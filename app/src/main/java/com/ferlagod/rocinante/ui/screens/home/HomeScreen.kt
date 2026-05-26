@@ -895,6 +895,19 @@ fun ProfileTab(
         )
     }
 
+    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
+    LaunchedEffect(Unit) {
+        val cachedReading = dataCache.loadShelfBooks("reading")
+        if (cachedReading != null && readingBooks.isEmpty()) {
+            readingBooks = cachedReading
+        }
+        val cachedUsers = dataCache.loadSuggestedUsers()
+        if (cachedUsers != null && suggestedUsers.isEmpty()) {
+            suggestedUsers = cachedUsers
+        }
+    }
+
     LaunchedEffect(username, refreshTrigger) {
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
@@ -902,11 +915,15 @@ fun ProfileTab(
             val cleanUser = username.removePrefix("@").trim()
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
             val response = api.getShelfData(shelfJsonUrl)
-            readingBooks = response.orderedItems ?: emptyList()
+            val fetchedItems = response.orderedItems ?: emptyList()
+            readingBooks = fetchedItems
+            dataCache.saveShelfBooks("reading", fetchedItems)
         } catch (_: Exception) {
         }
         try {
-            suggestedUsers = com.ferlagod.rocinante.data.api.NetworkClient.getSuggestedUsers(api, instanceUrl)
+            val fetchedUsers = com.ferlagod.rocinante.data.api.NetworkClient.getSuggestedUsers(api, instanceUrl)
+            suggestedUsers = fetchedUsers
+            dataCache.saveSuggestedUsers(fetchedUsers)
         } catch (_: Exception) {
         }
     }

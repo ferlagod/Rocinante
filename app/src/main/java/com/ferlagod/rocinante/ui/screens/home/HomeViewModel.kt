@@ -66,10 +66,13 @@ class HomeViewModel(
             if (!forceRefresh && _uiState.value.timeline.isEmpty()) {
                 val cachedTimeline = timelineCache.loadTimeline()
                 val cachedLikes = timelineCache.loadLikedStatuses()
-                if (!cachedTimeline.isNullOrEmpty()) {
+                val cachedProfile = timelineCache.loadProfile()
+                
+                if (!cachedTimeline.isNullOrEmpty() || cachedProfile != null) {
                     _uiState.value = _uiState.value.copy(
-                        timeline = cachedTimeline,
-                        visibleTimeline = cachedTimeline.take(10),
+                        profile = cachedProfile ?: _uiState.value.profile,
+                        timeline = cachedTimeline ?: _uiState.value.timeline,
+                        visibleTimeline = cachedTimeline?.take(10) ?: _uiState.value.visibleTimeline,
                         currentPage = 1,
                         likedStatusIds = cachedLikes,
                         isLoading = false
@@ -83,7 +86,7 @@ class HomeViewModel(
                     errorMessage = null
                 )
             } else {
-                if (_uiState.value.timeline.isEmpty()) {
+                if (_uiState.value.timeline.isEmpty() && _uiState.value.profile == null) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = true,
                         errorMessage = null
@@ -98,6 +101,7 @@ class HomeViewModel(
 
             try {
                 val profile = repository.loadProfile(username)
+                timelineCache.saveProfile(profile)
                 val cachedLikes = timelineCache.loadLikedStatuses()
                 
                 val mergedTimeline = repository.loadTimeline(

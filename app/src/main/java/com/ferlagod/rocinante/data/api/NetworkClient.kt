@@ -180,7 +180,7 @@ interface BookWyrmApi {
     suspend fun getRawJson(@Url fullUrl: String): ResponseBody
 
     @FormUrlEncoded
-    @POST("resolve-book")
+    @POST("resolve-book/")
     suspend fun resolveBook(
         @Field("remote_id") remoteId: String
     ): retrofit2.Response<ResponseBody>
@@ -221,11 +221,11 @@ interface BookWyrmApi {
         @Field("user") userHandle: String
     ): retrofit2.Response<ResponseBody>
 
-    // POST /reading-status/<status>/<book_id> — BookWyrm espera el estado
+    // POST /reading-status/<status>/<book_id>/ — BookWyrm espera el estado
     // y el ID del libro en la ruta, NO como campos de formulario.
     // Statuses válidos: "want", "start", "finish", "stop"
     @FormUrlEncoded
-    @POST("reading-status/{status}/{bookId}")
+    @POST("reading-status/{status}/{bookId}/")
     suspend fun updateReadingStatus(
         @Path("status") status: String,   // "want", "start", "finish", "stop"
         @Path("bookId") bookId: String,
@@ -233,10 +233,10 @@ interface BookWyrmApi {
         @Field("privacy") privacy: String = "public"
     ): retrofit2.Response<ResponseBody>
 
-    // POST /reading-status/update/<book_id> — actualiza el readthrough y añade comentario.
+    // POST /reading-status/update/<book_id>/ — actualiza el readthrough y añade comentario.
     // Requiere el 'id' del readthrough activo (oculto en el HTML del libro).
     @FormUrlEncoded
-    @POST("reading-status/update/{bookIdPath}")
+    @POST("reading-status/update/{bookIdPath}/")
     suspend fun updateProgressDetailed(
         @Path("bookIdPath") bookIdPath: String,
         @Field("id") readthroughId: String,

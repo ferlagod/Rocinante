@@ -179,9 +179,17 @@ fun ShelfNativeDetailScreen(
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
+    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
         if (currentPage == 1) {
-            isLoading = true
+            val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
+            if (cachedBooks != null && books.isEmpty()) {
+                books = cachedBooks
+                isLoading = false
+            } else if (books.isEmpty()) {
+                isLoading = true
+            }
         } else {
             isPaginating = true
         }
@@ -198,12 +206,15 @@ fun ShelfNativeDetailScreen(
             }
             if (currentPage == 1) {
                 books = fetchedItems
+                dataCache.saveShelfBooks(shelf.slug, fetchedItems)
             } else {
                 books = books + fetchedItems
             }
             errorMessage = null
         } catch (e: Exception) {
-            errorMessage = context.getString(R.string.error_network, e.message)
+            if (books.isEmpty()) {
+                errorMessage = context.getString(R.string.error_network, e.message)
+            }
             hasMorePages = false
         } finally {
             isLoading = false

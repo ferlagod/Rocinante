@@ -65,6 +65,34 @@ class TimelineCache(private val context: Context) {
         }
     }
 
+    private val profileCacheFile by lazy { File(context.cacheDir, "profile_cache.json") }
+
+    /**
+     * Guarda el perfil del usuario en caché de forma asíncrona.
+     */
+    suspend fun saveProfile(profile: com.ferlagod.rocinante.data.api.BookWyrmProfile) = withContext(Dispatchers.IO) {
+        try {
+            val json = gson.toJson(profile)
+            profileCacheFile.writeText(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Carga el perfil guardado de la caché.
+     */
+    suspend fun loadProfile(): com.ferlagod.rocinante.data.api.BookWyrmProfile? = withContext(Dispatchers.IO) {
+        try {
+            if (!profileCacheFile.exists()) return@withContext null
+            val json = profileCacheFile.readText()
+            gson.fromJson(json, com.ferlagod.rocinante.data.api.BookWyrmProfile::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     /**
      * Guarda en SharedPreferences el conjunto de IDs de actividades a las que se les ha dado Like localmente.
      *
@@ -85,5 +113,55 @@ class TimelineCache(private val context: Context) {
     fun loadLikedStatuses(): Set<String> {
         return context.getSharedPreferences("liked_prefs", Context.MODE_PRIVATE)
             .getStringSet("liked_ids", emptySet()) ?: emptySet()
+    }
+
+    /**
+     * Carga los libros guardados para una estantería específica.
+     */
+    suspend fun loadShelfBooks(slug: String): List<com.ferlagod.rocinante.data.api.ShelfBookItem>? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "shelf_${slug}_cache.json")
+            if (!file.exists()) return@withContext null
+            val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>() {}.type
+            gson.fromJson<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>(file.readText(), type)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Guarda la primera página de libros de una estantería en la caché.
+     */
+    suspend fun saveShelfBooks(slug: String, books: List<com.ferlagod.rocinante.data.api.ShelfBookItem>) = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "shelf_${slug}_cache.json")
+            file.writeText(gson.toJson(books))
+        } catch (e: Exception) {
+        }
+    }
+
+    /**
+     * Carga los usuarios sugeridos de la caché.
+     */
+    suspend fun loadSuggestedUsers(): List<com.ferlagod.rocinante.data.api.SuggestedUser>? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "suggested_users_cache.json")
+            if (!file.exists()) return@withContext null
+            val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.SuggestedUser>>() {}.type
+            gson.fromJson<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(file.readText(), type)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Guarda los usuarios sugeridos en la caché.
+     */
+    suspend fun saveSuggestedUsers(users: List<com.ferlagod.rocinante.data.api.SuggestedUser>) = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "suggested_users_cache.json")
+            file.writeText(gson.toJson(users))
+        } catch (e: Exception) {
+        }
     }
 }
