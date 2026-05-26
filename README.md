@@ -14,6 +14,25 @@ Rocinante es una aplicación nativa para Android diseñada para conectarse a cua
 
 ---
 
+## 📱 Capturas de pantalla
+
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="https://i.imgur.com/YiB61aV.png" width="250" alt="Pantalla de usuario"/></td>
+      <td><img src="https://i.imgur.com/Rz6nxyO.png" width="250" alt="Mis Libros"/></td>
+      <td><img src="https://i.imgur.com/F9KRRNI.png" width="250" alt="Actividad"/></td>
+    </tr>
+    <tr>
+      <td><img src="https://i.imgur.com/sZaRpUL.png" width="250" alt="Buscar"/></td>
+      <td><img src="https://i.imgur.com/coFN3Sw.png" width="250" alt="Actualizar progreso"/></td>
+      <td><img src="https://i.imgur.com/SjWJLuY.png" width="250" alt="Mi Perfil"/></td>
+    </tr>
+  </table>
+</div>
+
+---
+
 ## ✨ Características Principales
 
 📖 **Gestión de Estanterías**
