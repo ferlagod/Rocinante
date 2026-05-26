@@ -86,7 +86,7 @@ Rocinante está construido bajo los estándares más recientes de desarrollo And
 ### Instrucciones
 1. Clona este repositorio :
    ```bash
-   git clone https://forjalibre.eu/ferlagod/rocinante.git
+   git clone https://forjalibre.eu/ferlagod/rocinante_android.git
    ```
 2. Abre el proyecto en Android Studio.
 3. Espera a que Gradle sincronice todas las dependencias.
