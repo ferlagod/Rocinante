@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta Rocinante — espejo de Color.kt para uso en XML/themes -->
+    <color name="rocinante_granate">#6B0F2B</color>
+    <color name="rocinante_granate_light">#9B2247</color>
+    <color name="rocinante_dorado">#C5A47E</color>
+    <color name="rocinante_crema">#FCF9F5</color>
+    <color name="rocinante_parchment">#F5EFE7</color>
+    <color name="rocinante_ink">#2C1810</color>
+    <color name="rocinante_ink_dark">#1C1108</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

@@ -1,0 +1,53 @@
+/*
+ * Rocinante - Cliente Android para BookWyrm
+ * Copyright (C) 2026 Fernando Lago (ferlagod)
+ *
+ * Este programa es software libre: se puede redistribuir y/o modificar
+ * bajo los términos de la GNU Affero General Public License (AGPLv3).
+ * * AVISO DE DOBLE LICENCIA: Para uso comercial o propietario sin 
+ * las obligaciones de liberación de código de la AGPLv3, 
+ * es necesario adquirir una licencia comercial previa.
+ */
+package com.ferlagod.rocinante.workers
+
+import android.content.Context
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
+
+object ReminderManager {
+    private const val WORK_NAME = "ReadingReminder"
+
+    fun schedule(context: Context, hour: Int, minute: Int) {
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        // Si la hora ya pasó hoy, se programa para mañana a la misma hora
+        if (target.before(now)) {
+            target.add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        val initialDelay = target.timeInMillis - now.timeInMillis
+
+        val workRequest = PeriodicWorkRequestBuilder<ReadingReminderWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            WORK_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+    }
+
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+    }
+}
