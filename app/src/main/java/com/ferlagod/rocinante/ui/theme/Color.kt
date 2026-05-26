@@ -12,7 +12,10 @@ package com.ferlagod.rocinante.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Google-like Modern Palette (Material 3 Baseline)
+/**
+ * Paleta de colores para el tema claro y oscuro de la aplicación.
+ * Sigue la línea de diseño de Google (Material 3 Baseline).
+ */
 
 val PrimaryLight = Color(0xFF0B57D0)
 val OnPrimaryLight = Color(0xFFFFFFFF)

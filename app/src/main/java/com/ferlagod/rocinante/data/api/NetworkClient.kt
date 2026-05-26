@@ -34,6 +34,10 @@ import retrofit2.http.Field
 import retrofit2.http.Headers
 import java.util.concurrent.TimeUnit
 
+/**
+ * Representa el perfil público y la información básica de un actor/usuario
+ * en BookWyrm, incluyendo contadores de seguidores extraídos.
+ */
 data class BookWyrmProfile(
     val id: String?,
     val type: String?,
@@ -63,6 +67,9 @@ data class OutboxPage(
     @SerializedName("orderedItems") val orderedItems: List<ActivityPubActivity>?
 )
 
+/**
+ * Representa una actividad individual en el estándar ActivityPub (Nota, Reseña, Artículo, etc.).
+ */
 data class ActivityPubActivity(
     val id: String?,
     val type: String?,
@@ -113,6 +120,10 @@ data class BookSearchResult(
     val cover: String?
 )
 
+/**
+ * Representa los detalles ampliados y estructurados de un libro
+ * devueltos por la API de BookWyrm.
+ */
 data class BookWyrmBookDetails(
     val title: String?,
     val description: String?,
@@ -144,6 +155,11 @@ data class SuggestedUser(
     val profileUrl: String
 )
 
+/**
+ * Interfaz de Retrofit que define los endpoints (API REST) soportados para interactuar
+ * con una instancia de BookWyrm. Maneja tanto las llamadas nativas de ActivityPub como
+ * endpoints JSON específicos que expone BookWyrm.
+ */
 interface BookWyrmApi {
     @GET("user/{username}.json")
     suspend fun getUserProfile(
@@ -365,6 +381,11 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
     }
 }
 
+/**
+ * Cliente centralizado para la configuración y creación de conexiones de red a BookWyrm.
+ * Utiliza Retrofit y OkHttp, configurando interceptores esenciales para el manejo de sesiones 
+ * y tokens CSRF requeridos por el backend de Django en BookWyrm.
+ */
 object NetworkClient {
     /** Último OkHttpClient creado; permite acceder al CookieJar desde la UI. */
     var lastOkHttpClient: OkHttpClient? = null

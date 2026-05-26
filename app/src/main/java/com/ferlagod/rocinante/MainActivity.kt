@@ -56,6 +56,11 @@ import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 
+/**
+ * Actividad principal de Android y punto de entrada a la aplicación Compose.
+ * Inicializa el tema global, maneja la pantalla de bienvenida (Splash Screen)
+ * y establece el marco visual principal (Edge-To-Edge).
+ */
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Instalar SplashScreen ANTES de super.onCreate / setContent
@@ -87,6 +92,11 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+/**
+ * Composable raíz que establece la arquitectura de navegación general de la app.
+ * Gestiona el paso entre las pantallas principales (Login, Home, Settings) y la 
+ * comprobación continua de una sesión activa de forma segura.
+ */
 @Composable
 fun RocinanteApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -198,6 +208,13 @@ fun RocinanteApp() {
     }
 }
 
+/**
+ * Pantalla inicial de autenticación donde el usuario provee sus credenciales básicas
+ * para acceder a una instancia de BookWyrm. Maneja delegación a vistas web
+ * para el flujo de autorización real usando cookies.
+ *
+ * @param onLoginSuccess Callback que se ejecuta cuando el inicio de sesión se completa satisfactoriamente.
+ */
 @Composable
 fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -410,7 +427,28 @@ fun BookWyrmLoginWebView(
                         val isStillLoginPage = url.contains("/login")
 
                         if (hasSession && !isStillLoginPage) {
-                            onLoginSuccess(cookies, instanceUrl, username)
+                            // Inyectamos JavaScript para extraer el nombre de usuario de la sesión real en BookWyrm
+                            view.evaluateJavascript(
+                                "(function() { " +
+                                "  var profileLink = document.querySelector('nav a[href^=\"/user/\"], .navbar a[href^=\"/user/\"]'); " +
+                                "  if (!profileLink) { profileLink = document.querySelector('a[href^=\"/user/\"]'); } " +
+                                "  if (profileLink) { " +
+                                "      var parts = profileLink.getAttribute('href').split('/'); " +
+                                "      if (parts.length > 2) return parts[2]; " +
+                                "  } " +
+                                "  return null; " +
+                                "})();"
+                            ) { result ->
+                                val realUsername = result?.trim('"', '\'')
+                                
+                                val finalUsername = if (realUsername.isNullOrBlank() || realUsername == "null") {
+                                    username // Fallback al usuario original si el scraping falla
+                                } else {
+                                    realUsername
+                                }
+                                
+                                onLoginSuccess(cookies, instanceUrl, finalUsername)
+                            }
                         }
                     }
                 }

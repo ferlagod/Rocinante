@@ -10,11 +10,17 @@
  */
 package com.ferlagod.rocinante.utils
 
+/**
+ * Utilidades varias para interactuar y procesar datos del ecosistema BookWyrm / ActivityPub.
+ */
 object BookWyrmUtils {
 
     /**
-     * Extrae el identificador de la obra a partir de su URL completa.
+     * Extrae el identificador de la obra (libro/edición) a partir de su URL completa de BookWyrm.
      * Ejemplo: "https://instancia.com/book/12345.json" -> "12345"
+     *
+     * @param url URL completa del libro.
+     * @return El identificador numérico o de texto del libro, o cadena vacía si es inválido.
      */
     fun extractBookId(url: String?): String {
         if (url.isNullOrBlank()) return ""
@@ -27,7 +33,10 @@ object BookWyrmUtils {
     }
 
     /**
-     * Garantiza que la dirección incluya el sufijo necesario para obtener datos estructurados.
+     * Garantiza que la dirección URL incluya el sufijo ".json" para solicitar datos estructurados.
+     *
+     * @param url URL original.
+     * @return La URL con extensión ".json".
      */
     fun ensureJsonUrl(url: String?): String {
         if (url.isNullOrBlank()) return ""

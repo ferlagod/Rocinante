@@ -11,6 +11,12 @@
 package com.ferlagod.rocinante.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -56,9 +62,19 @@ import com.ferlagod.rocinante.data.api.BookWyrmProfile
 import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.api.editProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
-import com.ferlagod.rocinante.data.repository.BookWyrmRepository
 import kotlinx.coroutines.launch
 
+/**
+ * Pantalla principal (Home) de la aplicación.
+ *
+ * Implementa la estructura principal de navegación y muestra el contenido 
+ * correspondiente a la pestaña activa (Actividad, Mis Libros, Búsqueda o Perfil).
+ *
+ * @param cookie Token de sesión para autenticación en la API.
+ * @param instanceUrl URL base de la instancia del servidor a la que está conectado el usuario.
+ * @param username Nombre de usuario autenticado localmente.
+ * @param onSettingsClick Callback invocado al seleccionar el icono de configuración.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -69,6 +85,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    
     var showPostDialog by remember { mutableStateOf(false) }
     var selectedActivity by remember { mutableStateOf<TimelineUiItem?>(null) }
 
@@ -76,16 +93,14 @@ fun HomeScreen(
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
     }
 
-    val repository = remember(api) {
-        BookWyrmRepository(api)
-    }
-
     val timelineCache = remember(context) {
         com.ferlagod.rocinante.data.local.TimelineCache(context)
     }
 
-    val factory = remember(repository, timelineCache) {
-        HomeViewModelFactory(repository, timelineCache)
+    // El factory se crea con una función lambda que crea el repositorio usando el profileCache
+    // del ViewModel ya instanciado, de modo que el caché sobrevive a las recomposiciones.
+    val factory = remember(api, timelineCache) {
+        HomeViewModelFactory(api, timelineCache)
     }
 
     val viewModel: HomeViewModel = viewModel(factory = factory)
@@ -296,6 +311,16 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Diálogo para visualizar información detallada de una sugerencia de usuario
+ * y facilitar la acción de seguirlo.
+ *
+ * @param suggestedUser Información preliminar del usuario sugerido.
+ * @param api Cliente REST para obtener el perfil completo y efectuar el seguimiento.
+ * @param instanceUrl URL de la instancia actual para resolver el handle completo del usuario.
+ * @param onDismiss Callback invocado al descartar o cerrar el diálogo.
+ * @param onFollowSuccess Callback invocado cuando el seguimiento se completa exitosamente.
+ */
 @Composable
 fun SuggestedUserDialog(
     suggestedUser: com.ferlagod.rocinante.data.api.SuggestedUser,
@@ -425,6 +450,23 @@ fun SuggestedUserDialog(
     )
 }
 
+/**
+ * Renderiza la pestaña de actividad (Timeline) mostrando la lista de publicaciones.
+ *
+ * Soporta refresco manual (Pull-to-refresh) y carga infinita. Muestra estados vacíos y
+ * de carga correspondientes.
+ *
+ * @param modifier Modificador base para el contenedor.
+ * @param timeline Lista de elementos de actividad para renderizar.
+ * @param profile Perfil del usuario autenticado (utilizado para referencias y avatares por defecto).
+ * @param likedStatusIds Conjunto de identificadores de estados marcados como favoritos.
+ * @param isLoading Indica si se está realizando la carga inicial de datos.
+ * @param isRefreshing Indica si se está ejecutando un refresco manual.
+ * @param onRefresh Callback para iniciar un refresco manual.
+ * @param onLikeClick Callback al presionar el botón de favorito de un elemento.
+ * @param onLoadMore Callback invocado cuando la lista se aproxima al final para paginación.
+ * @param onItemClick Callback invocado al seleccionar el cuerpo de un elemento de la lista.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityTab(
@@ -444,30 +486,31 @@ fun ActivityTab(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        if (timeline.isEmpty()) {
-            if (isLoading || isRefreshing) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(modifier = Modifier.padding(bottom = 16.dp))
-                        Text(text = stringResource(R.string.activity_timeline_loading), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+        if (isLoading && timeline.isEmpty()) {
+            // Skeleton loading: muestra tarjetas de carga animadas en la primera carga
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(5) {
+                    ActivitySkeletonCard()
                 }
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = stringResource(R.string.activity_empty_title),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.activity_empty_body),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+            }
+        } else if (timeline.isEmpty() && !isRefreshing) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.activity_empty_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.activity_empty_body),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         } else {
@@ -475,7 +518,8 @@ fun ActivityTab(
             val shouldLoadMore = remember {
                 derivedStateOf {
                     val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-                    lastVisibleItem != null && lastVisibleItem.index >= listState.layoutInfo.totalItemsCount - 2
+                    // Umbral ampliado a -5 para anticipar mejor la carga del siguiente lote
+                    lastVisibleItem != null && lastVisibleItem.index >= listState.layoutInfo.totalItemsCount - 5
                 }
             }
             LaunchedEffect(shouldLoadMore.value) {
@@ -507,6 +551,71 @@ fun ActivityTab(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Tarjeta de carga "skeleton" que muestra rectángulos grises animados como placeholder
+ * mientras se carga el timeline por primera vez.
+ */
+@Composable
+private fun ActivitySkeletonCard() {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "skeletonAlpha"
+    )
+    val shimmerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
+
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(shimmerColor)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(14.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(shimmerColor)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(10.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(shimmerColor)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(shimmerColor)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .width(64.dp)
+                    .height(14.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(shimmerColor)
+            )
         }
     }
 }
@@ -570,7 +679,7 @@ private fun ActivityItemCard(
                         Text(text = "·", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = HtmlUtils.formatPublishedDate(item.published) ?: stringResource(R.string.date_unknown),
+                            text = HtmlUtils.formatRelativeDate(item.published) ?: stringResource(R.string.date_unknown),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -655,14 +764,26 @@ private fun ActivityItemCard(
     }
 }
 
+/**
+ * Devuelve el texto descriptivo y el icono correspondiente a cada tipo de actividad
+ * de ActivityPub/BookWyrm para mostrar en el header de las tarjetas del timeline.
+ *
+ * Los tipos aquí listados incluyen tanto los tipos de actividad wrapper (Announce, Add)
+ * como los tipos de objeto reales extraídos de actividades Create (Review, Comment, etc.).
+ *
+ * @param type Tipo de actividad o de objeto.
+ * @return Par de (texto localizado, icono Material).
+ */
 @Composable
 private fun getActivityContext(type: String): Pair<String, androidx.compose.ui.graphics.vector.ImageVector> {
     return when (type) {
-        "Review" -> Pair(stringResource(R.string.activity_type_review), Icons.Default.Edit)
+        "Review" -> Pair(stringResource(R.string.activity_type_review), Icons.Default.Star)
         "Rating" -> Pair(stringResource(R.string.activity_type_rating), Icons.Default.Star)
         "Announce" -> Pair(stringResource(R.string.activity_type_announce), Icons.Default.Share)
         "Note", "Comment" -> Pair(stringResource(R.string.activity_type_comment), Icons.Default.Edit)
-        "Add", "Create" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
+        "Quotation" -> Pair("Cita", Icons.AutoMirrored.Filled.Reply)
+        "Add" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
+        "Create" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
         else -> Pair(type, Icons.Default.Edit)
     }
 }

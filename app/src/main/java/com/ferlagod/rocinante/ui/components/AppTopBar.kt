@@ -27,6 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ferlagod.rocinante.R
 
+/**
+ * Barra superior de navegación global de la aplicación (TopAppBar).
+ * Muestra el título, el logotipo de Rocinante y provee acceso a la configuración.
+ *
+ * @param title Título principal a mostrar en la barra.
+ * @param onSettingsClick Callback invocado al pulsar el botón de opciones (rueda dentada).
+ * @param scrollBehavior Comportamiento reactivo de la barra al desplazarse por la pantalla.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopBar(

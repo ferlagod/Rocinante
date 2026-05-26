@@ -49,6 +49,15 @@ import com.ferlagod.rocinante.R.string.settings_version
 import com.ferlagod.rocinante.data.local.SettingsPreferences
 import com.ferlagod.rocinante.data.local.ThemeMode
 
+/**
+ * Pantalla principal de ajustes y configuración de la aplicación.
+ * Permite al usuario modificar preferencias visuales, opciones de comportamiento,
+ * gestionar notificaciones y cerrar la sesión activa.
+ *
+ * @param username Nombre del usuario autenticado actualmente, utilizado para advertencias de confirmación.
+ * @param onBack Callback para retroceder a la pantalla anterior en la navegación.
+ * @param onLogout Callback ejecutado al confirmar el cierre de sesión.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
 @Composable
 fun SettingsScreen(

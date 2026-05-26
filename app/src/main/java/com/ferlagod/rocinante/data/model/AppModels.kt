@@ -10,12 +10,34 @@
  */
 package com.ferlagod.rocinante.data.model
 
+/**
+ * Datos de la sesión del usuario activo.
+ * Guarda la URL de la instancia, el nombre de usuario y la cookie de sesión para autenticar las peticiones.
+ *
+ * @property instanceUrl Dirección del servidor de BookWyrm (ej. bookwyrm.social).
+ * @property username Nombre del usuario autenticado.
+ * @property cookie Valor de la cookie de sesión usada para las llamadas HTTP.
+ */
 data class SessionData(
     val instanceUrl: String,
     val username: String,
     val cookie: String,
 )
 
+/**
+ * Representa un elemento en el timeline de la aplicación.
+ * Contiene toda la información necesaria para pintar una actividad (reseña, comentario, etc.) en la UI.
+ *
+ * @property id Identificador único de la actividad.
+ * @property type Tipo de actividad (ej. "Review", "Comment", "Create").
+ * @property published Fecha de publicación en formato texto.
+ * @property content Contenido limpio de HTML para mostrar.
+ * @property bookCoverUrl Enlace a la imagen de portada del libro si aplica.
+ * @property bookUrl Enlace interno o de ActivityPub del libro.
+ * @property actorName Nombre o usuario de quien realiza la actividad.
+ * @property actorAvatarUrl Enlace a la imagen de perfil del autor.
+ * @property objectId ID del objeto sobre el que se actúa (útil para interacciones como favoritos o respuestas).
+ */
 data class TimelineUiItem(
     val id: String,
     val type: String,
@@ -34,7 +56,14 @@ data class TimelineUiItem(
 
 /**
  * Representa un usuario en la lista de seguidores o seguidos.
- * [isFollowedByMe] indica si el usuario actualmente autenticado sigue a este actor.
+ * Contiene información de perfil básica y el estado de seguimiento.
+ *
+ * @property actorUrl URL única de ActivityPub para el actor/usuario.
+ * @property name Nombre para mostrar del usuario.
+ * @property handle Identificador completo en formato @usuario@instancia.
+ * @property summary Breve descripción o biografía del usuario.
+ * @property avatarUrl URL de la foto de perfil.
+ * @property isFollowedByMe Indica si el usuario actual sigue a esta persona.
  */
 data class FollowUserItem(
     val actorUrl: String,
@@ -45,4 +74,5 @@ data class FollowUserItem(
     val avatarUrl: String?,
     val isFollowedByMe: Boolean
 )
+
 

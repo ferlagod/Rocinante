@@ -24,6 +24,12 @@ import java.io.IOException
 
 private val Context.dataStore by preferencesDataStore(name = "session_prefs")
 
+/**
+ * Almacenamiento persistente y seguro para la sesión del usuario.
+ * Utiliza DataStore Preferences para guardar las credenciales e información del servidor.
+ *
+ * @property context Contexto de la aplicación.
+ */
 class SessionStorage(private val context: Context) {
 
     companion object {
@@ -32,6 +38,10 @@ class SessionStorage(private val context: Context) {
         private val KEY_COOKIE = stringPreferencesKey("cookie")
     }
 
+    /**
+     * Flujo reactivo que emite los datos de sesión activa [SessionData].
+     * Si no hay sesión válida iniciada, emite null.
+     */
     val sessionFlow: Flow<SessionData?> = context.dataStore.data
         .catch { exception ->
             if (exception is IOException) {
@@ -60,6 +70,11 @@ class SessionStorage(private val context: Context) {
             }
         }
 
+    /**
+     * Almacena de forma persistente la información de una nueva sesión.
+     *
+     * @param session Datos de la sesión a guardar.
+     */
     suspend fun saveSession(session: SessionData) {
         context.dataStore.edit { prefs ->
             prefs[KEY_INSTANCE_URL] = session.instanceUrl
@@ -68,6 +83,9 @@ class SessionStorage(private val context: Context) {
         }
     }
 
+    /**
+     * Elimina todos los datos de sesión de la memoria persistente (Cierre de sesión).
+     */
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
             prefs.remove(KEY_INSTANCE_URL)

@@ -13,6 +13,21 @@ package com.ferlagod.rocinante.ui.screens.home
 import com.ferlagod.rocinante.data.api.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
 
+/**
+ * Estado inmutable que representa la interfaz de usuario de la pantalla principal (Home).
+ * Contiene todos los datos necesarios para renderizar la vista y su comportamiento.
+ *
+ * @property isLoading Indica si la aplicación está realizando la carga inicial de datos.
+ * @property isRefreshing Indica si se está ejecutando un refresco manual (pull-to-refresh).
+ * @property errorMessage Mensaje de error para mostrar al usuario, o null si no hay error.
+ * @property profile Información del perfil del usuario autenticado.
+ * @property timeline Lista completa de actividades cargadas en la línea de tiempo.
+ * @property selectedTab Índice de la pestaña actualmente seleccionada en la barra de navegación inferior.
+ * @property likedStatusIds Conjunto de identificadores de las publicaciones marcadas como favoritas (likes).
+ * @property userId Identificador interno único del usuario.
+ * @property visibleTimeline Subconjunto de actividades visibles actualmente en la vista (usado para paginación local).
+ * @property currentPage Página actual cargada en la vista paginada de la línea de tiempo.
+ */
 data class HomeUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,

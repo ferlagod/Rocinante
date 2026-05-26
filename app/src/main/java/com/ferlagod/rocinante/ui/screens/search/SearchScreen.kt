@@ -11,18 +11,25 @@
 package com.ferlagod.rocinante.ui.screens.search
 
 import android.widget.Toast
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -37,6 +44,15 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
 
+/**
+ * Pantalla interactiva que permite a los usuarios buscar obras en su instancia de BookWyrm,
+ * facilitando tanto la búsqueda por texto convencional como mediante escáner de códigos de barras (ISBN).
+ *
+ * @param instanceUrl Dirección del servidor (instancia) a consultar de forma prioritaria.
+ * @param cookie Credencial de sesión para autenticar búsquedas.
+ * @param api Cliente de red pre-configurado opcional.
+ * @param modifier Modificador de diseño para ajustar la disposición.
+ */
 @Composable
 fun SearchScreen(
     instanceUrl: String,
@@ -51,6 +67,10 @@ fun SearchScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<BookSearchResult>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isSearching by remember { mutableStateOf(false) }
+    var isLoadingDetails by remember { mutableStateOf(false) }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var selectedBookDetails by remember { mutableStateOf<BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<ActivityPubActivity>>(emptyList()) }
@@ -63,6 +83,8 @@ fun SearchScreen(
     ) { result ->
         if (result.contents != null) {
             searchQuery = result.contents
+            isSearching = true
+            keyboardController?.hide()
             // Lanzar búsqueda automáticamente
             coroutineScope.launch {
                 try {
@@ -77,6 +99,8 @@ fun SearchScreen(
                     } else {
                         errorMessage = context.getString(R.string.search_error, e.message)
                     }
+                } finally {
+                    isSearching = false
                 }
             }
         }
@@ -100,7 +124,34 @@ fun SearchScreen(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             label = { Text(stringResource(R.string.search_hint)) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    if (searchQuery.isNotBlank()) {
+                        isSearching = true
+                        keyboardController?.hide()
+                        coroutineScope.launch {
+                            try {
+                                searchResults = resolvedApi.searchBooks(searchQuery)
+                                errorMessage = null
+                                if (searchResults.isEmpty()) {
+                                    errorMessage = context.getString(R.string.shelf_empty)
+                                }
+                            } catch (e: Exception) {
+                                if (e is com.google.gson.JsonSyntaxException || e.message?.contains("html") == true) {
+                                    errorMessage = context.getString(R.string.search_error, context.getString(R.string.search_api_unsupported))
+                                } else {
+                                    errorMessage = context.getString(R.string.search_error, e.message)
+                                }
+                            } finally {
+                                isSearching = false
+                            }
+                        }
+                    }
+                }
+            ),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -108,6 +159,8 @@ fun SearchScreen(
         Button(
             onClick = {
                 if (searchQuery.isNotBlank()) {
+                    isSearching = true
+                    keyboardController?.hide()
                     coroutineScope.launch {
                         try {
                             searchResults = resolvedApi.searchBooks(searchQuery)
@@ -121,6 +174,8 @@ fun SearchScreen(
                             } else {
                                 errorMessage = context.getString(R.string.search_error, e.message)
                             }
+                        } finally {
+                            isSearching = false
                         }
                     }
                 }
@@ -152,7 +207,14 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (searchResults.isNotEmpty()) {
+        if (isLoadingDetails) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (isSearching) {
+            SearchSkeletonLoader()
+        } else if (searchResults.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -162,6 +224,7 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
+                                if (isLoadingDetails) return@clickable
                                 val bookKey = book.key
                                 if (!bookKey.isNullOrEmpty()) {
                                     if (settingsState.openLinksExternally) {
@@ -170,6 +233,7 @@ fun SearchScreen(
                                         context.startActivity(intent)
                                     } else {
                                         activeBookKey = bookKey
+                                        isLoadingDetails = true
                                         coroutineScope.launch {
                                             try {
                                                 val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookKey)
@@ -183,6 +247,8 @@ fun SearchScreen(
                                                 }
                                             } catch (e: Exception) {
                                                 errorMessage = context.getString(R.string.error_details_load, e.message)
+                                            } finally {
+                                                isLoadingDetails = false
                                             }
                                         }
                                     }
@@ -246,5 +312,69 @@ fun SearchScreen(
                 selectedBookReviews = emptyList()
             }
         )
+    }
+}
+
+@Composable
+fun SearchSkeletonLoader() {
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(6) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(70.dp)
+                            .height(100.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(LocalContentColor.current.copy(alpha = alpha))
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(20.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(LocalContentColor.current.copy(alpha = alpha))
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(16.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(LocalContentColor.current.copy(alpha = alpha))
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(12.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(LocalContentColor.current.copy(alpha = alpha))
+                        )
+                    }
+                }
+            }
+        }
     }
 }

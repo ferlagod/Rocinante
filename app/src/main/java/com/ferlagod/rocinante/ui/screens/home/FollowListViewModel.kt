@@ -31,16 +31,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+/**
+ * Enum que define si la lista a cargar corresponde a seguidores o usuarios seguidos.
+ */
 enum class FollowListDirection { FOLLOWERS, FOLLOWING }
 
+/**
+ * Estado inmutable de la interfaz para la lista de seguimiento.
+ *
+ * @property isLoading Indica si está cargando por primera vez.
+ * @property isRefreshing Indica si se está ejecutando un refresco en segundo plano.
+ * @property users Lista de usuarios obtenidos (seguidores o seguidos).
+ * @property errorMessage Posible mensaje de error a mostrar.
+ * @property myFollowingIds Conjunto de identificadores de actores que el usuario actual sigue.
+ * @property pendingHandles Indicadores de carga en curso por cada usuario.
+ */
 data class FollowListUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val users: List<FollowUserItem> = emptyList(),
     val errorMessage: String? = null,
-    /** IDs de actores que el usuario actual sigue (para calcular isFollowedByMe) */
     val myFollowingIds: Set<String> = emptySet(),
-    /** Indica qué actores tienen una operación en curso */
     val pendingHandles: Set<String> = emptySet()
 )
 
@@ -50,6 +61,14 @@ private const val MAX_PROFILES_TO_FETCH = 50
 /** Timeout por petición de perfil individual (ms) */
 private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
 
+/**
+ * ViewModel que gestiona la lógica para cargar, mostrar y alterar las listas
+ * de seguidores y usuarios seguidos. Soporta paginación, caché local
+ * y la acción de seguir o dejar de seguir a los usuarios listados.
+ *
+ * @property api Interfaz de red autenticada para interactuar con BookWyrm.
+ * @property cache Mecanismo de persistencia local de la lista.
+ */
 class FollowListViewModel(
     private val api: BookWyrmApi,
     private val cache: FollowListCache
@@ -158,10 +177,22 @@ class FollowListViewModel(
         }
     }
 
+    /**
+     * Efectúa la acción de seguir a un usuario de manera optimista y solicita el cambio a la API.
+     *
+     * @param actorUrl Identificador único del usuario (URL del actor).
+     * @param handle Identificador visual/arroba del usuario para mostrar carga en la UI.
+     */
     fun follow(actorUrl: String, handle: String) {
         toggleFollow(actorUrl, handle, follow = true)
     }
 
+    /**
+     * Efectúa la acción de dejar de seguir a un usuario de manera optimista y solicita el cambio a la API.
+     *
+     * @param actorUrl Identificador único del usuario (URL del actor).
+     * @param handle Identificador visual/arroba del usuario para mostrar carga en la UI.
+     */
     fun unfollow(actorUrl: String, handle: String) {
         toggleFollow(actorUrl, handle, follow = false)
     }

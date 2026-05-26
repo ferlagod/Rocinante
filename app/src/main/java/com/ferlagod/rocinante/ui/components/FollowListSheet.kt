@@ -11,6 +11,8 @@
 package com.ferlagod.rocinante.ui.components
 
 import android.widget.Toast
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
@@ -106,14 +108,7 @@ fun FollowListSheet(
 
             when {
                 uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    FollowListSkeletonLoader()
                 }
 
                 uiState.users.isEmpty() -> {
@@ -244,7 +239,13 @@ fun FollowListSheet(
 }
 
 /**
- * Fila individual de un usuario en la lista.
+ * Fila individual que representa a un usuario dentro de la lista de seguimiento.
+ * Permite visualizar el perfil básico y ofrece un botón de acción rápida para seguir o dejar de seguir.
+ *
+ * @param user Datos del perfil del usuario a renderizar.
+ * @param isPending Indica si hay una petición de red en curso para este usuario en particular.
+ * @param onFollowClick Acción ejecutada al pulsar el botón principal (seguir/unfollow).
+ * @param onRowClick Acción ejecutada al pulsar en cualquier otra zona de la fila para ver detalles.
  */
 @Composable
 private fun FollowUserRow(
@@ -305,6 +306,64 @@ private fun FollowUserRow(
                 ) {
                     Text(stringResource(R.string.follow_btn_follow))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FollowListSkeletonLoader() {
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        repeat(5) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(LocalContentColor.current.copy(alpha = alpha))
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(16.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(LocalContentColor.current.copy(alpha = alpha))
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.4f)
+                            .height(12.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(LocalContentColor.current.copy(alpha = alpha))
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(36.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(LocalContentColor.current.copy(alpha = alpha))
+                )
             }
         }
     }

@@ -44,6 +44,21 @@ import com.ferlagod.rocinante.utils.HtmlUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+/**
+ * Diálogo interactivo principal que muestra la información detallada de una obra, 
+ * incluyendo portada, descripción extendida, la opción para gestionar estantes y las reseñas públicas.
+ *
+ * @param bookDetails Datos estructurados devueltos por la API del libro.
+ * @param reviews Listado de reseñas y progreso de lectura asociados a la obra.
+ * @param activeBookKey URL remota o ID local clave de este libro para llamadas a red.
+ * @param fallbackCoverUrl Imagen auxiliar a emplear en caso de que [bookDetails] no provea portada.
+ * @param currentShelf El estante (ej. 'to-read', 'reading') en el que se ubica el libro.
+ * @param api Instancia autenticada del cliente de la red para operar.
+ * @param context Contexto de la interfaz de usuario para emitir mensajes y toasts.
+ * @param coroutineScope Entorno asíncrono asignado a esta vista.
+ * @param onDismiss Ejecuta la lógica para destruir o cerrar la pantalla modal actual.
+ * @param onShelved Callback opcional invocado al clasificar el libro en un estante exitosamente.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookDetailsDialog(

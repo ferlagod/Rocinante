@@ -11,6 +11,8 @@
 package com.ferlagod.rocinante.ui.screens.shelves
 
 import android.widget.Toast
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,6 +48,16 @@ data class ShelfUiItem(
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
+/**
+ * Pantalla que muestra y permite interactuar con los estantes personales del usuario 
+ * (por leer, leyendo, leídos). Actúa como punto de entrada antes de ver el detalle de cada estante.
+ *
+ * @param instanceUrl URL base de la instancia de BookWyrm.
+ * @param username Nombre del usuario autenticado.
+ * @param cookie Token de sesión para autenticar llamadas a la API.
+ * @param api Instancia opcional de [BookWyrmApi]. Si se provee, se reutiliza para eficiencia.
+ * @param onNavigateToSettings Acción a ejecutar cuando se solicita navegar a los ajustes desde la pantalla de estantes.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyBooksScreen(
@@ -151,33 +163,51 @@ fun ShelfNativeDetailScreen(
     var books by remember { mutableStateOf<List<ShelfBookItem>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var isPaginating by remember { mutableStateOf(false) }
+    var hasMorePages by remember { mutableStateOf(true) }
+    var currentPage by remember { mutableStateOf(1) }
     var refreshTrigger by remember { mutableStateOf(0) }
 
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
     var fallbackCoverUrl by remember { mutableStateOf("") }
     var activeBookUrl by remember { mutableStateOf("") }
+    var isLoadingDetails by remember { mutableStateOf(false) }
 
     var showTimePicker by remember { mutableStateOf(false) }
 
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
-    LaunchedEffect(shelf.slug, refreshTrigger) {
-        isLoading = true
+    LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
+        if (currentPage == 1) {
+            isLoading = true
+        } else {
+            isPaginating = true
+        }
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val cleanUser = username.removePrefix("@").trim()
-            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/${shelf.slug}.json?page=1"
+            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/${shelf.slug}.json?page=$currentPage"
 
             val response = api.getShelfData(shelfJsonUrl)
-            books = response.orderedItems ?: emptyList()
+            val fetchedItems = response.orderedItems ?: emptyList()
+            if (fetchedItems.isEmpty() || fetchedItems.size < 10) {
+                hasMorePages = false
+            }
+            if (currentPage == 1) {
+                books = fetchedItems
+            } else {
+                books = books + fetchedItems
+            }
             errorMessage = null
         } catch (e: Exception) {
             errorMessage = context.getString(R.string.error_network, e.message)
+            hasMorePages = false
         } finally {
             isLoading = false
+            isPaginating = false
         }
     }
 
@@ -204,10 +234,8 @@ fun ShelfNativeDetailScreen(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(16.dp)
             )
-        } else if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+        } else if (isLoading && currentPage == 1) {
+            ShelfSkeletonLoader()
         } else if (books.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -221,6 +249,12 @@ fun ShelfNativeDetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (isLoadingDetails) {
+                    item {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                    }
+                }
+
                 if (shelf.slug == "reading") {
                     item {
                         OutlinedCard(
@@ -276,11 +310,19 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
-                items(books) { book ->
-                    OutlinedCard(
+                items(books.size) { index ->
+                    val book = books[index]
+                    if (index >= books.size - 5 && !isLoading && !isPaginating && hasMorePages) {
+                        LaunchedEffect(index) {
+                            currentPage++
+                        }
+                    }
+
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
+                                if (isLoadingDetails) return@clickable
                                 val bookUrl = book.id
                                 if (!bookUrl.isNullOrEmpty()) {
                                     if (settingsState.openLinksExternally) {
@@ -288,11 +330,13 @@ fun ShelfNativeDetailScreen(
                                         context.startActivity(intent)
                                     } else {
                                         activeBookUrl = bookUrl
-                                        fallbackCoverUrl = book.cover?.url ?: ""
+                                        isLoadingDetails = true
                                         coroutineScope.launch {
                                             try {
                                                 val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
                                                 selectedBookDetails = api.getBookDetails(detailsUrl)
+
+                                                fallbackCoverUrl = book.cover?.url ?: ""
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                                 try {
@@ -300,9 +344,10 @@ fun ShelfNativeDetailScreen(
                                                 } catch (_: Exception) {
                                                     selectedBookReviews = emptyList()
                                                 }
-
                                             } catch (e: Exception) {
-                                                Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
+                                                errorMessage = context.getString(R.string.error_details_load, e.message)
+                                            } finally {
+                                                isLoadingDetails = false
                                             }
                                         }
                                     }
@@ -404,4 +449,79 @@ fun ReminderTimeDialog(
             }
         }
     )
+}
+
+@Composable
+fun ShelfSkeletonLoader() {
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(6) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(70.dp)
+                            .height(100.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(LocalContentColor.current.copy(alpha = alpha))
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(20.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(LocalContentColor.current.copy(alpha = alpha))
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .height(16.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(LocalContentColor.current.copy(alpha = alpha))
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row {
+                            Box(
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(24.dp)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(LocalContentColor.current.copy(alpha = alpha))
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(24.dp)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(LocalContentColor.current.copy(alpha = alpha))
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

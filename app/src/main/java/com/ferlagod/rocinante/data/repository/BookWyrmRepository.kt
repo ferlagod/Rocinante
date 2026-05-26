@@ -26,12 +26,35 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Número máximo de usuarios seguidos cuyos outboxes se cargarán. */
-private const val MAX_FOLLOWING_TO_LOAD = 15
+private const val MAX_FOLLOWING_TO_LOAD = 10
 
+/**
+ * Tipos de actividad ActivityPub que no tienen relevancia en el timeline y deben filtrarse.
+ * Incluye actividades de borrado, reversión y actualizaciones de perfil.
+ */
+private val IGNORED_ACTIVITY_TYPES = setOf("Delete", "Undo", "Update", "Like", "Reject", "Block")
+
+/**
+ * Repositorio encargado de gestionar la comunicación con la API de BookWyrm y coordinar
+ * el flujo de datos de los perfiles, líneas de tiempo e interacciones (likes, comentarios, etc.).
+ *
+ * @property api Instancia de [BookWyrmApi] para realizar llamadas de red.
+ * @property profileCache Caché mutable de perfiles de actores. Puede ser inyectado desde
+ *   el exterior (p.ej. desde el ViewModel) para persistir entre recomposiciones.
+ */
 class BookWyrmRepository(
-    private val api: BookWyrmApi
+    private val api: BookWyrmApi,
+    private val profileCache: java.util.concurrent.ConcurrentHashMap<String, BookWyrmProfile> =
+        java.util.concurrent.ConcurrentHashMap()
 ) {
-    private val profileCache = java.util.concurrent.ConcurrentHashMap<String, BookWyrmProfile>()
+
+    /**
+     * Carga el perfil completo de un usuario de BookWyrm, incluyendo sus contadores de seguidores
+     * y seguidos realizando consultas en paralelo.
+     *
+     * @param username Nombre del usuario a cargar (se limpia el prefijo '@').
+     * @return El objeto [BookWyrmProfile] con la información del perfil.
+     */
     suspend fun loadProfile(username: String): BookWyrmProfile {
         val cleanUsername = username.removePrefix("@").trim()
 
@@ -73,6 +96,13 @@ class BookWyrmRepository(
      *
      * Las portadas de los libros se extraen de los `attachment` de cada actividad
      * (sin peticiones adicionales al servidor — carga lazy en la UI).
+     *
+     * @param outboxUrl URL de la outbox del usuario actual.
+     * @param instanceUrl URL de la instancia actual de BookWyrm.
+     * @param username Nombre del usuario autenticado.
+     * @param actorNameHint Nombre opcional para mostrar del usuario.
+     * @param actorAvatarHint Enlace opcional a la imagen del avatar.
+     * @return Lista de [TimelineUiItem] lista para mostrarse.
      */
     suspend fun loadTimeline(
         outboxUrl: String?,
@@ -102,6 +132,13 @@ class BookWyrmRepository(
         allActivities
     }
 
+    /**
+     * Carga el timeline de los usuarios que el usuario actual sigue.
+     *
+     * @param instanceUrl URL del servidor de BookWyrm.
+     * @param username Nombre del usuario activo.
+     * @return Lista de actividades en formato [TimelineUiItem].
+     */
     suspend fun loadFollowedActivities(
         instanceUrl: String,
         username: String
@@ -116,7 +153,14 @@ class BookWyrmRepository(
     // Helpers privados
     // ---------------------------------------------------------------------------
 
-    /** Carga los ítems del outbox de un actor dado su URL. */
+    /**
+     * Carga las actividades de un outbox específico usando su URL de ActivityPub.
+     *
+     * @param outboxUrl Dirección URL del outbox.
+     * @param actorNameHint Nombre del actor para asociarlo a los ítems.
+     * @param actorAvatarHint Enlace al avatar del actor.
+     * @return Lista de elementos del timeline.
+     */
     suspend fun loadOutboxActivities(
         outboxUrl: String?,
         actorNameHint: String?,
@@ -145,6 +189,10 @@ class BookWyrmRepository(
     /**
      * Obtiene la lista de usuarios seguidos y carga el outbox de cada uno
      * (limitado a [MAX_FOLLOWING_TO_LOAD]).
+     *
+     * @param baseUrl URL base de la instancia.
+     * @param cleanUser Nombre de usuario limpio.
+     * @return Lista de actividades asociadas a los usuarios seguidos.
      */
     private suspend fun loadFollowingActivities(
         baseUrl: String,
@@ -187,6 +235,9 @@ class BookWyrmRepository(
      * Los datos del actor (nombre, avatar) se propagan a cada TimelineUiItem.
      * Usa getRawJson para soportar actores federados de otras instancias y timeouts
      * para no bloquear todo el timeline si un servidor remoto es lento.
+     *
+     * @param actorUrl URL única del perfil del usuario.
+     * @return Lista de actividades del actor.
      */
     private suspend fun loadFollowedActorActivities(actorUrl: String): List<TimelineUiItem> {
         // Timeout global de 10s para descargar el perfil Y el outbox de un seguido
@@ -217,13 +268,21 @@ class BookWyrmRepository(
      * Convierte una lista de [ActivityPubActivity] en [TimelineUiItem].
      * Extrae la portada del libro desde los `attachment` si están disponibles
      * (sin petición de red adicional).
+     *
+     * @param activities Lista de actividades crudas recibidas.
+     * @param actorNameHint Nombre a usar como fallback para el autor.
+     * @param actorAvatarHint Enlace al avatar a usar como fallback.
+     * @return Lista convertida de items del timeline.
      */
     private suspend fun mapActivitiesToItems(
         activities: List<ActivityPubActivity>,
         actorNameHint: String?,
         actorAvatarHint: String?
     ): List<TimelineUiItem> = coroutineScope {
-        val deferredItems = activities.map { activity ->
+        // Filtrar actividades que no son relevantes para el timeline de actividad literaria
+        val relevantActivities = activities.filter { it.type !in IGNORED_ACTIVITY_TYPES }
+
+        val deferredItems = relevantActivities.map { activity ->
             async {
                 var currentObjectData = activity.objectData
 
@@ -242,11 +301,30 @@ class BookWyrmRepository(
                     }
                 }
 
-                val rawContent = currentObjectData?.content
-                    ?: currentObjectData?.name
-                    ?: activity.content
-                    ?: activity.name
-                    ?: "Sin contenido"
+                // Extraer el tipo real del objeto cuando la actividad es un wrapper "Create".
+                // Según la spec ActivityPub + BookWyrm, Create envuelve el objeto real
+                // (Review, Comment, Quotation, Note). El tipo del objeto es más informativo.
+                val resolvedType = when (activity.type) {
+                    "Create" -> currentObjectData?.type ?: activity.type ?: "Actividad"
+                    else -> activity.type ?: "Actividad"
+                }
+
+                // Para actividades Add (añadir libro a estantería), construir contenido descriptivo
+                val isAddActivity = activity.type == "Add"
+                val bookTitle = currentObjectData?.name ?: currentObjectData?.id?.substringAfterLast("/")
+
+                val rawContent = when {
+                    isAddActivity && !bookTitle.isNullOrBlank() ->
+                        "Añadió \"$bookTitle\" a su estantería de lectura"
+                    isAddActivity ->
+                        "Añadió un libro a su estantería de lectura"
+                    else ->
+                        currentObjectData?.content
+                            ?: currentObjectData?.name
+                            ?: activity.content
+                            ?: activity.name
+                            ?: "Sin contenido"
+                }
 
                 // Portada: preferimos el primer attachment de tipo imagen o directamente el campo cover (si es un libro)
                 val bookCoverUrl = currentObjectData?.attachment
@@ -260,9 +338,9 @@ class BookWyrmRepository(
 
                 TimelineUiItem(
                     id = activity.id.orEmpty(),
-                    type = activity.type ?: "Actividad",
+                    type = resolvedType,
                     published = activity.published ?: "",
-                    content = HtmlUtils.stripHtml(rawContent).ifBlank { "Sin contenido" },
+                    content = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) "Añadió un libro a su estantería" else "Sin contenido" },
                     bookCoverUrl = bookCoverUrl,
                     bookUrl = bookUrl,
                     actorName = actorNameHint ?: "",
@@ -274,6 +352,15 @@ class BookWyrmRepository(
         deferredItems.map { it.await() }
     }
 
+    /**
+     * Resuelve el identificador local (base de datos interna de la instancia) de una actividad
+     * (estado/review/comentario) a partir de su URL pública, interactuando con el HTML
+     * de la página si es necesario para mapear el ID remoto con el local.
+     *
+     * @param instanceUrl Servidor de destino.
+     * @param statusUrl URL pública del estado.
+     * @return ID numérico local de la actividad, o null si no se puede resolver.
+     */
     suspend fun resolveLocalStatusId(instanceUrl: String, statusUrl: String): String? {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
@@ -416,6 +503,13 @@ class BookWyrmRepository(
         }
     }
 
+    /**
+     * Obtiene el ID numérico de la base de datos de un usuario a partir de su URL de perfil,
+     * parseando el HTML de una de sus estanterías de libros.
+     *
+     * @param profileUrl URL de perfil del usuario.
+     * @return El ID del usuario, o null si falla.
+     */
     suspend fun getUserId(profileUrl: String): String? {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
@@ -432,6 +526,12 @@ class BookWyrmRepository(
         }
     }
 
+    /**
+     * Marca como favorito un estado (le da me gusta) usando su ID local.
+     *
+     * @param statusId ID de la actividad a favorecer.
+     * @return true si la operación se realizó con éxito.
+     */
     suspend fun favoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.favoriteStatus(statusId)
@@ -441,6 +541,12 @@ class BookWyrmRepository(
         }
     }
 
+    /**
+     * Quita de favoritos un estado usando su ID local.
+     *
+     * @param statusId ID de la actividad.
+     * @return true si la operación se realizó con éxito.
+     */
     suspend fun unfavoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.unfavoriteStatus(statusId)
@@ -450,6 +556,15 @@ class BookWyrmRepository(
         }
     }
 
+    /**
+     * Envía una respuesta/comentario a un estado o actividad específica.
+     *
+     * @param userId ID del usuario que responde.
+     * @param content Texto del comentario.
+     * @param replyParent ID del estado padre al que se responde.
+     * @param csrfToken Token CSRF de seguridad de la instancia.
+     * @return true si se publica la respuesta correctamente.
+     */
     suspend fun replyStatus(userId: String, content: String, replyParent: String, csrfToken: String): Boolean {
         return try {
             val response = api.replyStatus(userId = userId, content = content, replyParent = replyParent, csrfToken = csrfToken)

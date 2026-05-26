@@ -68,6 +68,15 @@ private val DarkColorScheme = darkColorScheme(
     outline = OutlineDark
 )
 
+/**
+ * Tema principal de Compose de la aplicación Rocinante.
+ * Configura los esquemas de color (soportando colores dinámicos a partir de Android 12+),
+ * la tipografía de texto y el estilo de la barra de estado del sistema.
+ *
+ * @param darkTheme Determina si el tema oscuro debe aplicarse. Por defecto detecta los ajustes del sistema.
+ * @param dynamicColor Indica si se debe intentar usar el tema dinámico (Material You) del dispositivo.
+ * @param content El contenido de la UI que heredará este estilo de diseño.
+ */
 @Composable
 fun RocinanteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

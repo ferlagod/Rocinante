@@ -19,13 +19,18 @@ import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import com.ferlagod.rocinante.R
 
+/**
+ * Proveedor para cargar fuentes de Google de forma dinámica en la aplicación.
+ */
 private val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
     providerPackage = "com.google.android.gms",
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-// Lora: serif elegante, ideal para títulos literarios
+/**
+ * Fuente Lora: serif elegante, ideal para títulos literarios y portadas de libros.
+ */
 private val LoraFont = GoogleFont("Lora")
 val LoraFamily = FontFamily(
     Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.Normal),
@@ -34,7 +39,9 @@ val LoraFamily = FontFamily(
     Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.Bold),
 )
 
-// Inter: sans-serif moderno y legible para cuerpo de texto
+/**
+ * Fuente Inter: sans-serif moderno, limpio y altamente legible para el cuerpo del texto.
+ */
 private val InterFont = GoogleFont("Inter")
 val InterFamily = FontFamily(
     Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Normal),
@@ -43,6 +50,9 @@ val InterFamily = FontFamily(
     Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Bold),
 )
 
+/**
+ * Configuración de estilos tipográficos de Material 3 para la aplicación.
+ */
 val Typography = Typography(
     // Títulos grandes — Lora serif
     displayLarge = TextStyle(

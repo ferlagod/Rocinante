@@ -25,32 +25,59 @@ import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.local.SessionStorage
 import kotlinx.coroutines.flow.firstOrNull
 
+/**
+ * Worker periódico que se encarga de recordar al usuario continuar leyendo uno de los libros
+ * actualmente en su estantería de "Leyendo" ("reading"). Si no tiene libros en esa estantería,
+ * le sugiere buscar un libro nuevo.
+ *
+ * @param context Contexto de ejecución.
+ * @param workerParams Parámetros del worker de WorkManager.
+ */
 class ReadingReminderWorker(
     private val context: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
 
+    /**
+     * Realiza el trabajo en segundo plano: obtiene la sesión del usuario, consulta los libros
+     * en la estantería de lectura activa y muestra una notificación local.
+     *
+     * @return [Result.success] si se ejecutó correctamente o [Result.retry] si falla la conexión de red.
+     */
     override suspend fun doWork(): Result {
         try {
             val sessionStorage = SessionStorage(context)
             val session = sessionStorage.sessionFlow.firstOrNull()
             
             if (session != null) {
-                // Fetch reading shelf
-                val api = NetworkClient.createAuthenticatedApi(session.instanceUrl, session.cookie)
-                val cleanBase = if (session.instanceUrl.startsWith("http")) session.instanceUrl else "https://${session.instanceUrl}"
-                val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-                val cleanUser = session.username.removePrefix("@").trim()
-                val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
-                
-                val response = api.getShelfData(shelfJsonUrl)
-                val books = response.orderedItems ?: emptyList()
-                
-                if (books.isNotEmpty()) {
-                    val randomBook = books.random()
+                var bookTitle: String? = null
+                var hasBooksInShelf = true
+
+                try {
+                    // Fetch reading shelf
+                    val api = NetworkClient.createAuthenticatedApi(session.instanceUrl, session.cookie)
+                    val cleanBase = if (session.instanceUrl.startsWith("http")) session.instanceUrl else "https://${session.instanceUrl}"
+                    val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+                    val cleanUser = session.username.removePrefix("@").trim()
+                    val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
+                    
+                    val response = api.getShelfData(shelfJsonUrl)
+                    val books = response.orderedItems ?: emptyList()
+                    
+                    if (books.isNotEmpty()) {
+                        bookTitle = books.random().title
+                    } else {
+                        hasBooksInShelf = false
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Error de red, asumiremos el fallback genérico
+                }
+
+                if (hasBooksInShelf) {
                     showNotification(
                         title = context.getString(R.string.reminder_title),
-                        message = context.getString(R.string.reminder_msg_continue_reading, randomBook.title ?: context.getString(R.string.reminder_fallback_your_book))
+                        message = context.getString(R.string.reminder_msg_continue_reading, bookTitle ?: context.getString(R.string.reminder_fallback_your_book))
                     )
                 } else {
                     showNotification(
@@ -59,14 +86,28 @@ class ReadingReminderWorker(
                     )
                 }
             }
-            return Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
-            // Si falla la red, no enviamos notificación para no molestar
-            return Result.retry()
+        } finally {
+            // Reprogramar para el día siguiente (evita el drift)
+            try {
+                val settings = com.ferlagod.rocinante.data.local.SettingsPreferences(context).settingsFlow.firstOrNull()
+                if (settings != null && settings.reminderEnabled) {
+                    ReminderManager.schedule(context, settings.reminderHour, settings.reminderMinute)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
+        return Result.success()
     }
 
+    /**
+     * Crea y muestra una notificación local del sistema.
+     *
+     * @param title Título de la notificación.
+     * @param message Mensaje del cuerpo de la notificación.
+     */
     private fun showNotification(title: String, message: String) {
         val channelId = "rocinante_reading_reminders"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
