@@ -1,6 +1,8 @@
 <div align="center">
   
-# 🐎 Rocinante
+<img src="https://i.imgur.com/BR0w42y.png" width="100" alt="Logo Rocinante"/>
+
+# Rocinante
 
 **Un cliente Android moderno, libre y federado para BookWyrm**
 
