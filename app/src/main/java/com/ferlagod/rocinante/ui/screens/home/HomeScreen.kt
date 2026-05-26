@@ -184,6 +184,9 @@ fun HomeScreen(
                 onProfileUpdated = { newName, newSummary -> 
                     viewModel.updateProfileOptimistically(newName, newSummary)
                     viewModel.load(instanceUrl, username, cookie, forceRefresh = true) 
+                },
+                onFollowingIncremented = {
+                    viewModel.incrementFollowingCount()
                 }
             )
         }
@@ -672,7 +675,8 @@ fun ProfileTab(
     instanceUrl: String,
     @Suppress("UNUSED_PARAMETER") cookie: String,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
-    onProfileUpdated: (String, String) -> Unit
+    onProfileUpdated: (String, String) -> Unit,
+    onFollowingIncremented: () -> Unit = {}
 ) {
     val cleanSummary = HtmlUtils.stripHtml(profile?.summary)
     val avatarUrl = profile?.icon?.url
@@ -759,6 +763,13 @@ fun ProfileTab(
             onFollowSuccess = { 
                 selectedSuggestedUser = null
                 refreshTrigger++
+                onFollowingIncremented()
+                
+                // Refresh the following list in the background
+                val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+                val cleanUser = username.removePrefix("@").trim()
+                followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING, forceRefresh = true)
             }
         )
     }

@@ -141,6 +141,17 @@ class HomeViewModel(
         }
     }
 
+    fun incrementFollowingCount() {
+        val currentProfile = _uiState.value.profile
+        if (currentProfile != null) {
+            _uiState.value = _uiState.value.copy(
+                profile = currentProfile.copy(
+                    followingCountLocal = currentProfile.followingCountLocal + 1
+                )
+            )
+        }
+    }
+
     fun toggleLike(statusUrl: String, instanceUrl: String) {
         viewModelScope.launch {
             val statusId = repository.resolveLocalStatusId(instanceUrl, statusUrl) ?: return@launch
