@@ -48,16 +48,14 @@ Rocinante es una aplicación nativa para Android diseñada para conectarse a cua
 🌐 **Línea de Tiempo (Timeline) Federada**
 - Interactúa con publicaciones de tu red a través de ActivityPub.
 - Da "me gusta", responde a comentarios, y lee las reseñas de otros usuarios desde la aplicación.
-- Ve e interactúa directamente con usuarios de otras plataformas federadas.
 
 👥 **Perfiles y Seguidores**
 - Explora los perfiles de otros lectores.
 - Sigue y deja de seguir perfiles de manera rápida con listas interactivas.
-- Edita tu propia biografía y nombre de visualización.
 
 🔍 **Búsqueda Avanzada y Escáner de Códigos de Barras**
-- Busca libros o autores en toda la instancia federada.
-- **¡Novedad!** Utiliza la cámara de tu móvil para escanear códigos de barras (ISBN) y encontrar rápidamente tus libros físicos.
+- Busca libros en toda la instancia.
+- Utiliza la cámara de tu móvil para escanear códigos de barras (ISBN) y encontrar rápidamente tus libros físicos.
 
 🔔 **Recordatorios de Lectura**
 - ¿Te cuesta crear el hábito? Activa notificaciones locales diarias que te recordarán amablemente continuar con tu libro actual.
@@ -76,26 +74,6 @@ Rocinante está construido bajo los estándares más recientes de desarrollo And
 
 ---
 
-## 🚀 Compilación e Instalación
-
-### Prerrequisitos
-- Android Studio Iguana (o superior).
-- JDK 17+.
-- Un dispositivo o emulador con Android 8.0 (API 26) o superior.
-
-### Instrucciones
-1. Clona este repositorio :
-   ```bash
-   git clone https://forjalibre.eu/ferlagod/rocinante_android.git
-   ```
-2. Abre el proyecto en Android Studio.
-3. Espera a que Gradle sincronice todas las dependencias.
-4. Compila el proyecto:
-   - Haz clic en **Run 'app'** (`Shift + F10`)
-   - O bien, a través de la terminal: `./gradlew assembleDebug`
-5. El archivo APK resultante estará en `app/build/outputs/apk/debug/`.
-
----
 
 ## 📱 Uso Básico
 
@@ -104,11 +82,13 @@ Rocinante está construido bajo los estándares más recientes de desarrollo And
 3. **Tus Libros:** Ve a la pestaña de estanterías para ver lo que estás leyendo. Pulsa sobre el widget flotante para actualizar tu página rápidamente.
 4. **Escáner:** Usa la lupa del menú y presiona el icono del código de barras para añadir a tu colección el libro que tienes entre manos.
 
+***Debido a las limitaciones actuales de los servidores de BookWyrm, no es posible dar 'Me Gusta' a las publicaciones ni modificar tu Objetivo Anual de Lectura desde la app. Podrás ver tu línea de tiempo de seguidos, buscar libros y organizar tus estanterías.***
+
 ---
 
 ## 🤝 Contribuciones
 
-Este es un proyecto impulsado por la comunidad. Eres libre de informar sobre *bugs* o sugerir funcionalidades. Si deseas aportar código, ponte en contacto conmigo.
+Este es un proyecto impulsado por mí para la comunidad. Eres libre de informar sobre *bugs* o sugerir funcionalidades. Si deseas aportar código, ponte en contacto conmigo.
 
 ---
 
@@ -119,6 +99,6 @@ Este proyecto está licenciado bajo la **GNU Affero General Public License v3.0 
 > **Aviso de Doble Licenciamiento**  
 > Este software es **gratuito y de código abierto** bajo la licencia AGPLv3. Esto asegura que cualquier modificación de red que realices deba ser compartida libremente con la comunidad.
 > 
-> Sin embargo, si eres una empresa o entidad que desea utilizar este código base para lanzar productos **propietarios, comerciales de código cerrado**, o simplemente sin las obligaciones de liberación de código que impone la AGPLv3, **es obligatorio contactar con el desarrollador original (`ferlagod`)** para adquirir una licencia comercial previa.
+> Sin embargo, si eres una empresa o entidad que desea utilizar este código base para lanzar productos **propietarios, comerciales de código cerrado**, o simplemente sin las obligaciones de liberación de código que impone la AGPLv3, **es obligatorio contactar con el desarrollador original (`ferlagod`)**.
 
 Consulta el archivo [LICENSE](LICENSE) completo para más detalles.
