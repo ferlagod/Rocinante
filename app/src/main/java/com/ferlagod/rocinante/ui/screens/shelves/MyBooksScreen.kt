@@ -167,6 +167,7 @@ fun ShelfNativeDetailScreen(
     var hasMorePages by remember { mutableStateOf(true) }
     var currentPage by remember { mutableStateOf(1) }
     var refreshTrigger by remember { mutableStateOf(0) }
+    var isNetworkRefreshed by remember { mutableStateOf(false) }
 
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
@@ -183,6 +184,7 @@ fun ShelfNativeDetailScreen(
 
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
         if (currentPage == 1) {
+            isNetworkRefreshed = false
             val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
             if (cachedBooks != null && books.isEmpty()) {
                 books = cachedBooks
@@ -203,10 +205,14 @@ fun ShelfNativeDetailScreen(
             val fetchedItems = response.orderedItems ?: emptyList()
             if (fetchedItems.isEmpty() || fetchedItems.size < 10) {
                 hasMorePages = false
+            } else {
+                hasMorePages = true
             }
+            
             if (currentPage == 1) {
                 books = fetchedItems
                 dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                isNetworkRefreshed = true
             } else {
                 books = books + fetchedItems
             }
@@ -323,7 +329,7 @@ fun ShelfNativeDetailScreen(
 
                 items(books.size) { index ->
                     val book = books[index]
-                    if (index >= books.size - 5 && !isLoading && !isPaginating && hasMorePages) {
+                    if (index >= books.size - 5 && !isLoading && !isPaginating && hasMorePages && isNetworkRefreshed) {
                         LaunchedEffect(index) {
                             currentPage++
                         }
