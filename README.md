@@ -6,7 +6,7 @@
 
 **Un cliente Android moderno, libre y federado para BookWyrm**
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0+-purple.svg)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material_3-4CAF50.svg)](https://developer.android.com/jetpack/compose)
 
@@ -94,11 +94,7 @@ Este es un proyecto impulsado por mí para la comunidad. Eres libre de informar 
 
 ## ⚖️ Licencia y Aviso Legal
 
-Este proyecto está licenciado bajo la **GNU Affero General Public License v3.0 (AGPLv3)**.
-
-> **Aviso de Doble Licenciamiento**  
-> Este software es **gratuito y de código abierto** bajo la licencia AGPLv3. Esto asegura que cualquier modificación de red que realices deba ser compartida libremente con la comunidad.
-> 
-> Sin embargo, si eres una empresa o entidad que desea utilizar este código base para lanzar productos **propietarios, comerciales de código cerrado**, o simplemente sin las obligaciones de liberación de código que impone la AGPLv3, **es obligatorio contactar con el desarrollador original (`ferlagod`)**.
+Este proyecto está licenciado bajo la **GNU General Public License versión 3 (GPLv3)**.
+Copyright (C) 2026 ferlagod.
 
 Consulta el archivo [LICENSE](LICENSE) completo para más detalles.

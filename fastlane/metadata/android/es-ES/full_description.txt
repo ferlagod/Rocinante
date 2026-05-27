@@ -6,4 +6,4 @@ Características principales:
 - Seguimiento de progreso: actualización de páginas leídas sincronizada con el servidor.
 - Recordatorios locales: notificaciones diarias configurables desde el dispositivo, sin consumo de red, para fomentar el hábito.
 - Exploración de comunidad: visualización de reseñas, libros en curso y perfiles de otros usuarios.
-- Software libre: código transparente bajo licencia AGPLv3, sin rastreadores ni dependencias privativas.
+- Software libre: código transparente bajo licencia GPLv3, sin rastreadores ni dependencias privativas.
