@@ -14,6 +14,17 @@
 
 Rocinante es una aplicación nativa para Android diseñada para conectarse a cualquier instancia de **[BookWyrm](https://joinbookwyrm.com/)**, la red social de lectura basada en ActivityPub. Con Rocinante, puedes llevar tu biblioteca a todas partes y actualizar tu progreso de lectura.
 
+<br/>
+<div align="center">
+  <a href="#">
+    <img src="assets/fdroid-badge-es.png" height="55" alt="Consíguelo en F-Droid"/>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#">
+    <img src="https://img.shields.io/badge/Google_Play-Pronto-black.svg?logo=google-play&style=for-the-badge" height="55" alt="Pronto en Google Play"/>
+  </a>
+</div>
+
 ---
 
 ## 📱 Capturas de pantalla
