@@ -1,0 +1,9 @@
+Rocinante is a native Android client for connecting to any BookWyrm instance, the federated social network for readers. Designed with a focus on privacy and performance, it allows you to manage your reading habits without relying on closed platforms or algorithms.
+
+Key features:
+- Timeline interaction (ActivityPub): post updates, reply, and like.
+- Library management: organize books in default shelves (To Read, Reading, Read).
+- Progress tracking: update read pages synchronized with the server.
+- Local reminders: configurable daily notifications from the device, without network usage, to encourage reading habits.
+- Community exploration: view reviews, currently reading books, and other users' profiles.
+- Free and open-source software: transparent code under GPLv3 license, with no trackers or proprietary dependencies.
