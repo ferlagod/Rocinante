@@ -63,8 +63,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     // Splash Screen API (nativa Android 12+, con compat para versiones anteriores)
     implementation("androidx.core:core-splashscreen:1.0.1")
-    // Google Fonts para Compose (Lora serif + Inter sans-serif)
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
     // Soporte oficial de idiomas por app (Per-App Language) para APIs < 33
     implementation("androidx.appcompat:appcompat:1.6.1")
     // WorkManager para notificaciones locales

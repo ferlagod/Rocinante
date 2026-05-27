@@ -24,6 +24,8 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 /** Número máximo de usuarios seguidos cuyos outboxes se cargarán. */
 private const val MAX_FOLLOWING_TO_LOAD = 10
@@ -55,7 +57,7 @@ class BookWyrmRepository(
      * @param username Nombre del usuario a cargar (se limpia el prefijo '@').
      * @return El objeto [BookWyrmProfile] con la información del perfil.
      */
-    suspend fun loadProfile(username: String): BookWyrmProfile {
+    suspend fun loadProfile(username: String): BookWyrmProfile = withContext(Dispatchers.IO) {
         val cleanUsername = username.removePrefix("@").trim()
 
         // 1. Descarga del perfil base
@@ -86,7 +88,7 @@ class BookWyrmRepository(
             profile.followingCountLocal = followingDeferred?.await() ?: 0
         }
 
-        return profile
+        profile
     }
 
     /**
@@ -110,7 +112,7 @@ class BookWyrmRepository(
         username: String,
         actorNameHint: String?,
         actorAvatarHint: String?
-    ): List<TimelineUiItem> = coroutineScope {
+    ): List<TimelineUiItem> = withContext(Dispatchers.IO) {
 
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
@@ -142,11 +144,11 @@ class BookWyrmRepository(
     suspend fun loadFollowedActivities(
         instanceUrl: String,
         username: String
-    ): List<TimelineUiItem> {
+    ): List<TimelineUiItem> = withContext(Dispatchers.IO) {
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
         val cleanUser = username.removePrefix("@").trim()
-        return loadFollowingActivities(baseUrl, cleanUser)
+        loadFollowingActivities(baseUrl, cleanUser)
     }
 
     // ---------------------------------------------------------------------------

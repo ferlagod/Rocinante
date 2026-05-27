@@ -1,3 +1,4 @@
 {
-    "forgejo.instances": []
+    "forgejo.instances": [],
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

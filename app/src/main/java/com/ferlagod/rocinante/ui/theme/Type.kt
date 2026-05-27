@@ -12,42 +12,30 @@ package com.ferlagod.rocinante.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import com.ferlagod.rocinante.R
 
 /**
- * Proveedor para cargar fuentes de Google de forma dinámica en la aplicación.
- */
-private val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
-
-/**
  * Fuente Lora: serif elegante, ideal para títulos literarios y portadas de libros.
  */
-private val LoraFont = GoogleFont("Lora")
 val LoraFamily = FontFamily(
-    Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = LoraFont, fontProvider = provider, weight = FontWeight.Bold),
+    Font(resId = R.font.lora_regular, weight = FontWeight.Normal),
+    Font(resId = R.font.lora_medium, weight = FontWeight.Medium),
+    Font(resId = R.font.lora_semibold, weight = FontWeight.SemiBold),
+    Font(resId = R.font.lora_bold, weight = FontWeight.Bold),
 )
 
 /**
  * Fuente Inter: sans-serif moderno, limpio y altamente legible para el cuerpo del texto.
  */
-private val InterFont = GoogleFont("Inter")
 val InterFamily = FontFamily(
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Bold),
+    Font(resId = R.font.inter_regular, weight = FontWeight.Normal),
+    Font(resId = R.font.inter_medium, weight = FontWeight.Medium),
+    Font(resId = R.font.inter_semibold, weight = FontWeight.SemiBold),
+    Font(resId = R.font.inter_bold, weight = FontWeight.Bold),
 )
 
 /**

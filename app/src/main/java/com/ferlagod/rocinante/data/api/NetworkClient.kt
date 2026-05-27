@@ -33,6 +33,8 @@ import retrofit2.http.POST
 import retrofit2.http.Field
 import retrofit2.http.Headers
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Representa el perfil público y la información básica de un actor/usuario
@@ -451,10 +453,10 @@ object NetworkClient {
     /**
      * Extrae el user ID y el book ID ocultos en el HTML de la página del libro para enviar reseñas.
      */
-    suspend fun getReviewContext(api: BookWyrmApi, bookUrl: String): ReviewContext? {
-        return try {
+    suspend fun getReviewContext(api: BookWyrmApi, bookUrl: String): ReviewContext? = withContext(Dispatchers.IO) {
+        try {
             val bookId = BookWyrmUtils.extractBookId(bookUrl)
-            if (bookId.isEmpty()) return null
+            if (bookId.isEmpty()) return@withContext null
             val hostUrl = java.net.URL(bookUrl).let { "${it.protocol}://${it.host}" }
             var currentUrl = "$hostUrl/book/$bookId"
             var html = ""
@@ -587,8 +589,8 @@ object NetworkClient {
      * Raspa el HTML de la página del libro para obtener las reseñas de la comunidad.
      * BookWyrm no tiene un endpoint JSON para devolver las reseñas de un libro de forma paginada.
      */
-    suspend fun scrapeBookReviews(api: BookWyrmApi, bookUrl: String): List<ActivityPubActivity> {
-        return try {
+    suspend fun scrapeBookReviews(api: BookWyrmApi, bookUrl: String): List<ActivityPubActivity> = withContext(Dispatchers.IO) {
+        try {
             var currentUrl = bookUrl
             var html = ""
             for (i in 0..3) {
@@ -610,7 +612,7 @@ object NetworkClient {
                     break
                 }
             }
-            if (html.isEmpty()) return emptyList()
+            if (html.isEmpty()) return@withContext emptyList()
             val document = org.jsoup.Jsoup.parse(html)
 
             val reviewsList = mutableListOf<ActivityPubActivity>()
@@ -697,16 +699,16 @@ object NetworkClient {
     /**
      * Raspa la página "get-started/users/" para extraer los usuarios sugeridos a seguir.
      */
-    suspend fun getSuggestedUsers(api: BookWyrmApi, instanceUrl: String): List<SuggestedUser> {
-        return try {
+    suspend fun getSuggestedUsers(api: BookWyrmApi, instanceUrl: String): List<SuggestedUser> = withContext(Dispatchers.IO) {
+        try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val url = "${baseUrl}get-started/users/"
             
             val response = api.getRawHtmlResponse(url)
-            if (!response.isSuccessful) return emptyList()
+            if (!response.isSuccessful) return@withContext emptyList()
             
-            val html = response.body()?.string() ?: return emptyList()
+            val html = response.body()?.string() ?: return@withContext emptyList()
             val document = org.jsoup.Jsoup.parse(html)
             val users = mutableListOf<SuggestedUser>()
             
