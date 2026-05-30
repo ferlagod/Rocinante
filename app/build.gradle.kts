@@ -60,15 +60,15 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation(libs.androidx.datastore.preferences)
     // Splash Screen API (nativa Android 12+, con compat para versiones anteriores)
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.androidx.core.splashscreen)
     // Soporte oficial de idiomas por app (Per-App Language) para APIs < 33
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation(libs.androidx.appcompat)
     // WorkManager para notificaciones locales
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation(libs.androidx.work.runtime.ktx)
     // Jsoup para raspar el HTML de las páginas web
-    implementation("org.jsoup:jsoup:1.17.2")
+    implementation(libs.jsoup)
     // Escáner de código de barras (ZXing)
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation(libs.zxing.android.embedded)
 }

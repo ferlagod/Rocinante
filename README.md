@@ -109,3 +109,8 @@ Este proyecto está licenciado bajo la **GNU General Public License versión 3 (
 Copyright (C) 2026 ferlagod.
 
 Consulta el archivo [LICENSE](LICENSE) completo para más detalles.
+
+
+[![Apóyame en Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/ferlagod./)
+
+*Desarrollado con ❤️ y mucho café por [ferlagod](https://frikiverse.zone/@ferlagod).*
