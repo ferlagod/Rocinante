@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
 /** Número máximo de usuarios seguidos cuyos outboxes se cargarán. */
-private const val MAX_FOLLOWING_TO_LOAD = 10
+private const val MAX_FOLLOWING_TO_LOAD = 20
 
 /**
  * Tipos de actividad ActivityPub que no tienen relevancia en el timeline y deben filtrarse.
@@ -96,7 +96,7 @@ class BookWyrmRepository(
      * Las portadas de los libros se extraen de los `attachment` de cada actividad
      * (sin peticiones adicionales al servidor — carga lazy en la UI).
      *
-     * @param outboxUrl URL de la outbox del usuario actual.
+     * @param outboxUrl URL del outbox del usuario actual.
      * @param instanceUrl URL de la instancia actual de BookWyrm.
      * @param username Nombre del usuario autenticado.
      * @param actorNameHint Nombre opcional para mostrar del usuario.
@@ -151,6 +151,39 @@ class BookWyrmRepository(
     // ---------------------------------------------------------------------------
     // Helpers privados
     // ---------------------------------------------------------------------------
+
+    /**
+     * Carga las actividades de un inbox específico usando su URL de ActivityPub.
+     *
+     * @param inboxUrl Dirección URL del inbox.
+     * @param actorNameHint Nombre del actor para asociarlo a los ítems.
+     * @param actorAvatarHint Enlace al avatar del actor.
+     * @return Lista de elementos del timeline.
+     */
+    private suspend fun loadInboxActivities(
+        inboxUrl: String?,
+        actorNameHint: String?,
+        actorAvatarHint: String?
+    ): List<TimelineUiItem> {
+        if (inboxUrl.isNullOrBlank()) return emptyList()
+
+        val paginatedUrl = if (inboxUrl.contains("?")) {
+            "$inboxUrl&page=1"
+        } else {
+            "$inboxUrl?page=1"
+        }
+
+        return try {
+            val inbox = api.getInboxData(paginatedUrl)
+            mapActivitiesToItems(
+                inbox.orderedItems.orEmpty(),
+                actorNameHint = actorNameHint,
+                actorAvatarHint = actorAvatarHint
+            )
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
 
     /**
      * Carga las actividades de un outbox específico usando su URL de ActivityPub.
@@ -242,7 +275,9 @@ class BookWyrmRepository(
         // Timeout global de 10s para descargar el perfil Y el outbox de un seguido
         return withTimeoutOrNull(10_000L) {
             try {
-                val profileUrl = BookWyrmUtils.ensureJsonUrl(actorUrl)
+                // No usamos ensureJsonUrl porque rompería URLs de Mastodon/Pixelfed.
+                // Retrofit ya envía "Accept: application/activity+json", lo cual es el estándar.
+                val profileUrl = actorUrl
                 
                 // Get profile from cache or fetch and put
                 val profile = profileCache.getOrPut(profileUrl) {
@@ -289,8 +324,11 @@ class BookWyrmRepository(
                 if (currentObjectData == null && activity.rawObjectData?.isJsonPrimitive == true) {
                     val objectUrl = activity.rawObjectData.asString
                     try {
-                        val fetchedJson = withTimeoutOrNull(5000L) {
-                            api.getRawJson(BookWyrmUtils.ensureJsonUrl(objectUrl)).string()
+                        // Se reduce drásticamente el timeout de 5000 a 2000ms para no penalizar la fluidez
+                        // en caso de que un servidor remoto sea lento o no responda.
+                        // Usamos objectUrl crudo ya que Accept header maneja ActivityPub en Mastodon
+                        val fetchedJson = withTimeoutOrNull(2000L) {
+                            api.getRawJson(objectUrl).string()
                         }
                         if (fetchedJson != null) {
                             currentObjectData = Gson().fromJson(fetchedJson, ActivityPubObject::class.java)

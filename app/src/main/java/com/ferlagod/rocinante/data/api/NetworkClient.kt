@@ -43,6 +43,7 @@ data class BookWyrmProfile(
     val name: String?,
     val summary: String?,
     val outbox: String?,
+    val inbox: String?,
     val icon: ProfileIcon?,
     // preferredUsername es el handle local (sin @instance) según la spec ActivityPub
     val preferredUsername: String?,
@@ -174,6 +175,9 @@ interface BookWyrmApi {
 
     @GET
     suspend fun getOutboxData(@Url fullUrl: String): OutboxPage
+
+    @GET
+    suspend fun getInboxData(@Url fullUrl: String): OutboxPage
 
     @GET
     suspend fun getRawJson(@Url fullUrl: String): ResponseBody
