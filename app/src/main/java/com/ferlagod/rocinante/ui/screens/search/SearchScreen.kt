@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -115,6 +116,25 @@ fun SearchScreen(
         if (errorMessage != null) {
             Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
+            
+            if (errorMessage == context.getString(R.string.shelf_empty)) {
+                OutlinedButton(
+                    onClick = {
+                        val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
+                        val url = "https://$cleanInstance/create-book"
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Add,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Añadir libro desde tu instancia")
+                }
+            }
         }
 
         OutlinedTextField(
