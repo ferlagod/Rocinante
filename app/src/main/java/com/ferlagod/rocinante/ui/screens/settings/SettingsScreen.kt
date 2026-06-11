@@ -415,6 +415,7 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "" to "Sistema",
         "es" to "Español",
         "en" to "English",
+        "gl" to "Galego",
         "fr" to "Français",
         "de" to "Deutsch",
         "it" to "Italiano",

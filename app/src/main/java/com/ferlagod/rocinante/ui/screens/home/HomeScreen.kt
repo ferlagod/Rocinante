@@ -23,6 +23,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Reply
@@ -107,6 +109,23 @@ fun HomeScreen(
         viewModel.load(instanceUrl, username, cookie)
     }
 
+    val pagerState = rememberPagerState(
+        initialPage = uiState.selectedTab,
+        pageCount = { 4 }
+    )
+
+    LaunchedEffect(uiState.selectedTab) {
+        if (pagerState.currentPage != uiState.selectedTab) {
+            pagerState.animateScrollToPage(uiState.selectedTab)
+        }
+    }
+
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (!pagerState.isScrollInProgress && pagerState.currentPage != uiState.selectedTab) {
+            viewModel.selectTab(pagerState.currentPage)
+        }
+    }
+
     Scaffold(
         topBar = {
             AppTopBar(
@@ -155,52 +174,58 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        when (uiState.selectedTab) {
-            0 -> ActivityTab(
-                modifier = Modifier.padding(paddingValues),
-                timeline = uiState.visibleTimeline,
-                profile = uiState.profile,
-                likedStatusIds = uiState.likedStatusIds,
-                isLoading = uiState.isLoading,
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
-                onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
-                onLoadMore = { viewModel.loadMoreActivities() },
-                onItemClick = { selectedActivity = it }
-            )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = true
+        ) { page ->
+            when (page) {
+                0 -> ActivityTab(
+                    modifier = Modifier.padding(paddingValues),
+                    timeline = uiState.visibleTimeline,
+                    profile = uiState.profile,
+                    likedStatusIds = uiState.likedStatusIds,
+                    isLoading = uiState.isLoading,
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
+                    onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
+                    onLoadMore = { viewModel.loadMoreActivities() },
+                    onItemClick = { selectedActivity = it }
+                )
 
-            1 -> Box(modifier = Modifier.padding(paddingValues)) {
-                MyBooksScreen(
+                1 -> Box(modifier = Modifier.padding(paddingValues)) {
+                    MyBooksScreen(
+                        instanceUrl = instanceUrl,
+                        username = username,
+                        cookie = cookie,
+                        api = api,
+                        onNavigateToSettings = onSettingsClick
+                    )
+                }
+
+                2 -> SearchScreen(
                     instanceUrl = instanceUrl,
-                    username = username,
                     cookie = cookie,
                     api = api,
-                    onNavigateToSettings = onSettingsClick
+                    modifier = Modifier.padding(paddingValues)
+                )
+
+                3 -> ProfileTab(
+                    modifier = Modifier.padding(paddingValues),
+                    profile = uiState.profile,
+                    username = username,
+                    instanceUrl = instanceUrl,
+                    cookie = cookie,
+                    api = api,
+                    onProfileUpdated = { newName, newSummary -> 
+                        viewModel.updateProfileOptimistically(newName, newSummary)
+                        viewModel.load(instanceUrl, username, cookie, forceRefresh = true) 
+                    },
+                    onFollowingIncremented = {
+                        viewModel.incrementFollowingCount()
+                    }
                 )
             }
-
-            2 -> SearchScreen(
-                instanceUrl = instanceUrl,
-                cookie = cookie,
-                api = api,
-                modifier = Modifier.padding(paddingValues)
-            )
-
-            3 -> ProfileTab(
-                modifier = Modifier.padding(paddingValues),
-                profile = uiState.profile,
-                username = username,
-                instanceUrl = instanceUrl,
-                cookie = cookie,
-                api = api,
-                onProfileUpdated = { newName, newSummary -> 
-                    viewModel.updateProfileOptimistically(newName, newSummary)
-                    viewModel.load(instanceUrl, username, cookie, forceRefresh = true) 
-                },
-                onFollowingIncremented = {
-                    viewModel.incrementFollowingCount()
-                }
-            )
         }
 
         // Lógica del cuadro de diálogo para publicaciones
