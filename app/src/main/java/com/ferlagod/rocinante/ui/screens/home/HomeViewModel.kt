@@ -102,6 +102,7 @@ class HomeViewModel(
                 val cachedLikes = timelineCache.loadLikedStatuses()
                 
                 val mergedTimeline = repository.loadTimeline(
+                    inboxUrl = profile.inbox,
                     outboxUrl = profile.outbox,
                     instanceUrl = instanceUrl,
                     username = username,

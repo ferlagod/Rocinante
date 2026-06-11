@@ -104,6 +104,7 @@ class BookWyrmRepository(
      * @return Lista de [TimelineUiItem] lista para mostrarse.
      */
     suspend fun loadTimeline(
+        inboxUrl: String?,
         outboxUrl: String?,
         instanceUrl: String,
         username: String,
@@ -114,6 +115,21 @@ class BookWyrmRepository(
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
         val cleanUser = username.removePrefix("@").trim()
+
+        val inboxActivities = try {
+            if (!inboxUrl.isNullOrBlank()) {
+                // Pass null for hints so mapActivitiesToItems resolves the correct actor info
+                loadInboxActivities(inboxUrl, actorNameHint = null, actorAvatarHint = null)
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        if (inboxActivities.isNotEmpty()) {
+            return@withContext inboxActivities.sortedByDescending { it.published }
+        }
 
         // --- Outbox propio ---
         val ownActivitiesDeferred = async {
@@ -373,6 +389,31 @@ class BookWyrmRepository(
                 val isBook = currentObjectData?.type in listOf("Edition", "Work", "Book")
                 val bookUrl = currentObjectData?.inReplyToBook ?: if (isBook) currentObjectData?.id else null
 
+                var resolvedActorName = actorNameHint ?: ""
+                var resolvedActorAvatar = actorAvatarHint
+
+                val actorUrl = activity.actor
+                if (!actorUrl.isNullOrBlank()) {
+                    try {
+                        val profile = profileCache[actorUrl] ?: run {
+                            val fetchedJson = withTimeoutOrNull(2500L) {
+                                api.getRawJson(actorUrl).string()
+                            }
+                            if (fetchedJson != null && fetchedJson.trimStart().startsWith("{")) {
+                                val p = Gson().fromJson(fetchedJson, BookWyrmProfile::class.java)
+                                profileCache[actorUrl] = p
+                                p
+                            } else null
+                        }
+                        if (profile != null) {
+                            resolvedActorName = profile.name?.takeIf { it.isNotBlank() }
+                                ?: profile.preferredUsername
+                                ?: actorUrl.substringAfterLast("/")
+                            resolvedActorAvatar = profile.icon?.url
+                        }
+                    } catch (_: Exception) {}
+                }
+
                 TimelineUiItem(
                     id = activity.id.orEmpty(),
                     type = resolvedType,
@@ -380,8 +421,8 @@ class BookWyrmRepository(
                     content = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) "Añadió un libro a su estantería" else "Sin contenido" },
                     bookCoverUrl = bookCoverUrl,
                     bookUrl = bookUrl,
-                    actorName = actorNameHint ?: "",
-                    actorAvatarUrl = actorAvatarHint,
+                    actorName = resolvedActorName.ifBlank { "Usuario" },
+                    actorAvatarUrl = resolvedActorAvatar,
                     objectId = currentObjectData?.id ?: activity.id.orEmpty()
                 )
             }
