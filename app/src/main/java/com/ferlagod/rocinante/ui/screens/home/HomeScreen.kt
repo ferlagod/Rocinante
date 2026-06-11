@@ -889,6 +889,7 @@ fun ProfileTab(
             reviews = emptyList(),
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
+            currentShelf = "reading",
             api = api,
             context = context,
             coroutineScope = coroutineScope,
