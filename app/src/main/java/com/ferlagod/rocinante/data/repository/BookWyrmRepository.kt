@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
 /** Número máximo de usuarios seguidos cuyos outboxes se cargarán. */
-private const val MAX_FOLLOWING_TO_LOAD = 20
+private const val MAX_FOLLOWING_TO_LOAD = 200
 
 /**
  * Tipos de actividad ActivityPub que no tienen relevancia en el timeline y deben filtrarse.
@@ -116,20 +116,28 @@ class BookWyrmRepository(
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
         val cleanUser = username.removePrefix("@").trim()
 
-        val inboxActivities = try {
-            if (!inboxUrl.isNullOrBlank()) {
-                // Pass null for hints so mapActivitiesToItems resolves the correct actor info
-                loadInboxActivities(inboxUrl, actorNameHint = null, actorAvatarHint = null)
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) {
+        // ─── ESTRATEGIA 1: Scraping del feed HTML autenticado (método principal) ───
+        // BookWyrm no expone API REST para el timeline. El feed real (home) se construye
+        // en el servidor con Redis + Django ORM y solo es accesible como HTML. Este es
+        // el mismo feed que el usuario ve en el navegador y contiene TODAS las actividades
+        // de los seguidos, incluidos boosts y posts followers-only.
+        val htmlFeedItems = try {
+            com.ferlagod.rocinante.data.api.NetworkClient.scrapeHomeFeed(
+                api = api,
+                instanceUrl = instanceUrl,
+                maxPages = 2
+            )
+        } catch (_: Exception) {
             emptyList()
         }
 
-        if (inboxActivities.isNotEmpty()) {
-            return@withContext inboxActivities.sortedByDescending { it.published }
+        if (htmlFeedItems.isNotEmpty()) {
+            return@withContext htmlFeedItems
         }
+
+        // ─── ESTRATEGIA 2: Fallback a outboxes individuales (método clásico corregido) ───
+        // Si el scraping HTML falla (ej: cambio de HTML en BookWyrm, sesión expirada),
+        // reconstruimos el timeline a partir de los outboxes de ActivityPub.
 
         // --- Outbox propio ---
         val ownActivitiesDeferred = async {
@@ -212,26 +220,40 @@ class BookWyrmRepository(
     suspend fun loadOutboxActivities(
         outboxUrl: String?,
         actorNameHint: String?,
-        actorAvatarHint: String?
+        actorAvatarHint: String?,
+        maxPages: Int = 2
     ): List<TimelineUiItem> {
         if (outboxUrl.isNullOrBlank()) return emptyList()
 
-        val paginatedUrl = if (outboxUrl.contains("?")) {
-            "$outboxUrl&page=1"
-        } else {
-            "$outboxUrl?page=1"
+        val allItems = mutableListOf<TimelineUiItem>()
+
+        for (page in 1..maxPages) {
+            val paginatedUrl = if (outboxUrl.contains("?")) {
+                "$outboxUrl&page=$page"
+            } else {
+                "$outboxUrl?page=$page"
+            }
+
+            try {
+                val outbox = api.getOutboxData(paginatedUrl)
+                val items = outbox.orderedItems.orEmpty()
+                if (items.isEmpty()) break
+
+                val mapped = mapActivitiesToItems(
+                    items,
+                    actorNameHint = actorNameHint,
+                    actorAvatarHint = actorAvatarHint
+                )
+                allItems.addAll(mapped)
+
+                // Si la página tiene pocos items, probablemente es la última
+                if (items.size < 10) break
+            } catch (_: Exception) {
+                break
+            }
         }
 
-        return try {
-            val outbox = api.getOutboxData(paginatedUrl)
-            mapActivitiesToItems(
-                outbox.orderedItems.orEmpty(),
-                actorNameHint = actorNameHint,
-                actorAvatarHint = actorAvatarHint
-            )
-        } catch (_: Exception) {
-            emptyList()
-        }
+        return allItems
     }
 
     /**
@@ -246,27 +268,44 @@ class BookWyrmRepository(
         baseUrl: String,
         cleanUser: String
     ): List<TimelineUiItem> = coroutineScope {
-        val followingUrl = "${baseUrl}user/$cleanUser/following.json?page=1"
+        // Paginar la colección de seguidos para cargar TODOS los usuarios,
+        // no solo la primera página. BookWyrm pagina con ~10-12 items por página.
+        val allFollowingUrls = mutableListOf<String>()
+        var currentPage = 1
+        val maxFollowingPages = 10 // Límite de seguridad para no hacer loops infinitos
 
-        val followingActorUrls: List<String> = try {
-            // Se usa el mismo parseo robusto que en FollowListViewModel para soportar items que sean strings u objetos
-            val raw = api.getRawJson(followingUrl).string()
-            
-            @Suppress("DEPRECATION")
-            val root = JsonParser().parse(raw).asJsonObject
-            
-            val items: JsonArray = root.getAsJsonArray("orderedItems") ?: JsonArray()
+        while (currentPage <= maxFollowingPages) {
+            val followingUrl = "${baseUrl}user/$cleanUser/following.json?page=$currentPage"
+            try {
+                val raw = api.getRawJson(followingUrl).string()
 
-            items.mapNotNull { element ->
-                when {
-                    element.isJsonPrimitive -> element.asString
-                    element.isJsonObject -> (element as JsonObject).get("id")?.asString
-                    else -> null
+                @Suppress("DEPRECATION")
+                val root = JsonParser().parse(raw).asJsonObject
+
+                val items: JsonArray = root.getAsJsonArray("orderedItems") ?: JsonArray()
+                if (items.size() == 0) break
+
+                val pageUrls = items.mapNotNull { element ->
+                    when {
+                        element.isJsonPrimitive -> element.asString
+                        element.isJsonObject -> (element as JsonObject).get("id")?.asString
+                        else -> null
+                    }
                 }
-            }.take(MAX_FOLLOWING_TO_LOAD)
-        } catch (_: Exception) {
-            emptyList()
+                allFollowingUrls.addAll(pageUrls)
+
+                // Si ya tenemos suficientes, parar
+                if (allFollowingUrls.size >= MAX_FOLLOWING_TO_LOAD) break
+                // Si la página tiene pocos items, es la última
+                if (items.size() < 10) break
+
+                currentPage++
+            } catch (_: Exception) {
+                break
+            }
         }
+
+        val followingActorUrls = allFollowingUrls.take(MAX_FOLLOWING_TO_LOAD)
 
         // Cargar cada perfil de seguido en paralelo para obtener su outbox y datos de actor
         val deferreds = followingActorUrls.map { actorUrl ->
@@ -289,7 +328,7 @@ class BookWyrmRepository(
      */
     private suspend fun loadFollowedActorActivities(actorUrl: String): List<TimelineUiItem> {
         // Timeout global de 10s para descargar el perfil Y el outbox de un seguido
-        return withTimeoutOrNull(10_000L) {
+        return withTimeoutOrNull(15_000L) {
             try {
                 // No usamos ensureJsonUrl porque rompería URLs de Mastodon/Pixelfed.
                 // Retrofit ya envía "Accept: application/activity+json", lo cual es el estándar.
@@ -307,7 +346,7 @@ class BookWyrmRepository(
                     ?: profile.id?.substringAfterLast("/") ?: ""
                 val actorAvatar = profile.icon?.url
 
-                loadOutboxActivities(profile.outbox, actorNameHint = actorName, actorAvatarHint = actorAvatar)
+                loadOutboxActivities(profile.outbox, actorNameHint = actorName, actorAvatarHint = actorAvatar, maxPages = 2)
             } catch (_: Exception) {
                 emptyList()
             }
@@ -343,7 +382,7 @@ class BookWyrmRepository(
                         // Se reduce drásticamente el timeout de 5000 a 2000ms para no penalizar la fluidez
                         // en caso de que un servidor remoto sea lento o no responda.
                         // Usamos objectUrl crudo ya que Accept header maneja ActivityPub en Mastodon
-                        val fetchedJson = withTimeoutOrNull(2000L) {
+                        val fetchedJson = withTimeoutOrNull(4000L) {
                             api.getRawJson(objectUrl).string()
                         }
                         if (fetchedJson != null) {

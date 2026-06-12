@@ -39,3 +39,9 @@ Thumbs.db
 obj/
 app/release/baselineProfiles/0/app-release.dm
 app/release/baselineProfiles/1/app-release.dm
+test_ap.py
+.gitignore
+test_parse.py
+test_parse_bw.py
+bw_local.html
+feed_dump.html

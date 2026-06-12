@@ -588,6 +588,269 @@ object NetworkClient {
     }
 
     /**
+     * Raspa el HTML del feed principal autenticado de BookWyrm (la home page que ve
+     * el usuario en el navegador) y extrae las actividades del timeline.
+     *
+     * BookWyrm no expone una API REST para el feed "following". El verdadero timeline
+     * se construye en el servidor con Redis + Django ORM y solo es accesible como HTML
+     * renderizado. Este método parsea ese HTML usando JSoup para extraer todas las
+     * actividades visibles: reviews, comentarios, citas, boosts, cambios de estantería, etc.
+     *
+     * @param api Cliente autenticado de BookWyrm.
+     * @param instanceUrl URL base de la instancia (ej. "https://bookwyrm.social").
+     * @param maxPages Número máximo de páginas del feed a cargar (cada página ≈ 20-30 items).
+     * @return Lista de [com.ferlagod.rocinante.data.model.TimelineUiItem] lista para mostrar.
+     */
+    suspend fun scrapeHomeFeed(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        maxPages: Int = 2
+    ): List<com.ferlagod.rocinante.data.model.TimelineUiItem> = withContext(Dispatchers.IO) {
+        val allItems = mutableListOf<com.ferlagod.rocinante.data.model.TimelineUiItem>()
+        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+        val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+
+        for (page in 1..maxPages) {
+            try {
+                val t = System.currentTimeMillis()
+                val feedUrl = if (page == 1) "${baseUrl}?t=$t" else "${baseUrl}?page=$page&t=$t"
+                val html = fetchHtmlWithRedirects(api, feedUrl, baseUrl)
+                if (html.isEmpty()) break
+
+                val document = org.jsoup.Jsoup.parse(html)
+                val pageItems = parseStatusCards(document, baseUrl)
+
+                if (pageItems.isEmpty()) break
+                allItems.addAll(pageItems)
+            } catch (_: Exception) {
+                break
+            }
+        }
+
+        // Deduplicar por ID (mantiene el orden cronológico del HTML que viene ordenado del servidor)
+        allItems.distinctBy { it.id }
+    }
+
+    /**
+     * Obtiene el HTML de una URL siguiendo redirecciones manuales (OkHttp
+     * tiene followRedirects=false para capturar 302 de Django).
+     */
+    private suspend fun fetchHtmlWithRedirects(
+        api: BookWyrmApi,
+        url: String,
+        baseUrl: String
+    ): String {
+        var currentUrl = url
+        for (i in 0..3) {
+            val response = api.getRawHtmlResponse(currentUrl)
+            if (response.isSuccessful) {
+                return response.body()?.string() ?: ""
+            } else if (response.code() in 300..399) {
+                val location = response.headers()["Location"]
+                if (location != null) {
+                    currentUrl = if (location.startsWith("http")) location else {
+                        baseUrl.trimEnd('/') + location
+                    }
+                } else break
+            } else break
+        }
+        return ""
+    }
+
+    /**
+     * Parsea el documento HTML del feed de BookWyrm y extrae los status cards.
+     *
+     * BookWyrm usa Bulma CSS. Los status se renderizan como bloques dentro del
+     * contenido principal del feed. Cada status tiene:
+     * - Avatar del autor (img dentro de .media-left o similar)
+     * - Nombre del autor y enlace a su perfil
+     * - Tipo de actividad (review, comment, quotation, boost, shelve)
+     * - Contenido textual
+     * - Portada del libro si aplica
+     * - Fecha de publicación (elemento <time>)
+     * - Enlace permanente al status (para likes/replies)
+     */
+    private fun parseStatusCards(
+        document: org.jsoup.nodes.Document,
+        baseUrl: String
+    ): List<com.ferlagod.rocinante.data.model.TimelineUiItem> {
+        val items = mutableListOf<com.ferlagod.rocinante.data.model.TimelineUiItem>()
+        val cleanBase = baseUrl.trimEnd('/')
+
+        // BookWyrm renderiza cada status dentro de un <div> con data-date o dentro de
+        // article elements, o blocks con class "block" dentro del feed principal.
+        // Usamos múltiples selectores para cubrir diferentes versiones de BookWyrm.
+        var elements = document.select("#feed > .block, .column.is-two-thirds > .block")
+        
+        if (elements.isEmpty()) {
+            val statusElements = document.select(
+                "[data-date], .block[data-id], .is-flex.is-align-items-stretch"
+            )
+            elements = if (statusElements.isEmpty()) document.select(".block:has(time):has(img)") else statusElements
+        }
+
+        for (element in elements) {
+            try {
+                // --- Extraer la fecha de publicación ---
+                val timeElement = element.selectFirst("time")
+                // BookWyrm a veces no usa <time>, sino una etiqueta <a> dentro del breadcrumb
+                val breadcrumbDate = element.selectFirst(".breadcrumb li a")?.text() ?: ""
+                val publishedDate = timeElement?.attr("datetime")?.takeIf { it.isNotBlank() } 
+                    ?: timeElement?.text()?.takeIf { it.isNotBlank() } 
+                    ?: breadcrumbDate
+
+                // --- Extraer el enlace permanente (ID del status) ---
+                val permalinkElement = element.select("a").firstOrNull { a ->
+                    val href = a.attr("href")
+                    href.contains("/status/") || href.contains("/review/") ||
+                    href.contains("/comment/") || href.contains("/quotation/") ||
+                    href.contains("/reviewrating/")
+                }
+                val statusId = permalinkElement?.attr("href")?.let { href ->
+                    if (href.startsWith("http")) href else "$cleanBase$href"
+                } ?: "scraped-${publishedDate.hashCode()}-${items.size}"
+
+                // --- Extraer el actor (autor) ---
+                val avatarImg = element.selectFirst(".media-left img")
+                    ?: element.selectFirst("img.avatar")
+                    ?: element.selectFirst("img[src*=avatar]")
+                val avatarSrc = avatarImg?.attr("src") ?: ""
+                val avatarUrl = resolveUrl(avatarSrc, cleanBase)
+
+                // BookWyrm especifica al autor usando schema.org Person
+                val actorLink = element.selectFirst("[itemprop=author] a[itemprop=url]")
+                    ?: element.selectFirst("[itemprop=author] a")
+                    ?: element.selectFirst(".status-info a")
+                    ?: element.selectFirst("a[href*='/user/']")
+                    
+                val actorNameElement = element.selectFirst("[itemprop=author] [itemprop=name]")
+                val actorName = actorNameElement?.text()?.trim() 
+                    ?: actorLink?.text()?.trim() 
+                    ?: ""
+                    
+                val actorUrl = actorLink?.attr("href")?.let { href ->
+                    if (href.startsWith("http")) href else "$cleanBase$href"
+                } ?: ""
+
+                // --- Determinar el tipo de actividad ---
+                val statusType = detectStatusType(element, statusId)
+
+                // --- Extraer el contenido ---
+                val contentElement = element.selectFirst("[itemprop=reviewBody]")
+                    ?: element.selectFirst(".content .quote .e-content")
+                    ?: element.selectFirst(".content .e-content")
+                    ?: element.selectFirst(".e-content")
+                    ?: element.selectFirst("blockquote")
+                    ?: element.selectFirst("div.content")
+                val rawContent = contentElement?.html() ?: ""
+
+                // Extraer el título de la review si existe
+                val reviewTitle = element.selectFirst("h3[itemprop=name]")?.text()
+                    ?: element.selectFirst(".review-title")?.text()
+                    ?: ""
+
+                val fullContent = if (reviewTitle.isNotEmpty() && rawContent.isNotEmpty()) {
+                    "$reviewTitle — $rawContent"
+                } else if (reviewTitle.isNotEmpty()) {
+                    reviewTitle
+                } else {
+                    rawContent
+                }
+
+                val cleanContent = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(fullContent)
+
+                // --- Para actividades de boost/shelve sin contenido propio ---
+                val headerText = element.selectFirst(".status-info")?.text()
+                    ?: element.selectFirst(".card-header-title")?.text()
+                    ?: ""
+                val displayContent = if (cleanContent.isBlank() && headerText.isNotBlank()) {
+                    com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(headerText)
+                } else {
+                    cleanContent
+                }
+
+                // --- Extraer portada del libro ---
+                val coverImg = element.selectFirst("img[src*=covers]")
+                    ?: element.selectFirst("img[alt*=cover]")
+                    ?: element.selectFirst(".book-cover img")
+                    ?: element.selectFirst(".cover-container img")
+                val coverSrc = coverImg?.attr("src") ?: ""
+                val bookCoverUrl = resolveUrl(coverSrc, cleanBase).takeIf { it.isNotEmpty() }
+
+                // --- Extraer enlace al libro ---
+                val bookLink = element.selectFirst("a[href*='/book/']")
+                val bookUrl = bookLink?.attr("href")?.let { href ->
+                    if (href.startsWith("http")) href else "$cleanBase$href"
+                }
+
+                // --- Construir el TimelineUiItem ---
+                val item = com.ferlagod.rocinante.data.model.TimelineUiItem(
+                    id = statusId,
+                    type = statusType,
+                    published = publishedDate,
+                    content = displayContent.ifBlank { "Sin contenido" },
+                    bookCoverUrl = bookCoverUrl,
+                    bookUrl = bookUrl,
+                    actorName = actorName.ifBlank { "Usuario" },
+                    actorAvatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
+                    objectId = statusId
+                )
+                
+                if (item.actorName == "Usuario" && item.content == "Sin contenido" && item.bookCoverUrl.isNullOrEmpty()) {
+                    continue // Ignorar bloques vacíos sin contenido (ej. mensaje de "Fin del feed")
+                }
+                
+                items.add(item)
+            } catch (_: Exception) {
+                // Saltar status mal formados
+                continue
+            }
+        }
+
+        return items
+    }
+
+    /**
+     * Detecta el tipo de status (Review, Comment, Quotation, Note, Announce, Add)
+     * a partir del HTML del elemento.
+     */
+    private fun detectStatusType(element: org.jsoup.nodes.Element, statusId: String): String {
+        return when {
+            statusId.contains("/review/") -> "Review"
+            statusId.contains("/reviewrating/") -> "Review"
+            statusId.contains("/comment/") -> "Comment"
+            statusId.contains("/quotation/") -> "Quotation"
+            element.selectFirst("[itemprop=reviewBody]") != null -> "Review"
+            element.selectFirst("[itemprop=ratingValue]") != null -> "Review"
+            element.selectFirst("blockquote") != null -> "Quotation"
+            element.text().let { text ->
+                text.contains("wants to read", ignoreCase = true) ||
+                text.contains("quiere leer", ignoreCase = true) ||
+                text.contains("started reading", ignoreCase = true) ||
+                text.contains("empezó a leer", ignoreCase = true) ||
+                text.contains("finished reading", ignoreCase = true) ||
+                text.contains("terminó de leer", ignoreCase = true)
+            } -> "Add"
+            element.text().let { text ->
+                text.contains("boosted", ignoreCase = true) ||
+                text.contains("compartió", ignoreCase = true)
+            } -> "Announce"
+            else -> "Note"
+        }
+    }
+
+    /**
+     * Resuelve una URL relativa en absoluta usando la base de la instancia.
+     */
+    private fun resolveUrl(src: String, cleanBase: String): String {
+        if (src.isEmpty()) return ""
+        return if (src.startsWith("http")) src else {
+            val cleanSrc = src.trimStart('/')
+            "$cleanBase/$cleanSrc"
+        }
+    }
+
+    /**
      * Raspa el HTML de la página del libro para obtener las reseñas de la comunidad.
      * BookWyrm no tiene un endpoint JSON para devolver las reseñas de un libro de forma paginada.
      */

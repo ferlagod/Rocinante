@@ -1,0 +1,541 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>mousereeve - BookWyrm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/css/themes/bookwyrm-light.css" rel="stylesheet" type="text/css" />
+
+    <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="BookWyrm search" />
+
+    <link rel="shortcut icon" type="image/x-icon" href="https://bookwyrm-social.sfo3.digitaloceanspaces.com/images/logos/886fa857d5f6b7e9.png">
+    <link rel="apple-touch-icon" href="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/images/logo.png">
+    <link rel="manifest" href="/manifest.json" />
+
+    
+    
+
+
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://bookwyrm-social.sfo3.digitaloceanspaces.com/images/previews/logos/1-d66e8519-390f-4ad7-899d-f23c23e2b53a.jpg">
+    <meta name="og:image" content="https://bookwyrm-social.sfo3.digitaloceanspaces.com/images/previews/logos/1-d66e8519-390f-4ad7-899d-f23c23e2b53a.jpg">
+
+
+<meta name="twitter:title" content="BookWyrm">
+<meta name="og:title" content="BookWyrm">
+
+
+<meta name="twitter:description" content="None">
+<meta name="og:description" content="None">
+
+
+    
+    <link rel="alternate" type="application/rss+xml" href="/user/mousereeve/rss" title="mousereeve - BookWyrm" />
+
+</head>
+<body>
+
+<nav class="navbar" aria-label="main navigation">
+    <div class="container">
+        
+        
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img class="image logo" src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/images/logo-small.png" alt="BookWyrm home page" loading="lazy" decoding="async">
+            </a>
+            <form class="navbar-item column is-align-items-start pt-5" action="/search">
+                <div class="field has-addons">
+                    <div class="control">
+                        
+                            
+                        
+                        <input aria-label="Search for a book" id="tour-search" class="input" type="text" name="q" placeholder="Search for a book" value="" spellcheck="false">
+                    </div>
+                    <div class="control">
+                        <button class="button" type="submit">
+                            <span class="icon icon-search" title="Search">
+                                <span class="is-sr-only">Search</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="control">
+                        <button class="button" type="button" data-modal-open="barcode-scanner-modal">
+                            <span class="icon icon-barcode" title="Scan Barcode" id="tour-barcode">
+                                <span class="is-sr-only">Scan Barcode</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+
+<div class="modal " id="barcode-scanner-modal">
+    <div class="modal-background" data-modal-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" aria-described-by="barcode-scanner-modal_header">
+        <header class="modal-card-head">
+            <h2 class="modal-card-title mb-0" id="barcode-scanner-modal_header">
+                
+    Scan Barcode
+
+            </h2>
+            <button
+                type="button"
+                class="delete"
+                aria-label="Close"
+                data-modal-close
+            ></button>
+        </header>
+
+        
+        <section class="modal-card-body">
+            
+    <div class="block">
+        <div id="barcode-scanner"></div>
+    </div>
+
+    <div id="barcode-camera-list" class="select is-small">
+        <select>
+        </select>
+    </div>
+    <template id="barcode-grant-access">
+        <span class="icon icon-lock"></span>
+        <span class="is-size-5">Requesting camera...</span><br/>
+        <span>Grant access to the camera to scan a book's barcode.</span>
+    </template>
+    <template id="barcode-access-denied">
+        <span class="icon icon-warning"></span>
+        <span class="is-size-5">Access denied</span><br/>
+        <span>Could not access camera</span>
+    </template>
+    <template id="barcode-scanning">
+        <span class="icon icon-barcode"></span>
+        <span class="is-size-5">Scanning...</span><br/>
+        <span>Align your book's barcode with the camera.</span><span class="isbn"></span>
+    </template>
+    <template id="barcode-found">
+        <span class="icon icon-check"></span>
+        <span class="is-size-5">ISBN scanned</span><br/>
+        Searching for book: <span class="isbn"></span>...
+    </template>
+    <div id="barcode-status" class="block"></div>
+
+        </section>
+        <footer class="modal-card-foot">
+            
+    <button class="button" type="button" data-modal-close>Cancel</button>
+
+        </footer>
+        
+    </div>
+    <button
+        type="button"
+        class="modal-close is-large"
+        aria-label="Close"
+        data-modal-close
+    ></button>
+</div>
+
+
+            <button
+                type="button"
+                tabindex="0"
+                class="navbar-burger pulldown-menu my-4 is-flex-touch is-align-items-center is-justify-content-center"
+                data-controls="main_nav"
+                aria-expanded="false"
+                aria-label="Main navigation menu"
+            >
+                <i class="icon-dots-three-vertical" aria-hidden="true"></i>
+
+                <strong
+                    class="is-hidden  tag is-small px-1"
+                    data-poll-wrapper
+                >
+                    <span class="is-sr-only">Notifications</span>
+                    <strong data-poll="notifications" class="has-text-white">
+                        
+                    </strong>
+                </strong>
+            </button>
+        </div>
+        <div class="navbar-menu" id="main_nav">
+            <div class="navbar-start" id="tour-navbar-start">
+                
+            </div>
+
+            <div class="navbar-end">
+            
+                <div class="navbar-item pt-5 pb-0">
+                    
+                    <div class="columns">
+                        <div class="column">
+                            <form name="login" method="post" action="/login?next=/user/mousereeve">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="WBVI7EaPzXTs0g89IfgUXCKcda2Bg5WREQaaYKLbseXihrz4MLAg2xB96e1D0dA5">
+                                <div class="columns is-variable is-1">
+                                    <div class="column">
+                                        <label class="is-sr-only" for="id_localname">Username:</label>
+                                        <input type="text" name="localname" maxlength="150" class="input" required="" id="id_localname" placeholder="username">
+                                    </div>
+                                    <div class="column">
+                                        <label class="is-sr-only" for="id_password">Password:</label>
+                                        <div class="control has-icons-right">
+                                            <input type="password" name="password" maxlength="128" class="input" required="" id="id_password" placeholder="password">
+                                            <span data-password-icon data-for="id_password" class="icon is-right is-clickable">
+                                                <button type="button" aria-controls="id_password" class="icon-eye-blocked" title="Show/Hide password"></button>
+                                            </span>
+                                        </div>
+                                        <p class="help"><a href="/password-reset">Forgot your password?</a></p>
+                                    </div>
+                                    <div class="column is-narrow">
+                                        <button class="button is-primary" type="submit">Log in</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="column is-narrow">
+                            <a href="/" class="button is-link">
+                                Join
+                            </a>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+    </div>
+</nav>
+
+
+
+<main class="section is-flex-grow-1">
+    <div class="container">
+        
+            
+            
+            
+<header class="block">
+    
+<div class="columns is-mobile">
+    <div class="column">
+        <h1 class="title">User Profile</h1>
+    </div>
+    
+</div>
+
+
+
+</header>
+
+
+
+
+<div class="block">
+    <div class="columns">
+        <div class="column is-two-fifths">
+            
+                
+
+
+
+
+<div class="media block">
+    <div class="media-left">
+        <a href="/user/mousereeve">
+        
+
+<img
+    class="avatar image is-96x96"
+    src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/images/default_avi.jpg"
+    
+    alt="avatar for mousereeve"
+    loading="lazy"
+    decoding="async"
+>
+
+        </a>
+    </div>
+    <div class="media-content">
+        <p>
+            mousereeve
+            
+        </p>
+        <p><a href="https://bookwyrm.social/user/mousereeve">mousereeve@bookwyrm.social</a></p>
+        <p>Joined 4 years, 10 months ago</p>
+        <p>
+            
+        </p>
+    </div>
+</div>
+
+
+            
+        </div>
+
+        
+    </div>
+    <div>
+    
+        
+        
+        
+
+
+<div class="field mb-0">
+    <div class="control">
+        <a
+            class="button is-small is-link"
+            href="/remote_follow?user=mousereeve@bookwyrm.social"
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            onclick="BookWyrm.displayPopUp(`/remote_follow?user=mousereeve@bookwyrm.social`, `remoteFollow`); return false;"
+            aria-describedby="remote_follow_warning"
+        >
+            Follow on Fediverse
+        </a>
+    </div>
+    <p id="remote_follow_warning" class="mt-1 is-size-7 has-text-weight-light">
+        This link opens in a pop-up window
+    </p>
+</div>
+
+
+        
+
+        
+    
+    </div>
+    
+    
+    
+    <nav class="tabs">
+        <ul>
+            
+            <li class="is-active">
+                <a href="/user/mousereeve">Activity</a>
+            </li>
+            
+            <li>
+                <a href="/user/mousereeve/reviews-comments">Reviews and Comments</a>
+            </li>
+            
+            
+            
+            
+            
+            <li id="tour-shelves-tab">
+                <a href="/user/mousereeve/books">Books</a>
+            </li>
+            
+        </ul>
+    </nav>
+    
+    
+    
+</div>
+
+    
+    
+
+
+<div class="block">
+    <h2 class="title">
+        
+
+    mousereeve's books
+
+
+    </h2>
+    <div class="columns is-mobile scroll-x">
+        
+        <p class="column">
+            <em>No books found.</em>
+        </p>
+        
+    </div>
+    
+</div>
+
+
+
+
+<div>
+    <div class="columns is-mobile">
+        <h2 class="title column">User Activity</h2>
+        
+        <div class="column is-narrow">
+            <details class="dropdown">
+                <summary
+                    class="is-relative pulldown-menu dropdown-trigger"
+                    aria-label="Show RSS Options"
+                    role="button"
+                    aria-haspopup="menu"
+                >
+                    <span class="">
+                        <span class="icon icon-rss" aria-hidden="true"></span>
+                        <span class="">RSS feed</span>
+                    </span>
+                    <span class="icon icon-arrow-down is-hidden-mobile" aria-hidden="true"></span>
+                    <span class="summary-on-open">
+                        <span class="icon icon-arrow-left is-small" aria-hidden="true"></span>
+                        Back
+                    </span>
+                </summary>
+
+                <div class="dropdown-menu">
+                    <ul
+                        class="dropdown-content"
+                        role="menu"
+                    >
+                        <li role="menuitem">
+                            <a target="_blank" href="/user/mousereeve/rss" class="navbar-item" rel="nofollow noopener noreferrer">
+                                Complete feed
+                            </a>
+                        </li>
+                        <li role="menuitem">
+                            <a target="_blank" href="/user/mousereeve/rss-reviews" class="navbar-item" rel="nofollow noopener noreferrer">
+                                Reviews only
+                            </a>
+                        </li>
+                        <li role="menuitem">
+                            <a target="_blank" href="/user/mousereeve/rss-quotes" class="navbar-item" rel="nofollow noopener noreferrer">
+                                Quotes only
+                            </a>
+                        </li>
+                        <li role="menuitem">
+                            <a target="_blank" href="/user/mousereeve/rss-comments" class="navbar-item" rel="nofollow noopener noreferrer">
+                                Comments only
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+        
+    </div>
+
+    
+    <div class="block">
+        <p><em>No activities yet!</em></p>
+    </div>
+    
+
+    
+<nav class="pagination is-centered" aria-label="pagination">
+    <a
+        class="pagination-previous is-disabled"
+        
+        aria-hidden="true"
+        >
+
+        <span class="icon icon-arrow-left" aria-hidden="true"></span>
+        
+        Newer
+        
+    </a>
+
+    <a
+        class="pagination-next is-disabled"
+        
+        aria-hidden="true"
+        >
+
+        
+        Older
+        
+        <span class="icon icon-arrow-right" aria-hidden="true"></span>
+    </a>
+
+    
+</nav>
+
+</div>
+
+
+    
+
+            
+        
+    </div>
+</main>
+
+<div role="region" aria-live="polite" id="live-messages">
+    <p id="status-success-message" class="live-message is-sr-only is-hidden">Successfully posted status</p>
+    <p id="status-error-message" class="live-message notification is-danger p-3 pr-5 pl-5 is-hidden">Error posting status</p>
+</div>
+
+
+
+<footer class="footer">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-2">
+                <p>
+                    <a href="/about">About BookWyrm</a>
+                </p>
+                
+                <p>
+                    <a href="mailto:mousereeve@riseup.net">Contact site admin</a>
+                </p>
+                
+                <p>
+                    <a href="https://docs.joinbookwyrm.com/">Documentation</a>
+                </p>
+                
+            </div>
+            <div class="column is-2">
+                <p>
+                    <a href ="/conduct">Code of Conduct</a>
+                </p>
+                <p>
+                    <a href ="/privacy">Privacy Policy</a>
+                </p>
+                
+            </div>
+            <div class="column content">
+                
+                <p>
+                    <span class="icon icon-heart"></span>
+                    Support BookWyrm on <a href="https://www.patreon.com/bookwyrm" target="_blank" rel="nofollow noopener noreferrer">Patreon</a>
+                </p>
+                
+                <p>
+                BookWyrm's source code is freely available. You can contribute or report issues on <a href="https://github.com/bookwyrm-social/bookwyrm" target="_blank" rel="nofollow noopener noreferrer">GitHub</a>.
+                </p>
+            </div>
+            
+            <div class="column is-4">
+                <p>BookWyrm is managed from the unceded ancestral homeland of the <a href="https://www.ramaytush.org/" target="_blank" rel="nofollow noopener noreferrer">Ramaytush Ohlone</a> peoples, the original inhabitants of the San Francisco Peninsula. A portion of the proceeds go towards the <a href="https://www.ramaytush.org/donate.html" target="_blank"  rel="nofollow noopener noreferrer"><em> Yunakin</em> land tax</a>.</p>
+            </div>
+            
+        </div>
+    </div>
+</footer>
+
+
+
+<script nonce="7x9SRSyzZtUUyynMBDg0+w==">
+    var csrf_token = 'WBVI7EaPzXTs0g89IfgUXCKcda2Bg5WREQaaYKLbseXihrz4MLAg2xB96e1D0dA5';
+</script>
+
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/bookwyrm.js"></script>
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/localstorage.js"></script>
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/status_cache.js"></script>
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/vendor/quagga.min.js"></script>
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/vendor/shepherd.min.js"></script>
+<script src="https://bookwyrm-social.sfo3.digitaloceanspaces.com/static/js/guided_tour.js"></script>
+
+
+
+
+
+</body>
+</html>

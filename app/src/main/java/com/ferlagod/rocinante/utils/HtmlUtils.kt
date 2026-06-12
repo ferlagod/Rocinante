@@ -77,8 +77,10 @@ object HtmlUtils {
                 }
             }
         } catch (_: Exception) {
-            // Fallback a la función anterior si el formato no es parseable
-            formatPublishedDate(value)
+            // Si no es parseable como ISO-8601, devolvemos el valor original.
+            // Esto permite que el scraper pase strings como "hace 2 horas" o "18 May 2024"
+            // directamente a la UI si el servidor HTML no nos da un ISO-8601 real.
+            value
         }
     }
 }
