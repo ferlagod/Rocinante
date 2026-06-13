@@ -1,4 +1,4 @@
-# F-Droid & Security (¡Nunca subir claves de firma!)
+# F-Droid & Security (¡Nunca subir claves de firma ni ficheros de configuración sensibles!)
 *.jks
 *.keystore
 signing.properties
@@ -11,22 +11,26 @@ build/
 */build/
 gradle-app.setting
 
-# Excepciones para Gradle Wrapper (Obligatorio en F-Droid para compilar)
+# Excepciones para Gradle Wrapper (Obligatorio en F-Droid para poder compilar)
+!gradle/wrapper/gradle-wrapper.jar
 !gradle-wrapper.jar
 !gradle-wrapper.properties
 
 # Archivos de configuración local (rutas del SDK de Android, etc.)
 local.properties
 
-# Android Studio / IntelliJ IDEA
+# Android Studio / IntelliJ IDEA / VS Code
 .idea/
 *.iml
 *.iws
 *.ipr
+.vscode/
 
 # SO y otros
 .DS_Store
 Thumbs.db
+
+# Binarios y compilados (F-Droid NO permite binarios pre-compilados en el repo)
 *.class
 *.apk
 *.aab
@@ -34,14 +38,28 @@ Thumbs.db
 *.dex
 *.obf
 *.orig
+*.so
+*.jar
+*.aar
 
 # NDK
 obj/
+
+# Entornos y cachés de Python (para los scripts locales)
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Archivos de prueba y temporales locales
 app/release/baselineProfiles/0/app-release.dm
 app/release/baselineProfiles/1/app-release.dm
 test_ap.py
-.gitignore
 test_parse.py
 test_parse_bw.py
 bw_local.html
 feed_dump.html
+scratch.kt
+
+# Variables de entorno y secretos locales
+.env

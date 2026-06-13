@@ -1,0 +1,32 @@
+name: BookWyrm Scraper Monitor
+
+on:
+  schedule:
+    # Corre todos los lunes a las 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Permite ejecución manual
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 python-dotenv
+
+      - name: Ejecutar monitor de scraping
+        env:
+          BW_INSTANCE_URL: ${{ secrets.BW_INSTANCE_URL }}
+          BW_USERNAME: ${{ secrets.BW_USERNAME }}
+          BW_PASSWORD: ${{ secrets.BW_PASSWORD }}
+        run: |
+          python scripts/bookwyrm_scraper_monitor.py
