@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - Rocinante</title>
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --heading-color: #111827;
+            --primary-color: #4f46e5;
+            --container-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111827;
+                --text-color: #d1d5db;
+                --heading-color: #f9fafb;
+                --primary-color: #6366f1;
+                --container-bg: #1f2937;
+                --border-color: #374151;
+            }
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem 1rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--heading-color);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        p, ul, li {
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .date {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.75rem;
+        }
+        
+        strong {
+            color: var(--heading-color);
+        }
+    </style>
+    <!-- Import Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Política de Privacidad de Rocinante</h1>
+        <span class="date">Última actualización: 30 de mayo de 2026</span>
+
+        <p>Esta política de privacidad describe cómo la aplicación móvil <strong>Rocinante</strong> ("la Aplicación") gestiona la información de los usuarios. Rocinante es un cliente de código abierto diseñado para interactuar con la red social federada BookWyrm.</p>
+
+        <h2>1. Recopilación y uso de datos personales</h2>
+        <p>Rocinante es una aplicación centrada en la privacidad. La Aplicación no recopila, almacena, analiza ni transmite datos personales, telemétricos o de uso a servidores propios ni a terceros. No contiene SDKs de rastreo, herramientas de análisis estadístico ni librerías publicitarias de ningún tipo.</p>
+        <p>Toda la información generada o introducida en la Aplicación (credenciales de acceso, publicaciones, listas de lectura, interacción comunitaria y progreso) se transmite de forma cifrada única y directamente entre tu dispositivo y la instancia de BookWyrm a la que decidas conectarte.</p>
+
+        <h2>2. Permisos de la aplicación</h2>
+        <p>Para funcionar correctamente, Rocinante solicita los siguientes permisos en el sistema Android. Se usan estrictamente para las funcionalidades descritas a continuación:</p>
+        <ul>
+            <li><strong>Acceso a Internet (INTERNET, ACCESS_NETWORK_STATE):</strong> Esencial para conectar la Aplicación con tu instancia de BookWyrm y sincronizar el contenido de la red federada.</li>
+            <li><strong>Cámara (CAMERA):</strong> Se utiliza exclusivamente para escanear códigos de barras de libros o fotografiar portadas. Las imágenes se procesan localmente o se envían a tu propia instancia de BookWyrm si decides incluirlas en una publicación.</li>
+            <li><strong>Notificaciones (POST_NOTIFICATIONS):</strong> Se emplea únicamente para mostrar recordatorios diarios de lectura configurados por el usuario. Estas notificaciones se generan y programan localmente en el dispositivo, sin depender de servicios en la nube.</li>
+            <li><strong>Ejecución en segundo plano (FOREGROUND_SERVICE, WAKE_LOCK, RECEIVE_BOOT_COMPLETED):</strong> Necesarios para mantener activas las tareas de sincronización de la biblioteca y la programación de los recordatorios tras reiniciar el dispositivo.</li>
+        </ul>
+
+        <h2>3. Retención y eliminación de datos</h2>
+        <p>Rocinante no dispone de infraestructura centralizada ni servidores propios, por lo que no retenemos tus datos.</p>
+        <ul>
+            <li><strong>Datos locales:</strong> Puedes eliminar todos los datos de sesión y preferencias almacenados por la Aplicación en tu dispositivo en cualquier momento. Para ello, basta con borrar los datos y la caché de la aplicación desde los ajustes de tu sistema Android.</li>
+            <li><strong>Datos en la red (BookWyrm):</strong> Para eliminar tu cuenta, tus publicaciones o tu actividad en la red federada, debes solicitar la eliminación directamente desde la configuración web de la instancia de BookWyrm en la que te registraste.</li>
+        </ul>
+
+        <h2>4. Compartición de datos con terceros</h2>
+        <p>La Aplicación no comparte, vende ni cede ningún tipo de información a terceros. Todo el código fuente de Rocinante es libre, transparente y puede ser auditado públicamente bajo los términos de la licencia AGPL-3.0.</p>
+
+        <h2>5. Privacidad infantil</h2>
+        <p>Rocinante no está dirigida a menores de 13 años. Dado que no recopilamos datos de los usuarios, no recopilamos de forma consciente información personal de menores. Si un menor utiliza la aplicación para conectarse a una instancia de BookWyrm, la responsabilidad de la gestión de la cuenta recae sobre las políticas de dicha instancia.</p>
+
+        <h2>6. Cambios en la Política de Privacidad</h2>
+        <p>Esta política puede actualizarse puntualmente para reflejar cambios en las características de la Aplicación o nuevos requisitos técnicos de las plataformas de distribución. Cualquier modificación se publicará de forma accesible en esta misma URL.</p>
+
+        <h2>7. Contacto</h2>
+        <p>Si tienes alguna duda sobre esta política de privacidad o sobre el funcionamiento de la aplicación, puedes abrir una incidencia (issue) en el repositorio oficial del código fuente: <a href="https://forjalibre.eu/ferlagod/rocinante_android" target="_blank" rel="noopener noreferrer">https://forjalibre.eu/ferlagod/rocinante_android</a>.</p>
+    </div>
+
+</body>
+</html>
