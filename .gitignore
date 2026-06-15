@@ -60,9 +60,13 @@ test_parse_bw.py
 bw_local.html
 feed_dump.html
 scratch.kt
+test_login.py
+test_profile.kt
 
 # Variables de entorno y secretos locales
 .env
 update_licenses.py
 cookies.txt
 .idea/caches/deviceStreaming.xml
+home.html
+login.html

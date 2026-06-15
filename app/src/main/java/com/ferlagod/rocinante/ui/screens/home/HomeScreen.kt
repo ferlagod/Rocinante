@@ -103,6 +103,9 @@ fun HomeScreen(
     
     var showPostDialog by remember { mutableStateOf(false) }
     var selectedActivity by remember { mutableStateOf<TimelineUiItem?>(null) }
+    var dialogBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
+    var dialogBookKey by remember { mutableStateOf("") }
+    var dialogCoverUrl by remember { mutableStateOf("") }
 
     val api = remember(instanceUrl, cookie) {
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -143,6 +146,21 @@ fun HomeScreen(
         if (!pagerState.isScrollInProgress && pagerState.currentPage != uiState.selectedTab) {
             viewModel.selectTab(pagerState.currentPage)
         }
+    }
+
+    dialogBookDetails?.let { details ->
+        com.ferlagod.rocinante.ui.components.BookDetailsDialog(
+            bookDetails = details,
+            reviews = emptyList(),
+            activeBookKey = dialogBookKey,
+            fallbackCoverUrl = dialogCoverUrl,
+            currentShelf = "reading",
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { dialogBookDetails = null },
+            onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) }
+        )
     }
 
     Scaffold(
@@ -209,7 +227,8 @@ fun HomeScreen(
                     onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
                     onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
                     onLoadMore = { viewModel.loadMoreActivities() },
-                    onItemClick = { selectedActivity = it }
+                    onItemClick = { selectedActivity = it },
+                    api = api
                 )
 
                 1 -> Box(modifier = Modifier.padding(paddingValues)) {
@@ -357,7 +376,25 @@ fun HomeScreen(
                         }
                     )
                 },
-                onDismiss = { selectedActivity = null }
+                onDismiss = { selectedActivity = null },
+                onBookClick = { bookUrl, coverUrl ->
+                    if (bookUrl.isNotEmpty()) {
+                        dialogBookKey = bookUrl
+                        dialogCoverUrl = coverUrl ?: ""
+                        coroutineScope.launch {
+                            try {
+                                val localUrl = com.ferlagod.rocinante.data.api.NetworkClient.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                val baseUrl = localUrl.substringBefore("/book/")
+                                val detailsUrl = "$baseUrl/book/$bookId.json"
+                                dialogBookDetails = api.getBookDetails(detailsUrl)
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
             )
         }
     }
@@ -533,8 +570,30 @@ fun ActivityTab(
     onRefresh: () -> Unit,
     onLikeClick: (TimelineUiItem) -> Unit,
     onLoadMore: () -> Unit,
-    onItemClick: (TimelineUiItem) -> Unit
+    onItemClick: (TimelineUiItem) -> Unit,
+    api: com.ferlagod.rocinante.data.api.BookWyrmApi
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
+    var activeBookKey by remember { mutableStateOf("") }
+    var fallbackCoverUrl by remember { mutableStateOf("") }
+
+    selectedBookDetails?.let { details ->
+        com.ferlagod.rocinante.ui.components.BookDetailsDialog(
+            bookDetails = details,
+            reviews = emptyList(),
+            activeBookKey = activeBookKey,
+            fallbackCoverUrl = fallbackCoverUrl,
+            currentShelf = "reading",
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { selectedBookDetails = null },
+            onShelved = { onRefresh() }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -600,7 +659,25 @@ fun ActivityTab(
                             isLiked = isLiked,
                             onLikeClick = { onLikeClick(item) },
                             onReplyClick = { onItemClick(item) },
-                            onClick = { onItemClick(item) }
+                            onClick = { onItemClick(item) },
+                            onBookClick = { bookUrl, coverUrl ->
+                                if (bookUrl.isNotEmpty()) {
+                                    activeBookKey = bookUrl
+                                    fallbackCoverUrl = coverUrl ?: ""
+                                    coroutineScope.launch {
+                                        try {
+                                            val localUrl = com.ferlagod.rocinante.data.api.NetworkClient.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                            val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                            val baseUrl = localUrl.substringBefore("/book/")
+                                            val detailsUrl = "$baseUrl/book/$bookId.json"
+                                            selectedBookDetails = api.getBookDetails(detailsUrl)
+                                        } catch (e: Exception) {
+                                            if (e is kotlinx.coroutines.CancellationException) throw e
+                                            android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            }
                         )
                     }
                 }
@@ -681,7 +758,8 @@ private fun ActivityItemCard(
     isLiked: Boolean,
     onLikeClick: () -> Unit,
     onReplyClick: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onBookClick: (String, String?) -> Unit = { _, _ -> }
 ) {
     val displayAvatarUrl = item.actorAvatarUrl?.takeIf { it.isNotEmpty() }
         ?: currentUserProfile?.icon?.url
@@ -762,13 +840,18 @@ private fun ActivityItemCard(
                 }
 
                 if (!item.bookCoverUrl.isNullOrEmpty()) {
-                    AsyncImage(
+                    coil.compose.AsyncImage(
                         model = item.bookCoverUrl,
                         contentDescription = stringResource(R.string.book_cover_desc),
                         modifier = Modifier
                             .width(64.dp)
                             .height(96.dp)
-                            .clip(MaterialTheme.shapes.small),
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable {
+                                item.bookUrl?.let { url ->
+                                    onBookClick(url, item.bookCoverUrl)
+                                }
+                            },
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -1308,7 +1391,8 @@ fun ActivityDetailsDialog(
     isLiked: Boolean,
     onLikeClick: () -> Unit,
     onReplySubmit: (String, (Boolean) -> Unit) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onBookClick: (String, String?) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
 
@@ -1353,13 +1437,18 @@ fun ActivityDetailsDialog(
                         modifier = Modifier.weight(1f)
                     )
                     if (!item.bookCoverUrl.isNullOrEmpty()) {
-                        AsyncImage(
+                        coil.compose.AsyncImage(
                             model = item.bookCoverUrl,
                             contentDescription = stringResource(R.string.book_cover_desc),
                             modifier = Modifier
                                 .width(70.dp)
                                 .height(105.dp)
-                                .clip(MaterialTheme.shapes.small),
+                                .clip(MaterialTheme.shapes.small)
+                                .clickable {
+                                    item.bookUrl?.let { url ->
+                                        onBookClick(url, item.bookCoverUrl)
+                                    }
+                                },
                             contentScale = ContentScale.Crop
                         )
                     }

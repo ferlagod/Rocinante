@@ -755,7 +755,7 @@ object NetworkClient {
                     href.contains("/reviewrating/")
                 }
                 val statusId = permalinkElement?.attr("href")?.let { href ->
-                    if (href.startsWith("http")) href else "$cleanBase$href"
+                    resolveUrl(href, cleanBase)
                 } ?: "scraped-${publishedDate.hashCode()}-${items.size}"
 
                 // --- Extraer el actor (autor) ---
@@ -777,7 +777,7 @@ object NetworkClient {
                     ?: ""
                     
                 val actorUrl = actorLink?.attr("href")?.let { href ->
-                    if (href.startsWith("http")) href else "$cleanBase$href"
+                    resolveUrl(href, cleanBase)
                 } ?: ""
 
                 // --- Determinar el tipo de actividad ---
@@ -828,7 +828,7 @@ object NetworkClient {
                 // --- Extraer enlace al libro ---
                 val bookLink = element.selectFirst("a[href*='/book/']")
                 val bookUrl = bookLink?.attr("href")?.let { href ->
-                    if (href.startsWith("http")) href else "$cleanBase$href"
+                    resolveUrl(href, cleanBase)
                 }
 
                 // --- Construir el TimelineUiItem ---
@@ -893,8 +893,9 @@ object NetworkClient {
     private fun resolveUrl(src: String, cleanBase: String): String {
         if (src.isEmpty()) return ""
         return if (src.startsWith("http")) src else {
-            val cleanSrc = src.trimStart('/')
-            "$cleanBase/$cleanSrc"
+            val base = if (cleanBase.endsWith("/")) cleanBase.dropLast(1) else cleanBase
+            val path = if (src.startsWith("/")) src else "/$src"
+            "$base$path"
         }
     }
 
