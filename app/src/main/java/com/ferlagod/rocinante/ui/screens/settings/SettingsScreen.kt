@@ -438,7 +438,8 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "ro" to "Română",
         "cs" to "Čeština",
         "sv" to "Svenska",
-        "el" to "Ελληνικά"
+        "el" to "Ελληνικά",
+        "fi" to "Suomi"
     )
 
     AlertDialog(
