@@ -63,3 +63,4 @@ scratch.kt
 
 # Variables de entorno y secretos locales
 .env
+update_licenses.py

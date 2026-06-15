@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.components
 
@@ -33,6 +45,7 @@ import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.model.FollowUserItem
 import com.ferlagod.rocinante.ui.screens.home.FollowListDirection
 import com.ferlagod.rocinante.ui.screens.home.FollowListViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferlagod.rocinante.ui.screens.home.FollowListViewModelFactory
 
 /**
@@ -52,7 +65,8 @@ fun FollowListSheet(
     instanceUrl: String,
     username: String,
     api: BookWyrmApi,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onFollowToggled: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val cache = remember(context) { com.ferlagod.rocinante.data.local.FollowListCache(context) }
@@ -61,7 +75,7 @@ fun FollowListSheet(
         key = "follow_list_${direction.name}",
         factory = factory
     )
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
     val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
@@ -144,6 +158,7 @@ fun FollowListSheet(
                                 onFollowClick = {
                                     if (user.isFollowedByMe) {
                                         viewModel.unfollow(user.actorUrl, user.handle)
+                                        onFollowToggled(false)
                                         Toast.makeText(
                                             context,
                                             context.getString(R.string.unfollow_success),
@@ -151,6 +166,7 @@ fun FollowListSheet(
                                         ).show()
                                     } else {
                                         viewModel.follow(user.actorUrl, user.handle)
+                                        onFollowToggled(true)
                                         Toast.makeText(
                                             context,
                                             context.getString(R.string.follow_success),
@@ -213,6 +229,7 @@ fun FollowListSheet(
                             OutlinedButton(
                                 onClick = {
                                     viewModel.unfollow(user.actorUrl, user.handle)
+                                    onFollowToggled(false)
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -222,6 +239,7 @@ fun FollowListSheet(
                             Button(
                                 onClick = {
                                     viewModel.follow(user.actorUrl, user.handle)
+                                    onFollowToggled(true)
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {

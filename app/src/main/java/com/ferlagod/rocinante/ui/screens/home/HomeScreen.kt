@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
 
@@ -61,6 +73,7 @@ import com.ferlagod.rocinante.data.api.BookWyrmProfile
 import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.api.editProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 
 /**
@@ -103,7 +116,7 @@ fun HomeScreen(
     }
 
     val viewModel: HomeViewModel = viewModel(factory = factory)
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(instanceUrl, username, cookie) {
         viewModel.load(instanceUrl, username, cookie)
@@ -223,6 +236,9 @@ fun HomeScreen(
                     },
                     onFollowingIncremented = {
                         viewModel.incrementFollowingCount()
+                    },
+                    onFollowingDecremented = {
+                        viewModel.decrementFollowingCount()
                     }
                 )
             }
@@ -281,6 +297,7 @@ fun HomeScreen(
                                             Toast.makeText(context, context.getString(R.string.error_session_verification, htmlResponse.code().toString()), Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {
+                                        if (e is kotlinx.coroutines.CancellationException) throw e
                                         Toast.makeText(context, context.getString(R.string.post_error, e.message), Toast.LENGTH_LONG).show()
                                     } finally {
                                         isSubmitting = false
@@ -304,24 +321,25 @@ fun HomeScreen(
             )
         }
         
-        if (selectedActivity != null) {
-            val isLiked = uiState.likedStatusIds.contains(selectedActivity!!.objectId)
+        selectedActivity?.let { activity ->
+            val isLiked = uiState.likedStatusIds.contains(activity.objectId)
             ActivityDetailsDialog(
-                item = selectedActivity!!,
+                item = activity,
                 currentUserProfile = uiState.profile,
                 username = username,
                 instanceUrl = instanceUrl,
                 api = api,
                 isLiked = isLiked,
-                onLikeClick = { viewModel.toggleLike(selectedActivity!!.objectId, instanceUrl) },
+                onLikeClick = { viewModel.toggleLike(activity.objectId, instanceUrl) },
                 onReplySubmit = { replyText, onResult ->
                     viewModel.replyToStatus(
-                        statusUrl = selectedActivity!!.objectId,
+                        statusUrl = activity.objectId,
                         instanceUrl = instanceUrl,
                         content = replyText,
                         onResult = { success ->
                             onResult(success)
                             if (success) {
+                                selectedActivity = null
                                 viewModel.load(instanceUrl, username, cookie, forceRefresh = true)
                             }
                         }
@@ -363,6 +381,7 @@ fun SuggestedUserDialog(
             val jsonUrl = if (suggestedUser.profileUrl.endsWith(".json")) suggestedUser.profileUrl else "${suggestedUser.profileUrl}.json"
             fullProfile = api.getFullUserProfile(jsonUrl)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
         } finally {
             isLoading = false
@@ -449,6 +468,7 @@ fun SuggestedUserDialog(
                                 Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
                             }
                         } catch (e: Exception) {
+                            if (e is kotlinx.coroutines.CancellationException) throw e
                             Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
                         } finally {
                             isFollowing = false
@@ -819,7 +839,8 @@ fun ProfileTab(
     @Suppress("UNUSED_PARAMETER") cookie: String,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
     onProfileUpdated: (String, String) -> Unit,
-    onFollowingIncremented: () -> Unit = {}
+    onFollowingIncremented: () -> Unit = {},
+    onFollowingDecremented: () -> Unit = {}
 ) {
     val cleanSummary = HtmlUtils.stripHtml(profile?.summary)
     val avatarUrl = profile?.icon?.url
@@ -879,13 +900,28 @@ fun ProfileTab(
             instanceUrl = instanceUrl,
             username = username,
             api = api,
-            onDismiss = { followSheetDirection = null }
+            onDismiss = { followSheetDirection = null },
+            onFollowToggled = { isFollowing ->
+                if (isFollowing) {
+                    onFollowingIncremented()
+                } else {
+                    onFollowingDecremented()
+                }
+                
+                val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+                val cleanUser = username.removePrefix("@").trim()
+                
+                if (dir == FollowListDirection.FOLLOWERS) {
+                    followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING, forceRefresh = true)
+                }
+            }
         )
     }
 
-    if (selectedBookDetails != null) {
+    selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
-            bookDetails = selectedBookDetails!!,
+            bookDetails = details,
             reviews = emptyList(),
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
@@ -898,9 +934,9 @@ fun ProfileTab(
         )
     }
 
-    if (selectedSuggestedUser != null) {
+    selectedSuggestedUser?.let { user ->
         SuggestedUserDialog(
-            suggestedUser = selectedSuggestedUser!!,
+            suggestedUser = user,
             api = api,
             instanceUrl = instanceUrl,
             onDismiss = { selectedSuggestedUser = null },
@@ -1078,6 +1114,7 @@ fun ProfileTab(
                                                     val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
                                                     selectedBookDetails = api.getBookDetails(detailsUrl)
                                                 } catch (e: Exception) {
+                                                    if (e is kotlinx.coroutines.CancellationException) throw e
                                                     Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
                                                 }
                                             }
@@ -1224,6 +1261,7 @@ fun ProfileTab(
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
                                 Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSubmitting = false

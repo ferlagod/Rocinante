@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.components
 
@@ -193,6 +205,7 @@ fun BookDetailsDialog(
                                                         Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
                                                     }
                                                 } catch (e: Exception) {
+                                                    if (e is kotlinx.coroutines.CancellationException) throw e
                                                     Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
                                                 }
                                             }
@@ -377,7 +390,7 @@ fun BookDetailsDialog(
         )
     }
 
-    if (selectedReviewForDetail != null) {
+    selectedReviewForDetail?.let { review ->
         // Host de la instancia (ej. "https://bookwyrm.social"), usado para resolver
         // los enlaces de autor relativos a un handle de seguimiento.
         val instanceHostUrl = remember(activeBookKey) {
@@ -386,7 +399,7 @@ fun BookDetailsDialog(
             } catch (_: Exception) { "" }
         }
         ReviewDetailDialog(
-            review = selectedReviewForDetail!!,
+            review = review,
             instanceHostUrl = instanceHostUrl,
             api = api,
             context = context,
@@ -717,6 +730,7 @@ private fun ReadingProgressDialog(
                                     Toast.makeText(context, context.getString(R.string.progress_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
                                 Toast.makeText(context, context.getString(R.string.progress_network_error, e.message), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSending = false
@@ -1006,6 +1020,7 @@ private fun ReviewDialog(
                                     Toast.makeText(context, context.getString(R.string.review_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
                                 Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSending = false
@@ -1137,6 +1152,7 @@ fun ReviewDetailDialog(
                     }
 
                     // Botón para seguir / dejar de seguir al autor de la reseña.
+                    val currentHandle = resolvedHandle
                     when {
                         isResolvingHandle || isFollowPending -> {
                             CircularProgressIndicator(
@@ -1144,8 +1160,8 @@ fun ReviewDetailDialog(
                                 strokeWidth = 2.dp
                             )
                         }
-                        resolvedHandle != null -> {
-                            val cleanHandle = resolvedHandle!!.removePrefix("@")
+                        currentHandle != null -> {
+                            val cleanHandle = currentHandle.removePrefix("@")
                             if (isFollowing) {
                                 OutlinedButton(
                                     onClick = {
@@ -1159,7 +1175,9 @@ fun ReviewDetailDialog(
                                                 } else {
                                                     Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
                                                 }
+
                                             } catch (e: Exception) {
+                                                if (e is kotlinx.coroutines.CancellationException) throw e
                                                 Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
                                             } finally {
                                                 isFollowPending = false
@@ -1184,6 +1202,7 @@ fun ReviewDetailDialog(
                                                     Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
                                                 }
                                             } catch (e: Exception) {
+                                                if (e is kotlinx.coroutines.CancellationException) throw e
                                                 Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
                                             } finally {
                                                 isFollowPending = false

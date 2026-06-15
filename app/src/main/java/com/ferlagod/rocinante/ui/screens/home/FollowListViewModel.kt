@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
 
@@ -114,7 +126,7 @@ class FollowListViewModel(
                 coroutineScope {
                     // 1. Cargar mis seguidos y la lista target en paralelo
                     val myFollowingDeferred = async {
-                        loadActorUrls("${baseUrl}user/$username/following.json?page=1")
+                        loadAllActorUrls("${baseUrl}user/$username/following.json?page=1")
                     }
                     val targetListDeferred = async {
                         val path = when (direction) {
@@ -134,7 +146,7 @@ class FollowListViewModel(
                     }.map { it.await() }
 
                     // 3. Construir items
-                    val followingIds = myFollowingUrls.toSet()
+                    val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
                     val items = profiles.filterNotNull().map { profile ->
                         val actorId = profile.id.orEmpty()
                         FollowUserItem(
@@ -145,7 +157,7 @@ class FollowListViewModel(
                             handle = buildHandle(profile, baseUrl),
                             summary = profile.summary,
                             avatarUrl = profile.icon?.url,
-                            isFollowedByMe = actorId in followingIds
+                            isFollowedByMe = normalizeActorUrl(actorId) in followingIds
                         )
                     }
 
@@ -163,6 +175,7 @@ class FollowListViewModel(
             } catch (e: CancellationException) {
                 throw e  // nunca swallow CancellationException
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -245,29 +258,42 @@ class FollowListViewModel(
      * Esta función maneja ambos casos parseando el JSON raw.
      */
     private suspend fun loadActorUrls(url: String): List<String> {
-        return try {
-            val raw = withTimeoutOrNull(15_000L) {
-                api.getRawJson(url).string()
-            } ?: return emptyList()
+        return loadAllActorUrls(url, maxPages = 1)
+    }
 
-            @Suppress("DEPRECATION")
-            val root = JsonParser().parse(raw).asJsonObject
-            val items: JsonArray = root.getAsJsonArray("orderedItems")
-                ?: return emptyList()
+    private suspend fun loadAllActorUrls(initialUrl: String, maxPages: Int = 10): List<String> {
+        val allUrls = mutableListOf<String>()
+        var currentUrl: String? = initialUrl
+        var pagesFetched = 0
 
-            items.mapNotNull { element ->
-                when {
-                    element.isJsonPrimitive -> element.asString  // URL directa
-                    element.isJsonObject -> {
-                        // Objeto actor completo — extraemos el id
-                        (element as JsonObject).get("id")?.asString
+        while (currentUrl != null && pagesFetched < maxPages) {
+            try {
+                val raw = withTimeoutOrNull(15_000L) {
+                    api.getRawJson(currentUrl!!).string()
+                } ?: break
+
+                @Suppress("DEPRECATION")
+                val root = JsonParser().parse(raw).asJsonObject
+                val items: JsonArray = root.getAsJsonArray("orderedItems") ?: break
+
+                items.mapNotNull { element ->
+                    when {
+                        element.isJsonPrimitive -> element.asString  // URL directa
+                        element.isJsonObject -> {
+                            // Objeto actor completo — extraemos el id
+                            (element as JsonObject).get("id")?.asString
+                        }
+                        else -> null
                     }
-                    else -> null
-                }
+                }.let { allUrls.addAll(it) }
+
+                currentUrl = root.get("next")?.asString
+                pagesFetched++
+            } catch (_: Exception) {
+                break
             }
-        } catch (_: Exception) {
-            emptyList()
         }
+        return allUrls
     }
 
     /**
@@ -303,5 +329,9 @@ class FollowListViewModel(
 
         return if (actorHost.isNotEmpty()) "@$preferredUsername@$actorHost"
         else "@$preferredUsername"
+    }
+
+    private fun normalizeActorUrl(url: String): String {
+        return url.removeSuffix(".json").removeSuffix("/").trim()
     }
 }

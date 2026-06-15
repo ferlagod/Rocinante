@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.local
 
@@ -41,6 +53,7 @@ class TimelineCache(private val context: Context) {
             val json = gson.toJson(timeline)
             cacheFile.writeText(json)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
         }
     }
@@ -57,6 +70,7 @@ class TimelineCache(private val context: Context) {
             val type = object : TypeToken<List<TimelineUiItem>>() {}.type
             gson.fromJson<List<TimelineUiItem>>(json, type)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
             null
         }
@@ -72,6 +86,7 @@ class TimelineCache(private val context: Context) {
             val json = gson.toJson(profile)
             profileCacheFile.writeText(json)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
         }
     }
@@ -85,6 +100,7 @@ class TimelineCache(private val context: Context) {
             val json = profileCacheFile.readText()
             gson.fromJson(json, com.ferlagod.rocinante.data.api.BookWyrmProfile::class.java)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
             null
         }
@@ -122,6 +138,7 @@ class TimelineCache(private val context: Context) {
             val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>() {}.type
             gson.fromJson<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>(file.readText(), type)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             null
         }
     }
@@ -134,6 +151,7 @@ class TimelineCache(private val context: Context) {
             val file = File(context.cacheDir, "shelf_${slug}_cache.json")
             file.writeText(gson.toJson(books))
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
         }
     }
 
@@ -147,6 +165,7 @@ class TimelineCache(private val context: Context) {
             val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.SuggestedUser>>() {}.type
             gson.fromJson<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(file.readText(), type)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             null
         }
     }
@@ -159,6 +178,7 @@ class TimelineCache(private val context: Context) {
             val file = File(context.cacheDir, "suggested_users_cache.json")
             file.writeText(gson.toJson(users))
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
         }
     }
 }

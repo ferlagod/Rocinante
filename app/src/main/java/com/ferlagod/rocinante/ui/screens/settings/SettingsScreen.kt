@@ -2,8 +2,20 @@
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
  *
- * Este programa es software libre: se puede redistribuir y/o modificar
- * bajo los términos de la GNU General Public License versión 3 (GPLv3).
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.settings
 
@@ -44,6 +56,7 @@ import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.R.string.settings_clear_cache_desc
 import com.ferlagod.rocinante.R.string.settings_version
 import com.ferlagod.rocinante.data.local.SettingsPreferences
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferlagod.rocinante.data.local.ThemeMode
 
 /**
@@ -67,7 +80,7 @@ fun SettingsScreen(
     val factory = remember { SettingsViewModelFactory(settingsPreferences) }
     val viewModel: SettingsViewModel = viewModel(factory = factory)
 
-    val settingsState by viewModel.settingsState.collectAsState()
+    val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -212,7 +225,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_developer),
                     subtitle = "ferlagod",
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://forjalibre.eu/ferlagod"))
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://frikiverse.zone/"))
                         context.startActivity(intent)
                     }
                 )
