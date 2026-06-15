@@ -261,7 +261,7 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_rocinante_logo),
                         contentDescription = stringResource(R.string.app_name),
-                        modifier = Modifier.size(96.dp)
+                        modifier = Modifier.size(96.dp).clip(CircleShape)
                     )
                 }
 
