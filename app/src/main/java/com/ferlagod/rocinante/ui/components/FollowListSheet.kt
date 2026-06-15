@@ -100,6 +100,9 @@ fun FollowListSheet(
         else R.string.follow_list_following_title
     )
 
+    val unfollowSuccessMsg = stringResource(R.string.unfollow_success)
+    val followSuccessMsg = stringResource(R.string.follow_success)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         dragHandle = { BottomSheetDefaults.DragHandle() }
@@ -161,7 +164,7 @@ fun FollowListSheet(
                                         onFollowToggled(false)
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.unfollow_success),
+                                            unfollowSuccessMsg,
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     } else {
@@ -169,7 +172,7 @@ fun FollowListSheet(
                                         onFollowToggled(true)
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.follow_success),
+                                            followSuccessMsg,
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }

@@ -30,6 +30,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -163,7 +168,19 @@ fun RocinanteApp() {
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        enterTransition = {
+            slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+        },
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+        }
     ) {
         composable("login") {
             LoginScreen(
@@ -241,19 +258,24 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
         label = "login_alpha"
     )
 
-    if (!showWebView) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surfaceVariant
+    Crossfade(
+        targetState = showWebView,
+        label = "login_crossfade",
+        animationSpec = tween(durationMillis = 500)
+    ) { isWebView ->
+        if (!isWebView) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surfaceVariant
+                            )
                         )
                     )
-                )
-        ) {
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -397,18 +419,19 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
             }
         }
     } else {
-        val loginUrl = if (instanceUrl.startsWith("http")) {
-            "$instanceUrl/login"
-        } else {
-            "https://$instanceUrl/login"
-        }
+            val loginUrl = if (instanceUrl.startsWith("http")) {
+                "$instanceUrl/login"
+            } else {
+                "https://$instanceUrl/login"
+            }
 
-        BookWyrmLoginWebView(
-            loginUrl = loginUrl,
-            instanceUrl = instanceUrl,
-            username = username,
-            onLoginSuccess = onLoginSuccess
-        )
+            BookWyrmLoginWebView(
+                loginUrl = loginUrl,
+                instanceUrl = instanceUrl,
+                username = username,
+                onLoginSuccess = onLoginSuccess
+            )
+        }
     }
 }
 
@@ -440,12 +463,14 @@ fun BookWyrmLoginWebView(
                             // Inyectamos JavaScript para extraer el nombre de usuario de la sesión real en BookWyrm
                             view.evaluateJavascript(
                                 "(function() { " +
-                                "  var profileLink = document.querySelector('nav a[href^=\"/user/\"], .navbar a[href^=\"/user/\"]'); " +
-                                "  if (!profileLink) { profileLink = document.querySelector('a[href^=\"/user/\"]'); } " +
-                                "  if (profileLink) { " +
-                                "      var parts = profileLink.getAttribute('href').split('/'); " +
-                                "      if (parts.length > 2) return parts[2]; " +
-                                "  } " +
+                                "  try { " +
+                                "    var profileLink = document.querySelector('nav a[href^=\"/user/\"], .navbar a[href^=\"/user/\"]'); " +
+                                "    if (!profileLink) { profileLink = document.querySelector('a[href^=\"/user/\"]'); } " +
+                                "    if (profileLink) { " +
+                                "        var parts = profileLink.getAttribute('href').split('/'); " +
+                                "        if (parts.length > 2) return parts[2]; " +
+                                "    } " +
+                                "  } catch(e) { console.error(e); } " +
                                 "  return null; " +
                                 "})();"
                             ) { result ->

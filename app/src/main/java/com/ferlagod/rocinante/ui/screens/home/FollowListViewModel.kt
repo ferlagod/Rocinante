@@ -65,7 +65,7 @@ data class FollowListUiState(
 )
 
 /** Máximo de perfiles a cargar para mostrar en la lista */
-private const val MAX_PROFILES_TO_FETCH = 50
+private const val MAX_PROFILES_TO_FETCH = 500
 
 /** Timeout por petición de perfil individual (ms) */
 private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
@@ -140,10 +140,14 @@ class FollowListViewModel(
                     val targetActorUrls = targetListDeferred.await()
                         .take(MAX_PROFILES_TO_FETCH)
 
-                    // 2. Cargar perfiles en paralelo con timeout individual
-                    val profiles = targetActorUrls.map { actorUrl ->
-                        async { fetchProfileWithTimeout(actorUrl) }
-                    }.map { it.await() }
+                    // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar timeouts)
+                    val profiles = mutableListOf<BookWyrmProfile?>()
+                    targetActorUrls.chunked(30).forEach { chunk ->
+                        val chunkProfiles = chunk.map { actorUrl ->
+                            async { fetchProfileWithTimeout(actorUrl) }
+                        }.map { it.await() }
+                        profiles.addAll(chunkProfiles)
+                    }
 
                     // 3. Construir items
                     val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
@@ -258,10 +262,10 @@ class FollowListViewModel(
      * Esta función maneja ambos casos parseando el JSON raw.
      */
     private suspend fun loadActorUrls(url: String): List<String> {
-        return loadAllActorUrls(url, maxPages = 1)
+        return loadAllActorUrls(url, maxPages = 50)
     }
 
-    private suspend fun loadAllActorUrls(initialUrl: String, maxPages: Int = 10): List<String> {
+    private suspend fun loadAllActorUrls(initialUrl: String, maxPages: Int = 50): List<String> {
         val allUrls = mutableListOf<String>()
         var currentUrl: String? = initialUrl
         var pagesFetched = 0

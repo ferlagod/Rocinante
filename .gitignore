@@ -64,3 +64,5 @@ scratch.kt
 # Variables de entorno y secretos locales
 .env
 update_licenses.py
+cookies.txt
+.idea/caches/deviceStreaming.xml

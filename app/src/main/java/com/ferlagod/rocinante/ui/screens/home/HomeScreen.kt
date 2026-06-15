@@ -17,8 +17,11 @@
  * junto a este programa.
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
+@file:SuppressLint("LocalContextGetResourceValueCall")
+
 package com.ferlagod.rocinante.ui.screens.home
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -129,7 +132,10 @@ fun HomeScreen(
 
     LaunchedEffect(uiState.selectedTab) {
         if (pagerState.currentPage != uiState.selectedTab) {
-            pagerState.animateScrollToPage(uiState.selectedTab)
+            pagerState.animateScrollToPage(
+                page = uiState.selectedTab,
+                animationSpec = tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+            )
         }
     }
 
@@ -249,6 +255,11 @@ fun HomeScreen(
             var statusText by remember { mutableStateOf("") }
             var isSubmitting by remember { mutableStateOf(false) }
 
+            val postSuccessMsg = stringResource(R.string.post_success)
+            val postErrorFormat = stringResource(R.string.post_error, "%s")
+            val serverErrorFormat = stringResource(R.string.profile_server_error, "%s")
+            val sessionErrorFormat = stringResource(R.string.error_session_verification, "%s")
+
             AlertDialog(
                 onDismissRequest = { if (!isSubmitting) showPostDialog = false },
                 title = { Text(stringResource(R.string.post_dialog_title), fontWeight = FontWeight.Bold) },
@@ -278,27 +289,28 @@ fun HomeScreen(
                                         if (htmlResponse.isSuccessful) {
                                             val html = htmlResponse.body()?.string() ?: ""
                                             val userMatch = "name=[\"']user[\"'][^>]*?value=[\"'](\\d+)[\"']|value=[\"'](\\d+)[\"'][^>]*?name=[\"']user[\"']".toRegex(RegexOption.IGNORE_CASE).find(html)
-                                            val userId = userMatch?.let { it.groups[1]?.value ?: it.groups[2]?.value }
+                                            val fallbackMatch = "data-user-id=[\"'](\\d+)[\"']".toRegex(RegexOption.IGNORE_CASE).find(html)
+                                            val userId = userMatch?.let { it.groups[1]?.value ?: it.groups[2]?.value } ?: fallbackMatch?.groups?.get(1)?.value
                                             if (userId != null) {
                                                 val cookieJar = NetworkClient.lastOkHttpClient?.cookieJar as? com.ferlagod.rocinante.data.api.SessionCookieJar
                                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
                                                 val response = api.createStatus(userId = userId, content = statusText, csrfToken = csrfToken)
                                                 if (response.isSuccessful || response.code() == 302) {
                                                     showPostDialog = false
-                                                    Toast.makeText(context, context.getString(R.string.post_success), Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, postSuccessMsg, Toast.LENGTH_SHORT).show()
                                                     viewModel.load(instanceUrl, username, cookie, forceRefresh = true)
                                                 } else {
-                                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                                    Toast.makeText(context, serverErrorFormat.format(response.code().toString()), Toast.LENGTH_LONG).show()
                                                 }
                                             } else {
-                                                Toast.makeText(context, context.getString(R.string.error_id_html, html.take(100)), Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, postErrorFormat.format("User ID missing from HTML"), Toast.LENGTH_LONG).show()
                                             }
                                         } else {
-                                            Toast.makeText(context, context.getString(R.string.error_session_verification, htmlResponse.code().toString()), Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, sessionErrorFormat.format(htmlResponse.code().toString()), Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {
                                         if (e is kotlinx.coroutines.CancellationException) throw e
-                                        Toast.makeText(context, context.getString(R.string.post_error, e.message), Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, postErrorFormat.format(e.localizedMessage ?: "Network error"), Toast.LENGTH_LONG).show()
                                     } finally {
                                         isSubmitting = false
                                     }
