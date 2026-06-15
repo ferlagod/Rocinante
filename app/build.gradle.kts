@@ -33,6 +33,11 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            // ID distinto para que la build de depuración conviva con la release/F-Droid instalada
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
