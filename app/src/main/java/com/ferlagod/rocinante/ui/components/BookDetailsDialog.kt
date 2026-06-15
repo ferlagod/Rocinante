@@ -74,6 +74,15 @@ fun BookDetailsDialog(
     var showReviewDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
 
+    // Reseñas ordenadas de más reciente a más antigua. BookWyrm renderiza la fecha en
+    // formato legible (p. ej. "Aug. 22, 2024"), así que se parsea a una fecha comparable.
+    // Las reseñas con fecha no reconocida se colocan al final.
+    val sortedReviews = remember(reviews) {
+        reviews.sortedByDescending {
+            BookWyrmUtils.parseReviewDate(it.published) ?: java.time.LocalDate.MIN
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -227,7 +236,7 @@ fun BookDetailsDialog(
                         )
                     }
 
-                    if (reviews.isEmpty()) {
+                    if (sortedReviews.isEmpty()) {
                         item {
                             Text(
                                 text = stringResource(R.string.book_no_reviews),
@@ -236,7 +245,7 @@ fun BookDetailsDialog(
                             )
                         }
                     } else {
-                        items(reviews) { review ->
+                        items(sortedReviews) { review ->
                             // BookWyrm puede devolver la reseña en la raíz de la actividad (ActivityStreams extendido)
                             // o dentro del envoltorio "objectData" (ActivityStreams estándar). Se comprueban ambas vías.
                             val rawContent = review.objectData?.content ?: review.content ?: ""
@@ -369,8 +378,19 @@ fun BookDetailsDialog(
     }
 
     if (selectedReviewForDetail != null) {
+        // Host de la instancia (ej. "https://bookwyrm.social"), usado para resolver
+        // los enlaces de autor relativos a un handle de seguimiento.
+        val instanceHostUrl = remember(activeBookKey) {
+            try {
+                java.net.URL(activeBookKey).let { "${it.protocol}://${it.host}" }
+            } catch (_: Exception) { "" }
+        }
         ReviewDetailDialog(
             review = selectedReviewForDetail!!,
+            instanceHostUrl = instanceHostUrl,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
             onDismiss = { selectedReviewForDetail = null }
         )
     }
@@ -1010,6 +1030,10 @@ private fun ReviewDialog(
 @Composable
 fun ReviewDetailDialog(
     review: ActivityPubActivity,
+    instanceHostUrl: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
     onDismiss: () -> Unit
 ) {
     val rawContent = review.objectData?.content ?: review.content ?: ""
@@ -1022,6 +1046,23 @@ fun ReviewDetailDialog(
         else -> dateStr
     }
     val reviewerName = review.name ?: stringResource(R.string.progress_privacy_private)
+
+    // ── Estado de seguimiento del autor de la reseña ──
+    val actorUrl = review.actor.orEmpty()
+    // Handle resuelto del autor (@usuario@instancia); null mientras se resuelve o si falla.
+    var resolvedHandle by remember(actorUrl) { mutableStateOf<String?>(null) }
+    var isResolvingHandle by remember(actorUrl) { mutableStateOf(actorUrl.isNotBlank()) }
+    var isFollowing by remember(actorUrl) { mutableStateOf(false) }
+    var isFollowPending by remember(actorUrl) { mutableStateOf(false) }
+
+    LaunchedEffect(actorUrl) {
+        if (actorUrl.isBlank()) {
+            isResolvingHandle = false
+            return@LaunchedEffect
+        }
+        resolvedHandle = NetworkClient.resolveActorHandle(api, actorUrl, instanceHostUrl)
+        isResolvingHandle = false
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1079,12 +1120,82 @@ fun ReviewDetailDialog(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        resolvedHandle?.let { handle ->
+                            Text(
+                                text = handle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                maxLines = 1
+                            )
+                        }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = shortDate,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
+                    }
+
+                    // Botón para seguir / dejar de seguir al autor de la reseña.
+                    when {
+                        isResolvingHandle || isFollowPending -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        resolvedHandle != null -> {
+                            val cleanHandle = resolvedHandle!!.removePrefix("@")
+                            if (isFollowing) {
+                                OutlinedButton(
+                                    onClick = {
+                                        isFollowPending = true
+                                        coroutineScope.launch {
+                                            try {
+                                                val response = api.unfollowUser(cleanHandle)
+                                                if (response.isSuccessful || response.code() in 300..399) {
+                                                    isFollowing = false
+                                                    Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                            } finally {
+                                                isFollowPending = false
+                                            }
+                                        }
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                                ) {
+                                    Text(stringResource(R.string.follow_btn_unfollow))
+                                }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        isFollowPending = true
+                                        coroutineScope.launch {
+                                            try {
+                                                val response = api.followUser(cleanHandle)
+                                                if (response.isSuccessful || response.code() in 300..399) {
+                                                    isFollowing = true
+                                                    Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                            } finally {
+                                                isFollowPending = false
+                                            }
+                                        }
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                                ) {
+                                    Text(stringResource(R.string.follow_btn_follow))
+                                }
+                            }
+                        }
                     }
                 }
 

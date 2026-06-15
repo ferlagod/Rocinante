@@ -495,6 +495,38 @@ object NetworkClient {
     }
 
     /**
+     * Resuelve la URL del actor de una reseña a su handle de seguimiento (@usuario@instancia).
+     *
+     * El enlace del autor raspado del HTML puede ser relativo (usuario local) o absoluto
+     * (usuario federado). Se descarga el perfil ActivityPub para obtener el preferredUsername
+     * y el host reales, que es lo que esperan los endpoints follow/unfollow.
+     *
+     * @param actorUrl URL del actor extraída de la reseña (relativa o absoluta).
+     * @param instanceHostUrl Host de la instancia (ej. "https://bookwyrm.social") para resolver URLs relativas.
+     * @return El handle "@usuario@host" o null si no se pudo resolver.
+     */
+    suspend fun resolveActorHandle(api: BookWyrmApi, actorUrl: String, instanceHostUrl: String): String? = withContext(Dispatchers.IO) {
+        try {
+            if (actorUrl.isBlank()) return@withContext null
+            val absolute = if (actorUrl.startsWith("http")) actorUrl
+                           else instanceHostUrl.trimEnd('/') + "/" + actorUrl.trimStart('/')
+            val jsonUrl = BookWyrmUtils.ensureJsonUrl(absolute)
+            val raw = api.getRawJson(jsonUrl).string()
+            if (!raw.trimStart().startsWith("{")) return@withContext null
+            val profile = com.google.gson.Gson().fromJson(raw, BookWyrmProfile::class.java)
+            val preferredUsername = profile.preferredUsername
+                ?: profile.id?.substringAfterLast("/")
+                ?: return@withContext null
+            val host = try {
+                java.net.URI(profile.id ?: absolute).host ?: ""
+            } catch (_: Exception) { "" }
+            if (host.isNotEmpty()) "@$preferredUsername@$host" else "@$preferredUsername"
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * Resuelve un libro federado a su URL local siguiendo la redirección de resolve-book.
      */
     suspend fun resolveLocalBookUrl(api: BookWyrmApi, bookUrl: String): String? {
