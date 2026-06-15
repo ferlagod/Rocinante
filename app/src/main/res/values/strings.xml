@@ -8,7 +8,7 @@
     <string name="login_field_username">Nombre de usuario</string>
     <string name="login_btn_login">Iniciar sesión</string>
     <string name="login_btn_create_account">Crear cuenta en BookWyrm</string>
-    <string name="login_footer">BookWyrm es una red social de lectura federada y de código abierto</string>
+    <string name="login_footer">BookWyrm es una red social de lectura federada</string>
     <string name="nav_activity">Actividad</string>
     <string name="nav_my_books">Mis libros</string>
     <string name="nav_search">Buscar</string>

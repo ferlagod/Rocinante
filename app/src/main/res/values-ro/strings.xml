@@ -6,7 +6,7 @@
     <string name="login_field_username">Nume de utilizator</string>
     <string name="login_btn_login">Autentificare</string>
     <string name="login_btn_create_account">Creare cont BookWyrm</string>
-    <string name="login_footer">BookWyrm este o rețea socială de lectură federată și open-source</string>
+    <string name="login_footer">BookWyrm este o rețea socială de lectură federată</string>
     <string name="nav_activity">Activitate</string>
     <string name="nav_my_books">Cărțile mele</string>
     <string name="nav_search">Căutare</string>

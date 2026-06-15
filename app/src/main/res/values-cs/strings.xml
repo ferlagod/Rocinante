@@ -6,7 +6,7 @@
     <string name="login_field_username">Uživatelské jméno</string>
     <string name="login_btn_login">Přihlásit se</string>
     <string name="login_btn_create_account">Vytvořit účet BookWyrm</string>
-    <string name="login_footer">BookWyrm je federovaná sociální síť pro čtenáře s otevřeným zdrojovým kódem</string>
+    <string name="login_footer">BookWyrm je federovaná sociální síť pro čtenáře</string>
     <string name="nav_activity">Aktivita</string>
     <string name="nav_my_books">Moje knihy</string>
     <string name="nav_search">Hledat</string>

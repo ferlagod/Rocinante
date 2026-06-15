@@ -6,7 +6,7 @@
     <string name="login_field_username">Benutzername</string>
     <string name="login_btn_login">Anmelden</string>
     <string name="login_btn_create_account">BookWyrm-Konto erstellen</string>
-    <string name="login_footer">BookWyrm ist ein föderiertes, soziales Lesenetzwerk (Open Source)</string>
+    <string name="login_footer">BookWyrm ist ein föderiertes, soziales Lesenetzwerk</string>
     <string name="nav_activity">Aktivität</string>
     <string name="nav_my_books">Meine Bücher</string>
     <string name="nav_search">Suchen</string>

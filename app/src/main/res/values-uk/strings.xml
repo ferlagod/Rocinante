@@ -6,7 +6,7 @@
     <string name="login_field_username">Ім\'я користувача</string>
     <string name="login_btn_login">Увійти</string>
     <string name="login_btn_create_account">Створити обліковий запис BookWyrm</string>
-    <string name="login_footer">BookWyrm — це федеративна соціальна мережа для читачів із відкритим кодом</string>
+    <string name="login_footer">BookWyrm — це федеративна соціальна мережа для читачів</string>
     <string name="nav_activity">Активність</string>
     <string name="nav_my_books">Мої книги</string>
     <string name="nav_search">Пошук</string>

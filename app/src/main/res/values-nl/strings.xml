@@ -6,7 +6,7 @@
     <string name="login_field_username">Gebruikersnaam</string>
     <string name="login_btn_login">Inloggen</string>
     <string name="login_btn_create_account">BookWyrm-account maken</string>
-    <string name="login_footer">BookWyrm is een gefedereerd, open-source sociaal leesnetwerk</string>
+    <string name="login_footer">BookWyrm is een gefedereerd sociaal leesnetwerk</string>
     <string name="nav_activity">Activiteit</string>
     <string name="nav_my_books">Mijn boeken</string>
     <string name="nav_search">Zoeken</string>

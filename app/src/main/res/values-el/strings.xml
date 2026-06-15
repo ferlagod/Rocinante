@@ -6,7 +6,7 @@
     <string name="login_field_username">Όνομα χρήστη</string>
     <string name="login_btn_login">Σύνδεση</string>
     <string name="login_btn_create_account">Δημιουργία λογαριασμού BookWyrm</string>
-    <string name="login_footer">Το BookWyrm είναι ένα ομοσπονδιακό κοινωνικό δίκτυο ανάγνωσης ανοιχτού κώδικα</string>
+    <string name="login_footer">Το BookWyrm είναι ένα ομοσπονδιακό κοινωνικό δίκτυο ανάγνωσης</string>
     <string name="nav_activity">Δραστηριότητα</string>
     <string name="nav_my_books">Τα βιβλία μου</string>
     <string name="nav_search">Αναζήτηση</string>

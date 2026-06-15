@@ -6,7 +6,7 @@
     <string name="login_field_username">Användarnamn</string>
     <string name="login_btn_login">Logga in</string>
     <string name="login_btn_create_account">Skapa BookWyrm-konto</string>
-    <string name="login_footer">BookWyrm är ett federerat, socialt läsnätverk med öppen källkod</string>
+    <string name="login_footer">BookWyrm är ett federerat, socialt läsnätverk</string>
     <string name="nav_activity">Aktivitet</string>
     <string name="nav_my_books">Mina böcker</string>
     <string name="nav_search">Sök</string>
