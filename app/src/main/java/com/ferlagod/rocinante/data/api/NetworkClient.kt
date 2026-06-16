@@ -840,6 +840,27 @@ object NetworkClient {
                     resolveUrl(href, cleanBase)
                 }
 
+                // --- Extraer el ID local de BookWyrm (para dar Like/Responder a status remotos) ---
+                var localId: String? = null
+                val favForm = element.selectFirst("form[action*=/favorite/], form[action*=/unfavorite/]")
+                if (favForm != null) {
+                    val action = favForm.attr("action")
+                    val match = """/(favorite|unfavorite)/(\d+)""".toRegex().find(action)
+                    if (match != null) {
+                        localId = match.groupValues[2]
+                    }
+                }
+                if (localId == null) {
+                    val replyPanel = element.selectFirst("[id^=show_comment_]")
+                    if (replyPanel != null) {
+                        val idAttr = replyPanel.attr("id")
+                        val extracted = idAttr.removePrefix("show_comment_")
+                        if (extracted.all { it.isDigit() }) {
+                            localId = extracted
+                        }
+                    }
+                }
+
                 // --- Construir el TimelineUiItem ---
                 val item = com.ferlagod.rocinante.data.model.TimelineUiItem(
                     id = statusId,
@@ -850,7 +871,7 @@ object NetworkClient {
                     bookUrl = bookUrl,
                     actorName = actorName.ifBlank { "Usuario" },
                     actorAvatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
-                    objectId = statusId
+                    objectId = localId ?: statusId
                 )
                 
                 if (item.actorName == "Usuario" && item.content == "Sin contenido" && item.bookCoverUrl.isNullOrEmpty()) {

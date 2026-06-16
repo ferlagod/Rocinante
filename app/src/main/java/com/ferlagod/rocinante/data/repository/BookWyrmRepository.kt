@@ -493,6 +493,11 @@ class BookWyrmRepository(
     suspend fun resolveLocalStatusId(instanceUrl: String, statusUrl: String): String? {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
+                // If it is already a pure numeric ID (which we extract from forms), return it
+                if (statusUrl.all { it.isDigit() }) {
+                    return@withContext statusUrl
+                }
+                
                 val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
                 val typeRegex = """/(status|review|comment|quotation|reviewrating|post)/(\d+)""".toRegex()
                 
