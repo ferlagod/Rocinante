@@ -104,6 +104,7 @@ fun HomeScreen(
     var showPostDialog by remember { mutableStateOf(false) }
     var selectedActivity by remember { mutableStateOf<TimelineUiItem?>(null) }
     var dialogBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
+    var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
     var dialogBookKey by remember { mutableStateOf("") }
     var dialogCoverUrl by remember { mutableStateOf("") }
 
@@ -151,14 +152,17 @@ fun HomeScreen(
     dialogBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
             bookDetails = details,
-            reviews = emptyList(),
+            reviews = dialogBookReviews,
             activeBookKey = dialogBookKey,
             fallbackCoverUrl = dialogCoverUrl,
             currentShelf = "reading",
             api = api,
             context = context,
             coroutineScope = coroutineScope,
-            onDismiss = { dialogBookDetails = null },
+            onDismiss = {
+                dialogBookDetails = null
+                dialogBookReviews = emptyList()
+            },
             onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) }
         )
     }
@@ -388,6 +392,12 @@ fun HomeScreen(
                                 val baseUrl = localUrl.substringBefore("/book/")
                                 val detailsUrl = "$baseUrl/book/$bookId.json"
                                 dialogBookDetails = api.getBookDetails(detailsUrl)
+                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                try {
+                                    dialogBookReviews = NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                } catch (_: Exception) {
+                                    dialogBookReviews = emptyList()
+                                }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
                                 android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
@@ -576,20 +586,24 @@ fun ActivityTab(
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
+    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
     var fallbackCoverUrl by remember { mutableStateOf("") }
 
     selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
             bookDetails = details,
-            reviews = emptyList(),
+            reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
             currentShelf = "reading",
             api = api,
             context = context,
             coroutineScope = coroutineScope,
-            onDismiss = { selectedBookDetails = null },
+            onDismiss = {
+                selectedBookDetails = null
+                selectedBookReviews = emptyList()
+            },
             onShelved = { onRefresh() }
         )
     }
@@ -671,6 +685,12 @@ fun ActivityTab(
                                             val baseUrl = localUrl.substringBefore("/book/")
                                             val detailsUrl = "$baseUrl/book/$bookId.json"
                                             selectedBookDetails = api.getBookDetails(detailsUrl)
+                                            val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                            try {
+                                                selectedBookReviews = com.ferlagod.rocinante.data.api.NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                            } catch (_: Exception) {
+                                                selectedBookReviews = emptyList()
+                                            }
                                         } catch (e: Exception) {
                                             if (e is kotlinx.coroutines.CancellationException) throw e
                                             android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
@@ -984,6 +1004,7 @@ fun ProfileTab(
     }
 
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
+    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
 
     var followSheetDirection by remember { mutableStateOf<FollowListDirection?>(null) }
@@ -1017,14 +1038,17 @@ fun ProfileTab(
     selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
             bookDetails = details,
-            reviews = emptyList(),
+            reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
             currentShelf = "reading",
             api = api,
             context = context,
             coroutineScope = coroutineScope,
-            onDismiss = { selectedBookDetails = null },
+            onDismiss = {
+                selectedBookDetails = null
+                selectedBookReviews = emptyList()
+            },
             onShelved = { refreshTrigger++ }
         )
     }
@@ -1208,6 +1232,12 @@ fun ProfileTab(
                                                 try {
                                                     val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
                                                     selectedBookDetails = api.getBookDetails(detailsUrl)
+                                                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                    try {
+                                                        selectedBookReviews = com.ferlagod.rocinante.data.api.NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                                    } catch (_: Exception) {
+                                                        selectedBookReviews = emptyList()
+                                                    }
                                                 } catch (e: Exception) {
                                                     if (e is kotlinx.coroutines.CancellationException) throw e
                                                     Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
