@@ -1002,16 +1002,25 @@ private fun ReviewDialog(
                                     return@launch
                                 }
 
-                                val response = api.postReview(
-                                    book = reviewContext.bookId,
-                                    user = reviewContext.userId,
-                                    name = reviewName,
-                                    content = reviewContent,
-                                    rating = rating,
-                                    privacy = selectedPrivacy,
-                                    contentWarning = if (includeSpoiler) spoilerText else "",
-                                    sensitive = isSensitive
-                                )
+                                val response = if (reviewContent.isBlank()) {
+                                    api.postReviewRating(
+                                        book = reviewContext.bookId,
+                                        user = reviewContext.userId,
+                                        rating = rating.takeIf { it.isNotBlank() },
+                                        privacy = selectedPrivacy
+                                    )
+                                } else {
+                                    api.postReview(
+                                        book = reviewContext.bookId,
+                                        user = reviewContext.userId,
+                                        name = reviewName.takeIf { it.isNotBlank() },
+                                        content = reviewContent,
+                                        rating = rating.takeIf { it.isNotBlank() },
+                                        privacy = selectedPrivacy,
+                                        contentWarning = spoilerText.takeIf { includeSpoiler && it.isNotBlank() },
+                                        sensitive = if (isSensitive) "on" else null
+                                    )
+                                }
 
                                 if (response.isSuccessful || response.code() == 302) {
                                     Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()

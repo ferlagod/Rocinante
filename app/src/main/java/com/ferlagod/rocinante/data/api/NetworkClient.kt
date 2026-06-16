@@ -270,12 +270,21 @@ interface BookWyrmApi {
     suspend fun postReview(
         @Field("book") book: String,
         @Field("user") user: String,
-        @Field("name") name: String,
+        @Field("name") name: String?,
         @Field("content") content: String,
-        @Field("rating") rating: String,
+        @Field("rating") rating: String?,
         @Field("privacy") privacy: String,
-        @Field("content_warning") contentWarning: String,
-        @Field("sensitive") sensitive: Boolean
+        @Field("content_warning") contentWarning: String?,
+        @Field("sensitive") sensitive: String?
+    ): retrofit2.Response<okhttp3.ResponseBody>
+
+    @FormUrlEncoded
+    @POST("post/rating/")
+    suspend fun postReviewRating(
+        @Field("book") book: String,
+        @Field("user") user: String,
+        @Field("rating") rating: String?,
+        @Field("privacy") privacy: String
     ): retrofit2.Response<okhttp3.ResponseBody>
 
 

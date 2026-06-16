@@ -54,19 +54,13 @@ __pycache__/
 # Archivos de prueba y temporales locales
 app/release/baselineProfiles/0/app-release.dm
 app/release/baselineProfiles/1/app-release.dm
-test_ap.py
-test_parse.py
-test_parse_bw.py
-bw_local.html
-feed_dump.html
-scratch.kt
-test_login.py
-test_profile.kt
+scratch*.kt
+scratch*.py
+test_*.py
+test_*.kt
+*.html
 
 # Variables de entorno y secretos locales
 .env
-update_licenses.py
 cookies.txt
 .idea/caches/deviceStreaming.xml
-home.html
-login.html
