@@ -202,4 +202,11 @@
     <string name="activity_type_comment">Comentó</string>
     <string name="activity_type_add">Añadió un libro</string>
     <string name="profile_who_to_follow">A quien seguir</string>
+    <string name="changelog_title">Novedades de la %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Acceso directo a la ficha del libro tocando su portada en Actividad.
+🔹 Opción de seguir usuarios directamente desde las reseñas.
+🔹 Ya es posible responder y dar \"me gusta\" a publicaciones de ActivityPub.
+🔹 Reseñas ordenadas de más nuevas a más antiguas.
+🔹 Arreglado el error al publicar reseñas y los contadores de seguidores.
+🔹 Mejoras internas de estabilidad y reducción de consumo de batería.</string>
 </resources>

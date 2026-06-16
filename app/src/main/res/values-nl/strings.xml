@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Heeft gereageerd</string>
     <string name="activity_type_add">Heeft een boek toegevoegd</string>
     <string name="profile_who_to_follow">Wie te volgen</string>
+    <string name="changelog_title">Nieuw in %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Directe toegang tot boekgegevens door op de omslag te tikken in Activiteit.
+🔹 Optie om gebruikers rechtstreeks vanuit recensies te volgen.
+🔹 Het is nu mogelijk om te reageren en \"leuk\" te vinden bij ActivityPub-berichten.
+🔹 Recensies zijn gesorteerd van nieuw naar oud.
+🔹 Fout verholpen bij het plaatsen van recensies en de volgers tellers.
+🔹 Interne stabiliteitsverbeteringen en verminderd batterijverbruik.</string>
 </resources>

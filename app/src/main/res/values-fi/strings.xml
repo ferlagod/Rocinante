@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Kommentoi</string>
     <string name="activity_type_add">Lisäsi kirjan</string>
     <string name="profile_who_to_follow">Ketä seurata</string>
+    <string name="changelog_title">Uutta versiossa %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Suora pääsy kirjan tietoihin napauttamalla sen kantta Toiminnassa.
+🔹 Mahdollisuus seurata käyttäjiä suoraan arvosteluista.
+🔹 Nyt on mahdollista vastata ja tykätä ActivityPub-julkaisuista.
+🔹 Arvostelut on lajiteltu uusimmasta vanhimpaan.
+🔹 Korjattu virhe arvostelujen julkaisemisessa ja seuraajien laskureissa.
+🔹 Sisäiset vakausparannukset ja pienempi virrankulutus.</string>
 </resources>

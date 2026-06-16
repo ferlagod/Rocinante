@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Ha comentat</string>
     <string name="activity_type_add">Ha afegit un llibre</string>
     <string name="profile_who_to_follow">A qui seguir</string>
+    <string name="changelog_title">Novetats de la %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Accés directe a la fitxa del llibre tocant la seva portada a Activitat.
+🔹 Opció de seguir usuaris directament des de les ressenyes.
+🔹 Ja és possible respondre i donar \"m\'agrada\" a publicacions d\'ActivityPub.
+🔹 Ressenyes ordenades de més noves a més antigues.
+🔹 S\'ha solucionat l\'error en publicar ressenyes i els comptadors de seguidors.
+🔹 Millores internes d\'estabilitat i reducció de consum de bateria.</string>
 </resources>

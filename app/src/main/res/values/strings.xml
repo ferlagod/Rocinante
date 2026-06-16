@@ -202,4 +202,11 @@
     <string name="activity_type_comment">Commented</string>
     <string name="activity_type_add">Added a book</string>
     <string name="profile_who_to_follow">Who to follow</string>
+    <string name="changelog_title">What\'s new in %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Direct access to book details by tapping its cover in Activity.
+🔹 Option to follow users directly from reviews.
+🔹 It is now possible to reply and like ActivityPub posts.
+🔹 Reviews are sorted from newest to oldest.
+🔹 Fixed the bug when publishing reviews and follower counters.
+🔹 Internal stability improvements and reduced battery consumption.</string>
 </resources>

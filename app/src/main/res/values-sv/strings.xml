@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Kommenterade</string>
     <string name="activity_type_add">Lade till en bok</string>
     <string name="profile_who_to_follow">Vem du ska följa</string>
+    <string name="changelog_title">Nyheter i %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Direkt åtkomst till bokdetaljer genom att trycka på omslaget i Aktivitet.
+🔹 Alternativ att följa användare direkt från recensioner.
+🔹 Det är nu möjligt att svara på och gilla ActivityPub-inlägg.
+🔹 Recensioner sorteras från nyaste till äldsta.
+🔹 Fixat felet när man publicerade recensioner och följarräknare.
+🔹 Interna stabilitetsförbättringar och minskad batteriförbrukning.</string>
 </resources>

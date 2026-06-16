@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Okomentoval(a)</string>
     <string name="activity_type_add">Přidal(a) knihu</string>
     <string name="profile_who_to_follow">Koho sledovat</string>
+    <string name="changelog_title">Co je nového ve verzi %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Přímý přístup k detailům knihy klepnutím na její obálku v Aktivitě.
+🔹 Možnost sledovat uživatele přímo z recenzí.
+🔹 Nyní je možné odpovídat a dávat \"to se mi líbí\" u příspěvků z ActivityPub.
+🔹 Recenze jsou seřazeny od nejnovějších po nejstarší.
+🔹 Opravena chyba při publikování recenzí a počitadlech sledujících.
+🔹 Interní vylepšení stability a snížení spotřeby baterie.</string>
 </resources>

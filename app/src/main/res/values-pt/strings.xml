@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Comentou</string>
     <string name="activity_type_add">Adicionou um livro</string>
     <string name="profile_who_to_follow">Quem seguir</string>
+    <string name="changelog_title">Novidades da %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Acesso direto aos detalhes do livro tocando na capa em Atividade.
+🔹 Opção para seguir utilizadores diretamente a partir das críticas.
+🔹 Agora é possível responder e gostar de publicações ActivityPub.
+🔹 As críticas são ordenadas da mais recente para a mais antiga.
+🔹 Corrigido o erro ao publicar críticas e os contadores de seguidores.
+🔹 Melhorias internas de estabilidade e redução do consumo de bateria.</string>
 </resources>

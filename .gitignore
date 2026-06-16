@@ -64,3 +64,5 @@ test_*.kt
 .env
 cookies.txt
 .idea/caches/deviceStreaming.xml
+update_strings.py
+app/release/baselineProfiles/0/app-release.dm

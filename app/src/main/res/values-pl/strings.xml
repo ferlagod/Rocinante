@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Skomentował(a)</string>
     <string name="activity_type_add">Dodał(a) książkę</string>
     <string name="profile_who_to_follow">Kogo obserwować</string>
+    <string name="changelog_title">Co nowego w %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Bezpośredni dostęp do szczegółów książki poprzez dotknięcie jej okładki w Aktywności.
+🔹 Możliwość obserwowania użytkowników bezpośrednio z recenzji.
+🔹 Można już odpowiadać i lajkować posty z ActivityPub.
+🔹 Recenzje są sortowane od najnowszych do najstarszych.
+🔹 Naprawiono błąd podczas publikowania recenzji oraz liczniki obserwujących.
+🔹 Wewnętrzne ulepszenia stabilności i zmniejszone zużycie baterii.</string>
 </resources>

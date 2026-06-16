@@ -70,6 +70,8 @@ import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.compose.setContent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * Actividad principal de Android y punto de entrada a la aplicación Compose.
@@ -124,6 +126,43 @@ fun RocinanteApp() {
 
     BackHandler(enabled = isRootScreen) {
         showExitConfirmation = true
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
+    var showChangelog by remember { mutableStateOf(false) }
+    val currentVersion = "v1.0.3"
+
+    LaunchedEffect(Unit) {
+        val prefs = settingsPreferences.settingsFlow.first()
+        if (prefs.lastChangelogVersion != currentVersion) {
+            showChangelog = true
+        }
+    }
+
+    if (showChangelog) {
+        AlertDialog(
+            onDismissRequest = {
+                showChangelog = false
+                coroutineScope.launch {
+                    settingsPreferences.setLastChangelogVersion(currentVersion)
+                }
+            },
+            title = { Text(text = stringResource(R.string.changelog_title, currentVersion), fontWeight = FontWeight.Bold) },
+            text = { 
+                Text(stringResource(R.string.changelog_text_v1_0_3))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showChangelog = false
+                    coroutineScope.launch {
+                        settingsPreferences.setLastChangelogVersion(currentVersion)
+                    }
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            }
+        )
     }
 
     if (showExitConfirmation) {

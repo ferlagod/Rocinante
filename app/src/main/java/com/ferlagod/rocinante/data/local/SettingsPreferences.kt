@@ -58,7 +58,8 @@ data class SettingsData(
     val openLinksExternally: Boolean = false,
     val reminderEnabled: Boolean = false,
     val reminderHour: Int = 20,
-    val reminderMinute: Int = 0
+    val reminderMinute: Int = 0,
+    val lastChangelogVersion: String = ""
 )
 
 /**
@@ -74,6 +75,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         private val KEY_REMINDER_HOUR = androidx.datastore.preferences.core.intPreferencesKey("reminder_hour")
         private val KEY_REMINDER_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("reminder_minute")
+        private val KEY_LAST_CHANGELOG_VERSION = stringPreferencesKey("last_changelog_version")
     }
 
     /**
@@ -99,8 +101,9 @@ class SettingsPreferences(private val context: Context) {
             val reminderEnabled = prefs[KEY_REMINDER_ENABLED] ?: false
             val reminderHour = prefs[KEY_REMINDER_HOUR] ?: 20
             val reminderMinute = prefs[KEY_REMINDER_MINUTE] ?: 0
+            val lastChangelogVersion = prefs[KEY_LAST_CHANGELOG_VERSION] ?: ""
 
-            SettingsData(themeMode, openLinks, reminderEnabled, reminderHour, reminderMinute)
+            SettingsData(themeMode, openLinks, reminderEnabled, reminderHour, reminderMinute, lastChangelogVersion)
         }
 
     /**
@@ -146,6 +149,17 @@ class SettingsPreferences(private val context: Context) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_REMINDER_HOUR] = hour
             prefs[KEY_REMINDER_MINUTE] = minute
+        }
+    }
+
+    /**
+     * Guarda la versión de la aplicación para la cual ya se ha mostrado el cuadro de diálogo de novedades.
+     *
+     * @param version String de la versión (ej. "1.0.3").
+     */
+    suspend fun setLastChangelogVersion(version: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_LAST_CHANGELOG_VERSION] = version
         }
     }
 }

@@ -200,4 +200,11 @@
     <string name="activity_type_comment">A commenté</string>
     <string name="activity_type_add">A ajouté un livre</string>
     <string name="profile_who_to_follow">Qui suivre</string>
+    <string name="changelog_title">Nouveautés de la %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Accès direct aux détails du livre en touchant sa couverture dans Activité.
+🔹 Option pour suivre des utilisateurs directement depuis les critiques.
+🔹 Il est désormais possible de répondre et d\'aimer les publications ActivityPub.
+🔹 Critiques triées des plus récentes aux plus anciennes.
+🔹 Correction de l\'erreur lors de la publication de critiques et des compteurs d\'abonnés.
+🔹 Améliorations de stabilité interne et consommation de batterie réduite.</string>
 </resources>

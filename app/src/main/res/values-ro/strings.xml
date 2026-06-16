@@ -200,4 +200,11 @@
     <string name="activity_type_comment">A comentat</string>
     <string name="activity_type_add">A adăugat o carte</string>
     <string name="profile_who_to_follow">Pe cine să urmărești</string>
+    <string name="changelog_title">Noutăți în %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Acces direct la detaliile cărții atingând coperta în Activitate.
+🔹 Opțiunea de a urmări utilizatori direct din recenzii.
+🔹 Acum este posibil să răspunzi și să apreciezi postările ActivityPub.
+🔹 Recenziile sunt sortate de la cele mai noi la cele mai vechi.
+🔹 S-a remediat eroarea la publicarea recenziilor și a contoarelor de urmăritori.
+🔹 Îmbunătățiri interne de stabilitate și reducerea consumului de baterie.</string>
 </resources>

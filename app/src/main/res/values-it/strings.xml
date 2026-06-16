@@ -200,4 +200,11 @@
     <string name="activity_type_comment">Ha commentato</string>
     <string name="activity_type_add">Ha aggiunto un libro</string>
     <string name="profile_who_to_follow">Chi seguire</string>
+    <string name="changelog_title">Novità della %1$s</string>
+    <string name="changelog_text_v1_0_3">🔹 Accesso diretto ai dettagli del libro toccando la copertina in Attività.
+🔹 Opzione per seguire gli utenti direttamente dalle recensioni.
+🔹 Ora è possibile rispondere e mettere \"mi piace\" ai post di ActivityPub.
+🔹 Recensioni ordinate dalle più recenti alle più vecchie.
+🔹 Corretto l\'errore durante la pubblicazione delle recensioni e nei contatori dei follower.
+🔹 Miglioramenti interni della stabilità e riduzione del consumo della batteria.</string>
 </resources>
