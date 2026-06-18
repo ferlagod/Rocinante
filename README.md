@@ -19,7 +19,7 @@ Rocinante es una aplicación nativa para Android diseñada para conectarse a cua
   <a href="https://f-droid.org/es/packages/com.ferlagod.rocinante/">
     <img src="assets/fdroid-badge-es.png" height="55" alt="Consíguelo en F-Droid"/>
   </a>
-  <a href="obtainium://app/https://forjalibre.eu/ferlagod/rocinante_android/releases">
+  <a href="obtainium://app/https://forjalibre.eu/ferlagod/rocinante_android">
     <img src="assets/obtainium_badge.png" height="55" alt="Consíguelo en Obtainium"/>
   </a>
 </div>

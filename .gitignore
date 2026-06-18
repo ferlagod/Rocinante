@@ -67,3 +67,4 @@ cookies.txt
 update_strings.py
 app/release/baselineProfiles/0/app-release.dm
 app/release/output-metadata.json
+.idea/caches/deviceStreaming.xml
