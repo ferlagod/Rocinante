@@ -77,8 +77,7 @@ class BookWyrmRepository(
             val followersDeferred = profile.followers?.let { url ->
                 async {
                     try {
-                        val jsonUrl = if (url.endsWith(".json")) url else "$url.json"
-                        api.getCollectionData(jsonUrl).totalItems ?: 0
+                        api.getCollectionData(url).totalItems ?: 0
                     } catch (_: Exception) { 0 }
                 }
             }
@@ -86,8 +85,7 @@ class BookWyrmRepository(
             val followingDeferred = profile.following?.let { url ->
                 async {
                     try {
-                        val jsonUrl = if (url.endsWith(".json")) url else "$url.json"
-                        api.getCollectionData(jsonUrl).totalItems ?: 0
+                        api.getCollectionData(url).totalItems ?: 0
                     } catch (_: Exception) { 0 }
                 }
             }

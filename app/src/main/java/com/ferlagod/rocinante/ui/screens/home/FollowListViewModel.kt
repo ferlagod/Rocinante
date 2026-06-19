@@ -312,8 +312,7 @@ class FollowListViewModel(
 
     private suspend fun fetchProfileFollowingRedirects(actorUrl: String): BookWyrmProfile? {
         return try {
-            val jsonUrl = BookWyrmUtils.ensureJsonUrl(actorUrl)
-            val raw = api.getRawJson(jsonUrl).string()
+            val raw = api.getRawJson(actorUrl).string()
             // Verificar que sea JSON antes de parsear (evita parsear HTML de redirects)
             if (!raw.trimStart().startsWith("{")) return null
             gson.fromJson(raw, BookWyrmProfile::class.java)

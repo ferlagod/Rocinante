@@ -532,8 +532,7 @@ object NetworkClient {
             if (actorUrl.isBlank()) return@withContext null
             val absolute = if (actorUrl.startsWith("http")) actorUrl
                            else instanceHostUrl.trimEnd('/') + "/" + actorUrl.trimStart('/')
-            val jsonUrl = BookWyrmUtils.ensureJsonUrl(absolute)
-            val raw = api.getRawJson(jsonUrl).string()
+            val raw = api.getRawJson(absolute).string()
             if (!raw.trimStart().startsWith("{")) return@withContext null
             val profile = com.google.gson.Gson().fromJson(raw, BookWyrmProfile::class.java)
             val preferredUsername = profile.preferredUsername
