@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name" translatable="false">Rocinante</string>
     <string name="brand_bookwyrm" translatable="false">BookWyrm</string>
@@ -209,4 +208,4 @@
 🔹 Reviews are sorted from newest to oldest.
 🔹 Fixed the bug when publishing reviews and follower counters.
 🔹 Internal stability improvements and reduced battery consumption.</string>
-</resources>
+<string name="search_tab_books">"Books"</string><string name="search_tab_users">"Users"</string><string name="search_hint_users">"Search users"</string><string name="search_btn_users">"Search user"</string><string name="search_users_info">"To find local users, type their name. For users on other instances, use the format user@instance.com"</string><string name="search_users_empty">"No users found"</string><string name="user_profile_title">"User Profile"</string><string name="user_profile_no_name">"No name"</string><string name="user_profile_no_summary">"This user has no description."</string><string name="add_book_manually_btn">"Can't find the book? Add it manually"</string></resources>

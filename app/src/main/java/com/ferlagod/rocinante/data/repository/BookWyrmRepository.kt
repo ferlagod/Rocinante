@@ -294,6 +294,63 @@ class BookWyrmRepository(
         }
     }
 
+    /**
+     * Realiza una búsqueda de usuarios devolviendo el HTML y raspando los resultados.
+     */
+    suspend fun searchUsersScraped(query: String, instanceUrl: String): List<com.ferlagod.rocinante.data.api.SuggestedUser> = withContext(Dispatchers.IO) {
+        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+        val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+        
+        try {
+            // Realizar búsqueda pasando type=user
+            val searchUrl = "${baseUrl}search?q=${java.net.URLEncoder.encode(query, "UTF-8")}&type=user"
+            
+            val response = api.getRawHtmlResponse(searchUrl)
+            if (!response.isSuccessful) return@withContext emptyList()
+            
+            val responseBody = response.body()?.string() ?: return@withContext emptyList()
+            
+            val document = org.jsoup.Jsoup.parse(responseBody)
+            val results = mutableListOf<com.ferlagod.rocinante.data.api.SuggestedUser>()
+            
+            val mediaElements = document.select(".media")
+            for (element in mediaElements) {
+                val userAnchor = element.selectFirst("a[href*=/user/]") ?: continue
+                val profileUrl = userAnchor.attr("href")
+                
+                // Excluir links internos como /books o /followers
+                if (profileUrl.endsWith("/books") || profileUrl.endsWith("/followers") || profileUrl.endsWith("/following")) {
+                    continue
+                }
+                
+                val avatarImg = element.selectFirst("img.avatar") ?: element.selectFirst("img")
+                val avatarRaw = avatarImg?.attr("src")
+                val avatarUrl = if (avatarRaw != null && !avatarRaw.startsWith("http")) {
+                    baseUrl.trimEnd('/') + "/" + avatarRaw.trimStart('/')
+                } else avatarRaw ?: ""
+                
+                val nameElement = element.selectFirst(".title")
+                val name = nameElement?.text()?.replace("Blocca account", "")?.trim() ?: ""
+                
+                val handleElement = element.selectFirst(".subtitle")
+                val handle = handleElement?.text()?.trim() ?: profileUrl.substringAfter("/user/")
+                
+                results.add(
+                    com.ferlagod.rocinante.data.api.SuggestedUser(
+                        name = name,
+                        handle = handle,
+                        avatarUrl = avatarUrl,
+                        profileUrl = if (profileUrl.startsWith("http")) profileUrl else baseUrl.trimEnd('/') + "/" + profileUrl.trimStart('/')
+                    )
+                )
+            }
+            results.distinctBy { it.handle }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // Helpers privados
     // ---------------------------------------------------------------------------

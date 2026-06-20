@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Twój czytnik społecznościowy BookWyrm</string>
     <string name="login_card_title">Połącz z instancją</string>
@@ -207,4 +206,4 @@
 🔹 Recenzje są sortowane od najnowszych do najstarszych.
 🔹 Naprawiono błąd podczas publikowania recenzji oraz liczniki obserwujących.
 🔹 Wewnętrzne ulepszenia stabilności i zmniejszone zużycie baterii.</string>
-</resources>
+<string name="search_tab_books">"Książki"</string><string name="search_tab_users">"Użytkownicy"</string><string name="search_hint_users">"Szukaj użytkowników"</string><string name="search_btn_users">"Szukaj użytkownika"</string><string name="search_users_info">"Aby znaleźć lokalnych użytkowników, wpisz ich imię. W przypadku użytkowników innych instancji użyj formatu uzytkownik@instancja.com"</string><string name="search_users_empty">"Nie znaleziono użytkowników"</string><string name="user_profile_title">"Profil użytkownika"</string><string name="user_profile_no_name">"Brak imienia"</string><string name="user_profile_no_summary">"Ten użytkownik nie ma opisu."</string><string name="add_book_manually_btn">"Nie możesz znaleźć książki? Dodaj ją ręcznie"</string></resources>

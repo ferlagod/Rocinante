@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Vaše sociální čtečka BookWyrm</string>
     <string name="login_card_title">Připojit instanci</string>
@@ -207,4 +206,4 @@
 🔹 Recenze jsou seřazeny od nejnovějších po nejstarší.
 🔹 Opravena chyba při publikování recenzí a počitadlech sledujících.
 🔹 Interní vylepšení stability a snížení spotřeby baterie.</string>
-</resources>
+<string name="search_tab_books">"Knihy"</string><string name="search_tab_users">"Uživatelé"</string><string name="search_hint_users">"Hledat uživatele"</string><string name="search_btn_users">"Hledat uživatele"</string><string name="search_users_info">"Chcete-li najít místní uživatele, zadejte jejich jméno. Uživatelé v jiných instancích používají formát uzivatel@instance.com"</string><string name="search_users_empty">"Nenalezeni žádní uživatelé"</string><string name="user_profile_title">"Uživatelský profil"</string><string name="user_profile_no_name">"Bez jména"</string><string name="user_profile_no_summary">"Tento uživatel nemá žádný popis."</string><string name="add_book_manually_btn">"Nemůžete najít knihu? Přidejte ji ručně"</string></resources>

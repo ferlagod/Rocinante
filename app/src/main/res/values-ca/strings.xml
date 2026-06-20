@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">El teu lector social de BookWyrm</string>
     <string name="login_card_title">Connectar a instància</string>
@@ -207,4 +206,4 @@
 🔹 Ressenyes ordenades de més noves a més antigues.
 🔹 S\'ha solucionat l\'error en publicar ressenyes i els comptadors de seguidors.
 🔹 Millores internes d\'estabilitat i reducció de consum de bateria.</string>
-</resources>
+<string name="search_tab_books">"Llibres"</string><string name="search_tab_users">"Usuaris"</string><string name="search_hint_users">"Cercar usuaris"</string><string name="search_btn_users">"Cercar usuari"</string><string name="search_users_info">"Per trobar usuaris locals, escriu el seu nom. Si busques algú d'una altra instància, utilitza el format usuari@instancia.com"</string><string name="search_users_empty">"No s'han trobat usuaris"</string><string name="user_profile_title">"Perfil d'Usuari"</string><string name="user_profile_no_name">"Sense nom"</string><string name="user_profile_no_summary">"Aquest usuari no té descripció."</string><string name="add_book_manually_btn">"No trobes el llibre? Afegeix-lo manualment"</string></resources>

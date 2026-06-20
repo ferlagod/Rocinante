@@ -26,10 +26,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -63,6 +66,8 @@ import kotlinx.coroutines.launch
  * @param api Cliente de red pre-configurado opcional.
  * @param modifier Modificador de diseño para ajustar la disposición.
  */
+enum class SearchMode { BOOKS, USERS }
+
 @Composable
 fun SearchScreen(
     instanceUrl: String,
@@ -76,9 +81,14 @@ fun SearchScreen(
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<BookSearchResult>>(emptyList()) }
+    var userSearchResults by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(emptyList()) }
+    var searchMode by remember { mutableStateOf(SearchMode.BOOKS) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSearching by remember { mutableStateOf(false) }
     var isLoadingDetails by remember { mutableStateOf(false) }
+
+    var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.api.SuggestedUser?>(null) }
+    var selectedUserProfile by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmProfile?>(null) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -88,21 +98,27 @@ fun SearchScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val barcodeLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = ScanContract()
-    ) { result ->
-        if (result.contents != null) {
-            searchQuery = result.contents
+    val performSearch: () -> Unit = {
+        if (searchQuery.isNotBlank()) {
             isSearching = true
             keyboardController?.hide()
-            // Lanzar búsqueda automáticamente
             coroutineScope.launch {
                 try {
                     val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
-                    searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
-                    errorMessage = null
-                    if (searchResults.isEmpty()) {
-                        errorMessage = context.getString(R.string.shelf_empty)
+                    if (searchMode == SearchMode.BOOKS) {
+                        searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
+                        userSearchResults = emptyList()
+                        errorMessage = null
+                        if (searchResults.isEmpty()) {
+                            errorMessage = context.getString(R.string.shelf_empty)
+                        }
+                    } else {
+                        userSearchResults = repo.searchUsersScraped(searchQuery, instanceUrl)
+                        searchResults = emptyList()
+                        errorMessage = null
+                        if (userSearchResults.isEmpty()) {
+                            errorMessage = context.getString(R.string.search_users_empty)
+                        }
                     }
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
@@ -111,6 +127,16 @@ fun SearchScreen(
                     isSearching = false
                 }
             }
+        }
+    }
+
+    val barcodeLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            searchQuery = result.contents
+            searchMode = SearchMode.BOOKS
+            performSearch()
         }
     }
 
@@ -142,7 +168,7 @@ fun SearchScreen(
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("¿No encuentras el libro? Añádelo manualmente")
+                    Text(stringResource(R.string.add_book_manually_btn))
                 }
             }
         }
@@ -150,82 +176,73 @@ fun SearchScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text(stringResource(R.string.search_hint)) },
+            label = { Text(if (searchMode == SearchMode.BOOKS) stringResource(R.string.search_hint) else stringResource(R.string.search_hint_users)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(
-                onSearch = {
-                    if (searchQuery.isNotBlank()) {
-                        isSearching = true
-                        keyboardController?.hide()
-                        coroutineScope.launch {
-                            try {
-                                val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
-                                searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
-                                errorMessage = null
-                                if (searchResults.isEmpty()) {
-                                    errorMessage = context.getString(R.string.shelf_empty)
-                                }
-                            } catch (e: Exception) {
-                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                errorMessage = context.getString(R.string.search_error, e.message)
-                            } finally {
-                                isSearching = false
-                            }
-                        }
-                    }
-                }
+                onSearch = { performSearch() }
             ),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        TabRow(selectedTabIndex = searchMode.ordinal, modifier = Modifier.fillMaxWidth()) {
+            Tab(
+                selected = searchMode == SearchMode.BOOKS,
+                onClick = { 
+                    searchMode = SearchMode.BOOKS
+                    if (searchQuery.isNotBlank() && searchResults.isEmpty()) performSearch()
+                },
+                text = { Text(stringResource(R.string.search_tab_books)) }
+            )
+            Tab(
+                selected = searchMode == SearchMode.USERS,
+                onClick = { 
+                    searchMode = SearchMode.USERS
+                    if (searchQuery.isNotBlank() && userSearchResults.isEmpty()) performSearch()
+                },
+                text = { Text(stringResource(R.string.search_tab_users)) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         Button(
-            onClick = {
-                if (searchQuery.isNotBlank()) {
-                    isSearching = true
-                    keyboardController?.hide()
-                    coroutineScope.launch {
-                        try {
-                            val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
-                            searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
-                            errorMessage = null
-                            if (searchResults.isEmpty()) {
-                                errorMessage = context.getString(R.string.shelf_empty)
-                            }
-                        } catch (e: Exception) {
-                            if (e is kotlinx.coroutines.CancellationException) throw e
-                            errorMessage = context.getString(R.string.search_error, e.message)
-                        } finally {
-                            isSearching = false
-                        }
-                    }
-                }
-            },
+            onClick = { performSearch() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.search_btn))
+            Text(if (searchMode == SearchMode.BOOKS) stringResource(R.string.search_btn) else stringResource(R.string.search_btn_users))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedButton(
-            onClick = {
-                val options = ScanOptions()
-                options.setPrompt(context.getString(R.string.search_barcode_prompt))
-                options.setBeepEnabled(false)
-                options.setOrientationLocked(false)
-                barcodeLauncher.launch(options)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            androidx.compose.material3.Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.QrCodeScanner,
-                contentDescription = null
+        if (searchMode == SearchMode.BOOKS) {
+            OutlinedButton(
+                onClick = {
+                    val options = ScanOptions()
+                    options.setPrompt(context.getString(R.string.search_barcode_prompt))
+                    options.setBeepEnabled(false)
+                    options.setOrientationLocked(false)
+                    barcodeLauncher.launch(options)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.QrCodeScanner,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.search_barcode_btn))
+            }
+        } else {
+            Text(
+                text = stringResource(R.string.search_users_info),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.search_barcode_btn))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -237,7 +254,7 @@ fun SearchScreen(
 
         if (isSearching) {
             SearchSkeletonLoader()
-        } else if (searchResults.isNotEmpty()) {
+        } else if (searchMode == SearchMode.BOOKS && searchResults.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -329,6 +346,82 @@ fun SearchScreen(
                     }
                 }
             }
+        } else if (searchMode == SearchMode.USERS && userSearchResults.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(userSearchResults) { user ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (isLoadingDetails) return@clickable
+                                isLoadingDetails = true
+                                coroutineScope.launch {
+                                    try {
+                                        val profileUrlJson = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(user.profileUrl)
+                                        val profile = resolvedApi.getFullUserProfile(profileUrlJson)
+                                        selectedSuggestedUser = user
+                                        selectedUserProfile = profile
+                                    } catch (e: Exception) {
+                                        if (e is kotlinx.coroutines.CancellationException) throw e
+                                        errorMessage = context.getString(R.string.error_details_load, e.message)
+                                    } finally {
+                                        isLoadingDetails = false
+                                    }
+                                }
+                            },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (user.avatarUrl.isNotEmpty()) {
+                                AsyncImage(
+                                    model = user.avatarUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = user.name.takeIf { it.isNotBlank() }?.firstOrNull()?.toString()?.uppercase() ?: "?",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = user.name.ifBlank { "Sin nombre" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = user.handle,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -346,6 +439,185 @@ fun SearchScreen(
             }
         )
     }
+
+    if (selectedUserProfile != null && selectedSuggestedUser != null) {
+        UserProfileDialog(
+            profile = selectedUserProfile!!,
+            handle = selectedSuggestedUser!!.handle,
+            api = resolvedApi,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = {
+                selectedUserProfile = null
+                selectedSuggestedUser = null
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserProfileDialog(
+    profile: com.ferlagod.rocinante.data.api.BookWyrmProfile,
+    handle: String,
+    api: BookWyrmApi,
+    context: android.content.Context,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    onDismiss: () -> Unit
+) {
+    var isFollowing by remember { mutableStateOf(false) }
+    var isFollowPending by remember { mutableStateOf(false) }
+
+    val cleanHandle = handle.removePrefix("@")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.user_profile_title),
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header: Avatar + User + Handle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val avatarUrl = profile.icon?.url
+                    if (!avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = stringResource(R.string.profile_avatar_desc),
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Surface(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                androidx.compose.material3.Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Person,
+                                    contentDescription = stringResource(R.string.profile_default_avatar_desc),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = profile.name ?: stringResource(R.string.user_profile_no_name),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = handle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
+                // Botón para seguir / dejar de seguir al usuario
+                val buttonModifier = Modifier.fillMaxWidth()
+                if (isFollowPending) {
+                    Box(modifier = buttonModifier, contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    }
+                } else if (isFollowing) {
+                    OutlinedButton(
+                        onClick = {
+                            isFollowPending = true
+                            coroutineScope.launch {
+                                try {
+                                    val response = api.unfollowUser(cleanHandle)
+                                    if (response.isSuccessful || response.code() in 300..399) {
+                                        isFollowing = false
+                                        android.widget.Toast.makeText(context, context.getString(R.string.unfollow_success), android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    if (e is kotlinx.coroutines.CancellationException) throw e
+                                    android.widget.Toast.makeText(context, context.getString(R.string.error_network, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isFollowPending = false
+                                }
+                            }
+                        },
+                        modifier = buttonModifier
+                    ) {
+                        Text(stringResource(R.string.follow_btn_unfollow))
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            isFollowPending = true
+                            coroutineScope.launch {
+                                try {
+                                    val response = api.followUser(cleanHandle)
+                                    if (response.isSuccessful || response.code() in 300..399) {
+                                        isFollowing = true
+                                        android.widget.Toast.makeText(context, context.getString(R.string.follow_success), android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    if (e is kotlinx.coroutines.CancellationException) throw e
+                                    android.widget.Toast.makeText(context, context.getString(R.string.error_network, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isFollowPending = false
+                                }
+                            }
+                        },
+                        modifier = buttonModifier
+                    ) {
+                        Text(stringResource(R.string.follow_btn_follow))
+                    }
+                }
+
+                HorizontalDivider()
+
+                val cleanSummary = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(profile.summary ?: "").trim()
+                if (cleanSummary.isNotBlank()) {
+                    Text(
+                        text = cleanSummary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.user_profile_no_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.book_close))
+            }
+        }
+    )
 }
 
 @Composable

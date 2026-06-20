@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">O seu leitor social BookWyrm</string>
     <string name="login_card_title">Conectar instância</string>
@@ -207,4 +206,4 @@
 🔹 As críticas são ordenadas da mais recente para a mais antiga.
 🔹 Corrigido o erro ao publicar críticas e os contadores de seguidores.
 🔹 Melhorias internas de estabilidade e redução do consumo de bateria.</string>
-</resources>
+<string name="search_tab_books">"Livros"</string><string name="search_tab_users">"Usuários"</string><string name="search_hint_users">"Pesquisar usuários"</string><string name="search_btn_users">"Pesquisar usuário"</string><string name="search_users_info">"Para encontrar usuários locais, digite o nome deles. Para usuários de outras instâncias, use o formato usuario@instancia.com"</string><string name="search_users_empty">"Nenhum usuário encontrado"</string><string name="user_profile_title">"Perfil de Usuário"</string><string name="user_profile_no_name">"Sem nome"</string><string name="user_profile_no_summary">"Este usuário não tem descrição."</string><string name="add_book_manually_btn">"Não encontra o livro? Adicione-o manualmente"</string></resources>

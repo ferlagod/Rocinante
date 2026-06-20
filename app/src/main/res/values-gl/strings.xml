@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name" translatable="false">Rocinante</string>
     <string name="brand_bookwyrm" translatable="false">BookWyrm</string>
@@ -209,4 +208,4 @@
 🔹 Recensións ordenadas de máis novas a máis antigas.
 🔹 Arranxado o erro ao publicar recensións e os contadores de seguidores.
 🔹 Melloras internas de estabilidade e redución de consumo de batería.</string>
-</resources>
+<string name="search_tab_books">"Libros"</string><string name="search_tab_users">"Usuarios"</string><string name="search_hint_users">"Buscar usuarios"</string><string name="search_btn_users">"Buscar usuario"</string><string name="search_users_info">"Para atopar usuarios locais, escribe o seu nome. Se buscas a alguén doutra instancia, emprega o formato usuario@instancia.com"</string><string name="search_users_empty">"Non se atoparon usuarios"</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sen nome"</string><string name="user_profile_no_summary">"Este usuario non ten descrición."</string><string name="add_book_manually_btn">"¿Non atopas o libro? Engádeo manualmente"</string></resources>

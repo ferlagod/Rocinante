@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Cititorul tău social BookWyrm</string>
     <string name="login_card_title">Conectare la instanță</string>
@@ -207,4 +206,4 @@
 🔹 Recenziile sunt sortate de la cele mai noi la cele mai vechi.
 🔹 S-a remediat eroarea la publicarea recenziilor și a contoarelor de urmăritori.
 🔹 Îmbunătățiri interne de stabilitate și reducerea consumului de baterie.</string>
-</resources>
+<string name="search_tab_books">"Cărți"</string><string name="search_tab_users">"Utilizatori"</string><string name="search_hint_users">"Căutați utilizatori"</string><string name="search_btn_users">"Căutați utilizator"</string><string name="search_users_info">"Pentru a găsi utilizatori locali, introduceți numele acestora. Pentru utilizatorii din alte instanțe, utilizați formatul utilizator@instanta.com"</string><string name="search_users_empty">"Nu a fost găsit niciun utilizator"</string><string name="user_profile_title">"Profilul Utilizatorului"</string><string name="user_profile_no_name">"Fără nume"</string><string name="user_profile_no_summary">"Acest utilizator nu are nicio descriere."</string><string name="add_book_manually_btn">"Nu găsești cartea? Adaug-o manual"</string></resources>

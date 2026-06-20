@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Il tuo lettore social BookWyrm</string>
     <string name="login_card_title">Collega istanza</string>
@@ -207,4 +206,4 @@
 🔹 Recensioni ordinate dalle più recenti alle più vecchie.
 🔹 Corretto l\'errore durante la pubblicazione delle recensioni e nei contatori dei follower.
 🔹 Miglioramenti interni della stabilità e riduzione del consumo della batteria.</string>
-</resources>
+<string name="search_tab_books">"Libri"</string><string name="search_tab_users">"Utenti"</string><string name="search_hint_users">"Cerca utenti"</string><string name="search_btn_users">"Cerca utente"</string><string name="search_users_info">"Per trovare utenti locali, digita il loro nome. Per utenti di altre istanze, usa il formato utente@istanza.com"</string><string name="search_users_empty">"Nessun utente trovato"</string><string name="user_profile_title">"Profilo Utente"</string><string name="user_profile_no_name">"Senza nome"</string><string name="user_profile_no_summary">"Questo utente non ha una descrizione."</string><string name="add_book_manually_btn">"Non trovi il libro? Aggiungilo manualmente"</string></resources>

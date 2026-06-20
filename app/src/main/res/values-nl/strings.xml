@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Jouw sociale BookWyrm-lezer</string>
     <string name="login_card_title">Verbind instantie</string>
@@ -207,4 +206,4 @@
 🔹 Recensies zijn gesorteerd van nieuw naar oud.
 🔹 Fout verholpen bij het plaatsen van recensies en de volgers tellers.
 🔹 Interne stabiliteitsverbeteringen en verminderd batterijverbruik.</string>
-</resources>
+<string name="search_tab_books">"Boeken"</string><string name="search_tab_users">"Gebruikers"</string><string name="search_hint_users">"Gebruikers zoeken"</string><string name="search_btn_users">"Gebruiker zoeken"</string><string name="search_users_info">"Typ hun naam om lokale gebruikers te vinden. Gebruik voor gebruikers van andere instanties het formaat gebruiker@instantie.com"</string><string name="search_users_empty">"Geen gebruikers gevonden"</string><string name="user_profile_title">"Gebruikersprofiel"</string><string name="user_profile_no_name">"Geen naam"</string><string name="user_profile_no_summary">"Deze gebruiker heeft geen beschrijving."</string><string name="add_book_manually_btn">"Kunt u het boek niet vinden? Voeg het handmatig toe"</string></resources>
