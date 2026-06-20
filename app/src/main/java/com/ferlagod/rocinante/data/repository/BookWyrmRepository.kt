@@ -24,6 +24,7 @@ import com.ferlagod.rocinante.data.api.ActivityPubActivity
 import com.ferlagod.rocinante.data.api.ActivityPubObject
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmProfile
+import com.ferlagod.rocinante.data.api.BookSearchResult
 import com.ferlagod.rocinante.data.model.TimelineUiItem
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import com.google.gson.Gson
@@ -180,6 +181,117 @@ class BookWyrmRepository(
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
         val cleanUser = username.removePrefix("@").trim()
         loadFollowingActivities(baseUrl, cleanUser)
+    }
+
+    /**
+     * Realiza una búsqueda devolviendo el HTML y raspando los resultados.
+     * Soporta tanto resultados locales como remotos (conectores).
+     */
+    suspend fun searchBooksScraped(query: String, instanceUrl: String): List<BookSearchResult> = withContext(Dispatchers.IO) {
+        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+        val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+        
+        try {
+            val response = api.searchBooks(query)
+            if (!response.isSuccessful) return@withContext emptyList()
+            
+            val responseBody = response.body()?.string() ?: return@withContext emptyList()
+            
+            // Intento JSON primero por si es una API moderna pura
+            try {
+                if (responseBody.trimStart().startsWith("[")) {
+                    val typeToken = object : com.google.gson.reflect.TypeToken<List<BookSearchResult>>() {}.type
+                    return@withContext Gson().fromJson(responseBody, typeToken)
+                }
+            } catch (_: Exception) {}
+            
+            // Scraping HTML
+            val document = org.jsoup.Jsoup.parse(responseBody)
+            val results = mutableListOf<BookSearchResult>()
+            
+            // 1. Extraer resultados locales
+            val localElements = document.select("li.local-book-search-result, li:has(a[href*=/book/])")
+            for (element in localElements) {
+                // Ignore resolve-book forms in the local pass
+                if (element.selectFirst("form[action*=/resolve-book/]") != null) continue
+
+                val anchor = element.selectFirst("a[href*=/book/]") ?: continue
+                val title = anchor.text()
+                val key = anchor.attr("href").substringAfter("/book/").substringBefore("/")
+                
+                val authorAnchor = element.selectFirst("a.author") ?: element.selectFirst("a[href*=/author/]")
+                val author = authorAnchor?.text()
+                
+                val img = element.selectFirst("img.book-cover")
+                val coverRaw = img?.attr("src")
+                val cover = if (coverRaw != null && !coverRaw.startsWith("http")) {
+                    baseUrl.trimEnd('/') + coverRaw
+                } else coverRaw
+                
+                // Intentar extraer el año (ej: "(pubblicato 1949)" o "(published 1949)")
+                val textContent = element.text()
+                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().find(textContent)
+                val year = yearMatch?.value?.toIntOrNull()
+                
+                if (key.isNotBlank()) {
+                    results.add(
+                        BookSearchResult(
+                            key = key,
+                            title = title,
+                            author = author,
+                            year = year,
+                            cover = cover,
+                            isRemote = false
+                        )
+                    )
+                }
+            }
+            
+            // 2. Extraer resultados remotos (conectores federados)
+            // BookWyrm usa formularios con action "/resolve-book/" y un campo remote_id oculto
+            val remoteElements = document.select("li.remote-book-search-result, li:has(form[action*=/resolve-book/])")
+            for (element in remoteElements) {
+                // Buscamos el formulario para obtener el remote_id
+                val form = element.selectFirst("form[action*=/resolve-book/]")
+                val remoteIdInput = form?.selectFirst("input[name=remote_id]")
+                val remoteId = remoteIdInput?.attr("value")
+                
+                if (remoteId.isNullOrBlank()) continue
+                
+                // Normalmente el título está en negrita o en un span (BookWyrm UI)
+                val strongElems = element.select("strong")
+                val title = if (strongElems.isNotEmpty()) strongElems.first()?.text() ?: "Libro remoto" else "Libro remoto"
+                
+                // Extraer autor si está disponible
+                val authorText = element.text()
+                val author = authorText.substringAfter(" by ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
+                             ?: authorText.substringAfter(" di ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
+                
+                val img = element.selectFirst("img.book-cover")
+                val cover = img?.attr("src")
+                
+                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().find(authorText)
+                val year = yearMatch?.value?.toIntOrNull()
+                
+                results.add(
+                    BookSearchResult(
+                        key = remoteId, // Guardamos el remoteId en 'key' para que funcione como identificador temporal
+                        title = title,
+                        author = author,
+                        year = year,
+                        cover = cover,
+                        isRemote = true,
+                        remoteId = remoteId
+                    )
+                )
+            }
+            
+            // Evitar duplicados basados en 'key'
+            results.distinctBy { it.key }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
     }
 
     // ---------------------------------------------------------------------------

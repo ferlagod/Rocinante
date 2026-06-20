@@ -98,18 +98,15 @@ fun SearchScreen(
             // Lanzar búsqueda automáticamente
             coroutineScope.launch {
                 try {
-                    searchResults = resolvedApi.searchBooks(searchQuery)
+                    val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
+                    searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
                     errorMessage = null
                     if (searchResults.isEmpty()) {
                         errorMessage = context.getString(R.string.shelf_empty)
                     }
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
-                    if (e is com.google.gson.JsonSyntaxException || e.message?.contains("html") == true) {
-                        errorMessage = context.getString(R.string.search_error, context.getString(R.string.search_api_unsupported))
-                    } else {
-                        errorMessage = context.getString(R.string.search_error, e.message)
-                    }
+                    errorMessage = context.getString(R.string.search_error, e.message)
                 } finally {
                     isSearching = false
                 }
@@ -145,7 +142,7 @@ fun SearchScreen(
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Añadir libro desde tu instancia")
+                    Text("¿No encuentras el libro? Añádelo manualmente")
                 }
             }
         }
@@ -163,18 +160,15 @@ fun SearchScreen(
                         keyboardController?.hide()
                         coroutineScope.launch {
                             try {
-                                searchResults = resolvedApi.searchBooks(searchQuery)
+                                val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
+                                searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
                                 errorMessage = null
                                 if (searchResults.isEmpty()) {
                                     errorMessage = context.getString(R.string.shelf_empty)
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                if (e is com.google.gson.JsonSyntaxException || e.message?.contains("html") == true) {
-                                    errorMessage = context.getString(R.string.search_error, context.getString(R.string.search_api_unsupported))
-                                } else {
-                                    errorMessage = context.getString(R.string.search_error, e.message)
-                                }
+                                errorMessage = context.getString(R.string.search_error, e.message)
                             } finally {
                                 isSearching = false
                             }
@@ -194,18 +188,15 @@ fun SearchScreen(
                     keyboardController?.hide()
                     coroutineScope.launch {
                         try {
-                            searchResults = resolvedApi.searchBooks(searchQuery)
+                            val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
+                            searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
                             errorMessage = null
                             if (searchResults.isEmpty()) {
                                 errorMessage = context.getString(R.string.shelf_empty)
                             }
                         } catch (e: Exception) {
                             if (e is kotlinx.coroutines.CancellationException) throw e
-                            if (e is com.google.gson.JsonSyntaxException || e.message?.contains("html") == true) {
-                                errorMessage = context.getString(R.string.search_error, context.getString(R.string.search_api_unsupported))
-                            } else {
-                                errorMessage = context.getString(R.string.search_error, e.message)
-                            }
+                            errorMessage = context.getString(R.string.search_error, e.message)
                         } finally {
                             isSearching = false
                         }
@@ -264,11 +255,20 @@ fun SearchScreen(
                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                         context.startActivity(intent)
                                     } else {
-                                        activeBookKey = bookKey
                                         isLoadingDetails = true
                                         coroutineScope.launch {
                                             try {
-                                                val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookKey)
+                                                var finalBookKey = bookKey
+                                                if (book.isRemote && !book.remoteId.isNullOrEmpty()) {
+                                                    val localUrl = NetworkClient.resolveLocalBookUrl(resolvedApi, book.remoteId)
+                                                    if (localUrl != null) {
+                                                        val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
+                                                        if (potentialKey.isNotBlank()) finalBookKey = potentialKey
+                                                    }
+                                                }
+                                                
+                                                activeBookKey = finalBookKey
+                                                val detailsUrl = BookWyrmUtils.ensureJsonUrl(finalBookKey)
                                                 selectedBookDetails = resolvedApi.getBookDetails(detailsUrl)
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')

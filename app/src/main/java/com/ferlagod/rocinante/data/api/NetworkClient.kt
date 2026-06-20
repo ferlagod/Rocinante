@@ -129,7 +129,9 @@ data class BookSearchResult(
     val title: String?,
     val author: String?,
     val year: Int?,
-    val cover: String?
+    val cover: String?,
+    val isRemote: Boolean = false,
+    val remoteId: String? = null
 )
 
 /**
@@ -201,12 +203,12 @@ interface BookWyrmApi {
     ): retrofit2.Response<ResponseBody>
 
     // BookWyrm expone búsqueda JSON con &format=json desde v0.6.x.
-    // Instancias antiguas devolverán HTML y Gson fallará — no hay alternativa API estable.
+    // Devolvemos ResponseBody para poder procesar la respuesta en HTML o JSON
+    // y extraer tanto libros locales como remotos.
     @GET("search")
     suspend fun searchBooks(
-        @Query("q") query: String,
-        @Query("format") format: String = "json"
-    ): List<BookSearchResult>
+        @Query("q") query: String
+    ): retrofit2.Response<ResponseBody>
 
     @GET
     suspend fun getBookDetails(@Url fullUrl: String): BookWyrmBookDetails
