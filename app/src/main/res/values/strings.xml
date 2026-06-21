@@ -208,4 +208,12 @@
 🔹 Reviews are sorted from newest to oldest.
 🔹 Fixed the bug when publishing reviews and follower counters.
 🔹 Internal stability improvements and reduced battery consumption.</string>
-<string name="search_tab_books">"Books"</string><string name="search_tab_users">"Users"</string><string name="search_hint_users">"Search users"</string><string name="search_btn_users">"Search user"</string><string name="search_users_info">"To find local users, type their name. For users on other instances, use the format user@instance.com"</string><string name="search_users_empty">"No users found"</string><string name="user_profile_title">"User Profile"</string><string name="user_profile_no_name">"No name"</string><string name="user_profile_no_summary">"This user has no description."</string><string name="add_book_manually_btn">"Can't find the book? Add it manually"</string></resources>
+<string name="search_tab_books">"Books"</string><string name="search_tab_users">"Users"</string><string name="search_hint_users">"Search users"</string><string name="search_btn_users">"Search user"</string><string name="search_users_info">To find local users, type their name. For users on other instances, use the format user@instance.com</string><string name="search_users_empty">No users found</string><string name="user_profile_title">"User Profile"</string><string name="user_profile_no_name">"No name"</string><string name="user_profile_no_summary">"This user has no description."</string><string name="add_book_manually_btn">Can\'t find the book? Add it manually</string><string name="changelog_text_v1_0_4">Expanded search: It is now possible to search for users and locate books hosted on other instances.
+
+Comfortable reading: New \\"...read more\\" button to expand long reviews in the activity section.
+
+Counter fix: Solved the bug that showed 0 followers/following.
+
+Compatibility: Improved synchronization with Mastodon accounts.
+
+Design: Added support for monochrome icons.</string></resources>

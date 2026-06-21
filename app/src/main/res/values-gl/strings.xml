@@ -208,4 +208,12 @@
 🔹 Recensións ordenadas de máis novas a máis antigas.
 🔹 Arranxado o erro ao publicar recensións e os contadores de seguidores.
 🔹 Melloras internas de estabilidade e redución de consumo de batería.</string>
-<string name="search_tab_books">"Libros"</string><string name="search_tab_users">"Usuarios"</string><string name="search_hint_users">"Buscar usuarios"</string><string name="search_btn_users">"Buscar usuario"</string><string name="search_users_info">"Para atopar usuarios locais, escribe o seu nome. Se buscas a alguén doutra instancia, emprega o formato usuario@instancia.com"</string><string name="search_users_empty">"Non se atoparon usuarios"</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sen nome"</string><string name="user_profile_no_summary">"Este usuario non ten descrición."</string><string name="add_book_manually_btn">"¿Non atopas o libro? Engádeo manualmente"</string></resources>
+<string name="search_tab_books">"Libros"</string><string name="search_tab_users">"Usuarios"</string><string name="search_hint_users">"Buscar usuarios"</string><string name="search_btn_users">"Buscar usuario"</string><string name="search_users_info">Para atopar usuarios locais, escribe o seu nome. Se buscas a alguén doutra instancia, emprega o formato usuario@instancia.com</string><string name="search_users_empty">Non se atoparon usuarios</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sen nome"</string><string name="user_profile_no_summary">"Este usuario non ten descrición."</string><string name="add_book_manually_btn">¿Non atopas o libro? Engádeo manualmente</string><string name="changelog_text_v1_0_4">Busca ampliada: Agora é posible buscar usuarios e localizar libros aloxados noutras instancias.
+
+Lectura cómoda: Novo botón \\"...ver máis\\" para expandir recensións longas na sección de actividade.
+
+Corrección de contadores: Solucionado o erro que mostraba 0 seguidores/seguidos.
+
+Compatibilidade: Mellora na sincronización con contas de Mastodon.
+
+Deseño: Soporte engadido para iconas monocromáticas.</string></resources>

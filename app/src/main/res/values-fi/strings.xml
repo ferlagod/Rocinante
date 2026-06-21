@@ -206,4 +206,12 @@
 🔹 Arvostelut on lajiteltu uusimmasta vanhimpaan.
 🔹 Korjattu virhe arvostelujen julkaisemisessa ja seuraajien laskureissa.
 🔹 Sisäiset vakausparannukset ja pienempi virrankulutus.</string>
-<string name="search_tab_books">"Kirjat"</string><string name="search_tab_users">"Käyttäjät"</string><string name="search_hint_users">"Etsi käyttäjiä"</string><string name="search_btn_users">"Etsi käyttäjä"</string><string name="search_users_info">"Löytääksesi paikallisia käyttäjiä, kirjoita heidän nimensä. Jos etsit muita instansseja, käytä muotoa kayttaja@instanssi.com"</string><string name="search_users_empty">"Käyttäjiä ei löytynyt"</string><string name="user_profile_title">"Käyttäjäprofiili"</string><string name="user_profile_no_name">"Ei nimeä"</string><string name="user_profile_no_summary">"Tällä käyttäjällä ei ole kuvausta."</string><string name="add_book_manually_btn">"Etkö löydä kirjaa? Lisää se manuaalisesti"</string></resources>
+<string name="search_tab_books">"Kirjat"</string><string name="search_tab_users">"Käyttäjät"</string><string name="search_hint_users">"Etsi käyttäjiä"</string><string name="search_btn_users">"Etsi käyttäjä"</string><string name="search_users_info">Löytääksesi paikallisia käyttäjiä, kirjoita heidän nimensä. Jos etsit muita instansseja, käytä muotoa kayttaja@instanssi.com</string><string name="search_users_empty">Käyttäjiä ei löytynyt</string><string name="user_profile_title">"Käyttäjäprofiili"</string><string name="user_profile_no_name">"Ei nimeä"</string><string name="user_profile_no_summary">"Tällä käyttäjällä ei ole kuvausta."</string><string name="add_book_manually_btn">Etkö löydä kirjaa? Lisää se manuaalisesti</string><string name="changelog_text_v1_0_4">Laajennettu haku: Nyt on mahdollista etsiä käyttäjiä ja paikantaa kirjoja, joita isännöidään muilla ilmentymillä.
+
+Mukava lukukokemus: Uusi \\"...näytä lisää\\" -painike pitkien arvostelujen laajentamiseksi toimintaosiossa.
+
+Laskurikoe: Korjattu virhe, joka näytti 0 seuraajaa/seurattavaa.
+
+Yhteensopivuus: Parannettu synkronointia Mastodon-tilien kanssa.
+
+Suunnittelu: Lisätty tuki yksivärisille kuvakkeille.</string></resources>

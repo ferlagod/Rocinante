@@ -155,7 +155,7 @@ class SettingsPreferences(private val context: Context) {
     /**
      * Guarda la versión de la aplicación para la cual ya se ha mostrado el cuadro de diálogo de novedades.
      *
-     * @param version String de la versión (ej. "1.0.3").
+     * @param version String de la versión (ej. "1.0.4").
      */
     suspend fun setLastChangelogVersion(version: String) {
         context.settingsDataStore.edit { prefs ->

@@ -206,4 +206,12 @@
 🔹 Відгуки відсортовані від найновіших до найстаріших.
 🔹 Виправлено помилку під час публікації відгуків та лічильників підписників.
 🔹 Внутрішні поліпшення стабільності та зменшене споживання батареї.</string>
-<string name="search_tab_books">"Книги"</string><string name="search_tab_users">"Користувачі"</string><string name="search_hint_users">"Пошук користувачів"</string><string name="search_btn_users">"Пошук користувача"</string><string name="search_users_info">"Щоб знайти локальних користувачів, введіть їх ім'я. Для користувачів інших інстанцій використовуйте формат користувач@інстанція.com"</string><string name="search_users_empty">"Користувачів не знайдено"</string><string name="user_profile_title">"Профіль користувача"</string><string name="user_profile_no_name">"Без імені"</string><string name="user_profile_no_summary">"У цього користувача немає опису."</string><string name="add_book_manually_btn">"Не можете знайти книгу? Додайте її вручну"</string></resources>
+<string name="search_tab_books">"Книги"</string><string name="search_tab_users">"Користувачі"</string><string name="search_hint_users">"Пошук користувачів"</string><string name="search_btn_users">"Пошук користувача"</string><string name="search_users_info">Щоб знайти локальних користувачів, введіть їх ім\'я. Для користувачів інших інстанцій використовуйте формат користувач@інстанція.com</string><string name="search_users_empty">Користувачів не знайдено</string><string name="user_profile_title">"Профіль користувача"</string><string name="user_profile_no_name">"Без імені"</string><string name="user_profile_no_summary">"У цього користувача немає опису."</string><string name="add_book_manually_btn">Не можете знайти книгу? Додайте її вручну</string><string name="changelog_text_v1_0_4">Розширений пошук: Тепер можна шукати користувачів та знаходити книги, що зберігаються на інших серверах.
+
+Зручне читання: Нова кнопка \\"...показати більше\\" для розгортання довгих відгуків у розділі активності.
+
+Виправлення лічильників: Вирішено помилку, яка показувала 0 підписників/підписок.
+
+Сумісність: Покращена синхронізація з обліковими записами Mastodon.
+
+Дизайн: Додано підтримку монохромних піктограм.</string></resources>

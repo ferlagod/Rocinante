@@ -206,4 +206,12 @@
 🔹 Critiques triées des plus récentes aux plus anciennes.
 🔹 Correction de l\'erreur lors de la publication de critiques et des compteurs d\'abonnés.
 🔹 Améliorations de stabilité interne et consommation de batterie réduite.</string>
-<string name="search_tab_books">"Livres"</string><string name="search_tab_users">"Utilisateurs"</string><string name="search_hint_users">"Rechercher des utilisateurs"</string><string name="search_btn_users">"Rechercher un utilisateur"</string><string name="search_users_info">"Pour trouver des utilisateurs locaux, tapez leur nom. Pour les utilisateurs d'autres instances, utilisez le format utilisateur@instance.com"</string><string name="search_users_empty">"Aucun utilisateur trouvé"</string><string name="user_profile_title">"Profil Utilisateur"</string><string name="user_profile_no_name">"Sans nom"</string><string name="user_profile_no_summary">"Cet utilisateur n'a pas de description."</string><string name="add_book_manually_btn">"Vous ne trouvez pas le livre ? Ajoutez-le manuellement"</string></resources>
+<string name="search_tab_books">"Livres"</string><string name="search_tab_users">"Utilisateurs"</string><string name="search_hint_users">"Rechercher des utilisateurs"</string><string name="search_btn_users">"Rechercher un utilisateur"</string><string name="search_users_info">Pour trouver des utilisateurs locaux, tapez leur nom. Pour les utilisateurs d\'autres instances, utilisez le format utilisateur@instance.com</string><string name="search_users_empty">Aucun utilisateur trouvé</string><string name="user_profile_title">"Profil Utilisateur"</string><string name="user_profile_no_name">"Sans nom"</string><string name="user_profile_no_summary">"Cet utilisateur n'a pas de description."</string><string name="add_book_manually_btn">Vous ne trouvez pas le livre ? Ajoutez-le manuellement</string><string name="changelog_text_v1_0_4">Recherche élargie : Il est désormais possible de rechercher des utilisateurs et de localiser des livres hébergés sur d\'autres instances.
+
+Lecture confortable : Nouveau bouton \\"...voir plus\\" pour développer les longues critiques dans la section activité.
+
+Correction des compteurs : Résolution du bug affichant 0 abonnés/abonnements.
+
+Compatibilité : Amélioration de la synchronisation avec les comptes Mastodon.
+
+Design : Ajout du support des icônes monochromes.</string></resources>

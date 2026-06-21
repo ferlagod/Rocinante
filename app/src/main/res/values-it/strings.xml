@@ -206,4 +206,12 @@
 🔹 Recensioni ordinate dalle più recenti alle più vecchie.
 🔹 Corretto l\'errore durante la pubblicazione delle recensioni e nei contatori dei follower.
 🔹 Miglioramenti interni della stabilità e riduzione del consumo della batteria.</string>
-<string name="search_tab_books">"Libri"</string><string name="search_tab_users">"Utenti"</string><string name="search_hint_users">"Cerca utenti"</string><string name="search_btn_users">"Cerca utente"</string><string name="search_users_info">"Per trovare utenti locali, digita il loro nome. Per utenti di altre istanze, usa il formato utente@istanza.com"</string><string name="search_users_empty">"Nessun utente trovato"</string><string name="user_profile_title">"Profilo Utente"</string><string name="user_profile_no_name">"Senza nome"</string><string name="user_profile_no_summary">"Questo utente non ha una descrizione."</string><string name="add_book_manually_btn">"Non trovi il libro? Aggiungilo manualmente"</string></resources>
+<string name="search_tab_books">"Libri"</string><string name="search_tab_users">"Utenti"</string><string name="search_hint_users">"Cerca utenti"</string><string name="search_btn_users">"Cerca utente"</string><string name="search_users_info">Per trovare utenti locali, digita il loro nome. Per utenti di altre istanze, usa il formato utente@istanza.com</string><string name="search_users_empty">Nessun utente trovato</string><string name="user_profile_title">"Profilo Utente"</string><string name="user_profile_no_name">"Senza nome"</string><string name="user_profile_no_summary">"Questo utente non ha una descrizione."</string><string name="add_book_manually_btn">Non trovi il libro? Aggiungilo manualmente</string><string name="changelog_text_v1_0_4">Ricerca ampliata: Ora è possibile cercare utenti e localizzare libri ospitati su altre istanze.
+
+Lettura comoda: Nuovo pulsante \\"...leggi tutto\\" per espandere le recensioni lunghe nella sezione attività.
+
+Correzione contatori: Risolto il bug che mostrava 0 follower/seguiti.
+
+Compatibilità: Migliore sincronizzazione con gli account Mastodon.
+
+Design: Aggiunto supporto per icone monocromatiche.</string></resources>

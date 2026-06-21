@@ -131,7 +131,7 @@ fun RocinanteApp() {
     val coroutineScope = rememberCoroutineScope()
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     var showChangelog by remember { mutableStateOf(false) }
-    val currentVersion = "v1.0.3"
+    val currentVersion = "1.0.4"
 
     LaunchedEffect(Unit) {
         val prefs = settingsPreferences.settingsFlow.first()
@@ -150,7 +150,7 @@ fun RocinanteApp() {
             },
             title = { Text(text = stringResource(R.string.changelog_title, currentVersion), fontWeight = FontWeight.Bold) },
             text = { 
-                Text(stringResource(R.string.changelog_text_v1_0_3))
+                Text(stringResource(R.string.changelog_text_v1_0_4))
             },
             confirmButton = {
                 TextButton(onClick = {

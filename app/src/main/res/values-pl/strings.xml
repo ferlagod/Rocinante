@@ -206,4 +206,12 @@
 🔹 Recenzje są sortowane od najnowszych do najstarszych.
 🔹 Naprawiono błąd podczas publikowania recenzji oraz liczniki obserwujących.
 🔹 Wewnętrzne ulepszenia stabilności i zmniejszone zużycie baterii.</string>
-<string name="search_tab_books">"Książki"</string><string name="search_tab_users">"Użytkownicy"</string><string name="search_hint_users">"Szukaj użytkowników"</string><string name="search_btn_users">"Szukaj użytkownika"</string><string name="search_users_info">"Aby znaleźć lokalnych użytkowników, wpisz ich imię. W przypadku użytkowników innych instancji użyj formatu uzytkownik@instancja.com"</string><string name="search_users_empty">"Nie znaleziono użytkowników"</string><string name="user_profile_title">"Profil użytkownika"</string><string name="user_profile_no_name">"Brak imienia"</string><string name="user_profile_no_summary">"Ten użytkownik nie ma opisu."</string><string name="add_book_manually_btn">"Nie możesz znaleźć książki? Dodaj ją ręcznie"</string></resources>
+<string name="search_tab_books">"Książki"</string><string name="search_tab_users">"Użytkownicy"</string><string name="search_hint_users">"Szukaj użytkowników"</string><string name="search_btn_users">"Szukaj użytkownika"</string><string name="search_users_info">Aby znaleźć lokalnych użytkowników, wpisz ich imię. W przypadku użytkowników innych instancji użyj formatu uzytkownik@instancja.com</string><string name="search_users_empty">Nie znaleziono użytkowników</string><string name="user_profile_title">"Profil użytkownika"</string><string name="user_profile_no_name">"Brak imienia"</string><string name="user_profile_no_summary">"Ten użytkownik nie ma opisu."</string><string name="add_book_manually_btn">Nie możesz znaleźć książki? Dodaj ją ręcznie</string><string name="changelog_text_v1_0_4">Rozszerzone wyszukiwanie: Teraz możliwe jest wyszukiwanie użytkowników i lokalizowanie książek hostowanych na innych instancjach.
+
+Wygodne czytanie: Nowy przycisk \\"...pokaż więcej\\" do rozwijania długich recenzji w sekcji aktywności.
+
+Poprawka liczników: Rozwiązano błąd wyświetlający 0 obserwujących/obserwowanych.
+
+Kompatybilność: Ulepszona synchronizacja z kontami Mastodon.
+
+Design: Dodano obsługę monochromatycznych ikon.</string></resources>

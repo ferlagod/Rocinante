@@ -206,4 +206,12 @@
 🔹 Ressenyes ordenades de més noves a més antigues.
 🔹 S\'ha solucionat l\'error en publicar ressenyes i els comptadors de seguidors.
 🔹 Millores internes d\'estabilitat i reducció de consum de bateria.</string>
-<string name="search_tab_books">"Llibres"</string><string name="search_tab_users">"Usuaris"</string><string name="search_hint_users">"Cercar usuaris"</string><string name="search_btn_users">"Cercar usuari"</string><string name="search_users_info">"Per trobar usuaris locals, escriu el seu nom. Si busques algú d'una altra instància, utilitza el format usuari@instancia.com"</string><string name="search_users_empty">"No s'han trobat usuaris"</string><string name="user_profile_title">"Perfil d'Usuari"</string><string name="user_profile_no_name">"Sense nom"</string><string name="user_profile_no_summary">"Aquest usuari no té descripció."</string><string name="add_book_manually_btn">"No trobes el llibre? Afegeix-lo manualment"</string></resources>
+<string name="search_tab_books">"Llibres"</string><string name="search_tab_users">"Usuaris"</string><string name="search_hint_users">"Cercar usuaris"</string><string name="search_btn_users">"Cercar usuari"</string><string name="search_users_info">Per trobar usuaris locals, escriu el seu nom. Si busques algú d\'una altra instància, utilitza el format usuari@instancia.com</string><string name="search_users_empty">No s\'han trobat usuaris</string><string name="user_profile_title">"Perfil d'Usuari"</string><string name="user_profile_no_name">"Sense nom"</string><string name="user_profile_no_summary">"Aquest usuari no té descripció."</string><string name="add_book_manually_btn">No trobes el llibre? Afegeix-lo manualment</string><string name="changelog_text_v1_0_4">Cerca ampliada: Ara és possible cercar usuaris i localitzar llibres allotjats en altres instàncies.
+
+Lectura còmoda: Nou botó \\"...veure\'n més\\" per expandir ressenyes llargues a la secció d\'activitat.
+
+Correcció de comptadors: Solucionat l\'error que mostrava 0 seguidors/seguits.
+
+Compatibilitat: Millora en la sincronització amb comptes de Mastodon.
+
+Disseny: Suport afegit per a icones monocromàtiques.</string></resources>

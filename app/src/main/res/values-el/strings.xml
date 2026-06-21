@@ -206,4 +206,12 @@
 🔹 Οι κριτικές ταξινομούνται από τις νεότερες προς τις παλαιότερες.
 🔹 Διορθώθηκε το σφάλμα κατά τη δημοσίευση κριτικών και τους μετρητές ακολούθων.
 🔹 Εσωτερικές βελτιώσεις σταθερότητας και μειωμένη κατανάλωση μπαταρίας.</string>
-<string name="search_tab_books">"Βιβλία"</string><string name="search_tab_users">"Χρήστες"</string><string name="search_hint_users">"Αναζήτηση χρηστών"</string><string name="search_btn_users">"Αναζήτηση χρήστη"</string><string name="search_users_info">"Για να βρείτε τοπικούς χρήστες, πληκτρολογήστε το όνομά τους. Για χρήστες σε άλλες παρουσίες, χρησιμοποιήστε τη μορφή χρηστης@παρουσια.com"</string><string name="search_users_empty">"Δεν βρέθηκαν χρήστες"</string><string name="user_profile_title">"Προφίλ Χρήστη"</string><string name="user_profile_no_name">"Χωρίς όνομα"</string><string name="user_profile_no_summary">"Αυτός ο χρήστης δεν έχει περιγραφή."</string><string name="add_book_manually_btn">"Δεν βρίσκετε το βιβλίο; Προσθέστε το χειροκίνητα"</string></resources>
+<string name="search_tab_books">"Βιβλία"</string><string name="search_tab_users">"Χρήστες"</string><string name="search_hint_users">"Αναζήτηση χρηστών"</string><string name="search_btn_users">"Αναζήτηση χρήστη"</string><string name="search_users_info">Για να βρείτε τοπικούς χρήστες, πληκτρολογήστε το όνομά τους. Για χρήστες σε άλλες παρουσίες, χρησιμοποιήστε τη μορφή χρηστης@παρουσια.com</string><string name="search_users_empty">Δεν βρέθηκαν χρήστες</string><string name="user_profile_title">"Προφίλ Χρήστη"</string><string name="user_profile_no_name">"Χωρίς όνομα"</string><string name="user_profile_no_summary">"Αυτός ο χρήστης δεν έχει περιγραφή."</string><string name="add_book_manually_btn">Δεν βρίσκετε το βιβλίο; Προσθέστε το χειροκίνητα</string><string name="changelog_text_v1_0_4">Εκτεταμένη αναζήτηση: Είναι πλέον δυνατή η αναζήτηση χρηστών και ο εντοπισμός βιβλίων που φιλοξενούνται σε άλλες παρουσίες.
+
+Άνετη ανάγνωση: Νέο κουμπί \\"...δείτε περισσότερα\\" για επέκταση μεγάλων κριτικών στην ενότητα δραστηριότητας.
+
+Διόρθωση μετρητών: Επιλύθηκε το σφάλμα που εμφάνιζε 0 ακόλουθους/ακολουθούντες.
+
+Συμβατότητα: Βελτιωμένος συγχρονισμός με λογαριασμούς Mastodon.
+
+Σχεδιασμός: Προστέθηκε υποστήριξη για μονοχρωματικά εικονίδια.</string></resources>

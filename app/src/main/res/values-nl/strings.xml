@@ -206,4 +206,12 @@
 🔹 Recensies zijn gesorteerd van nieuw naar oud.
 🔹 Fout verholpen bij het plaatsen van recensies en de volgers tellers.
 🔹 Interne stabiliteitsverbeteringen en verminderd batterijverbruik.</string>
-<string name="search_tab_books">"Boeken"</string><string name="search_tab_users">"Gebruikers"</string><string name="search_hint_users">"Gebruikers zoeken"</string><string name="search_btn_users">"Gebruiker zoeken"</string><string name="search_users_info">"Typ hun naam om lokale gebruikers te vinden. Gebruik voor gebruikers van andere instanties het formaat gebruiker@instantie.com"</string><string name="search_users_empty">"Geen gebruikers gevonden"</string><string name="user_profile_title">"Gebruikersprofiel"</string><string name="user_profile_no_name">"Geen naam"</string><string name="user_profile_no_summary">"Deze gebruiker heeft geen beschrijving."</string><string name="add_book_manually_btn">"Kunt u het boek niet vinden? Voeg het handmatig toe"</string></resources>
+<string name="search_tab_books">"Boeken"</string><string name="search_tab_users">"Gebruikers"</string><string name="search_hint_users">"Gebruikers zoeken"</string><string name="search_btn_users">"Gebruiker zoeken"</string><string name="search_users_info">Typ hun naam om lokale gebruikers te vinden. Gebruik voor gebruikers van andere instanties het formaat gebruiker@instantie.com</string><string name="search_users_empty">Geen gebruikers gevonden</string><string name="user_profile_title">"Gebruikersprofiel"</string><string name="user_profile_no_name">"Geen naam"</string><string name="user_profile_no_summary">"Deze gebruiker heeft geen beschrijving."</string><string name="add_book_manually_btn">Kunt u het boek niet vinden? Voeg het handmatig toe</string><string name="changelog_text_v1_0_4">Uitgebreid zoeken: Het is nu mogelijk om naar gebruikers te zoeken en boeken te vinden die op andere instanties worden gehost.
+
+Comfortabel lezen: Nieuwe knop \\"...lees meer\\" om lange recensies in het activiteitengedeelte uit te vouwen.
+
+Teller-fix: Bug opgelost die 0 volgers/volgend weergaf.
+
+Compatibiliteit: Verbeterde synchronisatie met Mastodon-accounts.
+
+Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string></resources>

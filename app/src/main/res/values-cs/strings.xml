@@ -206,4 +206,12 @@
 🔹 Recenze jsou seřazeny od nejnovějších po nejstarší.
 🔹 Opravena chyba při publikování recenzí a počitadlech sledujících.
 🔹 Interní vylepšení stability a snížení spotřeby baterie.</string>
-<string name="search_tab_books">"Knihy"</string><string name="search_tab_users">"Uživatelé"</string><string name="search_hint_users">"Hledat uživatele"</string><string name="search_btn_users">"Hledat uživatele"</string><string name="search_users_info">"Chcete-li najít místní uživatele, zadejte jejich jméno. Uživatelé v jiných instancích používají formát uzivatel@instance.com"</string><string name="search_users_empty">"Nenalezeni žádní uživatelé"</string><string name="user_profile_title">"Uživatelský profil"</string><string name="user_profile_no_name">"Bez jména"</string><string name="user_profile_no_summary">"Tento uživatel nemá žádný popis."</string><string name="add_book_manually_btn">"Nemůžete najít knihu? Přidejte ji ručně"</string></resources>
+<string name="search_tab_books">"Knihy"</string><string name="search_tab_users">"Uživatelé"</string><string name="search_hint_users">"Hledat uživatele"</string><string name="search_btn_users">"Hledat uživatele"</string><string name="search_users_info">Chcete-li najít místní uživatele, zadejte jejich jméno. Uživatelé v jiných instancích používají formát uzivatel@instance.com</string><string name="search_users_empty">Nenalezeni žádní uživatelé</string><string name="user_profile_title">"Uživatelský profil"</string><string name="user_profile_no_name">"Bez jména"</string><string name="user_profile_no_summary">"Tento uživatel nemá žádný popis."</string><string name="add_book_manually_btn">Nemůžete najít knihu? Přidejte ji ručně</string><string name="changelog_text_v1_0_4">Rozšířené vyhledávání: Nyní je možné hledat uživatele a lokalizovat knihy hostované na jiných instancích.
+
+Pohodlné čtení: Nové tlačítko \\"...zobrazit více\\" pro rozbalení dlouhých recenzí v sekci aktivity.
+
+Oprava počítadel: Vyřešena chyba, která zobrazovala 0 sledujících/sledovaných.
+
+Kompatibilita: Vylepšená synchronizace s účty Mastodon.
+
+Design: Přidána podpora pro jednobarevné ikony.</string></resources>

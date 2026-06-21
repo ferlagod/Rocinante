@@ -206,4 +206,12 @@
 🔹 Recenziile sunt sortate de la cele mai noi la cele mai vechi.
 🔹 S-a remediat eroarea la publicarea recenziilor și a contoarelor de urmăritori.
 🔹 Îmbunătățiri interne de stabilitate și reducerea consumului de baterie.</string>
-<string name="search_tab_books">"Cărți"</string><string name="search_tab_users">"Utilizatori"</string><string name="search_hint_users">"Căutați utilizatori"</string><string name="search_btn_users">"Căutați utilizator"</string><string name="search_users_info">"Pentru a găsi utilizatori locali, introduceți numele acestora. Pentru utilizatorii din alte instanțe, utilizați formatul utilizator@instanta.com"</string><string name="search_users_empty">"Nu a fost găsit niciun utilizator"</string><string name="user_profile_title">"Profilul Utilizatorului"</string><string name="user_profile_no_name">"Fără nume"</string><string name="user_profile_no_summary">"Acest utilizator nu are nicio descriere."</string><string name="add_book_manually_btn">"Nu găsești cartea? Adaug-o manual"</string></resources>
+<string name="search_tab_books">"Cărți"</string><string name="search_tab_users">"Utilizatori"</string><string name="search_hint_users">"Căutați utilizatori"</string><string name="search_btn_users">"Căutați utilizator"</string><string name="search_users_info">Pentru a găsi utilizatori locali, introduceți numele acestora. Pentru utilizatorii din alte instanțe, utilizați formatul utilizator@instanta.com</string><string name="search_users_empty">Nu a fost găsit niciun utilizator</string><string name="user_profile_title">"Profilul Utilizatorului"</string><string name="user_profile_no_name">"Fără nume"</string><string name="user_profile_no_summary">"Acest utilizator nu are nicio descriere."</string><string name="add_book_manually_btn">Nu găsești cartea? Adaug-o manual</string><string name="changelog_text_v1_0_4">Căutare extinsă: Acum este posibil să căutați utilizatori și să localizați cărți găzduite pe alte instanțe.
+
+Citire confortabilă: Un nou buton \\"...vezi mai mult\\" pentru a extinde recenziile lungi în secțiunea de activitate.
+
+Corecție contoare: S-a rezolvat eroarea care afișa 0 urmăritori/urmăriri.
+
+Compatibilitate: Sincronizare îmbunătățită cu conturile Mastodon.
+
+Design: S-a adăugat suport pentru pictograme monocromatice.</string></resources>

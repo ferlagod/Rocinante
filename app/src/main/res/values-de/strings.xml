@@ -206,4 +206,12 @@
 🔹 Rezensionen sind von neu nach alt sortiert.
 🔹 Fehler beim Veröffentlichen von Rezensionen und bei Follower-Zählern behoben.
 🔹 Interne Stabilitätsverbesserungen und reduzierter Akkuverbrauch.</string>
-<string name="search_tab_books">"Bücher"</string><string name="search_tab_users">"Benutzer"</string><string name="search_hint_users">"Benutzer suchen"</string><string name="search_btn_users">"Benutzer suchen"</string><string name="search_users_info">"Um lokale Benutzer zu finden, geben Sie deren Namen ein. Für Benutzer anderer Instanzen verwenden Sie das Format benutzer@instanz.com"</string><string name="search_users_empty">"Keine Benutzer gefunden"</string><string name="user_profile_title">"Benutzerprofil"</string><string name="user_profile_no_name">"Ohne Namen"</string><string name="user_profile_no_summary">"Dieser Benutzer hat keine Beschreibung."</string><string name="add_book_manually_btn">"Finden Sie das Buch nicht? Fügen Sie es manuell hinzu"</string></resources>
+<string name="search_tab_books">"Bücher"</string><string name="search_tab_users">"Benutzer"</string><string name="search_hint_users">"Benutzer suchen"</string><string name="search_btn_users">"Benutzer suchen"</string><string name="search_users_info">Um lokale Benutzer zu finden, geben Sie deren Namen ein. Für Benutzer anderer Instanzen verwenden Sie das Format benutzer@instanz.com</string><string name="search_users_empty">Keine Benutzer gefunden</string><string name="user_profile_title">"Benutzerprofil"</string><string name="user_profile_no_name">"Ohne Namen"</string><string name="user_profile_no_summary">"Dieser Benutzer hat keine Beschreibung."</string><string name="add_book_manually_btn">Finden Sie das Buch nicht? Fügen Sie es manuell hinzu</string><string name="changelog_text_v1_0_4">Erweiterte Suche: Es ist nun möglich, nach Benutzern zu suchen und Bücher zu finden, die auf anderen Instanzen gehostet werden.
+
+Komfortables Lesen: Neuer \\"...mehr anzeigen\\"-Button zum Erweitern langer Rezensionen im Aktivitätsbereich.
+
+Zähler-Korrektur: Fehler behoben, der 0 Follower/Folgend anzeigte.
+
+Kompatibilität: Verbesserte Synchronisation mit Mastodon-Konten.
+
+Design: Unterstützung für monochrome Icons hinzugefügt.</string></resources>

@@ -206,4 +206,12 @@
 🔹 Recensioner sorteras från nyaste till äldsta.
 🔹 Fixat felet när man publicerade recensioner och följarräknare.
 🔹 Interna stabilitetsförbättringar och minskad batteriförbrukning.</string>
-<string name="search_tab_books">"Böcker"</string><string name="search_tab_users">"Användare"</string><string name="search_hint_users">"Sök användare"</string><string name="search_btn_users">"Sök användare"</string><string name="search_users_info">"Skriv deras namn för att hitta lokala användare. För användare på andra instanser, använd formatet användare@instans.com"</string><string name="search_users_empty">"Inga användare hittades"</string><string name="user_profile_title">"Användarprofil"</string><string name="user_profile_no_name">"Inget namn"</string><string name="user_profile_no_summary">"Denna användare har ingen beskrivning."</string><string name="add_book_manually_btn">"Hittar du inte boken? Lägg till den manuellt"</string></resources>
+<string name="search_tab_books">"Böcker"</string><string name="search_tab_users">"Användare"</string><string name="search_hint_users">"Sök användare"</string><string name="search_btn_users">"Sök användare"</string><string name="search_users_info">Skriv deras namn för att hitta lokala användare. För användare på andra instanser, använd formatet användare@instans.com</string><string name="search_users_empty">Inga användare hittades</string><string name="user_profile_title">"Användarprofil"</string><string name="user_profile_no_name">"Inget namn"</string><string name="user_profile_no_summary">"Denna användare har ingen beskrivning."</string><string name="add_book_manually_btn">Hittar du inte boken? Lägg till den manuellt</string><string name="changelog_text_v1_0_4">Utökad sökning: Det är nu möjligt att söka efter användare och hitta böcker som finns på andra instanser.
+
+Bekväm läsning: Ny \\"...läs mer\\"-knapp för att expandera långa recensioner i aktivitetssektionen.
+
+Räknarfix: Löst buggen som visade 0 följare/följer.
+
+Kompatibilitet: Förbättrad synkronisering med Mastodon-konton.
+
+Design: Lade till stöd för monokroma ikoner.</string></resources>
