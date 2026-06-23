@@ -214,4 +214,14 @@ Correcció de comptadors: Solucionat l\'error que mostrava 0 seguidors/seguits.
 
 Compatibilitat: Millora en la sincronització amb comptes de Mastodon.
 
-Disseny: Suport afegit per a icones monocromàtiques.</string></resources>
+Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="book_write_review">Ressenya</string>
+    <string name="book_add_quote">Afegir cita</string>
+    <string name="quotation_dialog_title">Afegir cita</string>
+    <string name="quotation_quote_label">Frase del llibre (opcional)</string>
+    <string name="quotation_page_label">Pàgina (opcional)</string>
+    <string name="quotation_content_label">El teu comentari / Cita</string>
+    <string name="quotation_btn_publish">Publicar</string>
+    <string name="quotation_success">Cita publicada amb èxit</string>
+    <string name="quotation_error">Error al publicar la cita: %s</string>
+    <string name="quotation_missing_data">No s'ha pogut carregar la informació necessària per publicar la cita</string>
+</resources>

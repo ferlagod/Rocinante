@@ -281,6 +281,18 @@ interface BookWyrmApi {
     ): retrofit2.Response<okhttp3.ResponseBody>
 
     @FormUrlEncoded
+    @POST("post/quotation/")
+    suspend fun postQuotation(
+        @Field("book") book: String,
+        @Field("user") user: String,
+        @Field("quote") quote: String,
+        @Field("content") content: String,
+        @Field("privacy") privacy: String,
+        @Field("content_warning") contentWarning: String?,
+        @Field("sensitive") sensitive: String?
+    ): retrofit2.Response<okhttp3.ResponseBody>
+
+    @FormUrlEncoded
     @POST("post/rating/")
     suspend fun postReviewRating(
         @Field("book") book: String,

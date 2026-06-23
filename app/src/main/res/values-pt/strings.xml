@@ -214,4 +214,14 @@ Correção de contadores: Resolvido o erro que mostrava 0 seguidores/seguindo.
 
 Compatibilidade: Melhoria na sincronização com contas do Mastodon.
 
-Design: Suporte adicionado para ícones monocromáticos.</string></resources>
+Design: Suporte adicionado para ícones monocromáticos.</string>    <string name="book_write_review">Crítica</string>
+    <string name="book_add_quote">Adicionar citação</string>
+    <string name="quotation_dialog_title">Adicionar citação</string>
+    <string name="quotation_quote_label">Frase do livro (opcional)</string>
+    <string name="quotation_page_label">Página (opcional)</string>
+    <string name="quotation_content_label">Seu comentário / Citação</string>
+    <string name="quotation_btn_publish">Publicar</string>
+    <string name="quotation_success">Citação publicada com sucesso</string>
+    <string name="quotation_error">Erro ao publicar citação: %s</string>
+    <string name="quotation_missing_data">Não foi possível carregar as informações necessárias para publicar a citação</string>
+</resources>

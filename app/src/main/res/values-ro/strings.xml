@@ -214,4 +214,14 @@ Corecție contoare: S-a rezolvat eroarea care afișa 0 urmăritori/urmăriri.
 
 Compatibilitate: Sincronizare îmbunătățită cu conturile Mastodon.
 
-Design: S-a adăugat suport pentru pictograme monocromatice.</string></resources>
+Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string name="book_write_review">Recenzie</string>
+    <string name="book_add_quote">Adaugă citat</string>
+    <string name="quotation_dialog_title">Adaugă citat</string>
+    <string name="quotation_quote_label">Frază din carte (opțional)</string>
+    <string name="quotation_page_label">Pagina (opțional)</string>
+    <string name="quotation_content_label">Comentariul tău / Citat</string>
+    <string name="quotation_btn_publish">Publică</string>
+    <string name="quotation_success">Citat publicat cu succes</string>
+    <string name="quotation_error">Eroare la publicarea citatului: %s</string>
+    <string name="quotation_missing_data">Nu s-au putut încărca informațiile necesare pentru a publica citatul</string>
+</resources>

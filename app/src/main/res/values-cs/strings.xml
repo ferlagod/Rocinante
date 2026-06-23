@@ -214,4 +214,14 @@ Oprava počítadel: Vyřešena chyba, která zobrazovala 0 sledujících/sledova
 
 Kompatibilita: Vylepšená synchronizace s účty Mastodon.
 
-Design: Přidána podpora pro jednobarevné ikony.</string></resources>
+Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="book_write_review">Recenze</string>
+    <string name="book_add_quote">Přidat citát</string>
+    <string name="quotation_dialog_title">Přidat citát</string>
+    <string name="quotation_quote_label">Fráze z knihy (volitelné)</string>
+    <string name="quotation_page_label">Strana (volitelné)</string>
+    <string name="quotation_content_label">Váš komentář / Citát</string>
+    <string name="quotation_btn_publish">Publikovat</string>
+    <string name="quotation_success">Citát úspěšně publikován</string>
+    <string name="quotation_error">Chyba při publikování citátu: %s</string>
+    <string name="quotation_missing_data">Nepodařilo se načíst požadované informace pro publikování citátu</string>
+</resources>

@@ -214,4 +214,14 @@ Poprawka liczników: Rozwiązano błąd wyświetlający 0 obserwujących/obserwo
 
 Kompatybilność: Ulepszona synchronizacja z kontami Mastodon.
 
-Design: Dodano obsługę monochromatycznych ikon.</string></resources>
+Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book_write_review">Recenzja</string>
+    <string name="book_add_quote">Dodaj cytat</string>
+    <string name="quotation_dialog_title">Dodaj cytat</string>
+    <string name="quotation_quote_label">Fraza z książki (opcjonalnie)</string>
+    <string name="quotation_page_label">Strona (opcjonalnie)</string>
+    <string name="quotation_content_label">Twój komentarz / Cytat</string>
+    <string name="quotation_btn_publish">Opublikuj</string>
+    <string name="quotation_success">Cytat opublikowany pomyślnie</string>
+    <string name="quotation_error">Błąd publikowania cytatu: %s</string>
+    <string name="quotation_missing_data">Nie udało się załadować informacji wymaganych do opublikowania cytatu</string>
+</resources>

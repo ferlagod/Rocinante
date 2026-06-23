@@ -84,6 +84,7 @@ fun BookDetailsDialog(
 ) {
     var showProgressDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
+    var showQuotationDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
 
     // Reseñas ordenadas de más reciente a más antigua. BookWyrm renderiza la fecha en
@@ -223,6 +224,25 @@ fun BookDetailsDialog(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(stringResource(R.string.book_update_progress))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showQuotationDialog = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.book_add_quote))
+                            }
+                            OutlinedButton(
+                                onClick = { showReviewDialog = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.book_write_review))
                             }
                         }
 
@@ -386,6 +406,21 @@ fun BookDetailsDialog(
             onSuccess = {
                 showReviewDialog = false
                 onDismiss() // Cerrar el diálogo entero
+            }
+        )
+    }
+
+    if (showQuotationDialog) {
+        QuotationDialog(
+            bookDetails = bookDetails,
+            activeBookKey = activeBookKey,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { showQuotationDialog = false },
+            onSuccess = {
+                showQuotationDialog = false
+                onDismiss()
             }
         )
     }
@@ -1041,6 +1076,294 @@ private fun ReviewDialog(
                 ) {
                     Text(
                         text = if (isSending) stringResource(R.string.post_btn_sending) else stringResource(R.string.review_btn_publish),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuotationDialog(
+    bookDetails: BookWyrmBookDetails,
+    activeBookKey: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
+    onDismiss: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    var pageText by remember { mutableStateOf("") }
+    var quoteText by remember { mutableStateOf("") }
+    var contentText by remember { mutableStateOf("") }
+    var includeSpoiler by remember { mutableStateOf(false) }
+    var spoilerText by remember { mutableStateOf("") }
+    var isSensitive by remember { mutableStateOf(false) }
+    var selectedPrivacy by remember { mutableStateOf("public") }
+    var isSending by remember { mutableStateOf(false) }
+    var privacyExpanded by remember { mutableStateOf(false) }
+
+    val privacyOptions = listOf(
+        "public" to stringResource(R.string.progress_privacy_public),
+        "followers" to stringResource(R.string.progress_privacy_followers),
+        "unlisted" to stringResource(R.string.privacy_unlisted),
+        "direct" to stringResource(R.string.progress_privacy_private)
+    )
+    val currentPrivacyLabel = privacyOptions.firstOrNull { it.first == selectedPrivacy }?.second ?: stringResource(R.string.progress_privacy_public)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.quotation_dialog_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.book_close))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Page text
+            Text(
+                text = stringResource(R.string.quotation_page_label),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = pageText,
+                onValueChange = { pageText = it },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Quote text
+            Text(
+                text = stringResource(R.string.quotation_quote_label),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = quoteText,
+                onValueChange = { quoteText = it },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                maxLines = 5,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Content text
+            Text(
+                text = stringResource(R.string.quotation_content_label),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = contentText,
+                onValueChange = { contentText = it },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                maxLines = 8,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Sensitive toggle
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = isSensitive,
+                    onCheckedChange = { isSensitive = it },
+                    colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                )
+                Text(
+                    text = stringResource(R.string.review_sensitive_label),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Spoiler alert
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.progress_spoiler_alert),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                IconButton(onClick = { includeSpoiler = !includeSpoiler }) {
+                    Icon(
+                        if (includeSpoiler) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = stringResource(R.string.progress_spoiler_alert),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            if (includeSpoiler) {
+                OutlinedTextField(
+                    value = spoilerText,
+                    onValueChange = { spoilerText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(stringResource(R.string.progress_spoiler_hint)) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Privacy & Submit
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = privacyExpanded,
+                    onExpandedChange = { privacyExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = currentPrivacyLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = privacyExpanded) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = privacyExpanded,
+                        onDismissRequest = { privacyExpanded = false }
+                    ) {
+                        privacyOptions.forEach { (value, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    selectedPrivacy = value
+                                    privacyExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        isSending = true
+                        coroutineScope.launch {
+                            try {
+                                val reviewContext = NetworkClient.getReviewContext(api, activeBookKey)
+                                if (reviewContext == null) {
+                                    Toast.makeText(context, context.getString(R.string.quotation_missing_data), Toast.LENGTH_SHORT).show()
+                                    isSending = false
+                                    return@launch
+                                }
+
+                                val finalContent = buildString {
+                                    if (pageText.isNotBlank()) {
+                                        append("Pág. $pageText")
+                                        if (quoteText.isNotBlank() || contentText.isNotBlank()) append("\n\n")
+                                    }
+                                    if (quoteText.isNotBlank()) {
+                                        append("Frase: \"$quoteText\"")
+                                        if (contentText.isNotBlank()) append("\n\n")
+                                    }
+                                    if (contentText.isNotBlank()) {
+                                        if (pageText.isNotBlank() || quoteText.isNotBlank()) append("Cita: ")
+                                        append(contentText)
+                                    }
+                                }
+
+                                val response = api.postQuotation(
+                                    book = reviewContext.bookId,
+                                    user = reviewContext.userId,
+                                    quote = quoteText,
+                                    content = finalContent,
+                                    privacy = selectedPrivacy,
+                                    contentWarning = spoilerText.takeIf { includeSpoiler && it.isNotBlank() },
+                                    sensitive = if (isSensitive) "on" else null
+                                )
+
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
+                                    onSuccess()
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.quotation_error, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_LONG).show()
+                            } finally {
+                                isSending = false
+                            }
+                        }
+                    },
+                    enabled = !isSending && (quoteText.isNotBlank() || contentText.isNotBlank()),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        text = if (isSending) stringResource(R.string.post_btn_sending) else stringResource(R.string.quotation_btn_publish),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }

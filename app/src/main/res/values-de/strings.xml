@@ -214,4 +214,14 @@ Zähler-Korrektur: Fehler behoben, der 0 Follower/Folgend anzeigte.
 
 Kompatibilität: Verbesserte Synchronisation mit Mastodon-Konten.
 
-Design: Unterstützung für monochrome Icons hinzugefügt.</string></resources>
+Design: Unterstützung für monochrome Icons hinzugefügt.</string>    <string name="book_write_review">Rezension</string>
+    <string name="book_add_quote">Zitat hinzufügen</string>
+    <string name="quotation_dialog_title">Zitat hinzufügen</string>
+    <string name="quotation_quote_label">Satz aus dem Buch (optional)</string>
+    <string name="quotation_page_label">Seite (optional)</string>
+    <string name="quotation_content_label">Dein Kommentar / Zitat</string>
+    <string name="quotation_btn_publish">Veröffentlichen</string>
+    <string name="quotation_success">Zitat erfolgreich veröffentlicht</string>
+    <string name="quotation_error">Fehler beim Veröffentlichen des Zitats: %s</string>
+    <string name="quotation_missing_data">Die für die Veröffentlichung des Zitats erforderlichen Informationen konnten nicht geladen werden</string>
+</resources>

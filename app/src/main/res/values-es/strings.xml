@@ -214,12 +214,23 @@
 <string name="search_btn_users">"Buscar usuario"</string>
 <string name="search_users_info">Para encontrar usuarios locales, escribe su nombre. Si buscas a alguien de otra instancia, utiliza el formato usuario@instancia.com</string>
 <string name="search_users_empty">No se encontraron usuarios</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sin nombre"</string>
-<string name="user_profile_no_summary">"Este usuario no tiene descripción."</string><string name="add_book_manually_btn">¿No encuentras el libro? Añádelo manualmente</string><string name="changelog_text_v1_0_4">Búsqueda ampliada: Ahora es posible buscar usuarios y localizar libros alojados en otras instancias.
+<string name="user_profile_no_summary">"Este usuario no tiene descripción."</string><string name="add_book_manually_btn">¿No encuentras el libro? Añádelo manualmente</string>    <string name="changelog_text_v1_0_4">Búsqueda ampliada: Ahora es posible buscar usuarios y localizar libros alojados en otras instancias.
 
-Lectura cómoda: Nuevo botón \\"...ver más\\" para expandir reseñas largas en la sección de actividad.
+Lectura cómoda: Nuevo botón \"...ver más\" para expandir reseñas largas en la sección de actividad.
 
 Corrección de contadores: Solucionado el error que mostraba 0 seguidores/seguidos.
 
 Compatibilidad: Mejora en la sincronización con cuentas de Mastodon.
 
-Diseño: Soporte añadido para iconos monocromáticos.</string></resources>
+Diseño: Soporte añadido para iconos monocromáticos.</string>
+    <string name="book_write_review">Reseña</string>
+    <string name="book_add_quote">Añadir cita</string>
+    <string name="quotation_dialog_title">Añadir cita</string>
+    <string name="quotation_quote_label">Frase del libro (opcional)</string>
+    <string name="quotation_page_label">Página (opcional)</string>
+    <string name="quotation_content_label">Tu comentario / Cita</string>
+    <string name="quotation_btn_publish">Publicar</string>
+    <string name="quotation_success">Cita publicada con éxito</string>
+    <string name="quotation_error">Error al publicar la cita: %s</string>
+    <string name="quotation_missing_data">No se pudo cargar la información necesaria para publicar la cita</string>
+</resources>

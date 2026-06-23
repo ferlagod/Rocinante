@@ -214,4 +214,14 @@ Correction des compteurs : Résolution du bug affichant 0 abonnés/abonnements.
 
 Compatibilité : Amélioration de la synchronisation avec les comptes Mastodon.
 
-Design : Ajout du support des icônes monochromes.</string></resources>
+Design : Ajout du support des icônes monochromes.</string>    <string name="book_write_review">Critique</string>
+    <string name="book_add_quote">Ajouter une citation</string>
+    <string name="quotation_dialog_title">Ajouter une citation</string>
+    <string name="quotation_quote_label">Phrase du livre (facultatif)</string>
+    <string name="quotation_page_label">Page (facultatif)</string>
+    <string name="quotation_content_label">Votre commentaire / Citation</string>
+    <string name="quotation_btn_publish">Publier</string>
+    <string name="quotation_success">Citation publiée avec succès</string>
+    <string name="quotation_error">Erreur lors de la publication de la citation: %s</string>
+    <string name="quotation_missing_data">Impossible de charger les informations requises pour publier la citation</string>
+</resources>

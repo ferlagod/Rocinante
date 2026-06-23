@@ -214,4 +214,14 @@
 
 Συμβατότητα: Βελτιωμένος συγχρονισμός με λογαριασμούς Mastodon.
 
-Σχεδιασμός: Προστέθηκε υποστήριξη για μονοχρωματικά εικονίδια.</string></resources>
+Σχεδιασμός: Προστέθηκε υποστήριξη για μονοχρωματικά εικονίδια.</string>    <string name="book_write_review">Κριτική</string>
+    <string name="book_add_quote">Προσθήκη παραθέματος</string>
+    <string name="quotation_dialog_title">Προσθήκη παραθέματος</string>
+    <string name="quotation_quote_label">Φράση από το βιβλίο (προαιρετικό)</string>
+    <string name="quotation_page_label">Σελίδα (προαιρετικό)</string>
+    <string name="quotation_content_label">Το σχόλιό σας / Παράθεμα</string>
+    <string name="quotation_btn_publish">Δημοσίευση</string>
+    <string name="quotation_success">Το παράθεμα δημοσιεύτηκε επιτυχώς</string>
+    <string name="quotation_error">Σφάλμα κατά τη δημοσίευση παραθέματος: %s</string>
+    <string name="quotation_missing_data">Δεν ήταν δυνατή η φόρτωση των απαιτούμενων πληροφοριών για τη δημοσίευση του παραθέματος</string>
+</resources>

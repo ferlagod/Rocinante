@@ -214,4 +214,14 @@ Teller-fix: Bug opgelost die 0 volgers/volgend weergaf.
 
 Compatibiliteit: Verbeterde synchronisatie met Mastodon-accounts.
 
-Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string></resources>
+Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <string name="book_write_review">Recensie</string>
+    <string name="book_add_quote">Citaat toevoegen</string>
+    <string name="quotation_dialog_title">Citaat toevoegen</string>
+    <string name="quotation_quote_label">Zin uit het boek (optioneel)</string>
+    <string name="quotation_page_label">Pagina (optioneel)</string>
+    <string name="quotation_content_label">Jouw opmerking / Citaat</string>
+    <string name="quotation_btn_publish">Publiceren</string>
+    <string name="quotation_success">Citaat succesvol gepubliceerd</string>
+    <string name="quotation_error">Fout bij publiceren citaat: %s</string>
+    <string name="quotation_missing_data">Kon de vereiste informatie voor het publiceren van het citaat niet laden</string>
+</resources>

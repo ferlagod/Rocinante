@@ -214,4 +214,14 @@ Correzione contatori: Risolto il bug che mostrava 0 follower/seguiti.
 
 Compatibilità: Migliore sincronizzazione con gli account Mastodon.
 
-Design: Aggiunto supporto per icone monocromatiche.</string></resources>
+Design: Aggiunto supporto per icone monocromatiche.</string>    <string name="book_write_review">Recensione</string>
+    <string name="book_add_quote">Aggiungi citazione</string>
+    <string name="quotation_dialog_title">Aggiungi citazione</string>
+    <string name="quotation_quote_label">Frase dal libro (opzionale)</string>
+    <string name="quotation_page_label">Pagina (opzionale)</string>
+    <string name="quotation_content_label">Il tuo commento / Citazione</string>
+    <string name="quotation_btn_publish">Pubblica</string>
+    <string name="quotation_success">Citazione pubblicata con successo</string>
+    <string name="quotation_error">Errore durante la pubblicazione della citazione: %s</string>
+    <string name="quotation_missing_data">Impossibile caricare le informazioni richieste per pubblicare la citazione</string>
+</resources>

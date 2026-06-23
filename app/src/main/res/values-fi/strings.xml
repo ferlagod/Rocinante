@@ -206,12 +206,23 @@
 🔹 Arvostelut on lajiteltu uusimmasta vanhimpaan.
 🔹 Korjattu virhe arvostelujen julkaisemisessa ja seuraajien laskureissa.
 🔹 Sisäiset vakausparannukset ja pienempi virrankulutus.</string>
-<string name="search_tab_books">"Kirjat"</string><string name="search_tab_users">"Käyttäjät"</string><string name="search_hint_users">"Etsi käyttäjiä"</string><string name="search_btn_users">"Etsi käyttäjä"</string><string name="search_users_info">Löytääksesi paikallisia käyttäjiä, kirjoita heidän nimensä. Jos etsit muita instansseja, käytä muotoa kayttaja@instanssi.com</string><string name="search_users_empty">Käyttäjiä ei löytynyt</string><string name="user_profile_title">"Käyttäjäprofiili"</string><string name="user_profile_no_name">"Ei nimeä"</string><string name="user_profile_no_summary">"Tällä käyttäjällä ei ole kuvausta."</string><string name="add_book_manually_btn">Etkö löydä kirjaa? Lisää se manuaalisesti</string><string name="changelog_text_v1_0_4">Laajennettu haku: Nyt on mahdollista etsiä käyttäjiä ja paikantaa kirjoja, joita isännöidään muilla ilmentymillä.
+<string name="search_tab_books">"Kirjat"</string><string name="search_tab_users">"Käyttäjät"</string><string name="search_hint_users">"Etsi käyttäjiä"</string><string name="search_btn_users">"Etsi käyttäjä"</string><string name="search_users_info">Löytääksesi paikallisia käyttäjiä, kirjoita heidän nimensä. Jos etsit muita instansseja, käytä muotoa kayttaja@instanssi.com</string><string name="search_users_empty">Käyttäjiä ei löytynyt</string><string name="user_profile_title">"Käyttäjäprofiili"</string><string name="user_profile_no_name">"Ei nimeä"</string><string name="user_profile_no_summary">"Tällä käyttäjällä ei ole kuvausta."</string><string name="add_book_manually_btn">Etkö löydä kirjaa? Lisää se manuaalisesti</string><string name="changelog_text_v1_0_4">Laajennettu haku: Nyt on mahdollista etsiä käyttäjiä ja paikantaa kirjoja muilta instansseilta.
 
-Mukava lukukokemus: Uusi \\"...näytä lisää\\" -painike pitkien arvostelujen laajentamiseksi toimintaosiossa.
+Mukavampi lukukokemus: Uusi \"...lue lisää\" -painike pitkien arvostelujen laajentamiseksi toimintaosiossa.
 
-Laskurikoe: Korjattu virhe, joka näytti 0 seuraajaa/seurattavaa.
+Laskureiden korjaus: Korjattu virhe, joka näytti 0 seuraajaa/seurattavaa.
 
 Yhteensopivuus: Parannettu synkronointia Mastodon-tilien kanssa.
 
-Suunnittelu: Lisätty tuki yksivärisille kuvakkeille.</string></resources>
+Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
+    <string name="book_write_review">Arvostelu</string>
+    <string name="book_add_quote">Lisää lainaus</string>
+    <string name="quotation_dialog_title">Lisää lainaus</string>
+    <string name="quotation_quote_label">Lause kirjasta (valinnainen)</string>
+    <string name="quotation_page_label">Sivu (valinnainen)</string>
+    <string name="quotation_content_label">Kommenttisi / Lainaus</string>
+    <string name="quotation_btn_publish">Julkaise</string>
+    <string name="quotation_success">Lainaus julkaistu onnistuneesti</string>
+    <string name="quotation_error">Virhe julkaistaessa lainausta: %s</string>
+    <string name="quotation_missing_data">Tarvittavia tietoja ei voitu ladata lainauksen julkaisemiseksi</string>
+</resources>
