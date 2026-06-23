@@ -429,6 +429,7 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "es" to "Español",
         "en" to "English",
         "gl" to "Galego",
+        "ca" to "Català",
         "fr" to "Français",
         "de" to "Deutsch",
         "it" to "Italiano",
@@ -439,7 +440,8 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "cs" to "Čeština",
         "sv" to "Svenska",
         "el" to "Ελληνικά",
-        "fi" to "Suomi"
+        "fi" to "Suomi",
+        "uk" to "Українська"
     )
 
     AlertDialog(

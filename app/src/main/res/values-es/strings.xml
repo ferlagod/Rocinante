@@ -208,7 +208,13 @@
 🔹 Reseñas ordenadas de más nuevas a más antiguas.
 🔹 Arreglado el error al publicar reseñas y los contadores de seguidores.
 🔹 Mejoras internas de estabilidad y reducción de consumo de batería.</string>
-<string name="search_tab_books">"Libros"</string><string name="search_tab_users">"Usuarios"</string><string name="search_hint_users">"Buscar usuarios"</string><string name="search_btn_users">"Buscar usuario"</string><string name="search_users_info">Para encontrar usuarios locales, escribe su nombre. Si buscas a alguien de otra instancia, utiliza el formato usuario@instancia.com</string><string name="search_users_empty">No se encontraron usuarios</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sin nombre"</string><string name="user_profile_no_summary">"Este usuario no tiene descripción."</string><string name="add_book_manually_btn">¿No encuentras el libro? Añádelo manualmente</string><string name="changelog_text_v1_0_4">Búsqueda ampliada: Ahora es posible buscar usuarios y localizar libros alojados en otras instancias.
+<string name="search_tab_books">"Libros"</string>
+<string name="search_tab_users">"Usuarios"</string>
+<string name="search_hint_users">"Buscar usuarios"</string>
+<string name="search_btn_users">"Buscar usuario"</string>
+<string name="search_users_info">Para encontrar usuarios locales, escribe su nombre. Si buscas a alguien de otra instancia, utiliza el formato usuario@instancia.com</string>
+<string name="search_users_empty">No se encontraron usuarios</string><string name="user_profile_title">"Perfil de Usuario"</string><string name="user_profile_no_name">"Sin nombre"</string>
+<string name="user_profile_no_summary">"Este usuario no tiene descripción."</string><string name="add_book_manually_btn">¿No encuentras el libro? Añádelo manualmente</string><string name="changelog_text_v1_0_4">Búsqueda ampliada: Ahora es posible buscar usuarios y localizar libros alojados en otras instancias.
 
 Lectura cómoda: Nuevo botón \\"...ver más\\" para expandir reseñas largas en la sección de actividad.
 
