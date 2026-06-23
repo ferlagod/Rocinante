@@ -110,7 +110,7 @@ fun SearchScreen(
                         userSearchResults = emptyList()
                         errorMessage = null
                         if (searchResults.isEmpty()) {
-                            errorMessage = context.getString(R.string.shelf_empty)
+                            errorMessage = context.getString(R.string.search_books_empty)
                         }
                     } else {
                         userSearchResults = repo.searchUsersScraped(searchQuery, instanceUrl)
@@ -153,7 +153,7 @@ fun SearchScreen(
             Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
             
-            if (errorMessage == context.getString(R.string.shelf_empty)) {
+            if (errorMessage == context.getString(R.string.search_books_empty)) {
                 OutlinedButton(
                     onClick = {
                         val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')

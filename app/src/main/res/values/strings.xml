@@ -36,6 +36,7 @@
     <string name="shelf_screen_subtitle">Select a shelf to view your reading progress.</string>
     <string name="shelf_back">Back</string>
     <string name="shelf_empty">This shelf is empty.</string>
+    <string name="search_books_empty">No books found</string>
     <string name="shelf_to_read_title">To read</string>
     <string name="shelf_to_read_desc">Books you want to read soon</string>
     <string name="shelf_reading_title">Reading</string>

@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Gson rules
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.** { *; }
+-keepclassmembers class * extends com.google.gson.reflect.TypeToken { *; }
+
+# Keep data models used with Gson
+-keep class com.ferlagod.rocinante.data.api.** { *; }

@@ -206,6 +206,7 @@ interface BookWyrmApi {
     // Devolvemos ResponseBody para poder procesar la respuesta en HTML o JSON
     // y extraer tanto libros locales como remotos.
     @GET("search")
+    @Headers("Accept: text/html")
     suspend fun searchBooks(
         @Query("q") query: String
     ): retrofit2.Response<ResponseBody>
