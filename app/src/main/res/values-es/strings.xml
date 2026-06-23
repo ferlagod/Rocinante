@@ -233,4 +233,5 @@ Diseño: Soporte añadido para iconos monocromáticos.</string>
     <string name="quotation_success">Cita publicada con éxito</string>
     <string name="quotation_error">Error al publicar la cita: %s</string>
     <string name="quotation_missing_data">No se pudo cargar la información necesaria para publicar la cita</string>
+    <string name="changelog_text_v1_0_5">Citas y reseñas: Ahora puedes verlas integradas dentro de la ficha de cada libro.\n\nBúsqueda pulida: Textos de la interfaz mejorados y ajustes internos para que la búsqueda sea más precisa.\n\nNuevos idiomas: La aplicación ahora está disponible en catalán y ucraniano, además de incluir correcciones para el finés.\n\nEstabilidad: Mejoras internas en el código (ProGuard/Gson) para evitar errores de ejecución.</string>
 </resources>

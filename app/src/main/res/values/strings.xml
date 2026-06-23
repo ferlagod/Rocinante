@@ -228,4 +228,5 @@ Design: Added support for monochrome icons.</string>
     <string name="quotation_success">Quote published successfully</string>
     <string name="quotation_error">Error publishing quote: %s</string>
     <string name="quotation_missing_data">Could not load required information to publish the quote</string>
+    <string name="changelog_text_v1_0_5">Quotes and reviews: You can now view them integrated directly into each book\'s details page.\n\nPolished search: Improved interface text and internal adjustments to make search more precise.\n\nNew languages: The app is now available in Catalan and Ukrainian, and includes fixes for Finnish.\n\nStability: Internal code improvements (ProGuard/Gson) to prevent runtime crashes.</string>
 </resources>
