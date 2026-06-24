@@ -1323,14 +1323,10 @@ private fun QuotationDialog(
                                 val finalContent = buildString {
                                     if (pageText.isNotBlank()) {
                                         append("Pág. $pageText")
-                                        if (quoteText.isNotBlank() || contentText.isNotBlank()) append("\n\n")
-                                    }
-                                    if (quoteText.isNotBlank()) {
-                                        append("Frase: \"$quoteText\"")
                                         if (contentText.isNotBlank()) append("\n\n")
                                     }
                                     if (contentText.isNotBlank()) {
-                                        if (pageText.isNotBlank() || quoteText.isNotBlank()) append("Cita: ")
+                                        if (pageText.isNotBlank()) append("Cita: ")
                                         append(contentText)
                                     }
                                 }
