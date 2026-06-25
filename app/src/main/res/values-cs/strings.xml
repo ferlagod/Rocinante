@@ -224,4 +224,5 @@ Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="boo
     <string name="quotation_success">Citát úspěšně publikován</string>
     <string name="quotation_error">Chyba při publikování citátu: %s</string>
     <string name="quotation_missing_data">Nepodařilo se načíst požadované informace pro publikování citátu</string>
+    <string name="changelog_text_v1_0_6">Citáty: Vylepšený vizuální design a opravena chyba, která duplikovala text citátu.\n\nKompatibilita: Aktualizovaná podpora pro správné fungování se servery BookWyrm verze 0.8.\n\nPočítadla: Opraven výpočet počtu sledujících a sledovaných.</string>
 </resources>

@@ -224,4 +224,5 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
     <string name="quotation_success">Cytat opublikowany pomyślnie</string>
     <string name="quotation_error">Błąd publikowania cytatu: %s</string>
     <string name="quotation_missing_data">Nie udało się załadować informacji wymaganych do opublikowania cytatu</string>
+    <string name="changelog_text_v1_0_6">Cytaty: Ulepszony projekt wizualny i naprawiony błąd, który duplikował tekst cytatu.\n\nKompatybilność: Zaktualizowano obsługę w celu prawidłowego działania z serwerami BookWyrm w wersji 0.8.\n\nLiczniki: Poprawiono obliczanie liczby obserwujących i obserwowanych.</string>
 </resources>

@@ -224,4 +224,5 @@ Design : Ajout du support des icônes monochromes.</string>    <string name="boo
     <string name="quotation_success">Citation publiée avec succès</string>
     <string name="quotation_error">Erreur lors de la publication de la citation: %s</string>
     <string name="quotation_missing_data">Impossible de charger les informations requises pour publier la citation</string>
+    <string name="changelog_text_v1_0_6">Citations : Amélioration du design visuel et correction du bug qui dupliquait le texte de la citation.\n\nCompatibilité : Mise à jour de la prise en charge pour fonctionner correctement avec les serveurs BookWyrm version 0.8.\n\nCompteurs : Correction du calcul du nombre d\'abonnés et d\'abonnements.</string>
 </resources>

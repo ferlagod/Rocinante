@@ -225,4 +225,5 @@ Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
     <string name="quotation_success">Lainaus julkaistu onnistuneesti</string>
     <string name="quotation_error">Virhe julkaistaessa lainausta: %s</string>
     <string name="quotation_missing_data">Tarvittavia tietoja ei voitu ladata lainauksen julkaisemiseksi</string>
+    <string name="changelog_text_v1_0_6">Lainaukset: Parannettu visuaalinen ilme ja korjattu virhe, joka kahdensi lainauksen tekstin.\n\nYhteensopivuus: Päivitetty tuki toimimaan oikein BookWyrm-palvelimien version 0.8 kanssa.\n\nLaskurit: Korjattu seuraajien ja seurattavien määrän laskenta.</string>
 </resources>

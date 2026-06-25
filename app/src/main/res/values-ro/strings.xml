@@ -224,4 +224,5 @@ Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string
     <string name="quotation_success">Citat publicat cu succes</string>
     <string name="quotation_error">Eroare la publicarea citatului: %s</string>
     <string name="quotation_missing_data">Nu s-au putut încărca informațiile necesare pentru a publica citatul</string>
+    <string name="changelog_text_v1_0_6">Citate: Design vizual îmbunătățit și s-a rezolvat eroarea care duplica textul citatului.\n\nCompatibilitate: Suport actualizat pentru a funcționa corect cu serverele BookWyrm versiunea 0.8.\n\nContoare: S-a corectat calculul numărului de urmăritori și urmăriri.</string>
 </resources>

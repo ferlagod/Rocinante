@@ -224,4 +224,5 @@ Design: Lade till stöd för monokroma ikoner.</string>    <string name="book_wr
     <string name="quotation_success">Citatet publicerades framgångsrikt</string>
     <string name="quotation_error">Fel vid publicering av citat: %s</string>
     <string name="quotation_missing_data">Det gick inte att ladda den information som krävs för att publicera citatet</string>
+    <string name="changelog_text_v1_0_6">Citat: Förbättrad visuell design och fixade buggen som duplicerade citattexten.\n\nKompatibilitet: Uppdaterat stöd för att fungera korrekt med BookWyrm-servrar på version 0.8.\n\nRäknare: Fixade beräkningen av antalet följare och följer.</string>
 </resources>

@@ -226,4 +226,5 @@ Deseño: Soporte engadido para iconas monocromáticas.</string>    <string name=
     <string name="quotation_success">Cita publicada con éxito</string>
     <string name="quotation_error">Erro ao publicar a cita: %s</string>
     <string name="quotation_missing_data">Non se puido cargar a información necesaria para publicar a cita</string>
+    <string name="changelog_text_v1_0_6">Citas: Deseño visual mellorado e solucionado o erro que duplicaba o texto da cita.\n\nCompatibilidade: Soporte actualizado para funcionar correctamente con servidores de BookWyrm na súa versión 0.8.\n\nContadores: Corrixido o cálculo do número de seguidores e seguidos.</string>
 </resources>
