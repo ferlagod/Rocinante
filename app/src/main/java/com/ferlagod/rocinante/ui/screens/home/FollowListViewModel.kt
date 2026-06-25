@@ -277,7 +277,26 @@ class FollowListViewModel(
                 } ?: break
 
                 @Suppress("DEPRECATION")
-                val root = JsonParser().parse(raw).asJsonObject
+                var root = JsonParser().parse(raw).asJsonObject
+                
+                // Fallback para instancias antiguas (BookWyrm 0.8) que devuelven el perfil del usuario (Person)
+                // en lugar de la colección al consultar followers.json o following.json
+                if (!root.has("orderedItems") && root.get("type")?.asString == "Person") {
+                    val fallbackUrl = if (initialUrl.contains("/following")) {
+                        root.get("following")?.asString
+                    } else {
+                        root.get("followers")?.asString
+                    }
+                    if (fallbackUrl != null) {
+                        val pagedFallbackUrl = if (fallbackUrl.contains("?")) fallbackUrl else "$fallbackUrl?page=1"
+                        val fallbackRaw = withTimeoutOrNull(15_000L) {
+                            api.getRawJson(pagedFallbackUrl).string()
+                        } ?: break
+                        @Suppress("DEPRECATION")
+                        root = JsonParser().parse(fallbackRaw).asJsonObject
+                    }
+                }
+
                 val items: JsonArray = root.getAsJsonArray("orderedItems") ?: break
 
                 items.mapNotNull { element ->
