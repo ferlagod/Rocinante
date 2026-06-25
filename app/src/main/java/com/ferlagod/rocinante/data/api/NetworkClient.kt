@@ -807,13 +807,53 @@ object NetworkClient {
                 val statusType = detectStatusType(element, statusId)
 
                 // --- Extraer el contenido ---
-                val contentElement = element.selectFirst("[itemprop=reviewBody]")
-                    ?: element.selectFirst(".content .quote .e-content")
-                    ?: element.selectFirst(".content .e-content")
-                    ?: element.selectFirst(".e-content")
-                    ?: element.selectFirst("blockquote")
-                    ?: element.selectFirst("div.content")
-                val rawContent = contentElement?.html() ?: ""
+                var rawContent = ""
+                if (statusType == "Quotation") {
+                    val quoteDiv = element.selectFirst(".quote.block")
+                    val quoteElement = quoteDiv?.selectFirst("blockquote") ?: element.selectFirst("blockquote")
+                    val quoteText = quoteElement?.text()?.trim() ?: ""
+                    
+                    val pText = quoteDiv?.selectFirst("p")?.text()?.trim() ?: ""
+                    val parenMatches = "\\([^)]*\\d+[^)]*\\)".toRegex().findAll(pText).toList()
+                    val pageText = parenMatches.lastOrNull()?.value ?: ""
+                    
+                    val commentElement = element.selectFirst("[itemprop=reviewBody]")
+                        ?: element.selectFirst(".content .e-content")
+                        ?: element.selectFirst(".e-content")
+                    var commentContent = ""
+                    
+                    if (commentElement != null) {
+                        val commentClone = commentElement.clone()
+                        commentClone.select(".quote.block").remove()
+                        commentClone.select("blockquote").remove() // Quitar la cita del comentario si estuviera anidada
+                        commentContent = commentClone.text().trim()
+                    }
+                    
+                    if (quoteText.isNotEmpty()) {
+                        rawContent = "«$quoteText»"
+                        if (pageText.isNotEmpty()) {
+                            rawContent += " $pageText"
+                        }
+                        if (commentContent.isNotEmpty()) {
+                            rawContent += " — $commentContent"
+                        }
+                    } else {
+                        rawContent = commentContent
+                    }
+                    
+                    if (rawContent.isBlank()) {
+                        val fallbackContent = element.selectFirst("div.content")
+                        rawContent = fallbackContent?.text() ?: ""
+                    }
+                } else {
+                    val contentElement = element.selectFirst("[itemprop=reviewBody]")
+                        ?: element.selectFirst(".content .quote .e-content")
+                        ?: element.selectFirst(".content .e-content")
+                        ?: element.selectFirst(".e-content")
+                        ?: element.selectFirst("blockquote")
+                        ?: element.selectFirst("div.content")
+                    rawContent = contentElement?.html() ?: ""
+                }
 
                 // Extraer el título de la review si existe
                 val reviewTitle = element.selectFirst("h3[itemprop=name]")?.text()
