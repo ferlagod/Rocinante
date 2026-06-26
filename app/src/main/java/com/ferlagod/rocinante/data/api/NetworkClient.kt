@@ -459,7 +459,24 @@ object NetworkClient {
                 requestBuilder.addHeader("X-CSRFToken", csrfToken)
             }
 
-            chain.proceed(requestBuilder.build())
+            var response = chain.proceed(requestBuilder.build())
+
+            // Handle 307 and 308 redirects manually, since followRedirects(false) is set globally.
+            // These status codes MUST preserve the request method and body (unlike 301/302).
+            // This prevents "307 Temporary Redirect" errors when HTTP->HTTPS upgrades happen 
+            // or when reverse proxies enforce canonical URLs.
+            var followCount = 0
+            while ((response.code == 307 || response.code == 308) && followCount < 3) {
+                val location = response.header("Location") ?: break
+                val newUrl = response.request.url.resolve(location) ?: break
+                
+                val newRequest = response.request.newBuilder().url(newUrl).build()
+                response.close()
+                response = chain.proceed(newRequest)
+                followCount++
+            }
+
+            response
         }
 
         val okHttpClient = OkHttpClient.Builder()
