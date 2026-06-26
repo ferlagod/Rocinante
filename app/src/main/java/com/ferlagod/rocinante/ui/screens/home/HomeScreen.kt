@@ -994,6 +994,9 @@ fun ProfileTab(
         factory = followFactory
     )
 
+    val followersState by followersViewModel.uiState.collectAsStateWithLifecycle()
+    val followingState by followingViewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(username, instanceUrl) {
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
@@ -1171,7 +1174,9 @@ fun ProfileTab(
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = profile?.followersCountLocal?.toString() ?: "0",
+                                text = profile?.followersCountLocal?.toString() 
+                                    ?: if (followersState.users.isNotEmpty()) followersState.users.size.toString() 
+                                    else if (!followersState.isLoading && !followersState.isRefreshing) "0" else "-",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1188,7 +1193,9 @@ fun ProfileTab(
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = profile?.followingCountLocal?.toString() ?: "0",
+                                text = profile?.followingCountLocal?.toString() 
+                                    ?: if (followingState.users.isNotEmpty()) followingState.users.size.toString() 
+                                    else if (!followingState.isLoading && !followingState.isRefreshing) "0" else "-",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )

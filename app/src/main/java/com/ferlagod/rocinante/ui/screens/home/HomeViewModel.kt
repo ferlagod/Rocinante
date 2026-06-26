@@ -191,7 +191,7 @@ class HomeViewModel(
         if (currentProfile != null) {
             _uiState.value = _uiState.value.copy(
                 profile = currentProfile.copy(
-                    followingCountLocal = currentProfile.followingCountLocal + 1
+                    followingCountLocal = currentProfile.followingCountLocal?.plus(1)
                 )
             )
         }
@@ -202,7 +202,7 @@ class HomeViewModel(
         if (currentProfile != null) {
             _uiState.value = _uiState.value.copy(
                 profile = currentProfile.copy(
-                    followingCountLocal = maxOf(0, currentProfile.followingCountLocal - 1)
+                    followingCountLocal = currentProfile.followingCountLocal?.let { maxOf(0, it - 1) }
                 )
             )
         }

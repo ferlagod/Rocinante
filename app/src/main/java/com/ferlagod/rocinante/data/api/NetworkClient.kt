@@ -63,8 +63,8 @@ data class BookWyrmProfile(
     val followers: String?,
     val following: String?,
     // Campos locales para la interfaz gráfica (no vienen del JSON de perfil)
-    var followersCountLocal: Int = 0,
-    var followingCountLocal: Int = 0
+    var followersCountLocal: Int? = null,
+    var followingCountLocal: Int? = null
 )
 
 data class ProfileIcon(

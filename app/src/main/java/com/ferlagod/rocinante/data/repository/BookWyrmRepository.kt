@@ -78,22 +78,22 @@ class BookWyrmRepository(
             val followersDeferred = profile.followers?.let { url ->
                 async {
                     try {
-                        api.getCollectionData(url).totalItems ?: 0
-                    } catch (_: Exception) { 0 }
+                        api.getCollectionData(url).totalItems
+                    } catch (_: Exception) { null }
                 }
             }
 
             val followingDeferred = profile.following?.let { url ->
                 async {
                     try {
-                        api.getCollectionData(url).totalItems ?: 0
-                    } catch (_: Exception) { 0 }
+                        api.getCollectionData(url).totalItems
+                    } catch (_: Exception) { null }
                 }
             }
 
             // 3. Asignación de resultados reales
-            profile.followersCountLocal = followersDeferred?.await() ?: 0
-            profile.followingCountLocal = followingDeferred?.await() ?: 0
+            profile.followersCountLocal = followersDeferred?.await()
+            profile.followingCountLocal = followingDeferred?.await()
         }
 
         profile
