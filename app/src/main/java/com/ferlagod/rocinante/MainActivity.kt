@@ -131,7 +131,7 @@ fun RocinanteApp() {
     val coroutineScope = rememberCoroutineScope()
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     var showChangelog by remember { mutableStateOf(false) }
-    val currentVersion = "1.0.6"
+    val currentVersion = "1.0.7"
 
     LaunchedEffect(Unit) {
         val prefs = settingsPreferences.settingsFlow.first()
