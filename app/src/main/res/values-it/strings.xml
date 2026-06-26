@@ -225,4 +225,7 @@ Design: Aggiunto supporto per icone monocromatiche.</string>    <string name="bo
     <string name="quotation_error">Errore durante la pubblicazione della citazione: %s</string>
     <string name="quotation_missing_data">Impossibile caricare le informazioni richieste per pubblicare la citazione</string>
     <string name="changelog_text_v1_0_6">Citazioni: Design visivo migliorato e risolto il bug che duplicava il testo della citazione.\n\nCompatibilità: Supporto aggiornato per funzionare correttamente con i server BookWyrm versione 0.8.\n\nContatori: Corretto il calcolo del numero di follower e seguiti.</string>
+    <string name="changelog_text_v1_0_7">- Correzione errore di connessione: Risolto il bug (Errore 307) che impediva di eseguire azioni a causa di problemi di reindirizzamento HTTPS durante l\'accesso. Non è più necessario effettuare nuovamente l\'accesso.
+
+- Contatore follower: Risolto il problema sui server con BookWyrm 0.8 che mostrava i tuoi follower e seguiti come 0. L\'app ora calcola questo numero internamente per evitare il bug del server.</string>
 </resources>

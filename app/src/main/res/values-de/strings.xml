@@ -225,4 +225,7 @@ Design: Unterstützung für monochrome Icons hinzugefügt.</string>    <string n
     <string name="quotation_error">Fehler beim Veröffentlichen des Zitats: %s</string>
     <string name="quotation_missing_data">Die für die Veröffentlichung des Zitats erforderlichen Informationen konnten nicht geladen werden</string>
     <string name="changelog_text_v1_0_6">Zitate: Verbessertes visuelles Design und Behebung des Fehlers, der den Zitattext duplizierte.\n\nKompatibilität: Aktualisierte Unterstützung für die ordnungsgemäße Funktion mit BookWyrm-Servern der Version 0.8.\n\nZähler: Die Berechnung der Anzahl von Followern und Gefolgten wurde korrigiert.</string>
+    <string name="changelog_text_v1_0_7">- Behebung von Verbindungsfehlern: Fehler (Fehler 307) behoben, der Aktionen aufgrund von HTTPS-Umleitungsproblemen bei der Anmeldung verhinderte. Eine erneute Anmeldung ist nicht mehr erforderlich.
+
+- Follower-Zähler: Das Problem auf Servern mit BookWyrm 0.8 wurde behoben, bei dem die Anzahl der Follower und der Personen, denen Sie folgen, als 0 angezeigt wurde. Die App berechnet diese Zahl nun intern, um den Serverfehler zu umgehen.</string>
 </resources>

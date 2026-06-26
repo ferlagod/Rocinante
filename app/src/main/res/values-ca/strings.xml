@@ -225,4 +225,7 @@ Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="
     <string name="quotation_error">Error al publicar la cita: %s</string>
     <string name="quotation_missing_data">No s\'ha pogut carregar la informació necessària per publicar la cita</string>
     <string name="changelog_text_v1_0_6">Cites: Disseny visual millorat i solucionat l\'error que duplicava el text de la cita.\n\nCompatibilitat: Suport actualitzat per funcionar correctament amb servidors de BookWyrm en la seva versió 0.8.\n\nComptadors: Corregit el càlcul del nombre de seguidors i seguits.</string>
+    <string name="changelog_text_v1_0_7">- Solució d\'error de connexió: Corregit l\'error (Error 307) que impedia realitzar accions a causa de problemes de redirecció HTTPS a l\'iniciar sessió. Ja no cal tornar a iniciar sessió.
+
+- Comptador de seguidors: Arreglat el problema en servidors amb BookWyrm 0.8 que mostrava els teus seguidors i seguits a 0. L\'aplicació ara calcula aquest número internament per evitar l\'error del servidor.</string>
 </resources>

@@ -225,4 +225,7 @@ Design : Ajout du support des icônes monochromes.</string>    <string name="boo
     <string name="quotation_error">Erreur lors de la publication de la citation: %s</string>
     <string name="quotation_missing_data">Impossible de charger les informations requises pour publier la citation</string>
     <string name="changelog_text_v1_0_6">Citations : Amélioration du design visuel et correction du bug qui dupliquait le texte de la citation.\n\nCompatibilité : Mise à jour de la prise en charge pour fonctionner correctement avec les serveurs BookWyrm version 0.8.\n\nCompteurs : Correction du calcul du nombre d\'abonnés et d\'abonnements.</string>
+    <string name="changelog_text_v1_0_7">- Correction de l\'erreur de connexion: Correction du bogue (Erreur 307) qui empêchait d\'effectuer des actions en raison de problèmes de redirection HTTPS lors de la connexion. Il n\'est plus nécessaire de se reconnecter.
+
+- Compteur d\'abonnés: Correction du problème sur les serveurs avec BookWyrm 0.8 qui affichait vos abonnés et abonnements à 0. L\'application calcule désormais ce nombre en interne pour éviter le bogue du serveur.</string>
 </resources>

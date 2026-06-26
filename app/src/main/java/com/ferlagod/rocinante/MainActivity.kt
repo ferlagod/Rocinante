@@ -150,7 +150,7 @@ fun RocinanteApp() {
             },
             title = { Text(text = stringResource(R.string.changelog_title, currentVersion), fontWeight = FontWeight.Bold) },
             text = { 
-                Text(stringResource(R.string.changelog_text_v1_0_6))
+                Text(stringResource(R.string.changelog_text_v1_0_7))
             },
             confirmButton = {
                 TextButton(onClick = {

@@ -225,4 +225,7 @@ Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <str
     <string name="quotation_error">Fout bij publiceren citaat: %s</string>
     <string name="quotation_missing_data">Kon de vereiste informatie voor het publiceren van het citaat niet laden</string>
     <string name="changelog_text_v1_0_6">Citaten: Verbeterd visueel ontwerp en de bug verholpen die de citaattekst dupliceerde.\n\nCompatibiliteit: Bijgewerkte ondersteuning om correct te werken met BookWyrm-servers versie 0.8.\n\nTellers: De berekening van het aantal volgers en volgend gecorrigeerd.</string>
+    <string name="changelog_text_v1_0_7">- Oplossing voor verbindingsfout: De fout (Fout 307) is verholpen die acties verhinderde vanwege HTTPS-omleidingsproblemen bij het inloggen. Opnieuw inloggen is niet meer nodig.
+
+- Volgersteller: Het probleem op servers met BookWyrm 0.8 is opgelost waarbij uw volgers en volgend op 0 stonden. De app berekent dit nummer nu intern om de serverfout te omzeilen.</string>
 </resources>

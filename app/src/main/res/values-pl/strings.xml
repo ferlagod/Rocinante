@@ -225,4 +225,7 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
     <string name="quotation_error">Błąd publikowania cytatu: %s</string>
     <string name="quotation_missing_data">Nie udało się załadować informacji wymaganych do opublikowania cytatu</string>
     <string name="changelog_text_v1_0_6">Cytaty: Ulepszony projekt wizualny i naprawiony błąd, który duplikował tekst cytatu.\n\nKompatybilność: Zaktualizowano obsługę w celu prawidłowego działania z serwerami BookWyrm w wersji 0.8.\n\nLiczniki: Poprawiono obliczanie liczby obserwujących i obserwowanych.</string>
+    <string name="changelog_text_v1_0_7">- Naprawa błędu połączenia: Naprawiono błąd (Błąd 307), który uniemożliwiał wykonywanie akcji z powodu problemów z przekierowaniem HTTPS podczas logowania. Ponowne logowanie nie jest już konieczne.
+
+- Licznik obserwujących: Naprawiono problem na serwerach z BookWyrm 0.8, który pokazywał 0 obserwujących i obserwowanych. Aplikacja teraz oblicza tę liczbę wewnętrznie, aby uniknąć błędu serwera.</string>
 </resources>
