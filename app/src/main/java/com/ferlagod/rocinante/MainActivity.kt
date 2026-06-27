@@ -62,6 +62,9 @@ import com.ferlagod.rocinante.data.model.SessionData
 import com.ferlagod.rocinante.ui.screens.home.HomeScreen
 import com.ferlagod.rocinante.ui.screens.login.SessionViewModel
 import com.ferlagod.rocinante.ui.screens.login.SessionViewModelFactory
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -481,11 +484,23 @@ fun BookWyrmLoginWebView(
     username: String,
     onLoginSuccess: (String, String, String) -> Unit
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
+
     AndroidView(
         factory = { context ->
             WebView(context).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+
+                if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+                    WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, isDarkTheme)
+                } else if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+                    @Suppress("DEPRECATION")
+                    WebSettingsCompat.setForceDark(
+                        settings,
+                        if (isDarkTheme) WebSettingsCompat.FORCE_DARK_ON else WebSettingsCompat.FORCE_DARK_OFF
+                    )
+                }
 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {

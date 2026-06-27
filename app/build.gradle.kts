@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Splash Screen API (nativa Android 12+, con compat para versiones anteriores)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.webkit)
     // Soporte oficial de idiomas por app (Per-App Language) para APIs < 33
     implementation(libs.androidx.appcompat)
     // WorkManager para notificaciones locales

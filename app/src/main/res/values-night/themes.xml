@@ -2,17 +2,17 @@
 <resources>
 
     <!--
-      Tema base de la Activity: sin ActionBar, fondo crema del logo.
+      Tema base de la Activity: sin ActionBar, fondo oscuro para modo noche.
       La SplashScreen API lo extiende automáticamente al arrancar.
     -->
     <style name="Theme.Rocinante" parent="Theme.SplashScreen">
         <!-- Icono centrado en la splash screen -->
-        <item name="windowSplashScreenBackground">#FCF9F5</item>
+        <item name="windowSplashScreenBackground">#131314</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_rocinante_logo</item>
         <!-- Duración máxima del icono animado (0 = estático) -->
         <item name="windowSplashScreenAnimationDuration">0</item>
         <!-- Color de la barra de estado durante el splash -->
-        <item name="android:statusBarColor">#FCF9F5</item>
+        <item name="android:statusBarColor">#131314</item>
         <!-- Tema al que transicionar al terminar el splash -->
         <item name="postSplashScreenTheme">@style/Theme.Rocinante.Main</item>
     </style>
@@ -21,7 +21,7 @@
     <style name="Theme.Rocinante.Main" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
 </resources>
