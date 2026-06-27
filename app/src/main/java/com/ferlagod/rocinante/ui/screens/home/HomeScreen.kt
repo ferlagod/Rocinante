@@ -1536,45 +1536,20 @@ fun ActivityDetailsDialog(
                 
                 Text(text = item.type, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    var isTextExpanded by remember { mutableStateOf(false) }
-                    var hasVisualOverflow by remember { mutableStateOf(false) }
+                var isTextExpanded by remember { mutableStateOf(false) }
+                var hasVisualOverflow by remember { mutableStateOf(false) }
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = item.content,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = if (isTextExpanded) Int.MAX_VALUE else 6,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            onTextLayout = { textLayoutResult ->
-                                if (textLayoutResult.hasVisualOverflow && !isTextExpanded) {
-                                    hasVisualOverflow = true
-                                }
-                            }
-                        )
-                        if (hasVisualOverflow && !isTextExpanded) {
-                            Text(
-                                text = "...ver más",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .clickable { isTextExpanded = true }
-                                    .padding(top = 4.dp, bottom = 4.dp)
-                            )
-                        }
-                    }
-                    if (!item.bookCoverUrl.isNullOrEmpty()) {
+                if (!item.bookCoverUrl.isNullOrEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         coil.compose.AsyncImage(
                             model = item.bookCoverUrl,
                             contentDescription = stringResource(R.string.book_cover_desc),
                             modifier = Modifier
-                                .width(70.dp)
-                                .height(105.dp)
+                                .width(100.dp)
+                                .height(150.dp)
                                 .clip(MaterialTheme.shapes.small)
                                 .clickable {
                                     item.bookUrl?.let { url ->
@@ -1582,6 +1557,31 @@ fun ActivityDetailsDialog(
                                     }
                                 },
                             contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = item.content,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = if (isTextExpanded) Int.MAX_VALUE else 6,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        onTextLayout = { textLayoutResult ->
+                            if (textLayoutResult.hasVisualOverflow && !isTextExpanded) {
+                                hasVisualOverflow = true
+                            }
+                        }
+                    )
+                    if (hasVisualOverflow && !isTextExpanded) {
+                        Text(
+                            text = "...ver más",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clickable { isTextExpanded = true }
+                                .padding(top = 4.dp, bottom = 4.dp)
                         )
                     }
                 }
