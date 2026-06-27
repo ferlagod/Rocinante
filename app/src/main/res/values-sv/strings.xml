@@ -228,4 +228,9 @@ Design: Lade till stöd för monokroma ikoner.</string>    <string name="book_wr
     <string name="changelog_text_v1_0_7">- Fix för anslutningsfel: Fixat buggen (Fel 307) som förhindrade handlingar på grund av HTTPS-omdirigeringsproblem vid inloggning. Det är inte längre nödvändigt att logga in igen.
 
 - Följarräknare: Fixat problemet på servrar med BookWyrm 0.8 som visade dina följare och följer som 0. Appen beräknar nu detta nummer internt för att undvika serverbuggen.</string>
+    <string name="nav_notifications">Meddelanden</string>
+    <string name="notifications_empty_title">Inga meddelanden än</string>
+    <string name="notifications_empty_body">När du nämns eller följs kommer du att se det här.</string>
+    <string name="clear_notifications">Rensa meddelanden</string>
+    <string name="notifications_cleared">Meddelanden rensade</string>
 </resources>

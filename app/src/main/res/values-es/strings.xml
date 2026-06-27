@@ -11,10 +11,13 @@
     <string name="nav_activity">Actividad</string>
     <string name="nav_my_books">Mis libros</string>
     <string name="nav_search">Buscar</string>
+    <string name="nav_notifications">Notificaciones</string>
     <string name="nav_profile">Perfil</string>
     <string name="nav_logout">Cerrar sesión</string>
     <string name="activity_empty_title">Sin actividad reciente</string>
     <string name="activity_empty_body">Cuando la instancia devuelva publicaciones del outbox, aparecerán aquí.</string>
+    <string name="notifications_empty_title">No tienes notificaciones</string>
+    <string name="notifications_empty_body">Cuando te mencionen o sigan, lo verás aquí.</string>
     <string name="activity_unknown_user">Usuario desconocido</string>
     <string name="follow_list_followers_title">Seguidores</string>
     <string name="follow_list_following_title">Siguiendo</string>
@@ -238,4 +241,6 @@ Diseño: Soporte añadido para iconos monocromáticos.</string>
     <string name="changelog_text_v1_0_7">- Solución de error de conexión: Corregido el fallo (Error 307) que impedía realizar acciones debido a problemas de redirección HTTPS al iniciar sesión. Ya no es necesario volver a loguearse.
 
 - Contador de seguidores: Arreglado el problema en servidores con BookWyrm 0.8 que mostraba tus seguidores y seguidos a 0. La aplicación ahora calcula este número internamente para evitar el fallo del servidor.</string>
+    <string name="clear_notifications">Borrar notificaciones</string>
+    <string name="notifications_cleared">Notificaciones borradas</string>
 </resources>

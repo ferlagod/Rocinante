@@ -229,4 +229,9 @@ Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
     <string name="changelog_text_v1_0_7">- Yhteysvirheen korjaus: Korjattu virhe (Virhe 307), joka esti toimintojen suorittamisen kirjautumisen yhteydessä olevien HTTPS-uudelleenohjausongelmien vuoksi. Uudelleenkirjautumista ei enää tarvita.
 
 - Seuraajalaskuri: Korjattu ongelma palvelimilla, joilla on BookWyrm 0.8, joka näytti seuraajasi ja seuraamasi nollana. Sovellus laskee nyt tämän numeron sisäisesti palvelinvirheen välttämiseksi.</string>
+    <string name="nav_notifications">Ilmoitukset</string>
+    <string name="notifications_empty_title">Ei ilmoituksia vielä</string>
+    <string name="notifications_empty_body">Kun sinut mainitaan tai sinua seurataan, näet sen täällä.</string>
+    <string name="clear_notifications">Tyhjennä ilmoitukset</string>
+    <string name="notifications_cleared">Ilmoitukset tyhjennetty</string>
 </resources>

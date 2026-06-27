@@ -228,4 +228,9 @@ Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="boo
     <string name="changelog_text_v1_0_7">- Oprava chyby připojení: Byla opravena chyba (Chyba 307), která bránila provádění akcí kvůli problémům s přesměrováním HTTPS při přihlášení. Už se nemusíte znovu přihlašovat.
 
 - Počítadlo sledujících: Byl opraven problém na serverech s BookWyrm 0.8, kde se zobrazovali sledující i sledovaní s hodnotou 0. Aplikace nyní vypočítává toto číslo interně, aby předešla chybě serveru.</string>
+    <string name="nav_notifications">Oznámení</string>
+    <string name="notifications_empty_title">Zatím žádná oznámení</string>
+    <string name="notifications_empty_body">Když vás někdo zmíní nebo začne sledovat, uvidíte to zde.</string>
+    <string name="clear_notifications">Vymazat oznámení</string>
+    <string name="notifications_cleared">Oznámení vymazána</string>
 </resources>

@@ -228,4 +228,9 @@ Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string
     <string name="changelog_text_v1_0_7">- Remediere eroare de conexiune: S-a rezolvat eroarea (Eroare 307) care împiedica efectuarea acțiunilor din cauza problemelor de redirecționare HTTPS la autentificare. Nu mai este necesar să vă autentificați din nou.
 
 - Contor de urmăritori: S-a rezolvat problema pe serverele cu BookWyrm 0.8 care afișa urmăritorii și persoanele urmărite ca 0. Aplicația calculează acum acest număr intern pentru a evita eroarea serverului.</string>
+    <string name="nav_notifications">Notificări</string>
+    <string name="notifications_empty_title">Nicio notificare încă</string>
+    <string name="notifications_empty_body">Când ești menționat sau urmărit, vei vedea aici.</string>
+    <string name="clear_notifications">Șterge notificările</string>
+    <string name="notifications_cleared">Notificări șterse</string>
 </resources>

@@ -228,4 +228,9 @@ Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="
     <string name="changelog_text_v1_0_7">- Solució d\'error de connexió: Corregit l\'error (Error 307) que impedia realitzar accions a causa de problemes de redirecció HTTPS a l\'iniciar sessió. Ja no cal tornar a iniciar sessió.
 
 - Comptador de seguidors: Arreglat el problema en servidors amb BookWyrm 0.8 que mostrava els teus seguidors i seguits a 0. L\'aplicació ara calcula aquest número internament per evitar l\'error del servidor.</string>
+    <string name="nav_notifications">Notificacions</string>
+    <string name="notifications_empty_title">Encara no hi ha notificacions</string>
+    <string name="notifications_empty_body">Quan et mencionin o et segueixin, ho veuràs aquí.</string>
+    <string name="clear_notifications">Esborrar notificacions</string>
+    <string name="notifications_cleared">Notificacions esborrades</string>
 </resources>

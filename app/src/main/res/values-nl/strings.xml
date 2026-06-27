@@ -228,4 +228,9 @@ Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <str
     <string name="changelog_text_v1_0_7">- Oplossing voor verbindingsfout: De fout (Fout 307) is verholpen die acties verhinderde vanwege HTTPS-omleidingsproblemen bij het inloggen. Opnieuw inloggen is niet meer nodig.
 
 - Volgersteller: Het probleem op servers met BookWyrm 0.8 is opgelost waarbij uw volgers en volgend op 0 stonden. De app berekent dit nummer nu intern om de serverfout te omzeilen.</string>
+    <string name="nav_notifications">Meldingen</string>
+    <string name="notifications_empty_title">Nog geen meldingen</string>
+    <string name="notifications_empty_body">Wanneer je wordt vermeld of gevolgd, zie je het hier.</string>
+    <string name="clear_notifications">Meldingen wissen</string>
+    <string name="notifications_cleared">Meldingen gewist</string>
 </resources>

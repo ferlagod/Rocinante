@@ -11,10 +11,13 @@
     <string name="nav_activity">Activity</string>
     <string name="nav_my_books">My books</string>
     <string name="nav_search">Search</string>
+    <string name="nav_notifications">Notifications</string>
     <string name="nav_profile">Profile</string>
     <string name="nav_logout">Log out</string>
     <string name="activity_empty_title">No recent activity</string>
     <string name="activity_empty_body">When the instance returns posts from your outbox, they will appear here.</string>
+    <string name="notifications_empty_title">No notifications yet</string>
+    <string name="notifications_empty_body">When you get mentioned or followed, you will see it here.</string>
     <string name="activity_unknown_user">Unknown user</string>
     <string name="follow_list_followers_title">Followers</string>
     <string name="follow_list_following_title">Following</string>
@@ -233,4 +236,6 @@ Design: Added support for monochrome icons.</string>
     <string name="changelog_text_v1_0_7">- Connection error fix: Fixed the bug (Error 307) that prevented performing actions due to HTTPS redirection problems when logging in. It is no longer necessary to log in again.
 
 - Followers counter: Fixed the problem on servers with BookWyrm 0.8 that showed your followers and following as 0. The app now calculates this number internally to avoid the server bug.</string>
+    <string name="clear_notifications">Clear notifications</string>
+    <string name="notifications_cleared">Notifications cleared</string>
 </resources>

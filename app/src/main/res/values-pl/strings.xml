@@ -228,4 +228,9 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
     <string name="changelog_text_v1_0_7">- Naprawa błędu połączenia: Naprawiono błąd (Błąd 307), który uniemożliwiał wykonywanie akcji z powodu problemów z przekierowaniem HTTPS podczas logowania. Ponowne logowanie nie jest już konieczne.
 
 - Licznik obserwujących: Naprawiono problem na serwerach z BookWyrm 0.8, który pokazywał 0 obserwujących i obserwowanych. Aplikacja teraz oblicza tę liczbę wewnętrznie, aby uniknąć błędu serwera.</string>
+    <string name="nav_notifications">Powiadomienia</string>
+    <string name="notifications_empty_title">Jeszcze brak powiadomień</string>
+    <string name="notifications_empty_body">Kiedy ktoś o tobie wspomni lub zacznie cię obserwować, zobaczysz to tutaj.</string>
+    <string name="clear_notifications">Wyczyść powiadomienia</string>
+    <string name="notifications_cleared">Powiadomienia wyczyszczone</string>
 </resources>

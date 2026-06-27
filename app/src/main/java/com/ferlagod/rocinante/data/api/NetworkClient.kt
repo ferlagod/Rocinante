@@ -20,6 +20,8 @@
 package com.ferlagod.rocinante.data.api
 
 import com.ferlagod.rocinante.utils.BookWyrmUtils
+import com.ferlagod.rocinante.data.model.NotificationUiItem
+import com.ferlagod.rocinante.data.model.NotificationType
 
 import com.google.gson.annotations.SerializedName
 import okhttp3.Cookie
@@ -67,6 +69,9 @@ data class BookWyrmProfile(
     var followingCountLocal: Int? = null
 )
 
+/**
+ * Modelo para representar el icono de perfil de un usuario.
+ */
 data class ProfileIcon(
     val url: String?
 )
@@ -75,6 +80,9 @@ data class ActivityPubCollection(
     @SerializedName("totalItems") val totalItems: Int?
 )
 
+/**
+ * Representa una página del 'Outbox' (Bandeja de salida) de ActivityPub, contiene actividades.
+ */
 data class OutboxPage(
     @SerializedName("orderedItems") val orderedItems: List<ActivityPubActivity>?
 )
@@ -98,6 +106,9 @@ data class ActivityPubActivity(
         } else null
 }
 
+/**
+ * Objeto genérico de ActivityPub (puede ser una nota, reseña, etc.).
+ */
 data class ActivityPubObject(
     val id: String?,
     val type: String?,
@@ -113,6 +124,9 @@ data class ActivityPubObject(
     val cover: ActivityPubAttachment? = null
 )
 
+/**
+ * Adjunto multimedia dentro de una actividad de ActivityPub.
+ */
 data class ActivityPubAttachment(
     val url: String? = null,
     val mediaType: String? = null,
@@ -120,6 +134,9 @@ data class ActivityPubAttachment(
 )
 
 // Colección de usuarios seguidos (ActivityPub OrderedCollection)
+/**
+ * Representa una página de usuarios seguidos o seguidores.
+ */
 data class FollowingPage(
     @SerializedName("orderedItems") val orderedItems: List<String>?
 )
@@ -148,6 +165,9 @@ data class BookWyrmBookDetails(
 )
 
 // NUEVOS MODELOS PARA LA ESTANTERÍA
+/**
+ * Representa una estantería (colección de libros) de un usuario.
+ */
 data class ShelfPage(
     @SerializedName("orderedItems") val orderedItems: List<ShelfBookItem>?
 )
@@ -158,6 +178,9 @@ data class ShelfBookItem(
     val cover: ShelfBookCover?
 )
 
+/**
+ * Representación de la portada de un libro.
+ */
 data class ShelfBookCover(
     val url: String?
 )
@@ -175,27 +198,42 @@ data class SuggestedUser(
  * endpoints JSON específicos que expone BookWyrm.
  */
 interface BookWyrmApi {
+    /**
+     * Obtiene el perfil básico de un usuario remoto o local.
+     */
     @GET("user/{username}.json")
     suspend fun getUserProfile(
         @Path("username") username: String,
         @Query("t") cacheBuster: Long = System.currentTimeMillis()
     ): BookWyrmProfile
 
+    /**
+     * Obtiene el perfil extendido (Outbox, colecciones) de un usuario.
+     */
     @GET
     suspend fun getFullUserProfile(
         @Url fullUrl: String,
         @Query("t") cacheBuster: Long = System.currentTimeMillis()
     ): BookWyrmProfile
 
+    /**
+     * Descarga la página del Outbox especificada.
+     */
     @GET
     suspend fun getOutboxData(@Url fullUrl: String): OutboxPage
 
     @GET
     suspend fun getInboxData(@Url fullUrl: String): OutboxPage
 
+    /**
+     * Descarga un JSON genérico desde una URL completa.
+     */
     @GET
     suspend fun getRawJson(@Url fullUrl: String): ResponseBody
 
+    /**
+     * Resuelve un identificador de libro remoto para agregarlo a la base de datos local de la instancia.
+     */
     @FormUrlEncoded
     @POST("resolve-book/")
     suspend fun resolveBook(
@@ -205,12 +243,18 @@ interface BookWyrmApi {
     // BookWyrm expone búsqueda JSON con &format=json desde v0.6.x.
     // Devolvemos ResponseBody para poder procesar la respuesta en HTML o JSON
     // y extraer tanto libros locales como remotos.
+    /**
+     * Realiza una búsqueda de libros por título o autor.
+     */
     @GET("search")
     @Headers("Accept: text/html")
     suspend fun searchBooks(
         @Query("q") query: String
     ): retrofit2.Response<ResponseBody>
 
+    /**
+     * Descarga los detalles de un libro (ActivityPub Object).
+     */
     @GET
     suspend fun getBookDetails(@Url fullUrl: String): BookWyrmBookDetails
 
@@ -218,14 +262,23 @@ interface BookWyrmApi {
     suspend fun getShelfData(@Url fullUrl: String): ShelfPage
 
     // Colección de usuarios seguidos por el usuario
+    /**
+     * Obtiene la lista de cuentas a las que sigue un usuario.
+     */
     @GET
     suspend fun getFollowingData(@Url fullUrl: String): FollowingPage
 
     // Colección de seguidores del usuario (misma estructura que following)
+    /**
+     * Obtiene la lista de cuentas que siguen a un usuario.
+     */
     @GET
     suspend fun getFollowersData(@Url fullUrl: String): FollowingPage
 
     // Seguir a un usuario: POST /follow/ con campo "user" = "@handle@instance"
+    /**
+     * Envía una petición para seguir a un usuario remoto o local.
+     */
     @FormUrlEncoded
     @POST("follow/")
     suspend fun followUser(
@@ -233,6 +286,9 @@ interface BookWyrmApi {
     ): retrofit2.Response<ResponseBody>
 
     // Dejar de seguir: POST /unfollow/ con campo "user" = "@handle@instance"
+    /**
+     * Envía una petición para dejar de seguir a un usuario.
+     */
     @FormUrlEncoded
     @POST("unfollow/")
     suspend fun unfollowUser(
@@ -242,6 +298,9 @@ interface BookWyrmApi {
     // POST /reading-status/<status>/<book_id>/ — BookWyrm espera el estado
     // y el ID del libro en la ruta, NO como campos de formulario.
     // Statuses válidos: "want", "start", "finish", "stop"
+    /**
+     * Actualiza el estado de lectura (Reading, Read, To-Read) de un libro.
+     */
     @FormUrlEncoded
     @POST("reading-status/{status}/{bookId}/")
     suspend fun updateReadingStatus(
@@ -253,6 +312,9 @@ interface BookWyrmApi {
 
     // POST /reading-status/update/<book_id>/ — actualiza el readthrough y añade comentario.
     // Requiere el 'id' del readthrough activo (oculto en el HTML del libro).
+    /**
+     * Actualiza el progreso de lectura (páginas leídas) de un libro.
+     */
     @FormUrlEncoded
     @POST("reading-status/update/{bookIdPath}/")
     suspend fun updateProgressDetailed(
@@ -268,6 +330,9 @@ interface BookWyrmApi {
         @Field("content_warning") contentWarning: String = ""
     ): retrofit2.Response<ResponseBody>
 
+    /**
+     * Publica una reseña (review) de un libro.
+     */
     @FormUrlEncoded
     @POST("post/review/")
     suspend fun postReview(
@@ -281,6 +346,9 @@ interface BookWyrmApi {
         @Field("sensitive") sensitive: String?
     ): retrofit2.Response<okhttp3.ResponseBody>
 
+    /**
+     * Publica una cita (quote) de un libro.
+     */
     @FormUrlEncoded
     @POST("post/quotation/")
     suspend fun postQuotation(
@@ -293,6 +361,9 @@ interface BookWyrmApi {
         @Field("sensitive") sensitive: String?
     ): retrofit2.Response<okhttp3.ResponseBody>
 
+    /**
+     * Asigna o actualiza la puntuación (estrellas) de un libro.
+     */
     @FormUrlEncoded
     @POST("post/rating/")
     suspend fun postReviewRating(
@@ -303,6 +374,9 @@ interface BookWyrmApi {
     ): retrofit2.Response<okhttp3.ResponseBody>
 
 
+    /**
+     * Obtiene las preferencias de configuración del perfil del usuario logueado.
+     */
     @GET("preferences/profile/")
     suspend fun getProfilePreferences(): retrofit2.Response<okhttp3.ResponseBody>
 
@@ -312,6 +386,9 @@ interface BookWyrmApi {
     ): retrofit2.Response<okhttp3.ResponseBody>
 
 
+    /**
+     * Añade un libro a una estantería específica (custom shelf).
+     */
     @FormUrlEncoded
     @POST("shelve/")
     suspend fun shelveBook(
@@ -323,16 +400,25 @@ interface BookWyrmApi {
 
 
     // POST /favorite/<status_id>
+    /**
+     * Marca una actividad o estado como favorito (Like).
+     */
     @Headers("Accept: application/json")
     @POST("favorite/{statusId}/")
     suspend fun favoriteStatus(@Path("statusId") statusId: String): retrofit2.Response<okhttp3.ResponseBody>
 
     // POST /unfavorite/<status_id>
+    /**
+     * Quita la marca de favorito de una actividad.
+     */
     @Headers("Accept: application/json")
     @POST("unfavorite/{statusId}/")
     suspend fun unfavoriteStatus(@Path("statusId") statusId: String): retrofit2.Response<okhttp3.ResponseBody>
 
     // POST /post/reply/
+    /**
+     * Envía una respuesta a un estado o publicación existente.
+     */
     @Headers("Accept: application/json")
     @FormUrlEncoded
     @POST("post/reply/")
@@ -345,6 +431,9 @@ interface BookWyrmApi {
     ): retrofit2.Response<okhttp3.ResponseBody>
 
     // POST /post/status/ (for new status)
+    /**
+     * Crea una nueva publicación o estado (Post).
+     */
     @Headers("Accept: application/json")
     @FormUrlEncoded
     @POST("post/status/")
@@ -356,17 +445,33 @@ interface BookWyrmApi {
     ): retrofit2.Response<okhttp3.ResponseBody>
 
     // NUEVO METODO PARA EXTRAER LOS CONTADORES DE LAS COLECCIONES
+    /**
+     * Obtiene datos genéricos de una colección de ActivityPub.
+     */
     @GET
     suspend fun getCollectionData(@Url fullUrl: String): ActivityPubCollection
 
     // NUEVO METODO PARA OBTENER HTML PURO
+    /**
+     * Descarga el código fuente HTML bruto de una página (usado para web scraping).
+     */
     @GET
     suspend fun getRawHtml(@Url fullUrl: String): retrofit2.Response<okhttp3.ResponseBody>
 
     // Anotación corregida: @Url puro, requiere pasar la dirección absoluta desde el UI
+    /**
+     * Descarga el HTML bruto devolviendo el objeto Response de Retrofit.
+     */
     @GET
     @Headers("Accept: text/html")
     suspend fun getRawHtmlResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
+
+    /**
+     * Limpia el historial de notificaciones leídas.
+     */
+    @FormUrlEncoded
+    @POST("notifications")
+    suspend fun postClearNotifications(@Field("csrfmiddlewaretoken") csrfToken: String): retrofit2.Response<ResponseBody>
 }
 
 /**
@@ -498,11 +603,17 @@ object NetworkClient {
             .create(BookWyrmApi::class.java)
     }
 
+    /**
+     * Contexto temporal utilizado al actualizar el progreso de lectura.
+     */
     data class ProgressContext(
         val readthroughId: String,
         val userId: String,
         val localBookId: String
     )
+    /**
+     * Contexto temporal utilizado al vincular un usuario y un libro en una reseña.
+     */
     data class ReviewContext(val userId: String, val bookId: String)
 
     /**
@@ -1158,8 +1269,143 @@ object NetworkClient {
             emptyList()
         }
     }
+
+    /**
+     * Extrae el contador actual de notificaciones no leídas haciendo scraping del HTML de la página de inicio.
+     * Es una operación ligera diseñada para ejecutarse periódicamente en segundo plano (Foreground Polling).
+     *
+     * @param api Cliente de red para mantener la cookie de sesión.
+     * @param instanceUrl URL de la instancia actual.
+     * @return Número entero con el conteo de notificaciones no leídas, o 0 en caso de error/no haber notificaciones.
+     */
+    suspend fun getUnreadNotificationCount(api: BookWyrmApi, instanceUrl: String): Int = withContext(Dispatchers.IO) {
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val html = fetchHtmlWithRedirects(api, baseUrl, baseUrl)
+            if (html.isEmpty()) return@withContext 0
+            
+            val document = org.jsoup.Jsoup.parse(html)
+            val badge = document.select("strong[data-poll=notifications]").first()
+            val text = badge?.text()?.trim() ?: ""
+            if (text.isNotEmpty()) text.toIntOrNull() ?: 0 else 0
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    /**
+     * Realiza un scraping completo de la página de notificaciones de la cuenta (`/notifications`)
+     * y extrae una lista estructurada de las notificaciones recientes.
+     * Utiliza expresiones regulares simples sobre el texto crudo para inferir el tipo de notificación.
+     *
+     * @param api Cliente de red para la petición autenticada.
+     * @param instanceUrl URL de la instancia actual.
+     * @return Lista parseada de [NotificationUiItem] lista para pintar en la interfaz.
+     */
+    suspend fun scrapeNotifications(api: BookWyrmApi, instanceUrl: String): List<NotificationUiItem> = withContext(Dispatchers.IO) {
+        val notifications = mutableListOf<NotificationUiItem>()
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val notifUrl = "${baseUrl}notifications"
+            
+            val html = fetchHtmlWithRedirects(api, notifUrl, baseUrl)
+            if (html.isEmpty()) return@withContext emptyList()
+            
+            val document = org.jsoup.Jsoup.parse(html)
+            // BookWyrm uses div.notification for the wrapper
+            val elements = document.select("div.notification:not(.live-message)")
+            for (element in elements) {
+                val id = element.attr("id").ifEmpty { java.util.UUID.randomUUID().toString() }
+                val isUnread = element.hasClass("unread") // Assuming unread class is used
+                
+                // Content
+                val contentHtml = element.select(".content").firstOrNull()?.html() ?: element.text()
+                
+                // Avatar
+                val avatarImg = element.select("img").firstOrNull()
+                var avatarUrl = avatarImg?.attr("src") ?: ""
+                if (avatarUrl.isNotEmpty() && !avatarUrl.startsWith("http")) {
+                    avatarUrl = "$baseUrl${avatarUrl.trimStart('/')}"
+                }
+                
+                // Actor name (first bold/link or just something)
+                val actorName = element.select("strong").firstOrNull()?.text() 
+                    ?: element.select("a").firstOrNull()?.text() ?: "Unknown"
+                    
+                // Date
+                val timeElement = element.select("time").firstOrNull()
+                val date = timeElement?.text() ?: ""
+                
+                // Permalink
+                val permalink = element.select("a.time, .status-link").firstOrNull()?.attr("href")?.let {
+                    if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
+                }
+                
+                // Guess type based on text
+                val fullText = element.text().lowercase()
+                val type = when {
+                    fullText.contains("replied") || fullText.contains("respondió") -> NotificationType.REPLY
+                    fullText.contains("mention") || fullText.contains("mencionó") -> NotificationType.MENTION
+                    fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") -> NotificationType.FAVORITE
+                    fullText.contains("boost") || fullText.contains("compartió") -> NotificationType.BOOST
+                    fullText.contains("follow") || fullText.contains("siguió") || fullText.contains("sigue") -> NotificationType.FOLLOW
+                    else -> NotificationType.UNKNOWN
+                }
+                
+                notifications.add(
+                    NotificationUiItem(
+                        id = id.ifEmpty { java.util.UUID.randomUUID().toString() },
+                        isUnread = isUnread,
+                        type = type,
+                        actorName = actorName,
+                        actorAvatarUrl = avatarUrl.ifEmpty { null },
+                        date = date,
+                        content = contentHtml,
+                        permalink = permalink
+                    )
+                )
+            }
+            notifications
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    /**
+     * Limpia (borra) todas las notificaciones leídas de la cuenta realizando un POST a /notifications.
+     * @param api Cliente de red autenticado.
+     * @param instanceUrl URL de la instancia.
+     * @return true si la operación tuvo éxito.
+     */
+    suspend fun clearNotifications(api: BookWyrmApi, instanceUrl: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val notifUrl = "${baseUrl}notifications"
+            
+            val html = fetchHtmlWithRedirects(api, notifUrl, baseUrl)
+            if (html.isEmpty()) return@withContext false
+            val csrfToken = org.jsoup.Jsoup.parse(html).select("input[name=csrfmiddlewaretoken]").attr("value")
+            
+            if (csrfToken.isEmpty()) return@withContext false
+            
+            val response = api.postClearNotifications(csrfToken)
+            response.isSuccessful
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            e.printStackTrace()
+            false
+        }
+    }
 }
 
+/**
+ * Función de extensión que empaqueta una petición multipart para editar el perfil (Avatar, biografía).
+ */
 suspend fun com.ferlagod.rocinante.data.api.BookWyrmApi.editProfile(
     name: String,
     summary: String,

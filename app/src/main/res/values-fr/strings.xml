@@ -228,4 +228,9 @@ Design : Ajout du support des icônes monochromes.</string>    <string name="boo
     <string name="changelog_text_v1_0_7">- Correction de l\'erreur de connexion: Correction du bogue (Erreur 307) qui empêchait d\'effectuer des actions en raison de problèmes de redirection HTTPS lors de la connexion. Il n\'est plus nécessaire de se reconnecter.
 
 - Compteur d\'abonnés: Correction du problème sur les serveurs avec BookWyrm 0.8 qui affichait vos abonnés et abonnements à 0. L\'application calcule désormais ce nombre en interne pour éviter le bogue du serveur.</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="notifications_empty_title">Aucune notification pour le moment</string>
+    <string name="notifications_empty_body">Lorsque vous serez mentionné ou suivi, vous le verrez ici.</string>
+    <string name="clear_notifications">Effacer les notifications</string>
+    <string name="notifications_cleared">Notifications effacées</string>
 </resources>

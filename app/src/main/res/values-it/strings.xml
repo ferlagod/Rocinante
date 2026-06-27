@@ -228,4 +228,9 @@ Design: Aggiunto supporto per icone monocromatiche.</string>    <string name="bo
     <string name="changelog_text_v1_0_7">- Correzione errore di connessione: Risolto il bug (Errore 307) che impediva di eseguire azioni a causa di problemi di reindirizzamento HTTPS durante l\'accesso. Non è più necessario effettuare nuovamente l\'accesso.
 
 - Contatore follower: Risolto il problema sui server con BookWyrm 0.8 che mostrava i tuoi follower e seguiti come 0. L\'app ora calcola questo numero internamente per evitare il bug del server.</string>
+    <string name="nav_notifications">Notifiche</string>
+    <string name="notifications_empty_title">Nessuna notifica ancora</string>
+    <string name="notifications_empty_body">Quando vieni menzionato o seguito, lo vedrai qui.</string>
+    <string name="clear_notifications">Cancella notifiche</string>
+    <string name="notifications_cleared">Notifiche cancellate</string>
 </resources>

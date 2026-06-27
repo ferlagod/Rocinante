@@ -1370,6 +1370,17 @@ private fun QuotationDialog(
     }
 }
 
+/**
+ * Diálogo para visualizar una reseña completa (review) de un libro en detalle,
+ * mostrando su texto íntegro, calificación, y autor.
+ *
+ * @param review Objeto de actividad que contiene la reseña.
+ * @param instanceHostUrl URL base de la instancia.
+ * @param api Cliente API para acciones adicionales.
+ * @param context Contexto de Android (para intents o toasts).
+ * @param coroutineScope Scope de corrutinas para llamadas asíncronas desde la UI.
+ * @param onDismiss Callback ejecutado al cerrar el diálogo.
+ */
 @Composable
 fun ReviewDetailDialog(
     review: ActivityPubActivity,

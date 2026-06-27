@@ -71,3 +71,4 @@ app/release/output-metadata.json
 translate.py
 .idea/caches/deviceStreaming.xml
 get_quotes.py
+translate_clear_notifs.py

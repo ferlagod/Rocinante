@@ -50,6 +50,16 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.Icons
 
+/**
+ * Modelo de datos optimizado para la vista de estanterías (Shelves).
+ * Contiene identificadores e información de visualización básica.
+ *
+ * @property id Identificador único de la estantería.
+ * @property title Nombre visible de la estantería.
+ * @property bookCount Número de libros en la estantería.
+ * @property bookCovers Lista de URLs de portadas para mostrar una vista previa.
+ * @property fullUrl URL de la colección original en la API.
+ */
 data class ShelfUiItem(
     val slug: String,
     val title: String,
@@ -154,6 +164,18 @@ fun MyBooksScreen(
     }
 }
 
+/**
+ * Pantalla de detalle de una estantería nativa. Muestra una cuadrícula de libros
+ * utilizando el cliente de red nativo (NetworkClient) y permite visualizar detalles de un libro.
+ *
+ * @param instanceUrl URL de la instancia actual.
+ * @param username Nombre del usuario activo.
+ * @param cookie Cookie de sesión autenticada.
+ * @param sharedApi Cliente API de BookWyrm (opcional).
+ * @param shelf Estantería a visualizar.
+ * @param onBack Callback para volver atrás.
+ * @param onNavigateToSettings Callback para navegar a la configuración.
+ */
 @Composable
 fun ShelfNativeDetailScreen(
     instanceUrl: String,
@@ -450,6 +472,14 @@ fun ShelfNativeDetailScreen(
     }
 }
 
+/**
+ * Diálogo para seleccionar a qué hora y minuto se debe lanzar el recordatorio diario de lectura.
+ *
+ * @param initialHour Hora inicial a mostrar (formato 24h).
+ * @param initialMinute Minuto inicial a mostrar.
+ * @param onDismiss Callback ejecutado al cancelar el diálogo.
+ * @param onConfirm Callback ejecutado al confirmar la selección, devuelve la hora y minuto elegidos.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderTimeDialog(
@@ -481,6 +511,9 @@ fun ReminderTimeDialog(
     )
 }
 
+/**
+ * Animación de esqueleto (Skeleton Loader) para la lista de estanterías, mostrada mientras se cargan los datos.
+ */
 @Composable
 fun ShelfSkeletonLoader() {
     val infiniteTransition = rememberInfiniteTransition()

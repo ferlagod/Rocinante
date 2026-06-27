@@ -329,6 +329,10 @@ private fun FollowUserRow(
     }
 }
 
+/**
+ * Animación de esqueleto (Skeleton Loader) mostrada mientras se carga
+ * la lista de seguidores o siguiendo de un usuario.
+ */
 @Composable
 fun FollowListSkeletonLoader() {
     val infiniteTransition = rememberInfiniteTransition()

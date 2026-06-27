@@ -68,6 +68,15 @@ import kotlinx.coroutines.launch
  */
 enum class SearchMode { BOOKS, USERS }
 
+/**
+ * Pantalla principal de búsqueda, permite buscar libros y usuarios en la instancia local
+ * o en el ecosistema federado mediante el cliente de BookWyrm.
+ *
+ * @param instanceUrl URL base de la instancia.
+ * @param cookie Cookie de sesión autenticada.
+ * @param api Cliente API para peticiones a BookWyrm.
+ * @param modifier Modificador visual para el layout.
+ */
 @Composable
 fun SearchScreen(
     instanceUrl: String,
@@ -455,6 +464,15 @@ fun SearchScreen(
     }
 }
 
+/**
+ * Diálogo emergente que muestra un resumen del perfil de un usuario cuando se selecciona en los resultados de búsqueda.
+ * Proporciona información básica y acciones rápidas como Seguir/Dejar de seguir.
+ *
+ * @param user Perfil de usuario simplificado.
+ * @param instanceUrl URL de la instancia activa.
+ * @param api Cliente de la API para enviar acciones (follow/unfollow).
+ * @param onDismiss Callback ejecutado para cerrar el diálogo.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileDialog(
@@ -620,6 +638,10 @@ fun UserProfileDialog(
     )
 }
 
+/**
+ * Animación de esqueleto (Skeleton Loader) empleada mientras se cargan los resultados
+ * de la búsqueda, proporcionando un feedback visual inmediato al usuario.
+ */
 @Composable
 fun SearchSkeletonLoader() {
     val infiniteTransition = rememberInfiniteTransition()

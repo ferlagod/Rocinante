@@ -53,6 +53,10 @@ import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Notifications
+import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalUriHandler
+import com.ferlagod.rocinante.ui.screens.notifications.NotificationsTab
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -100,8 +104,10 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
     
     var showPostDialog by remember { mutableStateOf(false) }
+    var unreadNotifications by remember { mutableStateOf(0) }
     var selectedActivity by remember { mutableStateOf<TimelineUiItem?>(null) }
     var dialogBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
     var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
@@ -129,9 +135,20 @@ fun HomeScreen(
         viewModel.load(instanceUrl, username, cookie)
     }
 
+    LaunchedEffect(api, instanceUrl) {
+        while (true) {
+            try {
+                unreadNotifications = NetworkClient.getUnreadNotificationCount(api, instanceUrl)
+            } catch (e: Exception) {
+                // Ignore
+            }
+            delay(3 * 60 * 1000L) // 3 mins
+        }
+    }
+
     val pagerState = rememberPagerState(
         initialPage = uiState.selectedTab,
-        pageCount = { 4 }
+        pageCount = { 5 }
     )
 
     LaunchedEffect(uiState.selectedTab) {
@@ -174,6 +191,7 @@ fun HomeScreen(
                     0 -> stringResource(R.string.nav_activity)
                     1 -> stringResource(R.string.nav_my_books)
                     2 -> stringResource(R.string.nav_search)
+                    3 -> stringResource(R.string.nav_notifications)
                     else -> stringResource(R.string.nav_profile)
                 },
                 onSettingsClick = onSettingsClick
@@ -185,25 +203,42 @@ fun HomeScreen(
                     selected = uiState.selectedTab == 0,
                     onClick = { viewModel.selectTab(0) },
                     icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_activity)) },
-                    label = { Text(stringResource(R.string.nav_activity)) }
+                    label = { Text(stringResource(R.string.nav_activity), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
                 NavigationBarItem(
                     selected = uiState.selectedTab == 1,
                     onClick = { viewModel.selectTab(1) },
                     icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = stringResource(R.string.nav_my_books)) }, // ICONO CORREGIDO
-                    label = { Text(stringResource(R.string.nav_my_books)) }
+                    label = { Text(stringResource(R.string.nav_my_books), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
                 NavigationBarItem(
                     selected = uiState.selectedTab == 2,
                     onClick = { viewModel.selectTab(2) },
                     icon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search)) },
-                    label = { Text(stringResource(R.string.nav_search)) }
+                    label = { Text(stringResource(R.string.nav_search), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
                 NavigationBarItem(
                     selected = uiState.selectedTab == 3,
-                    onClick = { viewModel.selectTab(3) },
+                    onClick = { 
+                        viewModel.selectTab(3)
+                        unreadNotifications = 0 // Clear badge when tapped
+                    },
+                    icon = { 
+                        if (unreadNotifications > 0) {
+                            BadgedBox(badge = { Badge { Text(unreadNotifications.toString()) } }) {
+                                Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications))
+                            }
+                        } else {
+                            Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications))
+                        }
+                    },
+                    label = { Text(stringResource(R.string.nav_notifications), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+                )
+                NavigationBarItem(
+                    selected = uiState.selectedTab == 4,
+                    onClick = { viewModel.selectTab(4) },
                     icon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.nav_profile)) },
-                    label = { Text(stringResource(R.string.nav_profile)) }
+                    label = { Text(stringResource(R.string.nav_profile), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
             }
         },
@@ -252,7 +287,21 @@ fun HomeScreen(
                     modifier = Modifier.padding(paddingValues)
                 )
 
-                3 -> ProfileTab(
+                3 -> Box(modifier = Modifier.padding(paddingValues)) {
+                    NotificationsTab(
+                        api = api,
+                        instanceUrl = instanceUrl,
+                        onUrlClicked = { url -> 
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (e: Exception) {
+                                // Ignore
+                            }
+                        }
+                    )
+                }
+
+                4 -> ProfileTab(
                     modifier = Modifier.padding(paddingValues),
                     profile = uiState.profile,
                     username = username,
@@ -945,6 +994,20 @@ private fun getActivityContext(type: String): Pair<String, androidx.compose.ui.g
     }
 }
 
+/**
+ * Pestaña del Perfil del usuario, que muestra su avatar, información biográfica, y contadores
+ * de seguidores y libros. También proporciona la opción de editar el perfil.
+ *
+ * @param modifier Modificador visual para el layout.
+ * @param profile Perfil del usuario cargado.
+ * @param username Nombre del usuario autenticado.
+ * @param instanceUrl URL de la instancia a la que pertenece.
+ * @param cookie Cookie de sesión.
+ * @param api Cliente API para realizar acciones en el perfil.
+ * @param onProfileUpdated Callback cuando el perfil se actualiza correctamente.
+ * @param onFollowingIncremented Callback cuando se sigue a un usuario.
+ * @param onFollowingDecremented Callback cuando se deja de seguir a un usuario.
+ */
 @Composable
 fun ProfileTab(
     modifier: Modifier = Modifier,
@@ -1417,6 +1480,16 @@ fun ProfileTab(
     }
 }
 
+/**
+ * Diálogo interactivo que muestra los detalles de una publicación o actividad específica,
+ * permitiendo al usuario visualizar las respuestas existentes y redactar una nueva respuesta.
+ *
+ * @param activity La actividad principal a visualizar.
+ * @param onDismiss Callback ejecutado para cerrar el diálogo.
+ * @param onReply Callback ejecutado para procesar y enviar la respuesta escrita por el usuario.
+ * @param isLoading Indica si el diálogo se encuentra en proceso de cargar respuestas adicionales.
+ * @param replies Lista de actividades que son respuesta a la publicación principal.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityDetailsDialog(

@@ -285,6 +285,10 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * Componente visual que muestra un título de sección dentro de la pantalla de ajustes.
+ * @param title Texto del título a mostrar.
+ */
 @Composable
 fun SettingsSectionTitle(title: String) {
     Text(
@@ -296,6 +300,15 @@ fun SettingsSectionTitle(title: String) {
     )
 }
 
+/**
+ * Elemento de configuración genérico clicable con un icono, título, subtítulo y una acción opcional.
+ * 
+ * @param icon Icono principal a mostrar.
+ * @param title Título principal del ajuste.
+ * @param subtitle Descripción secundaria del ajuste.
+ * @param onClick Acción a realizar al pulsar el elemento.
+ * @param trailingContent Componente visual opcional a mostrar al final de la fila.
+ */
 @Composable
 fun SettingsItem(
     title: String,
@@ -347,6 +360,15 @@ fun SettingsItem(
     }
 }
 
+/**
+ * Ajuste tipo interruptor (Switch) para opciones booleanas (ej. mostrar notificaciones).
+ *
+ * @param icon Icono principal.
+ * @param title Título del ajuste.
+ * @param subtitle Descripción del ajuste.
+ * @param checked Estado actual del interruptor.
+ * @param onCheckedChange Callback ejecutado cuando se cambia el estado.
+ */
 @Composable
 fun SettingsSwitch(
     title: String,
@@ -384,6 +406,13 @@ fun SettingsSwitch(
     }
 }
 
+/**
+ * Selector de tema de la aplicación (Light, Dark, System).
+ * Muestra tres botones para elegir la apariencia visual preferida.
+ *
+ * @param currentTheme Tema actualmente seleccionado.
+ * @param onThemeSelected Callback al seleccionar un nuevo tema.
+ */
 @Composable
 fun ThemeSelector(
     currentTheme: ThemeMode,
@@ -414,6 +443,9 @@ fun ThemeSelector(
     }
 }
 
+/**
+ * Separador visual estándar para listas de configuraciones.
+ */
 @Composable
 fun Divider() {
     androidx.compose.material3.HorizontalDivider(
@@ -422,6 +454,12 @@ fun Divider() {
     )
 }
 
+/**
+ * Diálogo para seleccionar el idioma de la interfaz de la aplicación.
+ * Permite cambiar la configuración regional (Locale) dinámicamente.
+ *
+ * @param onDismiss Callback ejecutado al cerrar el diálogo.
+ */
 @Composable
 fun LanguageDialog(onDismiss: () -> Unit) {
     val languages = listOf(

@@ -228,4 +228,9 @@ Design: Unterstützung für monochrome Icons hinzugefügt.</string>    <string n
     <string name="changelog_text_v1_0_7">- Behebung von Verbindungsfehlern: Fehler (Fehler 307) behoben, der Aktionen aufgrund von HTTPS-Umleitungsproblemen bei der Anmeldung verhinderte. Eine erneute Anmeldung ist nicht mehr erforderlich.
 
 - Follower-Zähler: Das Problem auf Servern mit BookWyrm 0.8 wurde behoben, bei dem die Anzahl der Follower und der Personen, denen Sie folgen, als 0 angezeigt wurde. Die App berechnet diese Zahl nun intern, um den Serverfehler zu umgehen.</string>
+    <string name="nav_notifications">Benachrichtigungen</string>
+    <string name="notifications_empty_title">Noch keine Benachrichtigungen</string>
+    <string name="notifications_empty_body">Wenn Sie erwähnt werden oder Ihnen jemand folgt, sehen Sie es hier.</string>
+    <string name="clear_notifications">Benachrichtigungen löschen</string>
+    <string name="notifications_cleared">Benachrichtigungen gelöscht</string>
 </resources>

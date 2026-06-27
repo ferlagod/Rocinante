@@ -477,6 +477,15 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
     }
 }
 
+/**
+ * Componente que muestra un WebView para realizar el proceso de login en la instancia de BookWyrm.
+ * Intercepta la carga de páginas para detectar cuando el usuario ha iniciado sesión exitosamente.
+ *
+ * @param loginUrl URL inicial de inicio de sesión.
+ * @param instanceUrl URL base de la instancia.
+ * @param username Nombre de usuario a pre-rellenar (si es posible).
+ * @param onLoginSuccess Callback ejecutado al detectar una sesión válida, devuelve la cookie de sesión.
+ */
 @Composable
 fun BookWyrmLoginWebView(
     loginUrl: String,

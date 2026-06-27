@@ -186,6 +186,10 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Incrementa optimísticamente el contador de 'Siguiendo' en el perfil actual.
+     * Útil tras realizar un follow exitoso sin necesidad de recargar todo el perfil.
+     */
     fun incrementFollowingCount() {
         val currentProfile = _uiState.value.profile
         if (currentProfile != null) {
@@ -197,6 +201,10 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Decrementa optimísticamente el contador de 'Siguiendo' en el perfil actual.
+     * Útil tras dejar de seguir a alguien.
+     */
     fun decrementFollowingCount() {
         val currentProfile = _uiState.value.profile
         if (currentProfile != null) {
@@ -243,6 +251,15 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Envía una respuesta a un estado (actividad) existente y recarga el feed.
+     *
+     * @param statusId Identificador de la publicación a la que se responde.
+     * @param content Contenido de la respuesta.
+     * @param instanceUrl URL base de la instancia.
+     * @param onSuccess Callback ejecutado cuando la respuesta se envía correctamente.
+     * @param onError Callback ejecutado si ocurre un error, pasando el mensaje.
+     */
     fun replyToStatus(
         statusUrl: String,
         instanceUrl: String,
@@ -280,6 +297,10 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Carga la página siguiente de actividades (paginación del feed).
+     * Mantiene los elementos actuales y añade los nuevos recuperados del servidor.
+     */
     fun loadMoreActivities() {
         val currentVisibleSize = _uiState.value.visibleTimeline.size
         val totalSize = _uiState.value.timeline.size
