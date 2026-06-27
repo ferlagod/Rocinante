@@ -233,4 +233,5 @@ Design: Lade till stöd för monokroma ikoner.</string>    <string name="book_wr
     <string name="notifications_empty_body">När du nämns eller följs kommer du att se det här.</string>
     <string name="clear_notifications">Rensa meddelanden</string>
     <string name="notifications_cleared">Meddelanden rensade</string>
+    <string name="changelog_text_v1_0_8">Ny flik för Aviseringar: Du kan nu kontrollera alla dina meddelanden och larm direkt från den nya sektionen i bottenfältet.\n\nFörbättringar av Mörkt Läge: Appens laddningsskärm och inloggning respekterar nu telefonens mörka tema. Inga fler ljusblixtar när du öppnar appen på natten!\n\nPolerad visning: Designjusteringar för att göra det bekvämare att läsa aktiviteter.</string>
 </resources>

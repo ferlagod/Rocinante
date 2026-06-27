@@ -233,4 +233,5 @@ Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="boo
     <string name="notifications_empty_body">Když vás někdo zmíní nebo začne sledovat, uvidíte to zde.</string>
     <string name="clear_notifications">Vymazat oznámení</string>
     <string name="notifications_cleared">Oznámení vymazána</string>
+    <string name="changelog_text_v1_0_8">Nová karta Oznámení: Nyní můžete kontrolovat všechna svá upozornění a varování přímo z nové sekce na spodním panelu.\n\nVylepšení Tmavého režimu: Načítací obrazovka aplikace a přihlášení nyní respektují tmavý motiv vašeho telefonu. Už žádné záblesky světla při otevírání aplikace v noci!\n\nVylepšené zobrazení: Úpravy designu pro pohodlnější čtení aktivit.</string>
 </resources>

@@ -233,4 +233,5 @@ Design: Aggiunto supporto per icone monocromatiche.</string>    <string name="bo
     <string name="notifications_empty_body">Quando vieni menzionato o seguito, lo vedrai qui.</string>
     <string name="clear_notifications">Cancella notifiche</string>
     <string name="notifications_cleared">Notifiche cancellate</string>
+    <string name="changelog_text_v1_0_8">Nuova scheda Notifiche: Ora puoi controllare tutti i tuoi avvisi e allerte direttamente dalla nuova sezione nella barra inferiore.\n\nMiglioramenti della Modalità Scura: La schermata di caricamento dell\'app e il login ora rispettano il tema scuro del tuo telefono. Niente più bagliori di luce quando apri l\'app di notte!\n\nVisualizzazione rifinita: Regolazioni del design per rendere più comoda la lettura delle attività.</string>
 </resources>
