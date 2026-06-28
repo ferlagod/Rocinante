@@ -104,6 +104,9 @@
     <string name="profile_following">Following</string>
     <string name="profile_bio_title">Biography</string>
     <string name="profile_bio_empty">This profile has no visible biography.</string>
+    <string name="profile_reading_goal_title">Reading Goal</string>
+    <string name="profile_reading_goal_progress">%1$d of %2$d books</string>
+
     <string name="profile_edit_btn">Edit</string>
     <string name="profile_currently_reading">Currently reading</string>
     <string name="profile_edit_dialog_title">Edit profile</string>

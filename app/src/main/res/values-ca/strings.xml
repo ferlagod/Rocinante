@@ -234,4 +234,6 @@ Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="
     <string name="clear_notifications">Esborrar notificacions</string>
     <string name="notifications_cleared">Notificacions esborrades</string>
     <string name="changelog_text_v1_0_8">Nova pestanya de Notificacions: Ja pots revisar tots els teus avisos i alertes directament des de la nova secció a la barra inferior.\n\nMillores en el Mode Fosc: La pantalla de càrrega de l\'app i l\'inici de sessió ara respecten el tema fosc del teu mòbil. S\'han acabat les fogonades de llum en obrir l\'app de nit!\n\nVisualització polida: Ajustaments de disseny perquè llegir les activitats sigui més còmode.</string>
+    <string name="profile_reading_goal_title">Objectiu de lectura</string>
+    <string name="profile_reading_goal_progress">%1$d de %2$d llibres</string>
 </resources>

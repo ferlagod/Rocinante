@@ -235,4 +235,6 @@ Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
     <string name="clear_notifications">Tyhjennä ilmoitukset</string>
     <string name="notifications_cleared">Ilmoitukset tyhjennetty</string>
     <string name="changelog_text_v1_0_8">Uusi Ilmoitukset-välilehti: Voit nyt tarkistaa kaikki huomautukset ja hälytykset suoraan alapalkin uudesta osiosta.\n\nTumman tilan parannukset: Sovelluksen latausnäyttö ja kirjautuminen noudattavat nyt puhelimesi tummaa teemaa. Ei enää kirkkaita välähdyksiä avatessasi sovelluksen yöllä!\n\nHiottu näkymä: Suunnittelumuutoksia toimintojen lukemisen mukavoittamiseksi.</string>
+    <string name="profile_reading_goal_title">Lukutavoite</string>
+    <string name="profile_reading_goal_progress">%1$d/%2$d kirjaa</string>
 </resources>

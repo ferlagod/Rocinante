@@ -234,4 +234,6 @@ Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <str
     <string name="clear_notifications">Meldingen wissen</string>
     <string name="notifications_cleared">Meldingen gewist</string>
     <string name="changelog_text_v1_0_8">Nieuw tabblad Meldingen: Je kunt nu al je meldingen en waarschuwingen direct bekijken vanuit de nieuwe sectie in de onderste balk.\n\nVerbeteringen Donkere Modus: Het laadscherm van de app en het inloggen respecteren nu het donkere thema van je telefoon. Geen felle lichtflitsen meer bij het openen van de app \'s nachts!\n\nVerfijnde weergave: Ontwerpaanpassingen om het lezen van activiteiten comfortabeler te maken.</string>
+    <string name="profile_reading_goal_title">Leesdoel</string>
+    <string name="profile_reading_goal_progress">%1$d van %2$d boeken</string>
 </resources>

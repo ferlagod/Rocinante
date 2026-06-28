@@ -234,4 +234,6 @@ Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string
     <string name="clear_notifications">Șterge notificările</string>
     <string name="notifications_cleared">Notificări șterse</string>
     <string name="changelog_text_v1_0_8">Filă nouă Notificări: Acum poți verifica toate avizele și alertele direct din noua secțiune din bara de jos.\n\nÎmbunătățiri pentru Modul Întunecat: Ecranul de încărcare al aplicației și autentificarea respectă acum tema întunecată a telefonului tău. Gata cu blițurile luminoase la deschiderea aplicației noaptea!\n\nVizualizare rafinată: Ajustări de design pentru a face citirea activităților mai confortabilă.</string>
+    <string name="profile_reading_goal_title">Obiectiv de lectură</string>
+    <string name="profile_reading_goal_progress">%1$d din %2$d cărți</string>
 </resources>

@@ -67,6 +67,8 @@ data class BookWyrmProfile(
     // Campos locales para la interfaz gráfica (no vienen del JSON de perfil)
     var followersCountLocal: Int? = null,
     var followingCountLocal: Int? = null
+    , var readingGoal: ReadingGoal? = null
+
 )
 
 /**
@@ -74,6 +76,14 @@ data class BookWyrmProfile(
  */
 data class ProfileIcon(
     val url: String?
+)
+
+/**
+ * Representa el progreso del reto de lectura anual extraído del HTML de BookWyrm.
+ */
+data class ReadingGoal(
+    val max: Int,
+    val value: Int
 )
 
 data class ActivityPubCollection(

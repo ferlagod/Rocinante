@@ -90,10 +90,30 @@ class BookWyrmRepository(
                     } catch (_: Exception) { null }
                 }
             }
+            
+            val readingGoalDeferred = async {
+                try {
+                    val profileUrl = profile.id ?: return@async null
+                    // BookWyrm JSON id is usually the profile URL. If it ends with .json, strip it.
+                    val htmlUrl = profileUrl.removeSuffix(".json")
+                    val htmlResponse = api.getRawHtmlResponse(htmlUrl)
+                    val htmlString = htmlResponse.body()?.string() ?: return@async null
+                    val doc = org.jsoup.Jsoup.parse(htmlString)
+                    val progressElement = doc.selectFirst("progress")
+                    if (progressElement != null) {
+                        val value = progressElement.attr("value").toIntOrNull()
+                        val max = progressElement.attr("max").toIntOrNull()
+                        if (value != null && max != null) {
+                            com.ferlagod.rocinante.data.api.ReadingGoal(max = max, value = value)
+                        } else null
+                    } else null
+                } catch (_: Exception) { null }
+            }
 
             // 3. Asignación de resultados reales
             profile.followersCountLocal = followersDeferred?.await()
             profile.followingCountLocal = followingDeferred?.await()
+            profile.readingGoal = readingGoalDeferred.await()
         }
 
         profile

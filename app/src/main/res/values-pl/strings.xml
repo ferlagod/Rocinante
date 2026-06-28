@@ -234,4 +234,6 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
     <string name="clear_notifications">Wyczyść powiadomienia</string>
     <string name="notifications_cleared">Powiadomienia wyczyszczone</string>
     <string name="changelog_text_v1_0_8">Nowa karta Powiadomienia: Możesz teraz sprawdzić wszystkie swoje ostrzeżenia i alerty bezpośrednio z nowej sekcji na dolnym pasku.\n\nUlepszenia Trybu Ciemnego: Ekran ładowania aplikacji i logowanie respektują teraz ciemny motyw Twojego telefonu. Koniec z jasnymi błyskami światła podczas otwierania aplikacji w nocy!\n\nDopracowany wygląd: Zmiany w projektowaniu, aby czytanie aktywności było wygodniejsze.</string>
+    <string name="profile_reading_goal_title">Cel czytelniczy</string>
+    <string name="profile_reading_goal_progress">%1$d z %2$d książek</string>
 </resources>

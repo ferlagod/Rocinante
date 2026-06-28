@@ -234,4 +234,6 @@ Design : Ajout du support des icônes monochromes.</string>    <string name="boo
     <string name="clear_notifications">Effacer les notifications</string>
     <string name="notifications_cleared">Notifications effacées</string>
     <string name="changelog_text_v1_0_8">Nouvel onglet Notifications : Vous pouvez désormais consulter tous vos avis et alertes directement depuis la nouvelle section dans la barre inférieure.\n\nAméliorations du Mode Sombre : L\'écran de chargement de l\'application et la connexion respectent désormais le thème sombre de votre téléphone. Fini les éblouissements en ouvrant l\'application la nuit !\n\nVisualisation affinée : Ajustements de conception pour rendre la lecture des activités plus confortable.</string>
+    <string name="profile_reading_goal_title">Objectif de lecture</string>
+    <string name="profile_reading_goal_progress">%1$d sur %2$d livres</string>
 </resources>

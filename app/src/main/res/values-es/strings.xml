@@ -103,6 +103,9 @@
     <string name="profile_following">Siguiendo</string>
     <string name="profile_bio_title">Biografía</string>
     <string name="profile_bio_empty">Este perfil no tiene biografía visible.</string>
+    <string name="profile_reading_goal_title">Reto de lectura</string>
+    <string name="profile_reading_goal_progress">%1$d de %2$d libros</string>
+
     <string name="profile_edit_btn">Editar</string>
     <string name="profile_currently_reading">Leyendo actualmente</string>
     <string name="profile_edit_dialog_title">Editar perfil</string>
