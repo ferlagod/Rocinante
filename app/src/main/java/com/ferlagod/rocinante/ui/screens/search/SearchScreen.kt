@@ -294,7 +294,11 @@ fun SearchScreen(
                                                 }
                                                 
                                                 activeBookKey = finalBookKey
-                                                val detailsUrl = BookWyrmUtils.ensureJsonUrl(finalBookKey)
+                                                val detailsUrl = if (finalBookKey.startsWith("http")) {
+                                                    BookWyrmUtils.ensureJsonUrl(finalBookKey)
+                                                } else {
+                                                    BookWyrmUtils.ensureJsonUrl("https://$instanceUrl/book/$finalBookKey")
+                                                }
                                                 selectedBookDetails = resolvedApi.getBookDetails(detailsUrl)
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
