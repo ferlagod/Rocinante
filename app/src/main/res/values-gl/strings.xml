@@ -239,4 +239,9 @@ Deseño: Soporte engadido para iconas monocromáticas.</string>    <string name=
     <string name="profile_reading_goal_title">Obxectivo de lectura</string>
     <string name="profile_reading_goal_progress">%1$d de %2$d libros</string>
     <string name="timeline_boost">Compartir</string>
+    <string name="changelog_text_v1_0_9">Compartir recensións: Agora podes enviar facilmente as recensións que leas a outras aplicacións.
+
+Retos de lectura: Xa podes visualizar os teus retos directamente desde a pantalla do teu perfil.
+
+Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libro despois de buscalo.</string>
 </resources>

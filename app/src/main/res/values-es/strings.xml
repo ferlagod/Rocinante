@@ -248,4 +248,9 @@ Diseño: Soporte añadido para iconos monocromáticos.</string>
     <string name="notifications_cleared">Notificaciones borradas</string>
     <string name="changelog_text_v1_0_8">Nueva pestaña de Notificaciones: Ya puedes revisar todos tus avisos y alertas directamente desde la nueva sección en la barra inferior.\n\nMejoras en el Modo Oscuro: La pantalla de carga de la app y el inicio de sesión ahora respetan el tema oscuro de tu móvil. ¡Se acabaron los fogonazos de luz al abrir la app de noche!\n\nVisualización pulida: Ajustes de diseño para que leer las actividades sea más cómodo.</string>
     <string name="timeline_boost">Compartir</string>
+    <string name="changelog_text_v1_0_9">Compartir reseñas: Ahora puedes enviar fácilmente las reseñas que leas a otras aplicaciones.
+
+Retos de lectura: Ya puedes visualizar tus retos directamente desde la pantalla de tu perfil.
+
+Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de un libro después de buscarlo.</string>
 </resources>

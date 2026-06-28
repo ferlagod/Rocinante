@@ -237,4 +237,9 @@ Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="
     <string name="profile_reading_goal_title">Objectiu de lectura</string>
     <string name="profile_reading_goal_progress">%1$d de %2$d llibres</string>
     <string name="timeline_boost">Compartir</string>
+    <string name="changelog_text_v1_0_9">Compartir ressenyes: Ara pots enviar fàcilment les ressenyes que llegeixis a altres aplicacions.
+
+Reptes de lectura: Ja pots visualitzar els teus reptes directament des de la pantalla del teu perfil.
+
+Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'un llibre després de cercar-lo.</string>
 </resources>

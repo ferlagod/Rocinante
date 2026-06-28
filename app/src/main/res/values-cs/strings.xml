@@ -237,4 +237,9 @@ Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="boo
     <string name="profile_reading_goal_title">Cíl čtení</string>
     <string name="profile_reading_goal_progress">%1$d z %2$d knih</string>
     <string name="timeline_boost">Sdílet</string>
+    <string name="changelog_text_v1_0_9">Sdílení recenzí: Nyní můžete snadno odesílat přečtené recenze do jiných aplikací.
+
+Čtenářské výzvy: Nyní můžete zobrazit své výzvy přímo na obrazovce profilu.
+
+Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobností o knize po jejím vyhledání.</string>
 </resources>

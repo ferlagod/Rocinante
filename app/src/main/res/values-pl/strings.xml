@@ -237,4 +237,9 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
     <string name="profile_reading_goal_title">Cel czytelniczy</string>
     <string name="profile_reading_goal_progress">%1$d z %2$d książek</string>
     <string name="timeline_boost">Udostępnij</string>
+    <string name="changelog_text_v1_0_9">Udostępnianie recenzji: Teraz możesz łatwo wysyłać przeczytane recenzje do innych aplikacji.
+
+Wyzwania czytelnicze: Możesz teraz przeglądać swoje cele bezpośrednio z ekranu profilu.
+
+Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegółów książki po jej wyszukaniu.</string>
 </resources>

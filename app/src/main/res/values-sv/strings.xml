@@ -237,4 +237,9 @@ Design: Lade till stöd för monokroma ikoner.</string>    <string name="book_wr
     <string name="profile_reading_goal_title">Läsmål</string>
     <string name="profile_reading_goal_progress">%1$d av %2$d böcker</string>
     <string name="timeline_boost">Dela</string>
+    <string name="changelog_text_v1_0_9">Dela recensioner: Du kan nu enkelt skicka recensionerna du läser till andra appar.
+
+Läsutmaningar: Du kan nu se dina mål direkt från din profilskärm.
+
+Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</string>
 </resources>

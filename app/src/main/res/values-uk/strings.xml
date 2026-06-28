@@ -237,4 +237,9 @@
     <string name="profile_reading_goal_title">Мета читання</string>
     <string name="profile_reading_goal_progress">%1$d з %2$d книг</string>
     <string name="timeline_boost">Поширити</string>
+    <string name="changelog_text_v1_0_9">Поділитися відгуками: Тепер ви можете легко надсилати прочитані відгуки в інші програми.
+
+Цілі читання: Тепер ви можете переглядати свої цілі безпосередньо з екрана профілю.
+
+Виправлення пошуку: Виправлено помилку, яка перешкоджала відкриттю деталей книги після пошуку.</string>
 </resources>

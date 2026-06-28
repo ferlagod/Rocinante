@@ -237,4 +237,9 @@ Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string
     <string name="profile_reading_goal_title">Obiectiv de lectură</string>
     <string name="profile_reading_goal_progress">%1$d din %2$d cărți</string>
     <string name="timeline_boost">Distribuie</string>
+    <string name="changelog_text_v1_0_9">Distribuie recenzii: Acum poți trimite cu ușurință recenziile pe care le citești către alte aplicații.
+
+Provocări de lectură: Acum îți poți vizualiza provocările direct din ecranul profilului tău.
+
+Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor unei cărți după ce a fost căutată.</string>
 </resources>

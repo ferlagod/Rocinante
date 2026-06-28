@@ -237,4 +237,9 @@ Design : Ajout du support des icônes monochromes.</string>    <string name="boo
     <string name="profile_reading_goal_title">Objectif de lecture</string>
     <string name="profile_reading_goal_progress">%1$d sur %2$d livres</string>
     <string name="timeline_boost">Partager</string>
+    <string name="changelog_text_v1_0_9">Partager les critiques : Vous pouvez désormais envoyer facilement les critiques que vous lisez vers d\'autres applications.
+
+Défis de lecture : Vous pouvez désormais visualiser vos objectifs directement depuis l\'écran de votre profil.
+
+Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les détails d\'un livre après l\'avoir recherché.</string>
 </resources>

@@ -237,4 +237,9 @@ Design: Aggiunto supporto per icone monocromatiche.</string>    <string name="bo
     <string name="profile_reading_goal_title">Obiettivo di lettura</string>
     <string name="profile_reading_goal_progress">%1$d di %2$d libri</string>
     <string name="timeline_boost">Condividi</string>
+    <string name="changelog_text_v1_0_9">Condividi recensioni: Ora puoi facilmente inviare le recensioni che leggi ad altre app.
+
+Obiettivi di lettura: Ora puoi visualizzare i tuoi obiettivi direttamente dalla schermata del tuo profilo.
+
+Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli di un libro dopo averlo cercato.</string>
 </resources>

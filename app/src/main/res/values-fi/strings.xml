@@ -238,4 +238,9 @@ Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
     <string name="profile_reading_goal_title">Lukutavoite</string>
     <string name="profile_reading_goal_progress">%1$d/%2$d kirjaa</string>
     <string name="timeline_boost">Jaa</string>
+    <string name="changelog_text_v1_0_9">Jaa arvosteluja: Voit nyt helposti lähettää lukemasi arvostelut muihin sovelluksiin.
+
+Lukutavoitteet: Voit nyt tarkastella tavoitteitasi suoraan profiilinäytöltäsi.
+
+Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen.</string>
 </resources>

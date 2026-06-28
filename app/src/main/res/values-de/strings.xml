@@ -237,4 +237,9 @@ Design: Unterstützung für monochrome Icons hinzugefügt.</string>    <string n
     <string name="profile_reading_goal_title">Leseziel</string>
     <string name="profile_reading_goal_progress">%1$d von %2$d Büchern</string>
     <string name="timeline_boost">Teilen</string>
+    <string name="changelog_text_v1_0_9">Rezensionen teilen: Sie können gelesene Rezensionen nun ganz einfach an andere Apps senden.
+
+Leseziele: Sie können Ihre Ziele nun direkt in Ihrem Profilbildschirm anzeigen.
+
+Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche verhinderte, wurde behoben.</string>
 </resources>

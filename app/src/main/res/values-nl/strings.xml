@@ -237,4 +237,9 @@ Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <str
     <string name="profile_reading_goal_title">Leesdoel</string>
     <string name="profile_reading_goal_progress">%1$d van %2$d boeken</string>
     <string name="timeline_boost">Delen</string>
+    <string name="changelog_text_v1_0_9">Recensies delen: Je kunt nu eenvoudig de recensies die je leest naar andere apps sturen.
+
+Leesdoelen: Je kunt nu je doelen rechtstreeks bekijken vanaf je profielscherm.
+
+Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderde.</string>
 </resources>

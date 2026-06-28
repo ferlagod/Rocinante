@@ -237,4 +237,9 @@ Design: Suporte adicionado para ícones monocromáticos.</string>    <string nam
     <string name="profile_reading_goal_title">Meta de leitura</string>
     <string name="profile_reading_goal_progress">%1$d de %2$d livros</string>
     <string name="timeline_boost">Partilhar</string>
+    <string name="changelog_text_v1_0_9">Partilhar avaliações: Agora podes enviar facilmente as avaliações que lês para outras aplicações.
+
+Desafios de leitura: Agora podes ver os teus objetivos diretamente do ecrã do teu perfil.
+
+Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de um livro após pesquisá-lo.</string>
 </resources>
