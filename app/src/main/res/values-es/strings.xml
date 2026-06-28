@@ -247,4 +247,5 @@ Diseño: Soporte añadido para iconos monocromáticos.</string>
     <string name="clear_notifications">Borrar notificaciones</string>
     <string name="notifications_cleared">Notificaciones borradas</string>
     <string name="changelog_text_v1_0_8">Nueva pestaña de Notificaciones: Ya puedes revisar todos tus avisos y alertas directamente desde la nueva sección en la barra inferior.\n\nMejoras en el Modo Oscuro: La pantalla de carga de la app y el inicio de sesión ahora respetan el tema oscuro de tu móvil. ¡Se acabaron los fogonazos de luz al abrir la app de noche!\n\nVisualización pulida: Ajustes de diseño para que leer las actividades sea más cómodo.</string>
+    <string name="timeline_boost">Compartir</string>
 </resources>

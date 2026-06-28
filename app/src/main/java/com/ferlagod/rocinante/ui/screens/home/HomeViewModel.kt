@@ -224,6 +224,35 @@ class HomeViewModel(
      * @param statusUrl URL canónica del estado original.
      * @param instanceUrl URL base de la instancia actual para resolver el ID local.
      */
+    
+    fun toggleBoost(statusUrl: String, instanceUrl: String) {
+        viewModelScope.launch {
+            val profileUrl = _uiState.value.profile?.id ?: return@launch
+            val outboxUrl = profileUrl.removeSuffix(".json") + "/outbox"
+
+            val currentlyBoosted = _uiState.value.boostedStatusIds.contains(statusUrl)
+            val newBoosted = !currentlyBoosted
+
+            val currentSet = _uiState.value.boostedStatusIds
+            val updatedSet = if (newBoosted) currentSet + statusUrl else currentSet - statusUrl
+            _uiState.value = _uiState.value.copy(boostedStatusIds = updatedSet)
+            timelineCache.saveBoostedStatuses(updatedSet)
+
+            val success = if (newBoosted) {
+                repository.boostStatus(statusUrl, outboxUrl)
+            } else {
+                repository.unboostStatus(statusUrl, outboxUrl)
+            }
+
+            if (!success) {
+                // Revert optimistic update
+                val revertedSet = if (newBoosted) updatedSet - statusUrl else updatedSet + statusUrl
+                _uiState.value = _uiState.value.copy(boostedStatusIds = revertedSet)
+                timelineCache.saveBoostedStatuses(revertedSet)
+            }
+        }
+    }
+
     fun toggleLike(statusUrl: String, instanceUrl: String) {
         viewModelScope.launch {
             val statusId = repository.resolveLocalStatusId(instanceUrl, statusUrl) ?: return@launch

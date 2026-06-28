@@ -242,4 +242,5 @@ Design: Added support for monochrome icons.</string>
     <string name="clear_notifications">Clear notifications</string>
     <string name="notifications_cleared">Notifications cleared</string>
     <string name="changelog_text_v1_0_8">New Notifications tab: You can now check all your notices and alerts directly from the new section in the bottom bar.\n\nDark Mode improvements: The app\'s loading screen and login now respect your phone\'s dark theme. No more bright flashes when opening the app at night!\n\nPolished visualization: Design adjustments to make reading activities more comfortable.</string>
+    <string name="timeline_boost">Boost</string>
 </resources>

@@ -67,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.ferlagod.rocinante.R
@@ -263,10 +264,31 @@ fun HomeScreen(
                     timeline = uiState.visibleTimeline,
                     profile = uiState.profile,
                     likedStatusIds = uiState.likedStatusIds,
+                    boostedStatusIds = uiState.boostedStatusIds,
                     isLoading = uiState.isLoading,
                     isRefreshing = uiState.isRefreshing,
                     onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
                     onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
+                    onBoostClick = { item -> 
+                        val shareText = buildString {
+                            append(item.actorName.ifEmpty { "Alguien" })
+                            append(" en BookWyrm:")
+                            if (item.content.isNotBlank() && item.content != "Sin contenido") {
+                                append("\n\n\"")
+                                append(item.content.take(200))
+                                if (item.content.length > 200) append("...")
+                                append("\"")
+                            }
+                            append("\n\n— Compartido con la app Rocinante")
+                        }
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                    },
                     onLoadMore = { viewModel.loadMoreActivities() },
                     onItemClick = { selectedActivity = it },
                     api = api
@@ -416,7 +438,28 @@ fun HomeScreen(
                 instanceUrl = instanceUrl,
                 api = api,
                 isLiked = isLiked,
+                isBoosted = uiState.boostedStatusIds.contains(activity.objectId),
                 onLikeClick = { viewModel.toggleLike(activity.objectId, instanceUrl) },
+                onBoostClick = { 
+                    val shareText = buildString {
+                        append(activity.actorName.ifEmpty { "Alguien" })
+                        append(" en BookWyrm:")
+                        if (activity.content.isNotBlank() && activity.content != "Sin contenido") {
+                            append("\n\n\"")
+                            append(activity.content.take(200))
+                            if (activity.content.length > 200) append("...")
+                            append("\"")
+                        }
+                        append("\n\n— Compartido con la app Rocinante")
+                    }
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
+                },
                 onReplySubmit = { replyText, onResult ->
                     viewModel.replyToStatus(
                         statusUrl = activity.objectId,
@@ -626,10 +669,12 @@ fun ActivityTab(
     timeline: List<TimelineUiItem>,
     profile: BookWyrmProfile?,
     likedStatusIds: Set<String>,
+    boostedStatusIds: Set<String>,
     isLoading: Boolean,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onLikeClick: (TimelineUiItem) -> Unit,
+    onBoostClick: (TimelineUiItem) -> Unit,
     onLoadMore: () -> Unit,
     onItemClick: (TimelineUiItem) -> Unit,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi
@@ -722,7 +767,9 @@ fun ActivityTab(
                             item = item, 
                             currentUserProfile = profile,
                             isLiked = isLiked,
+                            isBoosted = boostedStatusIds.contains(item.objectId),
                             onLikeClick = { onLikeClick(item) },
+                            onBoostClick = { onBoostClick(item) },
                             onReplyClick = { onItemClick(item) },
                             onClick = { onItemClick(item) },
                             onBookClick = { bookUrl, coverUrl ->
@@ -827,7 +874,9 @@ private fun ActivityItemCard(
     item: TimelineUiItem,
     currentUserProfile: BookWyrmProfile?,
     isLiked: Boolean,
+    isBoosted: Boolean,
     onLikeClick: () -> Unit,
+    onBoostClick: () -> Unit,
     onReplyClick: () -> Unit,
     onClick: () -> Unit,
     onBookClick: (String, String?) -> Unit = { _, _ -> }
@@ -965,6 +1014,18 @@ private fun ActivityItemCard(
                         text = stringResource(R.string.activity_like),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isLiked) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                }
+
+                IconButton(
+                    onClick = { onBoostClick() },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.timeline_boost),
+                        tint = LocalContentColor.current,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -1547,7 +1608,9 @@ fun ActivityDetailsDialog(
     instanceUrl: String,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
     isLiked: Boolean,
+    isBoosted: Boolean,
     onLikeClick: () -> Unit,
+    onBoostClick: () -> Unit,
     onReplySubmit: (String, (Boolean) -> Unit) -> Unit,
     onDismiss: () -> Unit,
     onBookClick: (String, String?) -> Unit = { _, _ -> }
@@ -1651,8 +1714,18 @@ fun ActivityDetailsDialog(
                     Text(
                         text = if (isLiked) stringResource(R.string.activity_liked_by_me) else stringResource(R.string.activity_like_action),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = onBoostClick) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.timeline_boost),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

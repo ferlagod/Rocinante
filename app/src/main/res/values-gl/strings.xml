@@ -238,4 +238,5 @@ Deseño: Soporte engadido para iconas monocromáticas.</string>    <string name=
     <string name="changelog_text_v1_0_8">Nova lapela de Notificacións: Xa podes revisar todos os teus avisos e alertas directamente desde a nova sección na barra inferior.\n\nMelloras no Modo Escuro: A pantalla de carga da app e o inicio de sesión agora respectan o tema escuro do teu móbil. Acabáronse os fogonazos de luz ao abrir a app de noite!\n\nVisualización puída: Axustes de deseño para que ler as actividades sexa máis cómodo.</string>
     <string name="profile_reading_goal_title">Obxectivo de lectura</string>
     <string name="profile_reading_goal_progress">%1$d de %2$d libros</string>
+    <string name="timeline_boost">Compartir</string>
 </resources>

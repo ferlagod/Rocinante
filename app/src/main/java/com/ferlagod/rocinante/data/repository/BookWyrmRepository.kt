@@ -880,6 +880,42 @@ class BookWyrmRepository(
     }
 
     /**
+     * Comparte (Boost/Announce) una publicación en el outbox del usuario.
+     */
+    suspend fun boostStatus(statusUrl: String, outboxUrl: String): Boolean {
+        return try {
+            val jsonObject = com.google.gson.JsonObject().apply {
+                addProperty("type", "Announce")
+                addProperty("object", statusUrl)
+            }
+            val response = api.postToOutbox(outboxUrl, jsonObject)
+            response.isSuccessful || response.code() in 200..299 || response.code() == 302
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Deshace el compartir (Undo Announce) de una publicación.
+     */
+    suspend fun unboostStatus(statusUrl: String, outboxUrl: String): Boolean {
+        return try {
+            val announceObject = com.google.gson.JsonObject().apply {
+                addProperty("type", "Announce")
+                addProperty("object", statusUrl)
+            }
+            val undoObject = com.google.gson.JsonObject().apply {
+                addProperty("type", "Undo")
+                add("object", announceObject)
+            }
+            val response = api.postToOutbox(outboxUrl, undoObject)
+            response.isSuccessful || response.code() in 200..299 || response.code() == 302
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
      * Envía una respuesta/comentario a un estado o actividad específica.
      *
      * @param userId ID del usuario que responde.

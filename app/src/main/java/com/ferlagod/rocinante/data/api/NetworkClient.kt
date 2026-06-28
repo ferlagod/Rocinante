@@ -482,6 +482,16 @@ interface BookWyrmApi {
     @FormUrlEncoded
     @POST("notifications")
     suspend fun postClearNotifications(@Field("csrfmiddlewaretoken") csrfToken: String): retrofit2.Response<ResponseBody>
+
+    /**
+     * Envía una actividad (ej. Announce para Boost) directamente a la bandeja de salida (Outbox).
+     */
+    @Headers("Accept: application/activity+json", "Content-Type: application/activity+json")
+    @POST
+    suspend fun postToOutbox(
+        @Url outboxUrl: String,
+        @Body body: com.google.gson.JsonObject
+    ): retrofit2.Response<ResponseBody>
 }
 
 /**

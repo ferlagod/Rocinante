@@ -181,4 +181,26 @@ class TimelineCache(private val context: Context) {
             if (e is kotlinx.coroutines.CancellationException) throw e
         }
     }
+
+    /**
+     * Guarda el conjunto de IDs que el usuario ha compartido (boosted).
+     *
+     * @param boostedIds Set de IDs de los estados marcados como boost.
+     */
+    fun saveBoostedStatuses(boostedIds: Set<String>) {
+        context.getSharedPreferences("boosted_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet("boosted_ids", boostedIds)
+            .apply()
+    }
+
+    /**
+     * Recupera el conjunto de IDs compartidos (boosted) cacheados.
+     *
+     * @return Set de identificadores.
+     */
+    fun loadBoostedStatuses(): Set<String> {
+        return context.getSharedPreferences("boosted_prefs", Context.MODE_PRIVATE)
+            .getStringSet("boosted_ids", emptySet()) ?: emptySet()
+    }
 }

@@ -43,9 +43,10 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val profile: BookWyrmProfile? = null,
     val timeline: List<TimelineUiItem> = emptyList(),
-    val selectedTab: Int = 0,
-    val likedStatusIds: Set<String> = emptySet(),
-    val userId: String? = null,
     val visibleTimeline: List<TimelineUiItem> = emptyList(),
-    val currentPage: Int = 1
+    val likedStatusIds: Set<String> = emptySet(),
+    val boostedStatusIds: Set<String> = emptySet(),
+    val userId: String? = null,
+    val currentPage: Int = 1,
+    val selectedTab: Int = 0
 )

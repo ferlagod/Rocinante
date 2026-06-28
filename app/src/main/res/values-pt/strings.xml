@@ -236,4 +236,5 @@ Design: Suporte adicionado para ícones monocromáticos.</string>    <string nam
     <string name="changelog_text_v1_0_8">Nova aba de Notificações: Agora você pode verificar todos os seus avisos e alertas diretamente da nova seção na barra inferior.\n\nMelhorias no Modo Escuro: A tela de carregamento do aplicativo e o login agora respeitam o tema escuro do seu celular. Chega de clarões ao abrir o aplicativo à noite!\n\nVisualização aprimorada: Ajustes de design para tornar a leitura das atividades mais confortável.</string>
     <string name="profile_reading_goal_title">Meta de leitura</string>
     <string name="profile_reading_goal_progress">%1$d de %2$d livros</string>
+    <string name="timeline_boost">Partilhar</string>
 </resources>
