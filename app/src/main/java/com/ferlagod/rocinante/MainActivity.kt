@@ -540,7 +540,7 @@ fun BookWyrmLoginWebView(
                                 val realUsername = result?.trim('"', '\'')
                                 
                                 val finalUsername = if (realUsername.isNullOrBlank() || realUsername == "null") {
-                                    username // Fallback al usuario original si el scraping falla
+                                    username.removePrefix("@").substringBefore("@").trim() // Fallback al usuario original si el scraping falla
                                 } else {
                                     realUsername
                                 }

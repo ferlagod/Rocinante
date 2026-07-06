@@ -68,7 +68,7 @@ class BookWyrmRepository(
      * @return El objeto [BookWyrmProfile] con la información del perfil.
      */
     suspend fun loadProfile(username: String): BookWyrmProfile = withContext(Dispatchers.IO) {
-        val cleanUsername = username.removePrefix("@").trim()
+        val cleanUsername = username.removePrefix("@").substringBefore("@").trim()
 
         // 1. Descarga del perfil base
         val profile = api.getUserProfile(cleanUsername)
@@ -145,7 +145,7 @@ class BookWyrmRepository(
 
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-        val cleanUser = username.removePrefix("@").trim()
+        val cleanUser = username.removePrefix("@").substringBefore("@").trim()
 
         // ─── ESTRATEGIA 1: Scraping del feed HTML autenticado (método principal) ───
         // BookWyrm no expone API REST para el timeline. El feed real (home) se construye
@@ -199,7 +199,7 @@ class BookWyrmRepository(
     ): List<TimelineUiItem> = withContext(Dispatchers.IO) {
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-        val cleanUser = username.removePrefix("@").trim()
+        val cleanUser = username.removePrefix("@").substringBefore("@").trim()
         loadFollowingActivities(baseUrl, cleanUser)
     }
 

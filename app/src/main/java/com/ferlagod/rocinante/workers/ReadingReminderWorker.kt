@@ -67,7 +67,7 @@ class ReadingReminderWorker(
                     val api = NetworkClient.createAuthenticatedApi(session.instanceUrl, session.cookie)
                     val cleanBase = if (session.instanceUrl.startsWith("http")) session.instanceUrl else "https://${session.instanceUrl}"
                     val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-                    val cleanUser = session.username.removePrefix("@").trim()
+                    val cleanUser = session.username.removePrefix("@").substringBefore("@").trim()
                     val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
                     
                     val response = api.getShelfData(shelfJsonUrl)

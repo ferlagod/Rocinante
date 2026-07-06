@@ -123,17 +123,18 @@ class FollowListViewModel(
             }
 
             try {
+                val cleanUser = username.removePrefix("@").substringBefore("@").trim()
                 coroutineScope {
                     // 1. Cargar mis seguidos y la lista target en paralelo
                     val myFollowingDeferred = async {
-                        loadAllActorUrls("${baseUrl}user/$username/following.json?page=1")
+                        loadAllActorUrls("${baseUrl}user/$cleanUser/following.json?page=1")
                     }
                     val targetListDeferred = async {
                         val path = when (direction) {
                             FollowListDirection.FOLLOWERS -> "followers"
                             FollowListDirection.FOLLOWING -> "following"
                         }
-                        loadActorUrls("${baseUrl}user/$username/$path.json?page=1")
+                        loadActorUrls("${baseUrl}user/$cleanUser/$path.json?page=1")
                     }
 
                     val myFollowingUrls = myFollowingDeferred.await()

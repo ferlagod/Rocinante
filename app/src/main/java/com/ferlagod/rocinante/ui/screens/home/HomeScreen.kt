@@ -1219,7 +1219,7 @@ fun ProfileTab(
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-            val cleanUser = username.removePrefix("@").trim()
+            val cleanUser = username.removePrefix("@").substringBefore("@").trim()
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
             val response = api.getShelfData(shelfJsonUrl)
             val fetchedItems = response.orderedItems ?: emptyList()
