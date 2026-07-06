@@ -242,5 +242,5 @@ Design: Suporte adicionado para ícones monocromáticos.</string>    <string nam
 Desafios de leitura: Agora podes ver os teus objetivos diretamente do ecrã do teu perfil.
 
 Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de um livro após pesquisá-lo.</string>
-    <string name=\"changelog_text_v1_1_0\">Correção de login: Foi resolvido um problema que impedia o carregamento correto das prateleiras ao fazer login usando o alias completo (ex. usuario@instancia.com).\n\nEstabilidade: O processamento das respostas do servidor foi melhorado para evitar falhas causadas por caracteres invisíveis (BOM).\n\n⚠️ Aviso: Se a sua instância BookWyrm usa Cloudflare, você pode ter erros de conexão ocasionais. Atualmente, estamos procurando uma solução para esse problema.</string>
+    <string name="changelog_text_v1_1_0">Correção de login: Foi resolvido um problema que impedia o carregamento correto das prateleiras ao fazer login usando o alias completo (ex. usuario@instancia.com).\n\nEstabilidade: O processamento das respostas do servidor foi melhorado para evitar falhas causadas por caracteres invisíveis (BOM).\n\n⚠️ Aviso: Se a sua instância BookWyrm usa Cloudflare, você pode ter erros de conexão ocasionais. Atualmente, estamos procurando uma solução para esse problema.</string>
 </resources>

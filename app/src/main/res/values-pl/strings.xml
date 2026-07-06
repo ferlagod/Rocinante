@@ -242,5 +242,5 @@ Design: Dodano obsługę monochromatycznych ikon.</string>    <string name="book
 Wyzwania czytelnicze: Możesz teraz przeglądać swoje cele bezpośrednio z ekranu profilu.
 
 Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegółów książki po jej wyszukaniu.</string>
-    <string name=\"changelog_text_v1_1_0\">Poprawka logowania: Rozwiązano problem, który uniemożliwiał prawidłowe ładowanie półek podczas logowania za pomocą pełnego aliasu (np. uzytkownik@instancja.com).\n\nStabilność: Poprawiono przetwarzanie odpowiedzi serwera, aby zapobiec awariom spowodowanym niewidocznymi znakami (BOM).\n\n⚠️ Uwaga: Jeśli Twoja instancja BookWyrm korzysta z Cloudflare, możesz czasami napotkać błędy połączenia. Obecnie szukamy rozwiązania tego problemu.</string>
+    <string name="changelog_text_v1_1_0">Poprawka logowania: Rozwiązano problem, który uniemożliwiał prawidłowe ładowanie półek podczas logowania za pomocą pełnego aliasu (np. uzytkownik@instancja.com).\n\nStabilność: Poprawiono przetwarzanie odpowiedzi serwera, aby zapobiec awariom spowodowanym niewidocznymi znakami (BOM).\n\n⚠️ Uwaga: Jeśli Twoja instancja BookWyrm korzysta z Cloudflare, możesz czasami napotkać błędy połączenia. Obecnie szukamy rozwiązania tego problemu.</string>
 </resources>

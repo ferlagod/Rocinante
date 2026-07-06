@@ -243,5 +243,5 @@ Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
 Lukutavoitteet: Voit nyt tarkastella tavoitteitasi suoraan profiilinäytöltäsi.
 
 Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen.</string>
-    <string name=\"changelog_text_v1_1_0\">Kirjautumisen korjaus: Korjattu ongelma, joka esti hyllyjen latautumisen oikein kirjauduttaessa koko nimimerkillä (esim. kayttaja@instanssi.com).\n\nVakaus: Palvelimen vastausten käsittelyä parannettu näkymättömien merkkien (BOM) aiheuttamien kaatumisten estämiseksi.\n\n⚠️ Huomio: Jos BookWyrm-instanssisi käyttää Cloudflarea, saatat kokea satunnaisia yhteysvirheitä. Etsimme parhaillaan ratkaisua tähän ongelmaan.</string>
+    <string name="changelog_text_v1_1_0">Kirjautumisen korjaus: Korjattu ongelma, joka esti hyllyjen latautumisen oikein kirjauduttaessa koko nimimerkillä (esim. kayttaja@instanssi.com).\n\nVakaus: Palvelimen vastausten käsittelyä parannettu näkymättömien merkkien (BOM) aiheuttamien kaatumisten estämiseksi.\n\n⚠️ Huomio: Jos BookWyrm-instanssisi käyttää Cloudflarea, saatat kokea satunnaisia yhteysvirheitä. Etsimme parhaillaan ratkaisua tähän ongelmaan.</string>
 </resources>

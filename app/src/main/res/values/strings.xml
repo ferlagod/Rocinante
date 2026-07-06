@@ -248,5 +248,5 @@ Design: Added support for monochrome icons.</string>
 Reading goals: You can now view your goals directly from your profile screen.
 
 Search fix: Fixed the bug that prevented opening book details after searching.</string>
-    <string name=\"changelog_text_v1_1_0\">Login fix: Resolved an issue that prevented loading shelves correctly when logging in using a full handle (e.g. user@instance.com).\n\nStability: Improved server response parsing to prevent crashes due to invisible characters (BOM).\n\n⚠️ Important: If your BookWyrm instance uses Cloudflare, you might occasionally experience connection errors. We are currently investigating a solution for this.</string>
+    <string name="changelog_text_v1_1_0">Login fix: Resolved an issue that prevented loading shelves correctly when logging in using a full handle (e.g. user@instance.com).\n\nStability: Improved server response parsing to prevent crashes due to invisible characters (BOM).\n\n⚠️ Important: If your BookWyrm instance uses Cloudflare, you might occasionally experience connection errors. We are currently investigating a solution for this.</string>
 </resources>
