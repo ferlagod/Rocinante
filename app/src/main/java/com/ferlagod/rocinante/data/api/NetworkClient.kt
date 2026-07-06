@@ -112,7 +112,7 @@ data class ActivityPubActivity(
 ) {
     val objectData: ActivityPubObject?
         get() = if (rawObjectData != null && rawObjectData.isJsonObject) {
-            com.google.gson.Gson().fromJson(rawObjectData, ActivityPubObject::class.java)
+            com.google.gson.GsonBuilder().setLenient().create().fromJson(rawObjectData, ActivityPubObject::class.java)
         } else null
 }
 
@@ -615,10 +615,14 @@ object NetworkClient {
 
         lastOkHttpClient = okHttpClient
 
+        val gson = com.google.gson.GsonBuilder()
+            .setLenient()
+            .create()
+
         return Retrofit.Builder()
             .baseUrl(finalUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create(gson))
             .build()
             .create(BookWyrmApi::class.java)
     }

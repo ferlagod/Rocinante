@@ -242,4 +242,5 @@ Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="boo
 Čtenářské výzvy: Nyní můžete zobrazit své výzvy přímo na obrazovce profilu.
 
 Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobností o knize po jejím vyhledání.</string>
+    <string name=\"changelog_text_v1_1_0\">Oprava přihlášení: Byl vyřešen problém, který bránil správnému načtení polic při přihlášení pomocí plného aliasu (např. uživatel@instance.com).\n\nStabilita: Vylepšeno zpracování odpovědí serveru, aby se zabránilo pádům způsobeným neviditelnými znaky (BOM).\n\n⚠️ Upozornění: Pokud vaše instance BookWyrm používá Cloudflare, můžete zaznamenat občasné chyby připojení. V současné době hledáme řešení tohoto problému.</string>
 </resources>

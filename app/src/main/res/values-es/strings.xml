@@ -253,4 +253,5 @@ Diseño: Soporte añadido para iconos monocromáticos.</string>
 Retos de lectura: Ya puedes visualizar tus retos directamente desde la pantalla de tu perfil.
 
 Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de un libro después de buscarlo.</string>
+    <string name=\"changelog_text_v1_1_0\">Solución de inicio de sesión: Se ha resuelto un problema que impedía cargar las estanterías correctamente al usar el alias completo (ej. usuario@instancia.com) en el login.\n\nEstabilidad: Mejorado el procesado de las respuestas del servidor para evitar cierres por caracteres invisibles (BOM).\n\n⚠️ Aviso: Si tu instancia de BookWyrm utiliza Cloudflare, podrías experimentar errores de conexión puntuales. Actualmente estamos buscando una solución para este problema.</string>
 </resources>

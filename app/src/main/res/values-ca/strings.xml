@@ -242,4 +242,5 @@ Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="
 Reptes de lectura: Ja pots visualitzar els teus reptes directament des de la pantalla del teu perfil.
 
 Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'un llibre després de cercar-lo.</string>
+    <string name=\"changelog_text_v1_1_0\">Solució d\'inici de sessió: S\'ha resolt un problema que impedia carregar les prestatgeries correctament en utilitzar l\'àlies complet (ex. usuari@instancia.com) en l\'inici de sessió.\n\nEstabilitat: Millorat el processament de les respostes del servidor per evitar tancaments per caràcters invisibles (BOM).\n\n⚠️ Avís: Si la vostra instància de BookWyrm utilitza Cloudflare, podríeu experimentar errors de connexió puntuals. Actualment estem buscant una solució per a aquest problema.</string>
 </resources>

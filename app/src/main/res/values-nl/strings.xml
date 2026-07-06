@@ -242,4 +242,5 @@ Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <str
 Leesdoelen: Je kunt nu je doelen rechtstreeks bekijken vanaf je profielscherm.
 
 Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderde.</string>
+    <string name=\"changelog_text_v1_1_0\">Inlog-fix: Er is een probleem opgelost dat verhinderde dat planken correct werden geladen bij het inloggen met de volledige alias (bijv. gebruiker@instantie.com).\n\nStabiliteit: De verwerking van serverreacties is verbeterd om crashes door onzichtbare tekens (BOM) te voorkomen.\n\n⚠️ Waarschuwing: Als uw BookWyrm-instantie Cloudflare gebruikt, kunt u incidenteel verbindingsfouten ervaren. We zoeken momenteel naar een oplossing voor dit probleem.</string>
 </resources>

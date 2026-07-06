@@ -242,4 +242,5 @@ Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string
 Provocări de lectură: Acum îți poți vizualiza provocările direct din ecranul profilului tău.
 
 Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor unei cărți după ce a fost căutată.</string>
+    <string name=\"changelog_text_v1_1_0\">Remediere autentificare: S-a rezolvat o problemă care împiedica încărcarea corectă a rafturilor la autentificarea cu aliasul complet (ex. utilizator@instanta.com).\n\nStabilitate: S-a îmbunătățit procesarea răspunsurilor serverului pentru a preveni blocările cauzate de caractere invizibile (BOM).\n\n⚠️ Avertisment: Dacă instanța dvs. BookWyrm utilizează Cloudflare, este posibil să întâmpinați erori de conexiune ocazionale. În prezent căutăm o soluție pentru această problemă.</string>
 </resources>
