@@ -15,6 +15,7 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.ResponseBody.Companion.toResponseBody
 import javax.inject.Singleton
 
 import com.ferlagod.rocinante.data.local.SettingsPreferences
