@@ -1,15 +1,23 @@
 package com.ferlagod.rocinante.ui.screens.notifications
+import com.ferlagod.rocinante.data.model.*
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.NetworkClient
+import com.ferlagod.rocinante.data.api.BookWyrmScraper
+import com.ferlagod.rocinante.data.local.SessionStorage
 import com.ferlagod.rocinante.data.model.NotificationUiItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.ferlagod.rocinante.R
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 /**
  * Representa el estado actual de la pantalla de Notificaciones.
@@ -20,18 +28,26 @@ sealed class NotificationsState {
     data class Error(val message: String) : NotificationsState()
 }
 
+
+
+
 /**
  * ViewModel encargado de gestionar la lógica de presentación de la pestaña de notificaciones.
  * Extrae y mantiene el estado de las notificaciones desde la web de la instancia, proporcionando
  * opciones para refrescar y actualizar el contenido.
  *
  * @param api Cliente autenticado de BookWyrm.
- * @param instanceUrl URL base de la instancia conectada.
+ * @param sessionStorage Almacenamiento local para obtener la URL de la instancia.
  */
-class NotificationsViewModel(
+@HiltViewModel
+class NotificationsViewModel @Inject constructor(
     private val api: BookWyrmApi,
-    private val instanceUrl: String
+    private val sessionStorage: SessionStorage,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
+
+    private val instanceUrl: String
+        get() = sessionStorage.currentSession?.instanceUrl ?: ""
 
     private val _state = MutableStateFlow<NotificationsState>(NotificationsState.Loading)
     val state: StateFlow<NotificationsState> = _state.asStateFlow()
@@ -51,10 +67,10 @@ class NotificationsViewModel(
         viewModelScope.launch {
             _state.value = NotificationsState.Loading
             try {
-                val items = NetworkClient.scrapeNotifications(api, instanceUrl)
+                val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
                 _state.value = NotificationsState.Success(items)
             } catch (e: Exception) {
-                _state.value = NotificationsState.Error(e.message ?: "Unknown error")
+                _state.value = NotificationsState.Error(e.message ?: context.getString(R.string.error_unknown))
             }
         }
     }
@@ -67,7 +83,7 @@ class NotificationsViewModel(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                val items = NetworkClient.scrapeNotifications(api, instanceUrl)
+                val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
                 _state.value = NotificationsState.Success(items)
             } catch (e: Exception) {
                 // Ignore error on refresh or show snackbar
@@ -85,11 +101,11 @@ class NotificationsViewModel(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                val success = NetworkClient.clearNotifications(api, instanceUrl)
+                val success = BookWyrmScraper.clearNotifications(api, instanceUrl)
                 if (success) {
                     _state.value = NotificationsState.Success(emptyList())
                 } else {
-                    val items = NetworkClient.scrapeNotifications(api, instanceUrl)
+                    val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
                     _state.value = NotificationsState.Success(items)
                 }
                 onComplete()
@@ -102,18 +118,3 @@ class NotificationsViewModel(
     }
 }
 
-/**
- * Factory para instanciar [NotificationsViewModel] inyectando las dependencias necesarias.
- */
-class NotificationsViewModelFactory(
-    private val api: BookWyrmApi,
-    private val instanceUrl: String
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(NotificationsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return NotificationsViewModel(api, instanceUrl) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}

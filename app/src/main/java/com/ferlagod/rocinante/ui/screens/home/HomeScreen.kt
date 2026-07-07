@@ -1,3 +1,4 @@
+@file:android.annotation.SuppressLint("LocalContextGetResourceValueCall")
 /*
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
@@ -17,11 +18,10 @@
  * junto a este programa.
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
-@file:SuppressLint("LocalContextGetResourceValueCall")
 
 package com.ferlagod.rocinante.ui.screens.home
+import com.ferlagod.rocinante.data.model.*
 
-import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -79,8 +79,9 @@ import com.ferlagod.rocinante.ui.components.FollowListSheet
 import com.ferlagod.rocinante.utils.HtmlUtils
 import com.ferlagod.rocinante.ui.screens.shelves.MyBooksScreen
 import com.ferlagod.rocinante.ui.screens.search.SearchScreen
-import com.ferlagod.rocinante.data.api.BookWyrmProfile
+import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.api.NetworkClient
+import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.api.editProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -112,8 +113,8 @@ fun HomeScreen(
     var showPostDialog by remember { mutableStateOf(false) }
     var unreadNotifications by remember { mutableStateOf(0) }
     var selectedActivity by remember { mutableStateOf<TimelineUiItem?>(null) }
-    var dialogBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
-    var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
+    var dialogBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
+    var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var dialogBookKey by remember { mutableStateOf("") }
     var dialogCoverUrl by remember { mutableStateOf("") }
 
@@ -121,17 +122,7 @@ fun HomeScreen(
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
     }
 
-    val timelineCache = remember(context) {
-        com.ferlagod.rocinante.data.local.TimelineCache(context)
-    }
-
-    // El factory se crea con una función lambda que crea el repositorio usando el profileCache
-    // del ViewModel ya instanciado, de modo que el caché sobrevive a las recomposiciones.
-    val factory = remember(api, timelineCache) {
-        HomeViewModelFactory(api, timelineCache)
-    }
-
-    val viewModel: HomeViewModel = viewModel(factory = factory)
+    val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(instanceUrl, username, cookie) {
@@ -141,7 +132,7 @@ fun HomeScreen(
     LaunchedEffect(api, instanceUrl) {
         while (true) {
             try {
-                unreadNotifications = NetworkClient.getUnreadNotificationCount(api, instanceUrl)
+                unreadNotifications = BookWyrmScraper.getUnreadNotificationCount(api, instanceUrl)
             } catch (e: Exception) {
                 // Ignore
             }
@@ -271,9 +262,9 @@ fun HomeScreen(
                     onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
                     onBoostClick = { item -> 
                         val shareText = buildString {
-                            append(item.actorName.ifEmpty { "Alguien" })
-                            append(" en BookWyrm:")
-                            if (item.content.isNotBlank() && item.content != "Sin contenido") {
+                            append(item.actorName.ifEmpty { context.getString(R.string.text_someone) })
+                            append(context.getString(R.string.share_on_bookwyrm))
+                            if (item.content.isNotBlank() && item.content != context.getString(R.string.text_no_content)) {
                                 append("\n\n\"")
                                 append(item.content.take(200))
                                 if (item.content.length > 200) append("...")
@@ -442,9 +433,9 @@ fun HomeScreen(
                 onLikeClick = { viewModel.toggleLike(activity.objectId, instanceUrl) },
                 onBoostClick = { 
                     val shareText = buildString {
-                        append(activity.actorName.ifEmpty { "Alguien" })
-                        append(" en BookWyrm:")
-                        if (activity.content.isNotBlank() && activity.content != "Sin contenido") {
+                        append(activity.actorName.ifEmpty { context.getString(R.string.text_someone) })
+                        append(context.getString(R.string.share_on_bookwyrm))
+                        if (activity.content.isNotBlank() && activity.content != context.getString(R.string.text_no_content)) {
                             append("\n\n\"")
                             append(activity.content.take(200))
                             if (activity.content.length > 200) append("...")
@@ -481,14 +472,14 @@ fun HomeScreen(
                         dialogCoverUrl = coverUrl ?: ""
                         coroutineScope.launch {
                             try {
-                                val localUrl = com.ferlagod.rocinante.data.api.NetworkClient.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
                                 val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
                                 val baseUrl = localUrl.substringBefore("/book/")
                                 val detailsUrl = "$baseUrl/book/$bookId.json"
                                 dialogBookDetails = api.getBookDetails(detailsUrl)
                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                 try {
-                                    dialogBookReviews = NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                    dialogBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
                                 } catch (_: Exception) {
                                     dialogBookReviews = emptyList()
                                 }
@@ -516,7 +507,7 @@ fun HomeScreen(
  */
 @Composable
 fun SuggestedUserDialog(
-    suggestedUser: com.ferlagod.rocinante.data.api.SuggestedUser,
+    suggestedUser: com.ferlagod.rocinante.data.model.SuggestedUser,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
     instanceUrl: String,
     onDismiss: () -> Unit,
@@ -681,8 +672,8 @@ fun ActivityTab(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
-    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
+    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
+    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
     var fallbackCoverUrl by remember { mutableStateOf("") }
 
@@ -778,14 +769,14 @@ fun ActivityTab(
                                     fallbackCoverUrl = coverUrl ?: ""
                                     coroutineScope.launch {
                                         try {
-                                            val localUrl = com.ferlagod.rocinante.data.api.NetworkClient.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                            val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
                                             val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
                                             val baseUrl = localUrl.substringBefore("/book/")
                                             val detailsUrl = "$baseUrl/book/$bookId.json"
                                             selectedBookDetails = api.getBookDetails(detailsUrl)
                                             val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                             try {
-                                                selectedBookReviews = com.ferlagod.rocinante.data.api.NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                                selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
                                             } catch (_: Exception) {
                                                 selectedBookReviews = emptyList()
                                             }
@@ -947,7 +938,7 @@ private fun ActivityItemCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                if (item.content.isNotBlank() && item.content != "Sin contenido") {
+                if (item.content.isNotBlank() && item.content != stringResource(R.string.text_no_content)) {
                     Text(
                         text = item.content,
                         style = MaterialTheme.typography.bodyMedium,
@@ -1050,7 +1041,7 @@ private fun getActivityContext(type: String): Pair<String, androidx.compose.ui.g
         "Rating" -> Pair(stringResource(R.string.activity_type_rating), Icons.Default.Star)
         "Announce" -> Pair(stringResource(R.string.activity_type_announce), Icons.Default.Share)
         "Note", "Comment" -> Pair(stringResource(R.string.activity_type_comment), Icons.Default.Edit)
-        "Quotation" -> Pair("Cita", Icons.AutoMirrored.Filled.Reply)
+        "Quotation" -> Pair(stringResource(R.string.activity_type_cita), Icons.AutoMirrored.Filled.Reply)
         "Add" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
         "Create" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
         else -> Pair(type, Icons.Default.Edit)
@@ -1092,8 +1083,8 @@ fun ProfileTab(
         (NetworkClient.lastOkHttpClient?.cookieJar as? com.ferlagod.rocinante.data.api.SessionCookieJar)
     }
 
-    var readingBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>(emptyList()) }
-    var suggestedUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(emptyList()) }
+    var readingBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
+    var suggestedUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
@@ -1108,17 +1099,8 @@ fun ProfileTab(
     var fallbackCoverUrl by remember { mutableStateOf("") }
 
 
-    val followCache = remember(context) { com.ferlagod.rocinante.data.local.FollowListCache(context) }
-    val followFactory = remember(api, followCache) { com.ferlagod.rocinante.ui.screens.home.FollowListViewModelFactory(api, followCache) }
-    
-    val followersViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        key = "follow_list_FOLLOWERS",
-        factory = followFactory
-    )
-    val followingViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        key = "follow_list_FOLLOWING",
-        factory = followFactory
-    )
+    val followersViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_FOLLOWERS")
+    val followingViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_FOLLOWING")
 
     val followersState by followersViewModel.uiState.collectAsStateWithLifecycle()
     val followingState by followingViewModel.uiState.collectAsStateWithLifecycle()
@@ -1132,12 +1114,12 @@ fun ProfileTab(
         followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING)
     }
 
-    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
-    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
+    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
+    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
 
     var followSheetDirection by remember { mutableStateOf<FollowListDirection?>(null) }
-    var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.api.SuggestedUser?>(null) }
+    var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
 
     followSheetDirection?.let { dir ->
         FollowListSheet(
@@ -1228,7 +1210,7 @@ fun ProfileTab(
         } catch (_: Exception) {
         }
         try {
-            val fetchedUsers = com.ferlagod.rocinante.data.api.NetworkClient.getSuggestedUsers(api, instanceUrl)
+            val fetchedUsers = com.ferlagod.rocinante.data.api.BookWyrmScraper.getSuggestedUsers(api, instanceUrl)
             suggestedUsers = fetchedUsers
             dataCache.saveSuggestedUsers(fetchedUsers)
         } catch (_: Exception) {
@@ -1367,7 +1349,7 @@ fun ProfileTab(
                                                     selectedBookDetails = api.getBookDetails(detailsUrl)
                                                     val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                                     try {
-                                                        selectedBookReviews = com.ferlagod.rocinante.data.api.NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                                        selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
                                                     } catch (_: Exception) {
                                                         selectedBookReviews = emptyList()
                                                     }
@@ -1686,7 +1668,7 @@ fun ActivityDetailsDialog(
                     )
                     if (hasVisualOverflow && !isTextExpanded) {
                         Text(
-                            text = "...ver más",
+                            text = stringResource(R.string.text_see_more),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,

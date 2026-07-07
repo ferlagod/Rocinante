@@ -18,6 +18,7 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.components
+import com.ferlagod.rocinante.data.model.*
 
 import android.widget.Toast
 import androidx.compose.animation.core.*
@@ -46,7 +47,7 @@ import com.ferlagod.rocinante.data.model.FollowUserItem
 import com.ferlagod.rocinante.ui.screens.home.FollowListDirection
 import com.ferlagod.rocinante.ui.screens.home.FollowListViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ferlagod.rocinante.ui.screens.home.FollowListViewModelFactory
+
 
 /**
  * ModalBottomSheet que muestra la lista de seguidores o siguiendo
@@ -69,12 +70,7 @@ fun FollowListSheet(
     onFollowToggled: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val cache = remember(context) { com.ferlagod.rocinante.data.local.FollowListCache(context) }
-    val factory = remember(api, cache) { FollowListViewModelFactory(api, cache) }
-    val viewModel: FollowListViewModel = viewModel(
-        key = "follow_list_${direction.name}",
-        factory = factory
-    )
+    val viewModel: FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_${direction.name}")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"

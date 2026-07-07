@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.shelves
+import com.ferlagod.rocinante.data.model.*
+
 
 import android.widget.Toast
 import androidx.compose.animation.core.*
@@ -40,7 +42,8 @@ import com.ferlagod.rocinante.R
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.NetworkClient
-import com.ferlagod.rocinante.data.api.ShelfBookItem
+import com.ferlagod.rocinante.data.api.BookWyrmScraper
+import com.ferlagod.rocinante.data.model.ShelfBookItem
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
@@ -188,6 +191,9 @@ fun ShelfNativeDetailScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    
+    val errorNetworkTemplate = stringResource(R.string.error_network)
+    val errorDetailsLoadTemplate = stringResource(R.string.error_details_load)
 
     val api = remember(instanceUrl, cookie) {
         sharedApi ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -202,8 +208,8 @@ fun ShelfNativeDetailScreen(
     var refreshTrigger by remember { mutableStateOf(0) }
     var isNetworkRefreshed by remember { mutableStateOf(false) }
 
-    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmBookDetails?>(null) }
-    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.ActivityPubActivity>>(emptyList()) }
+    var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
+    var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var fallbackCoverUrl by remember { mutableStateOf("") }
     var activeBookUrl by remember { mutableStateOf("") }
     var isLoadingDetails by remember { mutableStateOf(false) }
@@ -253,7 +259,7 @@ fun ShelfNativeDetailScreen(
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             if (books.isEmpty()) {
-                errorMessage = context.getString(R.string.error_network, e.message)
+                errorMessage = errorNetworkTemplate.format(e.message ?: "")
             }
             hasMorePages = false
         } finally {
@@ -391,13 +397,13 @@ fun ShelfNativeDetailScreen(
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                                 try {
-                                                    selectedBookReviews = NetworkClient.scrapeBookReviews(api, baseBookUrl)
+                                                    selectedBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
                                                 } catch (_: Exception) {
                                                     selectedBookReviews = emptyList()
                                                 }
                                             } catch (e: Exception) {
                                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = context.getString(R.string.error_details_load, e.message)
+                                                errorMessage = errorDetailsLoadTemplate.format(e.message ?: "")
                                             } finally {
                                                 isLoadingDetails = false
                                             }

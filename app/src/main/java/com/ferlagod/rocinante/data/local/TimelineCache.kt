@@ -18,6 +18,7 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.local
+import com.ferlagod.rocinante.data.model.*
 
 import android.content.Context
 import com.ferlagod.rocinante.data.model.TimelineUiItem
@@ -81,7 +82,7 @@ class TimelineCache(private val context: Context) {
     /**
      * Guarda el perfil del usuario en caché de forma asíncrona.
      */
-    suspend fun saveProfile(profile: com.ferlagod.rocinante.data.api.BookWyrmProfile) = withContext(Dispatchers.IO) {
+    suspend fun saveProfile(profile: com.ferlagod.rocinante.data.model.BookWyrmProfile) = withContext(Dispatchers.IO) {
         try {
             val json = gson.toJson(profile)
             profileCacheFile.writeText(json)
@@ -94,11 +95,11 @@ class TimelineCache(private val context: Context) {
     /**
      * Carga el perfil guardado de la caché.
      */
-    suspend fun loadProfile(): com.ferlagod.rocinante.data.api.BookWyrmProfile? = withContext(Dispatchers.IO) {
+    suspend fun loadProfile(): com.ferlagod.rocinante.data.model.BookWyrmProfile? = withContext(Dispatchers.IO) {
         try {
             if (!profileCacheFile.exists()) return@withContext null
             val json = profileCacheFile.readText()
-            gson.fromJson(json, com.ferlagod.rocinante.data.api.BookWyrmProfile::class.java)
+            gson.fromJson(json, com.ferlagod.rocinante.data.model.BookWyrmProfile::class.java)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
@@ -131,12 +132,12 @@ class TimelineCache(private val context: Context) {
     /**
      * Carga los libros guardados para una estantería específica.
      */
-    suspend fun loadShelfBooks(slug: String): List<com.ferlagod.rocinante.data.api.ShelfBookItem>? = withContext(Dispatchers.IO) {
+    suspend fun loadShelfBooks(slug: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem>? = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "shelf_${slug}_cache.json")
             if (!file.exists()) return@withContext null
-            val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>() {}.type
-            gson.fromJson<List<com.ferlagod.rocinante.data.api.ShelfBookItem>>(file.readText(), type)
+            val type = object : TypeToken<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>() {}.type
+            gson.fromJson<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(file.readText(), type)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             null
@@ -146,7 +147,7 @@ class TimelineCache(private val context: Context) {
     /**
      * Guarda la primera página de libros de una estantería en la caché.
      */
-    suspend fun saveShelfBooks(slug: String, books: List<com.ferlagod.rocinante.data.api.ShelfBookItem>) = withContext(Dispatchers.IO) {
+    suspend fun saveShelfBooks(slug: String, books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>) = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "shelf_${slug}_cache.json")
             file.writeText(gson.toJson(books))
@@ -158,12 +159,12 @@ class TimelineCache(private val context: Context) {
     /**
      * Carga los usuarios sugeridos de la caché.
      */
-    suspend fun loadSuggestedUsers(): List<com.ferlagod.rocinante.data.api.SuggestedUser>? = withContext(Dispatchers.IO) {
+    suspend fun loadSuggestedUsers(): List<com.ferlagod.rocinante.data.model.SuggestedUser>? = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "suggested_users_cache.json")
             if (!file.exists()) return@withContext null
-            val type = object : TypeToken<List<com.ferlagod.rocinante.data.api.SuggestedUser>>() {}.type
-            gson.fromJson<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(file.readText(), type)
+            val type = object : TypeToken<List<com.ferlagod.rocinante.data.model.SuggestedUser>>() {}.type
+            gson.fromJson<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(file.readText(), type)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             null
@@ -173,7 +174,7 @@ class TimelineCache(private val context: Context) {
     /**
      * Guarda los usuarios sugeridos en la caché.
      */
-    suspend fun saveSuggestedUsers(users: List<com.ferlagod.rocinante.data.api.SuggestedUser>) = withContext(Dispatchers.IO) {
+    suspend fun saveSuggestedUsers(users: List<com.ferlagod.rocinante.data.model.SuggestedUser>) = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "suggested_users_cache.json")
             file.writeText(gson.toJson(users))

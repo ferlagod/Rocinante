@@ -1,3 +1,4 @@
+@file:android.annotation.SuppressLint("LocalContextGetResourceValueCall")
 /*
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
@@ -18,6 +19,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.search
+import com.ferlagod.rocinante.data.model.*
+
 
 import android.widget.Toast
 import androidx.compose.animation.core.*
@@ -47,11 +50,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
-import com.ferlagod.rocinante.data.api.ActivityPubActivity
-import com.ferlagod.rocinante.data.api.BookSearchResult
+import com.ferlagod.rocinante.data.model.ActivityPubActivity
+import com.ferlagod.rocinante.data.model.BookSearchResult
 import com.ferlagod.rocinante.data.api.BookWyrmApi
-import com.ferlagod.rocinante.data.api.BookWyrmBookDetails
+import com.ferlagod.rocinante.data.model.BookWyrmBookDetails
 import com.ferlagod.rocinante.data.api.NetworkClient
+import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -90,14 +94,14 @@ fun SearchScreen(
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<BookSearchResult>>(emptyList()) }
-    var userSearchResults by remember { mutableStateOf<List<com.ferlagod.rocinante.data.api.SuggestedUser>>(emptyList()) }
+    var userSearchResults by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
     var searchMode by remember { mutableStateOf(SearchMode.BOOKS) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSearching by remember { mutableStateOf(false) }
     var isLoadingDetails by remember { mutableStateOf(false) }
 
-    var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.api.SuggestedUser?>(null) }
-    var selectedUserProfile by remember { mutableStateOf<com.ferlagod.rocinante.data.api.BookWyrmProfile?>(null) }
+    var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
+    var selectedUserProfile by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmProfile?>(null) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -113,7 +117,7 @@ fun SearchScreen(
             keyboardController?.hide()
             coroutineScope.launch {
                 try {
-                    val repo = com.ferlagod.rocinante.data.repository.BookWyrmRepository(resolvedApi)
+                    val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
                     if (searchMode == SearchMode.BOOKS) {
                         searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
                         userSearchResults = emptyList()
@@ -286,7 +290,7 @@ fun SearchScreen(
                                             try {
                                                 var finalBookKey = bookKey
                                                 if (book.isRemote && !book.remoteId.isNullOrEmpty()) {
-                                                    val localUrl = NetworkClient.resolveLocalBookUrl(resolvedApi, book.remoteId)
+                                                    val localUrl = BookWyrmScraper.resolveLocalBookUrl(resolvedApi, book.remoteId)
                                                     if (localUrl != null) {
                                                         val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
                                                         if (potentialKey.isNotBlank()) finalBookKey = potentialKey
@@ -303,7 +307,7 @@ fun SearchScreen(
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                                 try {
-                                                    selectedBookReviews = NetworkClient.scrapeBookReviews(resolvedApi, baseBookUrl)
+                                                    selectedBookReviews = BookWyrmScraper.scrapeBookReviews(resolvedApi, baseBookUrl)
                                                 } catch (_: Exception) {
                                                     selectedBookReviews = emptyList()
                                                 }
@@ -420,7 +424,7 @@ fun SearchScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = user.name.ifBlank { "Sin nombre" },
+                                    text = user.name.ifBlank { stringResource(R.string.user_profile_no_name) },
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -480,7 +484,7 @@ fun SearchScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileDialog(
-    profile: com.ferlagod.rocinante.data.api.BookWyrmProfile,
+    profile: com.ferlagod.rocinante.data.model.BookWyrmProfile,
     handle: String,
     api: BookWyrmApi,
     context: android.content.Context,

@@ -18,6 +18,7 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.local
+import com.ferlagod.rocinante.data.model.*
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
@@ -40,6 +41,8 @@ private val Context.dataStore by preferencesDataStore(name = "session_prefs")
  * @property context Contexto de la aplicación.
  */
 class SessionStorage(private val context: Context) {
+
+    var currentSession: SessionData? = null
 
     companion object {
         private val KEY_INSTANCE_URL = stringPreferencesKey("instance_url")
@@ -64,7 +67,7 @@ class SessionStorage(private val context: Context) {
             val username = prefs[KEY_USERNAME]
             val cookie = prefs[KEY_COOKIE]
 
-            if (
+            val session = if (
                 instanceUrl.isNullOrBlank() ||
                 username.isNullOrBlank() ||
                 cookie.isNullOrBlank()
@@ -77,6 +80,8 @@ class SessionStorage(private val context: Context) {
                     cookie = cookie
                 )
             }
+            currentSession = session
+            session
         }
 
     /**
@@ -90,6 +95,7 @@ class SessionStorage(private val context: Context) {
             prefs[KEY_USERNAME] = session.username
             prefs[KEY_COOKIE] = session.cookie
         }
+        currentSession = session
     }
 
     /**
@@ -101,5 +107,6 @@ class SessionStorage(private val context: Context) {
             prefs.remove(KEY_USERNAME)
             prefs.remove(KEY_COOKIE)
         }
+        currentSession = null
     }
 }

@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.components
+import com.ferlagod.rocinante.data.model.*
+
 
 import android.content.Context
 import android.widget.Toast
@@ -44,10 +46,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import com.ferlagod.rocinante.R
-import com.ferlagod.rocinante.data.api.ActivityPubActivity
+import com.ferlagod.rocinante.data.model.ActivityPubActivity
 import com.ferlagod.rocinante.data.api.BookWyrmApi
-import com.ferlagod.rocinante.data.api.BookWyrmBookDetails
+import com.ferlagod.rocinante.data.model.BookWyrmBookDetails
 import com.ferlagod.rocinante.data.api.NetworkClient
+import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import com.ferlagod.rocinante.utils.HtmlUtils
 import kotlinx.coroutines.CoroutineScope
@@ -174,7 +177,7 @@ fun BookDetailsDialog(
                                         onClick = {
                                             coroutineScope.launch {
                                                 try {
-                                                    val localUrl = NetworkClient.resolveLocalBookUrl(api, activeBookKey) ?: activeBookKey
+                                                    val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey) ?: activeBookKey
                                                     val bookId = BookWyrmUtils.extractBookId(localUrl)
                                                     if (bookId.isBlank()) {
                                                         Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
@@ -727,7 +730,7 @@ private fun ReadingProgressDialog(
                             try {
                                 // 1. Obtener el context (readthrough ID + user ID + localBookId)
                                 // getProgressContext automáticamente resuelve la URL local si es federada
-                                val progressContext = NetworkClient.getProgressContext(api, activeBookKey)
+                                val progressContext = BookWyrmScraper.getProgressContext(api, activeBookKey)
                                 if (progressContext == null) {
                                     Toast.makeText(context, context.getString(R.string.progress_readthrough_not_found), Toast.LENGTH_SHORT).show()
                                     isSending = false
@@ -1030,7 +1033,7 @@ private fun ReviewDialog(
                         isSending = true
                         coroutineScope.launch {
                             try {
-                                val reviewContext = NetworkClient.getReviewContext(api, activeBookKey)
+                                val reviewContext = BookWyrmScraper.getReviewContext(api, activeBookKey)
                                 if (reviewContext == null) {
                                     Toast.makeText(context, context.getString(R.string.review_missing_data), Toast.LENGTH_SHORT).show()
                                     isSending = false
@@ -1313,7 +1316,7 @@ private fun QuotationDialog(
                         isSending = true
                         coroutineScope.launch {
                             try {
-                                val reviewContext = NetworkClient.getReviewContext(api, activeBookKey)
+                                val reviewContext = BookWyrmScraper.getReviewContext(api, activeBookKey)
                                 if (reviewContext == null) {
                                     Toast.makeText(context, context.getString(R.string.quotation_missing_data), Toast.LENGTH_SHORT).show()
                                     isSending = false
@@ -1322,11 +1325,11 @@ private fun QuotationDialog(
 
                                 val finalContent = buildString {
                                     if (pageText.isNotBlank()) {
-                                        append("Pág. $pageText")
+                                        append(context.getString(R.string.quotation_page_format, pageText))
                                         if (contentText.isNotBlank()) append("\n\n")
                                     }
                                     if (contentText.isNotBlank()) {
-                                        if (pageText.isNotBlank()) append("Cita: ")
+                                        if (pageText.isNotBlank()) append(context.getString(R.string.quotation_quote_prefix))
                                         append(contentText)
                                     }
                                 }
@@ -1414,7 +1417,7 @@ fun ReviewDetailDialog(
             isResolvingHandle = false
             return@LaunchedEffect
         }
-        resolvedHandle = NetworkClient.resolveActorHandle(api, actorUrl, instanceHostUrl)
+        resolvedHandle = BookWyrmScraper.resolveActorHandle(api, actorUrl, instanceHostUrl)
         isResolvingHandle = false
     }
 

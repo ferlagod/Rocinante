@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.local
+import com.ferlagod.rocinante.data.model.*
+
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey

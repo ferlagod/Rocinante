@@ -18,11 +18,12 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
+import com.ferlagod.rocinante.data.model.*
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.api.BookWyrmApi
-import com.ferlagod.rocinante.data.api.BookWyrmProfile
+import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.FollowUserItem
 import com.ferlagod.rocinante.data.local.FollowListCache
 import com.google.gson.Gson
@@ -37,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -70,6 +73,9 @@ private const val MAX_PROFILES_TO_FETCH = 500
 /** Timeout por petición de perfil individual (ms) */
 private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
 
+
+
+
 /**
  * ViewModel que gestiona la lógica para cargar, mostrar y alterar las listas
  * de seguidores y usuarios seguidos. Soporta paginación, caché local
@@ -78,7 +84,8 @@ private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
  * @property api Interfaz de red autenticada para interactuar con BookWyrm.
  * @property cache Mecanismo de persistencia local de la lista.
  */
-class FollowListViewModel(
+@HiltViewModel
+class FollowListViewModel @Inject constructor(
     private val api: BookWyrmApi,
     private val cache: FollowListCache
 ) : ViewModel() {

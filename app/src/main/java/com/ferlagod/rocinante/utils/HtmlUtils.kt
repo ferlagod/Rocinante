@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.utils
+import com.ferlagod.rocinante.data.model.*
+
 
 /**
  * Clase de utilidades para formatear texto y manipular strings con formato HTML.

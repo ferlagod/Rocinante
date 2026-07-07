@@ -18,27 +18,43 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
+import com.ferlagod.rocinante.data.model.*
+
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.local.TimelineCache
-import com.ferlagod.rocinante.data.repository.BookWyrmRepository
+import com.ferlagod.rocinante.data.repository.UserRepository
+import com.ferlagod.rocinante.data.repository.TimelineRepository
+import com.ferlagod.rocinante.data.repository.InteractionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.ferlagod.rocinante.R
+
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 /**
- * ViewModel responsable de gestionar el estado y la lógica de negocio de la pantalla principal (Home).
- * Coordina la carga del perfil del usuario, la línea de tiempo (timeline) y las interacciones
- * como dar "me gusta" o responder a publicaciones.
+ * ViewModel principal de la aplicación.
+ * Maneja el estado global de la Home (Actividad, Mis Libros, etc.) y centraliza la carga 
+ * del timeline, notificaciones y perfiles usando los repositorios correspondientes.
  *
- * @property repository Repositorio para el acceso a la API de BookWyrm.
- * @property timelineCache Sistema de persistencia local para cachear el timeline y likes.
+ * @property userRepository Repositorio para la gestión del perfil propio y de usuarios seguidos.
+ * @property timelineRepository Repositorio para la carga de actividades del timeline principal.
+ * @property interactionRepository Repositorio para la gestión de Likes, Boosts y Replies.
+ * @property timelineCache Caché temporal (Memoria/Archivo) para restaurar rápidamente el timeline al rotar la pantalla.
  */
-class HomeViewModel(
-    private val repository: BookWyrmRepository,
-    private val timelineCache: TimelineCache
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val timelineRepository: TimelineRepository,
+    private val interactionRepository: InteractionRepository,
+    private val timelineCache: TimelineCache,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -66,7 +82,7 @@ class HomeViewModel(
             _uiState.value = HomeUiState(
                 isLoading = false,
                 isRefreshing = false,
-                errorMessage = "Faltan datos de sesión."
+                errorMessage = context.getString(R.string.error_missing_session_data)
             )
             return
         }
@@ -109,11 +125,11 @@ class HomeViewModel(
             }
 
             try {
-                val profile = repository.loadProfile(username)
+                val profile = userRepository.loadProfile(username)
                 timelineCache.saveProfile(profile)
                 val cachedLikes = timelineCache.loadLikedStatuses()
                 
-                val mergedTimeline = repository.loadTimeline(
+                val mergedTimeline = timelineRepository.loadTimeline(
                     inboxUrl = profile.inbox,
                     outboxUrl = profile.outbox,
                     instanceUrl = instanceUrl,
@@ -140,7 +156,7 @@ class HomeViewModel(
                     val profileIdUrl = profile.id
                     if (profileIdUrl != null) {
                         launch {
-                            val userId = repository.getUserId(profileIdUrl)
+                            val userId = userRepository.getUserId(profileIdUrl)
                             if (userId != null) {
                                 _uiState.value = _uiState.value.copy(userId = userId)
                             }
@@ -152,7 +168,7 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    errorMessage = if (_uiState.value.timeline.isEmpty()) "Error cargando datos: ${e.message}" else null
+                    errorMessage = if (_uiState.value.timeline.isEmpty()) context.getString(R.string.error_loading_data, e.message ?: "") else null
                 )
             }
         }
@@ -239,9 +255,9 @@ class HomeViewModel(
             timelineCache.saveBoostedStatuses(updatedSet)
 
             val success = if (newBoosted) {
-                repository.boostStatus(statusUrl, outboxUrl)
+                interactionRepository.boostStatus(statusUrl, outboxUrl)
             } else {
-                repository.unboostStatus(statusUrl, outboxUrl)
+                interactionRepository.unboostStatus(statusUrl, outboxUrl)
             }
 
             if (!success) {
@@ -255,7 +271,7 @@ class HomeViewModel(
 
     fun toggleLike(statusUrl: String, instanceUrl: String) {
         viewModelScope.launch {
-            val statusId = repository.resolveLocalStatusId(instanceUrl, statusUrl) ?: return@launch
+            val statusId = interactionRepository.resolveLocalStatusId(instanceUrl, statusUrl) ?: return@launch
             
             val currentlyLiked = _uiState.value.likedStatusIds.contains(statusUrl)
             val newLiked = !currentlyLiked
@@ -266,9 +282,9 @@ class HomeViewModel(
             timelineCache.saveLikedStatuses(updatedSet)
 
             val success = if (newLiked) {
-                repository.favoriteStatus(statusId)
+                interactionRepository.favoriteStatus(statusId)
             } else {
-                repository.unfavoriteStatus(statusId)
+                interactionRepository.unfavoriteStatus(statusId)
             }
 
             if (!success) {
@@ -300,7 +316,7 @@ class HomeViewModel(
             if (userId == null) {
                 val profileUrl = _uiState.value.profile?.id
                 if (profileUrl != null) {
-                    userId = repository.getUserId(profileUrl)
+                    userId = userRepository.getUserId(profileUrl)
                     if (userId != null) {
                         _uiState.value = _uiState.value.copy(userId = userId)
                     }
@@ -312,7 +328,7 @@ class HomeViewModel(
                 return@launch
             }
 
-            val parentStatusId = repository.resolveLocalStatusId(instanceUrl, statusUrl)
+            val parentStatusId = interactionRepository.resolveLocalStatusId(instanceUrl, statusUrl)
             if (parentStatusId == null) {
                 onResult(false)
                 return@launch
@@ -321,7 +337,7 @@ class HomeViewModel(
             val cookieJar = com.ferlagod.rocinante.data.api.NetworkClient.lastOkHttpClient?.cookieJar as? com.ferlagod.rocinante.data.api.SessionCookieJar
             val csrfToken = cookieJar?.currentCsrfToken() ?: ""
 
-            val success = repository.replyStatus(userId, content, parentStatusId, csrfToken)
+            val success = interactionRepository.replyStatus(userId, content, parentStatusId, csrfToken)
             onResult(success)
         }
     }

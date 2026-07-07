@@ -18,8 +18,11 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.login
+import com.ferlagod.rocinante.data.model.*
 
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.local.SessionStorage
@@ -46,7 +49,8 @@ data class SessionUiState(
  *
  * @property sessionStorage Componente responsable de la persistencia segura de los datos de sesión.
  */
-class SessionViewModel(
+@HiltViewModel
+class SessionViewModel @Inject constructor(
     private val sessionStorage: SessionStorage
 ) : ViewModel() {
 
@@ -86,23 +90,5 @@ class SessionViewModel(
         viewModelScope.launch {
             sessionStorage.clearSession()
         }
-    }
-}
-
-/**
- * Fábrica para instanciar [SessionViewModel] con sus dependencias.
- *
- * @property sessionStorage Almacenamiento persistente inyectado en el ViewModel.
- */
-class SessionViewModelFactory(
-    private val sessionStorage: SessionStorage
-) : ViewModelProvider.Factory {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SessionViewModel::class.java)) {
-            return SessionViewModel(sessionStorage) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

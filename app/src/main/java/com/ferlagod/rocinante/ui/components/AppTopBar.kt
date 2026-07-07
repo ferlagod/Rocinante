@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.components
+import com.ferlagod.rocinante.data.model.*
+
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row

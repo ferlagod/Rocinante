@@ -18,6 +18,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.settings
+import com.ferlagod.rocinante.data.model.*
+
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -30,13 +32,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+
 /**
  * ViewModel responsable de la gestión y persistencia de las preferencias de configuración del usuario.
  * Interactúa con [SettingsPreferences] para leer y escribir opciones como el tema, recordatorios y apertura de enlaces.
  *
  * @property settingsPreferences Almacén local de preferencias de configuración (DataStore).
  */
-class SettingsViewModel(
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
     private val settingsPreferences: SettingsPreferences
 ) : ViewModel() {
 
@@ -96,19 +102,3 @@ class SettingsViewModel(
     }
 }
 
-/**
- * Fábrica para instanciar [SettingsViewModel] inyectando sus dependencias necesarias.
- *
- * @property settingsPreferences Almacenamiento local de configuración.
- */
-class SettingsViewModelFactory(
-    private val settingsPreferences: SettingsPreferences
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(settingsPreferences) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}

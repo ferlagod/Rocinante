@@ -1,4 +1,5 @@
 package com.ferlagod.rocinante.ui.screens.notifications
+import com.ferlagod.rocinante.data.model.*
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,9 +42,7 @@ fun NotificationsTab(
     instanceUrl: String,
     onUrlClicked: (String) -> Unit
 ) {
-    val viewModel: NotificationsViewModel = viewModel(
-        factory = NotificationsViewModelFactory(api, instanceUrl)
-    )
+    val viewModel: NotificationsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 

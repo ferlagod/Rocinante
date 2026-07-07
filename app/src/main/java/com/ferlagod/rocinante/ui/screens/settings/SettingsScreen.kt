@@ -1,3 +1,4 @@
+@file:android.annotation.SuppressLint("LocalContextGetResourceValueCall")
 /*
  * Rocinante - Cliente Android para BookWyrm
  * Copyright (C) 2026 ferlagod
@@ -18,6 +19,8 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.settings
+import com.ferlagod.rocinante.data.model.*
+
 
 import android.Manifest
 import android.content.Context
@@ -77,8 +80,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val settingsPreferences = remember { SettingsPreferences(context) }
-    val factory = remember { SettingsViewModelFactory(settingsPreferences) }
-    val viewModel: SettingsViewModel = viewModel(factory = factory)
+    val viewModel: SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     
