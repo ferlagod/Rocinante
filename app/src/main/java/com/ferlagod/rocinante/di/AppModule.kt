@@ -52,7 +52,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBookWyrmApi(sessionStorage: SessionStorage): BookWyrmApi {
+    fun provideBookWyrmApi(sessionStorage: SessionStorage, @ApplicationContext context: Context): BookWyrmApi {
         // We create a singleton Retrofit instance using a base URL placeholder.
         // An interceptor reads the active session from SessionStorage dynamically.
         val interceptor = okhttp3.Interceptor { chain ->
@@ -131,9 +131,30 @@ object AppModule {
             response
         }
 
+        val cacheSize = 15L * 1024 * 1024
+        val cache = okhttp3.Cache(java.io.File(context.cacheDir, "http_cache"), cacheSize)
+
+        val cacheInterceptor = okhttp3.Interceptor { chain ->
+            var response = chain.proceed(chain.request())
+            val contentType = response.body?.contentType()
+            // Force cache for 2 minutes for JSON and ActivityPub responses
+            if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("activity+json") == true) {
+                val cacheControl = okhttp3.CacheControl.Builder()
+                    .maxAge(2, java.util.concurrent.TimeUnit.MINUTES)
+                    .build()
+                response = response.newBuilder()
+                    .removeHeader("Pragma")
+                    .header("Cache-Control", cacheControl.toString())
+                    .build()
+            }
+            response
+        }
+
         val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .cache(cache)
             .addInterceptor(interceptor)
             .addInterceptor(bomInterceptor)
+            .addNetworkInterceptor(cacheInterceptor)
             .followRedirects(false)
             .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
