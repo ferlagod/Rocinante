@@ -200,7 +200,7 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        TabRow(selectedTabIndex = searchMode.ordinal, modifier = Modifier.fillMaxWidth()) {
+        PrimaryTabRow(selectedTabIndex = searchMode.ordinal, modifier = Modifier.fillMaxWidth()) {
             Tab(
                 selected = searchMode == SearchMode.BOOKS,
                 onClick = { 

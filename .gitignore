@@ -72,3 +72,6 @@ translate.py
 .idea/caches/deviceStreaming.xml
 get_quotes.py
 translate_clear_notifs.py
+
+# Kotlin daemon
+.kotlin/
