@@ -28,6 +28,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -752,7 +753,7 @@ fun ActivityTab(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(timeline) { item ->
+                    items(items = timeline, key = { it.id }) { item ->
                         val isLiked = likedStatusIds.contains(item.objectId)
                         ActivityItemCard(
                             item = item, 
@@ -881,6 +882,7 @@ private fun ActivityItemCard(
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize()
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

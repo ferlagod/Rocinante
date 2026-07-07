@@ -272,7 +272,7 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(searchResults) { book ->
+                items(items = searchResults, key = { it.key ?: it.title ?: it.hashCode().toString() }) { book ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -368,7 +368,7 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(userSearchResults) { user ->
+                items(items = userSearchResults, key = { it.handle }) { user ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

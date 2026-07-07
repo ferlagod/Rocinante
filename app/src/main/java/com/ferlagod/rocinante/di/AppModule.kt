@@ -110,8 +110,29 @@ object AppModule {
             response
         }
 
+        val bomInterceptor = okhttp3.Interceptor { chain ->
+            val response = chain.proceed(chain.request())
+            val body = response.body
+            if (body != null) {
+                val contentType = body.contentType()
+                if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("activity+json") == true) {
+                    val rawJson = body.string()
+                    if (rawJson.startsWith("\uFEFF")) {
+                        val cleanJson = rawJson.substring(1)
+                        val newBody = cleanJson.toResponseBody(contentType)
+                        return@Interceptor response.newBuilder().body(newBody).build()
+                    } else {
+                        val newBody = rawJson.toResponseBody(contentType)
+                        return@Interceptor response.newBuilder().body(newBody).build()
+                    }
+                }
+            }
+            response
+        }
+
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .addInterceptor(interceptor)
+            .addInterceptor(bomInterceptor)
             .followRedirects(false)
             .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)

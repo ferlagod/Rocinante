@@ -28,48 +28,48 @@ import androidx.compose.ui.graphics.Color
  * Sigue la línea de diseño de Google (Material 3 Baseline).
  */
 
-val PrimaryLight = Color(0xFF0B57D0)
+val PrimaryLight = Color(0xFF2962FF) // Vibrant Royal Blue
 val OnPrimaryLight = Color(0xFFFFFFFF)
-val PrimaryContainerLight = Color(0xFFD3E3FD)
-val OnPrimaryContainerLight = Color(0xFF041E49)
+val PrimaryContainerLight = Color(0xFFD6E4FF)
+val OnPrimaryContainerLight = Color(0xFF001947)
 
-val SecondaryLight = Color(0xFF00639B)
+val SecondaryLight = Color(0xFF00838F) // Vibrant Teal/Cyan
 val OnSecondaryLight = Color(0xFFFFFFFF)
-val SecondaryContainerLight = Color(0xFFCDE5FF)
-val OnSecondaryContainerLight = Color(0xFF001D32)
+val SecondaryContainerLight = Color(0xFFBCEBF0)
+val OnSecondaryContainerLight = Color(0xFF00282C)
 
-val TertiaryLight = Color(0xFF146C2E)
+val TertiaryLight = Color(0xFF6200EA) // Vibrant Deep Purple
 val OnTertiaryLight = Color(0xFFFFFFFF)
-val TertiaryContainerLight = Color(0xFFC4EED0)
-val OnTertiaryContainerLight = Color(0xFF00210A)
+val TertiaryContainerLight = Color(0xFFEADBFF)
+val OnTertiaryContainerLight = Color(0xFF21005E)
 
-val BackgroundLight = Color(0xFFF8F9FA)
-val OnBackgroundLight = Color(0xFF1F1F1F)
-val SurfaceLight = Color(0xFFFFFFFF)
-val OnSurfaceLight = Color(0xFF1F1F1F)
-val SurfaceVariantLight = Color(0xFFE1E3E1)
-val OnSurfaceVariantLight = Color(0xFF444746)
-val OutlineLight = Color(0xFF747775)
+val BackgroundLight = Color(0xFFF9FAFF) // Slightly bluish white
+val OnBackgroundLight = Color(0xFF191C20)
+val SurfaceLight = Color(0xFFF3F6FC) // Very light blue-grey for surface
+val OnSurfaceLight = Color(0xFF191C20)
+val SurfaceVariantLight = Color(0xFFDFE2EB)
+val OnSurfaceVariantLight = Color(0xFF43474E)
+val OutlineLight = Color(0xFF74777F)
 
-val PrimaryDark = Color(0xFFA8C7FA)
-val OnPrimaryDark = Color(0xFF062E6F)
-val PrimaryContainerDark = Color(0xFF0842A0)
-val OnPrimaryContainerDark = Color(0xFFD3E3FD)
+val PrimaryDark = Color(0xFFB4C5FF) // Light vibrant blue
+val OnPrimaryDark = Color(0xFF002A78)
+val PrimaryContainerDark = Color(0xFF003FA4)
+val OnPrimaryContainerDark = Color(0xFFD6E4FF)
 
-val SecondaryDark = Color(0xFF94CCFF)
-val OnSecondaryDark = Color(0xFF003353)
-val SecondaryContainerDark = Color(0xFF004A76)
-val OnSecondaryContainerDark = Color(0xFFCDE5FF)
+val SecondaryDark = Color(0xFF4DD0E1)
+val OnSecondaryDark = Color(0xFF00363D)
+val SecondaryContainerDark = Color(0xFF004F58)
+val OnSecondaryContainerDark = Color(0xFFBCEBF0)
 
-val TertiaryDark = Color(0xFF6DD58C)
-val OnTertiaryDark = Color(0xFF003912)
-val TertiaryContainerDark = Color(0xFF00531E)
-val OnTertiaryContainerDark = Color(0xFFC4EED0)
+val TertiaryDark = Color(0xFFD0BCFF)
+val OnTertiaryDark = Color(0xFF381E72)
+val TertiaryContainerDark = Color(0xFF4F378B)
+val OnTertiaryContainerDark = Color(0xFFEADBFF)
 
-val BackgroundDark = Color(0xFF131314)
-val OnBackgroundDark = Color(0xFFE3E3E3)
-val SurfaceDark = Color(0xFF1E1E1E)
-val OnSurfaceDark = Color(0xFFE3E3E3)
-val SurfaceVariantDark = Color(0xFF444746)
-val OnSurfaceVariantDark = Color(0xFFC4C7C5)
-val OutlineDark = Color(0xFF8E918F)
+val BackgroundDark = Color(0xFF111318)
+val OnBackgroundDark = Color(0xFFE1E2E8)
+val SurfaceDark = Color(0xFF191C20) // Slightly bluish dark
+val OnSurfaceDark = Color(0xFFE1E2E8)
+val SurfaceVariantDark = Color(0xFF43474E)
+val OnSurfaceVariantDark = Color(0xFFC4C6D0)
+val OutlineDark = Color(0xFF8E9099)
