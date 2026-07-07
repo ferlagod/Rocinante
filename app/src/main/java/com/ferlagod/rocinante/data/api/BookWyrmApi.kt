@@ -42,8 +42,7 @@ interface BookWyrmApi {
      */
     @GET("user/{username}.json")
     suspend fun getUserProfile(
-        @Path("username") username: String,
-        @Query("t") cacheBuster: Long = System.currentTimeMillis()
+        @Path("username") username: String
     ): BookWyrmProfile
 
     /**
@@ -51,8 +50,7 @@ interface BookWyrmApi {
      */
     @GET
     suspend fun getFullUserProfile(
-        @Url fullUrl: String,
-        @Query("t") cacheBuster: Long = System.currentTimeMillis()
+        @Url fullUrl: String
     ): BookWyrmProfile
 
     /**

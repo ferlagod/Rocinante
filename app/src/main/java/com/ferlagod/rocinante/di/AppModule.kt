@@ -137,14 +137,12 @@ object AppModule {
         val cacheInterceptor = okhttp3.Interceptor { chain ->
             var response = chain.proceed(chain.request())
             val contentType = response.body?.contentType()
-            // Force cache for 2 minutes for JSON and ActivityPub responses
-            if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("activity+json") == true) {
-                val cacheControl = okhttp3.CacheControl.Builder()
-                    .maxAge(2, java.util.concurrent.TimeUnit.MINUTES)
-                    .build()
+            if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("html") == true || contentType?.subtype?.contains("activity+json") == true) {
                 response = response.newBuilder()
                     .removeHeader("Pragma")
-                    .header("Cache-Control", cacheControl.toString())
+                    .removeHeader("Cache-Control")
+                    .removeHeader("Set-Cookie") // Prevent OkHttp from bypassing cache due to session cookies
+                    .header("Cache-Control", "public, max-age=120")
                     .build()
             }
             response

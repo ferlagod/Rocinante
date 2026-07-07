@@ -141,6 +141,10 @@ class HomeViewModel @Inject constructor(
                 timelineCache.saveTimeline(mergedTimeline)
                 val updatedLikes = timelineCache.loadLikedStatuses()
 
+                val serverLikes = mergedTimeline.filter { it.isLikedByMe }.map { it.objectId }.toSet()
+                val finalLikes = updatedLikes + serverLikes
+                timelineCache.saveLikedStatuses(finalLikes)
+
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isRefreshing = false,
@@ -149,7 +153,7 @@ class HomeViewModel @Inject constructor(
                     timeline = mergedTimeline,
                     visibleTimeline = mergedTimeline.take(10),
                     currentPage = 1,
-                    likedStatusIds = updatedLikes
+                    likedStatusIds = finalLikes
                 )
 
                 if (_uiState.value.userId == null) {

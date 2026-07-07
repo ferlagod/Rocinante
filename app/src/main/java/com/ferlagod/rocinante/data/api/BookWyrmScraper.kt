@@ -216,8 +216,7 @@ object BookWyrmScraper {
 
         for (page in 1..maxPages) {
             try {
-                val t = System.currentTimeMillis()
-                val feedUrl = if (page == 1) "${baseUrl}?t=$t" else "${baseUrl}?page=$page&t=$t"
+                val feedUrl = if (page == 1) baseUrl else "${baseUrl}?page=$page"
                 val html = fetchHtmlWithRedirects(api, feedUrl, baseUrl)
                 if (html.isEmpty()) break
 
@@ -279,6 +278,10 @@ object BookWyrmScraper {
                 val publishedDate = timeElement?.attr("datetime")?.takeIf { it.isNotBlank() } 
                     ?: timeElement?.text()?.takeIf { it.isNotBlank() } 
                     ?: breadcrumbDate
+
+                if (items.isEmpty()) {
+                    android.util.Log.e("BookWyrmScraper", "HTML OF FIRST STATUS: " + element.outerHtml())
+                }
 
                 val permalinkElement = element.select("a").firstOrNull { a ->
                     val href = a.attr("href")
@@ -396,13 +399,22 @@ object BookWyrmScraper {
                 }
 
                 var localId: String? = null
-                val favForm = element.selectFirst("form[action*=/favorite/], form[action*=/unfavorite/]")
-                if (favForm != null) {
-                    val action = favForm.attr("action")
+                var isLikedByMe = false
+                
+                // Bookwyrm renders BOTH favorite and unfavorite forms. 
+                // The active one doesn't have the 'is-hidden' class.
+                val anyFavForm = element.selectFirst("form[action*=/favorite/], form[action*=/unfavorite/]")
+                if (anyFavForm != null) {
+                    val action = anyFavForm.attr("action")
                     val match = """/(favorite|unfavorite)/(\d+)""".toRegex().find(action)
                     if (match != null) {
                         localId = match.groupValues[2]
                     }
+                }
+                
+                val unfavForm = element.selectFirst("form[name=unfavorite]:not(.is-hidden), form[action*=/unfavorite/]:not(.is-hidden)")
+                if (unfavForm != null) {
+                    isLikedByMe = true
                 }
                 if (localId == null) {
                     val replyPanel = element.selectFirst("[id^=show_comment_]")
@@ -424,7 +436,8 @@ object BookWyrmScraper {
                     bookUrl = bookUrl,
                     actorName = actorName.ifBlank { "Usuario" },
                     actorAvatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
-                    objectId = localId ?: statusId
+                    objectId = localId ?: statusId,
+                    isLikedByMe = isLikedByMe
                 )
                 
                 if (item.actorName == "Usuario" && item.content == "Sin contenido" && item.bookCoverUrl.isNullOrEmpty()) {
