@@ -244,4 +244,5 @@ Lukutavoitteet: Voit nyt tarkastella tavoitteitasi suoraan profiilinäytöltäsi
 
 Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen.</string>
     <string name="changelog_text_v1_1_0">Kirjautumisen korjaus: Korjattu ongelma, joka esti hyllyjen latautumisen oikein kirjauduttaessa koko nimimerkillä (esim. kayttaja@instanssi.com).\n\nVakaus: Palvelimen vastausten käsittelyä parannettu näkymättömien merkkien (BOM) aiheuttamien kaatumisten estämiseksi.\n\n⚠️ Huomio: Jos BookWyrm-instanssisi käyttää Cloudflarea, saatat kokea satunnaisia yhteysvirheitä. Etsimme parhaillaan ratkaisua tähän ongelmaan.</string>
+    <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
 </resources>

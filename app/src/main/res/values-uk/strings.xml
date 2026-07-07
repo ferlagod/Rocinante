@@ -243,4 +243,5 @@
 
 Виправлення пошуку: Виправлено помилку, яка перешкоджала відкриттю деталей книги після пошуку.</string>
     <string name="changelog_text_v1_1_0">Виправлення входу: Вирішено проблему, яка перешкоджала правильному завантаженню полиць під час входу за допомогою повного псевдоніма (наприклад, user@instance.com).\n\nСтабільність: Покращено обробку відповідей сервера для запобігання збоям через невидимі символи (BOM).\n\n⚠️ Попередження: Якщо ваш екземпляр BookWyrm використовує Cloudflare, у вас іноді можуть виникати помилки підключення. Наразі ми шукаємо рішення цієї проблеми.</string>
+    <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
 </resources>

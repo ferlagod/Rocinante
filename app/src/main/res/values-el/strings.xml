@@ -243,4 +243,5 @@
 
 Διόρθωση αναζήτησης: Διορθώθηκε το σφάλμα που εμπόδιζε το άνοιγμα των λεπτομερειών ενός βιβλίου μετά από αναζήτηση.</string>
     <string name="changelog_text_v1_1_0">Διόρθωση σύνδεσης: Επιλύθηκε ένα πρόβλημα που εμπόδιζε τη σωστή φόρτωση των ραφιών κατά τη σύνδεση με το πλήρες ψευδώνυμο (π.χ. user@instance.com).\n\nΣταθερότητα: Βελτιώθηκε η επεξεργασία των απαντήσεων του διακομιστή για την αποφυγή σφαλμάτων λόγω αόρατων χαρακτήρων (BOM).\n\n⚠️ Προειδοποίηση: Εάν η παρουσία σας BookWyrm χρησιμοποιεί Cloudflare, ενδέχεται να αντιμετωπίσετε περιστασιακά σφάλματα σύνδεσης. Επί του παρόντος αναζητούμε λύση για αυτό το ζήτημα.</string>
+    <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
 </resources>

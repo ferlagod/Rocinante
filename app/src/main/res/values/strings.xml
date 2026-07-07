@@ -250,6 +250,7 @@ Reading goals: You can now view your goals directly from your profile screen.
 
 Search fix: Fixed the bug that prevented opening book details after searching.</string>
     <string name="changelog_text_v1_1_0">Login fix: Resolved an issue that prevented loading shelves correctly when logging in using a full handle (e.g. user@instance.com).\n\nStability: Improved server response parsing to prevent crashes due to invisible characters (BOM).\n\n⚠️ Important: If your BookWyrm instance uses Cloudflare, you might occasionally experience connection errors. We are currently investigating a solution for this.</string>
+    <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
 <string name="error_missing_session_data">Faltan datos de sesión.</string>
     <string name="error_loading_data">Error cargando datos: %1$s</string>
     <string name="error_unknown">Unknown error</string>
