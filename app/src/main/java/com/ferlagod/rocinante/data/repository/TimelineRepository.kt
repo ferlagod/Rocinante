@@ -381,7 +381,7 @@ class TimelineRepository(
                     ?.url ?: currentObjectData?.cover?.url
 
                 val isBook = currentObjectData?.type in listOf("Edition", "Work", "Book")
-                val bookUrl = currentObjectData?.inReplyToBook ?: if (isBook) currentObjectData?.id else null
+                val bookUrl = currentObjectData?.inReplyToBook ?: activity.inReplyToBook ?: if (isBook) currentObjectData?.id else null
 
                 var resolvedActorName = actorNameHint ?: ""
                 var resolvedActorAvatar = actorAvatarHint

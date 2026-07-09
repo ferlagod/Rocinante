@@ -88,6 +88,7 @@ fun BookDetailsDialog(
     var showProgressDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
     var showQuotationDialog by remember { mutableStateOf(false) }
+    var showMyActivityDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
 
     // Reseñas ordenadas de más reciente a más antigua. BookWyrm renderiza la fecha en
@@ -247,6 +248,14 @@ fun BookDetailsDialog(
                             ) {
                                 Text(stringResource(R.string.book_write_review))
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { showMyActivityDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Mis citas y reseñas")
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -425,6 +434,16 @@ fun BookDetailsDialog(
                 showQuotationDialog = false
                 onDismiss()
             }
+        )
+    }
+
+    if (showMyActivityDialog) {
+        MyBookActivityDialog(
+            activeBookKey = activeBookKey,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { showMyActivityDialog = false }
         )
     }
 
@@ -1604,3 +1623,121 @@ fun ReviewDetailDialog(
         }
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyBookActivityDialog(
+    activeBookKey: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
+    onDismiss: () -> Unit
+) {
+    var isLoading by remember { mutableStateOf(true) }
+    var activities by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.TimelineUiItem>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    val sessionStorage = remember { com.ferlagod.rocinante.data.local.SessionStorage(context) }
+    val currentSession by sessionStorage.sessionFlow.collectAsState(initial = null)
+
+    LaunchedEffect(activeBookKey, currentSession) {
+        if (currentSession == null) return@LaunchedEffect
+        isLoading = true
+        try {
+            val username = currentSession?.username
+            val instanceUrl = currentSession?.instanceUrl ?: ""
+            if (username.isNullOrBlank() || instanceUrl.isBlank()) {
+                errorMessage = "Sesión no válida"
+                isLoading = false
+                return@LaunchedEffect
+            }
+            
+            val cleanInstance = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val outboxUrl = "${cleanInstance.trimEnd('/')}/user/${username.removePrefix("@").substringBefore("@")}/outbox"
+            
+            val userRepository = com.ferlagod.rocinante.data.repository.UserRepository(api, java.util.concurrent.ConcurrentHashMap())
+            val timelineRepo = com.ferlagod.rocinante.data.repository.TimelineRepository(api, userRepository)
+            
+            val allOutbox = timelineRepo.loadOutboxActivities(
+                outboxUrl = outboxUrl,
+                actorNameHint = username,
+                actorAvatarHint = null,
+                maxPages = 5
+            )
+            
+            val localBookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(activeBookKey)
+            
+            val filtered = allOutbox.filter { item ->
+                val itemBookId = item.bookUrl?.let { com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(it) } ?: ""
+                val itemObjectId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(item.objectId)
+                itemBookId == localBookId || itemObjectId == localBookId || item.bookUrl?.contains(localBookId) == true || item.objectId.contains(localBookId)
+            }
+            activities = filtered
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            errorMessage = e.message
+        } finally {
+            isLoading = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Mis publicaciones", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (errorMessage != null) {
+                Text(text = errorMessage ?: "Error", color = MaterialTheme.colorScheme.error)
+            } else if (activities.isEmpty()) {
+                Text("No has publicado nada sobre este libro recientemente.")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(activities) { activity ->
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = activity.type,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = activity.content,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                val dateStr = activity.published
+                                val shortDate = when {
+                                    dateStr.isBlank() -> "Unknown date"
+                                    dateStr.contains("T") -> dateStr.substringBefore("T")
+                                    else -> dateStr
+                                }
+                                Text(
+                                    text = shortDate,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.book_close))
+            }
+        }
+    )
+}
+

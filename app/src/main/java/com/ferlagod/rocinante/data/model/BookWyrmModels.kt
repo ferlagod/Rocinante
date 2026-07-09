@@ -80,6 +80,7 @@ data class ActivityPubActivity(
     val actor: String?,
     val content: String? = null,
     val name: String? = null,
+    @SerializedName("inReplyToBook") val inReplyToBook: String? = null,
     @SerializedName("object") val rawObjectData: com.google.gson.JsonElement? = null,
     val actorAvatarUrl: String? = null
 ) {
