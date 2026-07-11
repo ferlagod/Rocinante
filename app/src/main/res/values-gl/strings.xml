@@ -248,4 +248,6 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
     <string name="activity_boost">Difundir</string>
     <string name="changelog_text_v1_1_2">- Botón de difundir: Engadiuse a opción de difundir publicacións para compartilas directamente no teu muro de actividade.\n\n- Recensións e citas: Agora podes ler as recensións e citas feitas pola comunidade directamente desde a ficha de detalles de cada libro.</string>
+    <string name="changelog_text_v1_1_3">Novidades da versión 1.1.3:
+* **Notificacións:** Corrixiuse a visualización na lista e engadiuse soporte para ver o contido completo ao premer sobre elas.</string>
 </resources>
