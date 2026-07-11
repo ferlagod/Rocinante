@@ -250,4 +250,5 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="changelog_text_v1_1_2">- Botón de difundir: Engadiuse a opción de difundir publicacións para compartilas directamente no teu muro de actividade.\n\n- Recensións e citas: Agora podes ler as recensións e citas feitas pola comunidade directamente desde a ficha de detalles de cada libro.</string>
     <string name="changelog_text_v1_1_3">Novidades da versión 1.1.3:
 * **Notificacións:** Corrixiuse a visualización na lista e engadiuse soporte para ver o contido completo ao premer sobre elas.</string>
+    <string name="changelog_text_v1_1_5">Novidades da versión 1.1.5:\n* **Corrección de erros:** Solucionouse un problema de compatibilidade que causaba peches inesperados da aplicación en dispositivos con Android 14 ou inferior ao ver as notificacións.</string>
 </resources>

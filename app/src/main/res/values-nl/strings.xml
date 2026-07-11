@@ -248,4 +248,5 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="changelog_text_v1_1_2">- Deel-knop: Optie toegevoegd om berichten direct op je tijdlijn te delen.\n\n- Recensies en citaten: Je kunt nu community-recensies en citaten rechtstreeks vanaf de detailpagina van elk boek lezen.</string>
     <string name="changelog_text_v1_1_3">Nieuw in versie 1.1.3:
 * **Meldingen:** Weergave in de lijst gecorrigeerd en ondersteuning toegevoegd voor het bekijken van volledige inhoud bij het aantikken.</string>
+    <string name="changelog_text_v1_1_5">Nieuw in versie 1.1.5:\n* **Bugfixes:** Een compatibiliteitsprobleem opgelost waardoor de app vastliep op apparaten met Android 14 of ouder bij het bekijken van meldingen.</string>
 </resources>

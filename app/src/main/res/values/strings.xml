@@ -274,4 +274,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="quotation_page_format">Pág. %1$s</string>
     <string name="quotation_quote_prefix">Cita: </string>
         <string name="activity_boost">Boost</string>
+    <string name="changelog_text_v1_1_5">What\'s new in version 1.1.5:\n* **Bug fixes:** Fixed a compatibility issue that caused the app to crash on Android 14 and older devices when viewing notifications.</string>
 </resources>

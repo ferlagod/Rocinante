@@ -248,4 +248,5 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="changelog_text_v1_1_2">- Botão de difundir: Adicionada a opção de difundir publicações para compartilhá-las diretamente em sua linha do tempo.\n\n- Avaliações e citações: Agora você pode ler as avaliações e citações da comunidade diretamente da página de detalhes de cada livro.</string>
     <string name="changelog_text_v1_1_3">Novidades da versão 1.1.3:
 * **Notificações:** Exibição corrigida na lista e adicionado suporte para visualizar o conteúdo completo ao tocar nelas.</string>
+    <string name="changelog_text_v1_1_5">Novidades da versão 1.1.5:\n* **Correções de bugs:** Foi corrigido um problema de compatibilidade que causava o travamento do aplicativo em dispositivos com Android 14 ou inferior ao visualizar notificações.</string>
 </resources>

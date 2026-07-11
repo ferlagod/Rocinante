@@ -248,4 +248,5 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="changelog_text_v1_1_2">- Przycisk udostępniania: Dodano opcję udostępniania postów bezpośrednio na osi czasu.\n\n- Recenzje i cytaty: Teraz możesz czytać recenzje i cytaty społeczności bezpośrednio ze strony szczegółów każdej książki.</string>
     <string name="changelog_text_v1_1_3">Co nowego w wersji 1.1.3:
 * **Powiadomienia:** Poprawiono wyświetlanie na liście i dodano obsługę wyświetlania pełnej zawartości po ich dotknięciu.</string>
+    <string name="changelog_text_v1_1_5">Co nowego w wersji 1.1.5:\n* **Poprawki błędów:** Rozwiązano problem ze zgodnością, który powodował awarię aplikacji na urządzeniach z systemem Android 14 lub starszym podczas przeglądania powiadomień.</string>
 </resources>

@@ -21,8 +21,8 @@ android {
         applicationId = "com.ferlagod.rocinante"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.1.3"
+        versionCode = 21
+        versionName = "1.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

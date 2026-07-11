@@ -248,4 +248,5 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="changelog_text_v1_1_2">- Teilen-Button: Die Option zum Teilen von Beiträgen wurde hinzugefügt, um sie direkt in deiner Chronik zu teilen.\n\n- Rezensionen und Zitate: Du kannst jetzt Rezensionen und Zitate der Community direkt auf der Detailseite jedes Buches lesen.</string>
     <string name="changelog_text_v1_1_3">Neu in Version 1.1.3:
 * **Benachrichtigungen:** Anzeige in der Liste korrigiert und Unterstützung für die Anzeige des vollständigen Inhalts beim Antippen hinzugefügt.</string>
+    <string name="changelog_text_v1_1_5">Neu in Version 1.1.5:\n* **Fehlerbehebungen:** Ein Kompatibilitätsproblem wurde behoben, das zum Absturz der App auf Geräten mit Android 14 oder älter beim Anzeigen von Benachrichtigungen führte.</string>
 </resources>

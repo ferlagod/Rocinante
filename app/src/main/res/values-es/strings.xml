@@ -259,4 +259,5 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="changelog_text_v1_1_3">Novedades de la versión 1.1.3:
 * **Notificaciones:** Corregida la visualización en la lista y añadido soporte para ver el contenido completo al pulsar sobre ellas.</string>
     <string name="activity_boost">Difundir</string>
+    <string name="changelog_text_v1_1_5">Novedades de la versión 1.1.5:\n* **Corrección de errores:** Solucionado un problema de compatibilidad que causaba cierres inesperados de la aplicación en dispositivos con Android 14 o inferior al ver las notificaciones.</string>
 </resources>

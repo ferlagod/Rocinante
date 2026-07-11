@@ -248,4 +248,5 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="changelog_text_v1_1_2">- Buton distribuire: A fost adăugată opțiunea de a distribui postări pentru a le partaja direct pe cronologia ta.\n\n- Recenzii și citate: Acum poți citi recenziile și citatele comunității direct din pagina de detalii a fiecărei cărți.</string>
     <string name="changelog_text_v1_1_3">Noutăți în versiunea 1.1.3:
 * **Notificări:** Afișarea în listă a fost corectată și a fost adăugat suport pentru vizualizarea conținutului complet la apăsarea pe ele.</string>
+    <string name="changelog_text_v1_1_5">Noutăți în versiunea 1.1.5:\n* **Remedieri de erori:** S-a remediat o problemă de compatibilitate care a cauzat blocarea aplicației pe dispozitivele cu Android 14 sau mai vechi la vizualizarea notificărilor.</string>
 </resources>

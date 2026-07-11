@@ -248,4 +248,5 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="changelog_text_v1_1_2">- Dela-knapp: Lade till alternativet att dela inlägg direkt på din tidslinje.\n\n- Recensioner och citat: Du kan nu läsa gemenskapens recensioner och citat direkt från varje boks detaljsida.</string>
     <string name="changelog_text_v1_1_3">Nyheter i version 1.1.3:
 * **Meddelanden:** Åtgärdad visning i listan och lagt till stöd för att se fullständigt innehåll när du trycker på dem.</string>
+    <string name="changelog_text_v1_1_5">Nyheter i version 1.1.5:\n* **Buggfixar:** Åtgärdat ett kompatibilitetsproblem som orsakade att appen kraschade på enheter med Android 14 eller äldre när aviseringar visades.</string>
 </resources>

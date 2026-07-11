@@ -249,4 +249,5 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="changelog_text_v1_1_2">- Jaa-painike: Lisätty mahdollisuus jakaa julkaisuja suoraan aikajanallesi.\n\n- Arvostelut ja lainaukset: Voit nyt lukea yhteisön arvosteluja ja lainauksia suoraan jokaisen kirjan tietosivulta.</string>
     <string name="changelog_text_v1_1_3">Uutta versiossa 1.1.3:
 * **Ilmoitukset:** Korjattu näyttö luettelossa ja lisätty tuki koko sisällön tarkastelemiseen napsauttamalla.</string>
+    <string name="changelog_text_v1_1_5">Uutta versiossa 1.1.5:\n* **Virheenkorjauksia:** Korjattu yhteensopivuusongelma, joka aiheutti sovelluksen kaatumisen Android 14 -laitteilla ja sitä vanhemmilla laitteilla ilmoituksia katseltaessa.</string>
 </resources>

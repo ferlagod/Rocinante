@@ -248,4 +248,5 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="changelog_text_v1_1_2">- Pulsante condividi: Aggiunta l\'opzione per condividere i post direttamente sulla tua bacheca.\n\n- Recensioni e citazioni: Ora puoi leggere le recensioni e le citazioni della comunità direttamente dalla pagina dei dettagli di ogni libro.</string>
     <string name="changelog_text_v1_1_3">Novità della versione 1.1.3:
 * **Notifiche:** Corretta la visualizzazione nell\'elenco e aggiunto il supporto per visualizzare il contenuto completo toccandole.</string>
+    <string name="changelog_text_v1_1_5">Novità della versione 1.1.5:\n* **Correzioni di bug:** Risolto un problema di compatibilità che causava l\'arresto anomalo dell\'app sui dispositivi con Android 14 o versioni precedenti durante la visualizzazione delle notifiche.</string>
 </resources>

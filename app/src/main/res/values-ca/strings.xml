@@ -248,4 +248,5 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="changelog_text_v1_1_2">- Botó de difondre: S\'ha afegit l\'opció de difondre publicacions per compartir-les directament al teu mur d\'activitat.\n\n- Ressenyes i cites: Ara pots llegir les ressenyes i cites fetes per la comunitat directament des de la fitxa de detalls de cada llibre.</string>
     <string name="changelog_text_v1_1_3">Novetats de la versió 1.1.3:
 * **Notificacions:** Corregida la visualització a la llista i afegit suport per veure el contingut complet en prémer sobre elles.</string>
+    <string name="changelog_text_v1_1_5">Novetats de la versió 1.1.5:\n* **Correcció d\'errors:** S\'ha solucionat un problema de compatibilitat que provocava tancaments inesperats a l\'aplicació en dispositius amb Android 14 o inferior en veure les notificacions.</string>
 </resources>
