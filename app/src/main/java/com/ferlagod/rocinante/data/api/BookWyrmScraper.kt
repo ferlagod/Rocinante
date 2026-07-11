@@ -716,7 +716,7 @@ object BookWyrmScraper {
                 // If this element looks like an embedded post, merge its content into the previous notification.
                 val isEmbeddedPost = element.select("article, .status").isNotEmpty() || type == NotificationType.UNKNOWN
                 if (isEmbeddedPost && notifications.isNotEmpty()) {
-                    val prev = notifications.removeLast()
+                    val prev = notifications.removeAt(notifications.lastIndex)
                     val embeddedHtml = element.select(".content").firstOrNull()?.html() ?: element.html()
                     val mergedContent = prev.content + "<br><br>" + embeddedHtml
                     notifications.add(prev.copy(content = mergedContent))
