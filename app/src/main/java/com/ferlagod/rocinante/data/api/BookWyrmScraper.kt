@@ -684,14 +684,22 @@ object BookWyrmScraper {
                     avatarUrl = "$baseUrl${avatarUrl.trimStart('/')}"
                 }
                 
-                val actorName = element.select("strong").firstOrNull()?.text() 
-                    ?: element.select("a").firstOrNull()?.text() ?: "Unknown"
+                val actorName = element.select("strong").firstOrNull()?.text()?.takeIf { it.isNotBlank() }
+                    ?: element.select("a").firstOrNull { it.text().isNotBlank() }?.text() 
+                    ?: "Unknown"
                     
                 val timeElement = element.select("time").firstOrNull()
                 val date = timeElement?.text() ?: ""
                 
-                val permalink = element.select("a.time, .status-link").firstOrNull()?.attr("href")?.let {
+                var permalink = element.select("a.time, .status-link").firstOrNull()?.attr("href")?.let {
                     if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
+                }
+                
+                if (permalink == null) {
+                    val profileHref = element.select("a[href^=/user/]").firstOrNull { it.text().isNotBlank() }?.attr("href")
+                    if (profileHref != null) {
+                        permalink = if (profileHref.startsWith("http")) profileHref else "$baseUrl${profileHref.trimStart('/')}"
+                    }
                 }
                 
                 val fullText = element.text().lowercase()
@@ -700,8 +708,19 @@ object BookWyrmScraper {
                     fullText.contains("mention") || fullText.contains("mencionó") -> NotificationType.MENTION
                     fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") -> NotificationType.FAVORITE
                     fullText.contains("boost") || fullText.contains("compartió") -> NotificationType.BOOST
-                    fullText.contains("follow") || fullText.contains("siguió") || fullText.contains("sigue") -> NotificationType.FOLLOW
+                    fullText.contains("follow") || fullText.contains("siguió") || fullText.contains("sigue") || fullText.contains("segue") -> NotificationType.FOLLOW
                     else -> NotificationType.UNKNOWN
+                }
+                
+                // BookWyrm sometimes splits a notification into the header ("User boosted...") and the embedded post ("<article>...").
+                // If this element looks like an embedded post, merge its content into the previous notification.
+                val isEmbeddedPost = element.select("article, .status").isNotEmpty() || type == NotificationType.UNKNOWN
+                if (isEmbeddedPost && notifications.isNotEmpty()) {
+                    val prev = notifications.removeLast()
+                    val embeddedHtml = element.select(".content").firstOrNull()?.html() ?: element.html()
+                    val mergedContent = prev.content + "<br><br>" + embeddedHtml
+                    notifications.add(prev.copy(content = mergedContent))
+                    continue
                 }
                 
                 notifications.add(

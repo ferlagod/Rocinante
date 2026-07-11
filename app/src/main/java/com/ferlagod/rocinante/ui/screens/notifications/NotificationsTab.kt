@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.*
@@ -40,7 +41,7 @@ import com.ferlagod.rocinante.data.model.NotificationUiItem
 fun NotificationsTab(
     api: BookWyrmApi,
     instanceUrl: String,
-    onUrlClicked: (String) -> Unit
+    onItemClicked: (NotificationUiItem) -> Unit
 ) {
     val viewModel: NotificationsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val state by viewModel.state.collectAsState()
@@ -124,7 +125,7 @@ fun NotificationsTab(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(s.notifications, key = { it.id }) { notif ->
-                                NotificationItemCard(item = notif, onUrlClicked = onUrlClicked)
+                                NotificationItemCard(item = notif, onItemClicked = onItemClicked)
                             }
                         }
                     }
@@ -145,13 +146,13 @@ fun NotificationsTab(
 @Composable
 fun NotificationItemCard(
     item: NotificationUiItem,
-    onUrlClicked: (String) -> Unit
+    onItemClicked: (NotificationUiItem) -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                item.permalink?.let { onUrlClicked(it) }
+                onItemClicked(item)
             },
         colors = CardDefaults.cardColors(
             containerColor = if (item.isUnread) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant
@@ -208,4 +209,55 @@ fun NotificationItemCard(
             }
         }
     }
+}
+
+/**
+ * Diálogo que muestra el detalle completo de una notificación.
+ * Permite leer todo el contenido y ofrece un botón para abrir el enlace original en el navegador.
+ */
+@Composable
+fun NotificationDetailDialog(
+    item: NotificationUiItem,
+    onDismiss: () -> Unit,
+    onUrlClicked: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (item.actorAvatarUrl != null) {
+                    AsyncImage(
+                        model = item.actorAvatarUrl,
+                        contentDescription = item.actorName,
+                        modifier = Modifier.size(40.dp).clip(CircleShape)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp).clip(CircleShape)
+                    )
+                }
+                Column {
+                    Text(text = item.actorName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = item.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                val parsedContent = HtmlCompat.fromHtml(item.content, HtmlCompat.FROM_HTML_MODE_COMPACT).toString().trim()
+                Text(
+                    text = parsedContent,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.book_close)) // "Cerrar"
+            }
+        }
+    )
 }

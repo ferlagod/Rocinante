@@ -63,6 +63,7 @@ import androidx.compose.material.icons.filled.Notifications
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalUriHandler
 import com.ferlagod.rocinante.ui.screens.notifications.NotificationsTab
+import com.ferlagod.rocinante.ui.screens.notifications.NotificationDetailDialog
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -121,6 +122,8 @@ fun HomeScreen(
     var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var dialogBookKey by remember { mutableStateOf("") }
     var dialogCoverUrl by remember { mutableStateOf("") }
+    var selectedNotificationUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
+    var selectedNotificationDetail by remember { mutableStateOf<com.ferlagod.rocinante.data.model.NotificationUiItem?>(null) }
 
     val api = remember(instanceUrl, cookie) {
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -322,11 +325,16 @@ fun HomeScreen(
                     NotificationsTab(
                         api = api,
                         instanceUrl = instanceUrl,
-                        onUrlClicked = { url -> 
-                            try {
-                                uriHandler.openUri(url)
-                            } catch (e: Exception) {
-                                // Ignore
+                        onItemClicked = { item -> 
+                            if (item.type == NotificationType.FOLLOW) {
+                                selectedNotificationUser = com.ferlagod.rocinante.data.model.SuggestedUser(
+                                    profileUrl = item.permalink ?: "",
+                                    name = item.actorName,
+                                    handle = "",
+                                    avatarUrl = item.actorAvatarUrl ?: ""
+                                )
+                            } else {
+                                selectedNotificationDetail = item
                             }
                         }
                     )
@@ -517,6 +525,30 @@ fun HomeScreen(
                                 android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
+                    }
+                }
+            )
+        }
+
+        selectedNotificationUser?.let { suggestedUser ->
+            SuggestedUserDialog(
+                suggestedUser = suggestedUser,
+                api = api,
+                instanceUrl = instanceUrl,
+                onDismiss = { selectedNotificationUser = null },
+                onFollowSuccess = { selectedNotificationUser = null }
+            )
+        }
+
+        selectedNotificationDetail?.let { item ->
+            NotificationDetailDialog(
+                item = item,
+                onDismiss = { selectedNotificationDetail = null },
+                onUrlClicked = { url ->
+                    try {
+                        uriHandler.openUri(url)
+                    } catch (e: Exception) {
+                        // Ignore
                     }
                 }
             )
