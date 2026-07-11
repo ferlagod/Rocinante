@@ -252,6 +252,24 @@ interface BookWyrmApi {
     @POST("unfavorite/{statusId}/")
     suspend fun unfavoriteStatus(@Path("statusId") statusId: String): retrofit2.Response<okhttp3.ResponseBody>
 
+    // POST /boost/<status_id>
+    /**
+     * Difunde (Boost/Announce) una actividad.
+     */
+    @Headers("Accept: application/json")
+    @POST("boost/{statusId}/")
+    suspend fun boostStatus(@Path("statusId") statusId: String): retrofit2.Response<okhttp3.ResponseBody>
+
+    // POST /unboost/<status_id>
+    /**
+     * Deshace la difusión de una actividad.
+     */
+    @Headers("Accept: application/json")
+    @POST("unboost/{statusId}/")
+    suspend fun unboostStatus(@Path("statusId") statusId: String): retrofit2.Response<okhttp3.ResponseBody>
+
+
+
     // POST /post/reply/
     /**
      * Envía una respuesta a un estado o publicación existente.

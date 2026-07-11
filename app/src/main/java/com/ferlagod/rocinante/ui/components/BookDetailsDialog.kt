@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1079,9 +1080,22 @@ private fun ReviewDialog(
                                     )
                                 }
 
-                                if (response.isSuccessful || response.code() == 302) {
-                                    Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
-                                    onSuccess()
+                                if (response.isSuccessful) {
+                                    val bodyString = response.body()?.string() ?: ""
+                                    if (bodyString.contains("class=\"errorlist\"") || bodyString.contains("error_1_id_")) {
+                                        Toast.makeText(context, "Error de validación al publicar", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
+                                        onSuccess()
+                                    }
+                                } else if (response.code() == 302) {
+                                    val location = response.headers()["Location"]
+                                    if (location?.contains("/login") == true) {
+                                        Toast.makeText(context, "La sesión ha expirado", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
+                                        onSuccess()
+                                    }
                                 } else {
                                     Toast.makeText(context, context.getString(R.string.review_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
@@ -1363,9 +1377,23 @@ private fun QuotationDialog(
                                     sensitive = if (isSensitive) "on" else null
                                 )
 
-                                if (response.isSuccessful || response.code() == 302) {
-                                    Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
-                                    onSuccess()
+                                if (response.isSuccessful) {
+                                    // Comprobar si devolvió 200 pero es el HTML del formulario con errores (el HTML tiene <form y no es JSON)
+                                    val bodyString = response.body()?.string() ?: ""
+                                    if (bodyString.contains("class=\"errorlist\"") || bodyString.contains("error_1_id_")) {
+                                        Toast.makeText(context, "Error de validación al publicar", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
+                                        onSuccess()
+                                    }
+                                } else if (response.code() == 302) {
+                                    val location = response.headers()["Location"]
+                                    if (location?.contains("/login") == true) {
+                                        Toast.makeText(context, "La sesión ha expirado", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
+                                        onSuccess()
+                                    }
                                 } else {
                                     Toast.makeText(context, context.getString(R.string.quotation_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
@@ -1613,8 +1641,7 @@ fun ReviewDetailDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                     )
-                }
-            }
+                }            }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {

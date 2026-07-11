@@ -75,3 +75,7 @@ translate_clear_notifs.py
 
 # Kotlin daemon
 .kotlin/
+login.py
+test_boost.sh
+add_strings.py
+inbox.json

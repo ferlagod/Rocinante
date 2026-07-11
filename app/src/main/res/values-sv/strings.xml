@@ -244,4 +244,5 @@ Läsutmaningar: Du kan nu se dina mål direkt från din profilskärm.
 Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</string>
     <string name="changelog_text_v1_1_0">Inloggningsfix: Löst ett problem som förhindrade att hyllor laddades korrekt vid inloggning med det fullständiga aliaset (t.ex. användare@instans.com).\n\nStabilitet: Förbättrad hantering av serversvar för att förhindra krascher orsakade av osynliga tecken (BOM).\n\n⚠️ Varning: Om din BookWyrm-instans använder Cloudflare kan du uppleva tillfälliga anslutningsfel. Vi letar för närvarande efter en lösning på detta problem.</string>
     <string name="changelog_text_v1_1_1">Performance: All lists (activity, books, notifications) are now much smoother and faster.\n\nDesign: Refreshed color palette with a vibrant blue and new rounded corners.\n\nStability: Fixed crashes caused by invisible characters (BOM) in server responses.\n\n⚠️ Important: Due to technical limitations, if your BookWyrm instance (like ramblingreaders.org) uses Cloudflare security checks, the application will not be able to connect.</string>
+    <string name="activity_boost">Dela</string>
 </resources>

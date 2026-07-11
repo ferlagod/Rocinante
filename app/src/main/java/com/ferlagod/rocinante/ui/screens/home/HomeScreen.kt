@@ -54,8 +54,11 @@ import androidx.compose.material.icons.filled.EmojiEvents
 
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Notifications
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalUriHandler
@@ -260,8 +263,21 @@ fun HomeScreen(
                     isLoading = uiState.isLoading,
                     isRefreshing = uiState.isRefreshing,
                     onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
-                    onLikeClick = { item -> viewModel.toggleLike(item.objectId, instanceUrl) },
+                    onLikeClick = { item -> 
+                        if (item.objectId.startsWith("scraped-")) {
+                            android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.toggleLike(item.objectId, instanceUrl)
+                        }
+                    },
                     onBoostClick = { item -> 
+                        if (item.objectId.startsWith("scraped-")) {
+                            android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.toggleBoost(item.objectId, instanceUrl)
+                        }
+                    },
+                    onShareClick = { item -> 
                         val shareText = buildString {
                             append(item.actorName.ifEmpty { context.getString(R.string.text_someone) })
                             append(context.getString(R.string.share_on_bookwyrm))
@@ -278,8 +294,7 @@ fun HomeScreen(
                             putExtra(Intent.EXTRA_TEXT, shareText)
                             type = "text/plain"
                         }
-                        val shareIntent = Intent.createChooser(sendIntent, null)
-                        context.startActivity(shareIntent)
+                        context.startActivity(Intent.createChooser(sendIntent, null))
                     },
                     onLoadMore = { viewModel.loadMoreActivities() },
                     onItemClick = { selectedActivity = it },
@@ -431,8 +446,21 @@ fun HomeScreen(
                 api = api,
                 isLiked = isLiked,
                 isBoosted = uiState.boostedStatusIds.contains(activity.objectId),
-                onLikeClick = { viewModel.toggleLike(activity.objectId, instanceUrl) },
+                onLikeClick = { 
+                    if (activity.objectId.startsWith("scraped-")) {
+                        android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewModel.toggleLike(activity.objectId, instanceUrl)
+                    }
+                },
                 onBoostClick = { 
+                    if (activity.objectId.startsWith("scraped-")) {
+                        android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewModel.toggleBoost(activity.objectId, instanceUrl)
+                    }
+                },
+                onShareClick = { 
                     val shareText = buildString {
                         append(activity.actorName.ifEmpty { context.getString(R.string.text_someone) })
                         append(context.getString(R.string.share_on_bookwyrm))
@@ -651,6 +679,8 @@ fun SuggestedUserDialog(
  * @param isRefreshing Indica si se está ejecutando un refresco manual.
  * @param onRefresh Callback para iniciar un refresco manual.
  * @param onLikeClick Callback al presionar el botón de favorito de un elemento.
+ * @param onBoostClick Callback al presionar el botón de retuit.
+ * @param onShareClick Callback al presionar el botón de compartir.
  * @param onLoadMore Callback invocado cuando la lista se aproxima al final para paginación.
  * @param onItemClick Callback invocado al seleccionar el cuerpo de un elemento de la lista.
  */
@@ -667,6 +697,7 @@ fun ActivityTab(
     onRefresh: () -> Unit,
     onLikeClick: (TimelineUiItem) -> Unit,
     onBoostClick: (TimelineUiItem) -> Unit,
+    onShareClick: (TimelineUiItem) -> Unit,
     onLoadMore: () -> Unit,
     onItemClick: (TimelineUiItem) -> Unit,
     api: com.ferlagod.rocinante.data.api.BookWyrmApi
@@ -762,6 +793,7 @@ fun ActivityTab(
                             isBoosted = boostedStatusIds.contains(item.objectId),
                             onLikeClick = { onLikeClick(item) },
                             onBoostClick = { onBoostClick(item) },
+                            onShareClick = { onShareClick(item) },
                             onReplyClick = { onItemClick(item) },
                             onClick = { onItemClick(item) },
                             onBookClick = { bookUrl, coverUrl ->
@@ -869,6 +901,7 @@ private fun ActivityItemCard(
     isBoosted: Boolean,
     onLikeClick: () -> Unit,
     onBoostClick: () -> Unit,
+    onShareClick: () -> Unit,
     onReplyClick: () -> Unit,
     onClick: () -> Unit,
     onBookClick: (String, String?) -> Unit = { _, _ -> }
@@ -1010,13 +1043,33 @@ private fun ActivityItemCard(
                     )
                 }
 
+                if (item.type != "Review") {
+                    TextButton(
+                        onClick = { onBoostClick() },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Repeat,
+                            contentDescription = stringResource(R.string.activity_boost),
+                            tint = if (isBoosted) androidx.compose.ui.graphics.Color(0xFF4CAF50) else LocalContentColor.current,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.activity_boost),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isBoosted) androidx.compose.ui.graphics.Color(0xFF4CAF50) else LocalContentColor.current
+                        )
+                    }
+                }
+
                 IconButton(
-                    onClick = { onBoostClick() },
+                    onClick = { onShareClick() },
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.timeline_boost),
+                        contentDescription = "Compartir",
                         tint = LocalContentColor.current,
                         modifier = Modifier.size(20.dp)
                     )
@@ -1595,6 +1648,7 @@ fun ActivityDetailsDialog(
     isBoosted: Boolean,
     onLikeClick: () -> Unit,
     onBoostClick: () -> Unit,
+    onShareClick: () -> Unit,
     onReplySubmit: (String, (Boolean) -> Unit) -> Unit,
     onDismiss: () -> Unit,
     onBookClick: (String, String?) -> Unit = { _, _ -> }
@@ -1703,10 +1757,20 @@ fun ActivityDetailsDialog(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    IconButton(onClick = onBoostClick) {
+                    if (item.type != "Review") {
+                        IconButton(onClick = onBoostClick) {
+                            Icon(
+                                imageVector = Icons.Default.Repeat,
+                                contentDescription = stringResource(R.string.activity_boost),
+                                tint = if (isBoosted) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = onShareClick) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = stringResource(R.string.timeline_boost),
+                            contentDescription = "Compartir",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

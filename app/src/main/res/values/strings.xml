@@ -270,4 +270,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="error_network_error">Network error</string>
     <string name="quotation_page_format">Pág. %1$s</string>
     <string name="quotation_quote_prefix">Cita: </string>
-    </resources>
+        <string name="activity_boost">Boost</string>
+</resources>

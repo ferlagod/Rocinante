@@ -72,6 +72,9 @@ class InteractionRepository(
                 }
 
                 // Parse the remote status URL to identify the host and the actor's username
+                if (!statusUrl.startsWith("http://") && !statusUrl.startsWith("https://")) {
+                    return@withContext null
+                }
                 val urlObj = java.net.URL(statusUrl)
                 val host = urlObj.host
                 val path = urlObj.path
@@ -229,35 +232,24 @@ class InteractionRepository(
         }
     }
     /**
-     * Comparte (Boost/Announce) una publicación en el outbox del usuario.
+     * Comparte (Boost/Announce) una publicación.
      */
-    suspend fun boostStatus(statusUrl: String, outboxUrl: String): Boolean {
+    suspend fun boostStatus(statusId: String): Boolean {
         return try {
-            val jsonObject = com.google.gson.JsonObject().apply {
-                addProperty("type", "Announce")
-                addProperty("object", statusUrl)
-            }
-            val response = api.postToOutbox(outboxUrl, jsonObject)
-            response.isSuccessful || response.code() in 200..299 || response.code() == 302
+            val response = api.boostStatus(statusId)
+            response.isSuccessful || response.code() in 200..399
         } catch (_: Exception) {
             false
         }
     }
+
     /**
      * Deshace el compartir (Undo Announce) de una publicación.
      */
-    suspend fun unboostStatus(statusUrl: String, outboxUrl: String): Boolean {
+    suspend fun unboostStatus(statusId: String): Boolean {
         return try {
-            val announceObject = com.google.gson.JsonObject().apply {
-                addProperty("type", "Announce")
-                addProperty("object", statusUrl)
-            }
-            val undoObject = com.google.gson.JsonObject().apply {
-                addProperty("type", "Undo")
-                add("object", announceObject)
-            }
-            val response = api.postToOutbox(outboxUrl, undoObject)
-            response.isSuccessful || response.code() in 200..299 || response.code() == 302
+            val response = api.unboostStatus(statusId)
+            response.isSuccessful || response.code() in 200..399
         } catch (_: Exception) {
             false
         }

@@ -91,6 +91,7 @@ class HomeViewModel @Inject constructor(
             if (!forceRefresh && _uiState.value.timeline.isEmpty()) {
                 val cachedTimeline = timelineCache.loadTimeline()
                 val cachedLikes = timelineCache.loadLikedStatuses()
+                val cachedBoosts = timelineCache.loadBoostedStatuses()
                 val cachedProfile = timelineCache.loadProfile()
                 
                 if (!cachedTimeline.isNullOrEmpty() || cachedProfile != null) {
@@ -100,6 +101,7 @@ class HomeViewModel @Inject constructor(
                         visibleTimeline = cachedTimeline?.take(10) ?: _uiState.value.visibleTimeline,
                         currentPage = 1,
                         likedStatusIds = cachedLikes,
+                        boostedStatusIds = cachedBoosts,
                         isLoading = false
                     )
                 }
@@ -145,6 +147,11 @@ class HomeViewModel @Inject constructor(
                 val finalLikes = updatedLikes + serverLikes
                 timelineCache.saveLikedStatuses(finalLikes)
 
+                val updatedBoosts = timelineCache.loadBoostedStatuses()
+                val serverBoosts = mergedTimeline.filter { it.isBoostedByMe }.map { it.objectId }.toSet()
+                val finalBoosts = updatedBoosts + serverBoosts
+                timelineCache.saveBoostedStatuses(finalBoosts)
+
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isRefreshing = false,
@@ -153,7 +160,8 @@ class HomeViewModel @Inject constructor(
                     timeline = mergedTimeline,
                     visibleTimeline = mergedTimeline.take(10),
                     currentPage = 1,
-                    likedStatusIds = finalLikes
+                    likedStatusIds = finalLikes,
+                    boostedStatusIds = finalBoosts
                 )
 
                 if (_uiState.value.userId == null) {
@@ -250,6 +258,8 @@ class HomeViewModel @Inject constructor(
             val profileUrl = _uiState.value.profile?.id ?: return@launch
             val outboxUrl = profileUrl.removeSuffix(".json") + "/outbox"
 
+            val statusId = interactionRepository.resolveLocalStatusId(instanceUrl, statusUrl) ?: return@launch
+
             val currentlyBoosted = _uiState.value.boostedStatusIds.contains(statusUrl)
             val newBoosted = !currentlyBoosted
 
@@ -259,9 +269,9 @@ class HomeViewModel @Inject constructor(
             timelineCache.saveBoostedStatuses(updatedSet)
 
             val success = if (newBoosted) {
-                interactionRepository.boostStatus(statusUrl, outboxUrl)
+                interactionRepository.boostStatus(statusId)
             } else {
-                interactionRepository.unboostStatus(statusUrl, outboxUrl)
+                interactionRepository.unboostStatus(statusId)
             }
 
             if (!success) {

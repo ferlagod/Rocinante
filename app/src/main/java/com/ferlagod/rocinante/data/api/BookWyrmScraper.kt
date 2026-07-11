@@ -279,9 +279,7 @@ object BookWyrmScraper {
                     ?: timeElement?.text()?.takeIf { it.isNotBlank() } 
                     ?: breadcrumbDate
 
-                if (items.isEmpty()) {
-                    android.util.Log.e("BookWyrmScraper", "HTML OF FIRST STATUS: " + element.outerHtml())
-                }
+
 
                 val permalinkElement = element.select("a").firstOrNull { a ->
                     val href = a.attr("href")
@@ -400,6 +398,7 @@ object BookWyrmScraper {
 
                 var localId: String? = null
                 var isLikedByMe = false
+                var isBoostedByMe = false
                 
                 // Bookwyrm renders BOTH favorite and unfavorite forms. 
                 // The active one doesn't have the 'is-hidden' class.
@@ -415,6 +414,22 @@ object BookWyrmScraper {
                 val unfavForm = element.selectFirst("form[name=unfavorite]:not(.is-hidden), form[action*=/unfavorite/]:not(.is-hidden)")
                 if (unfavForm != null) {
                     isLikedByMe = true
+                }
+
+                val unboostForm = element.selectFirst("form[name=unboost]:not(.is-hidden), form[action*=/unboost/]:not(.is-hidden)")
+                if (unboostForm != null) {
+                    isBoostedByMe = true
+                }
+
+                if (localId == null) {
+                    val anyBoostForm = element.selectFirst("form[action*=/boost/], form[action*=/unboost/]")
+                    if (anyBoostForm != null) {
+                        val action = anyBoostForm.attr("action")
+                        val match = """/(boost|unboost)/(\d+)""".toRegex().find(action)
+                        if (match != null) {
+                            localId = match.groupValues[2]
+                        }
+                    }
                 }
                 if (localId == null) {
                     val replyPanel = element.selectFirst("[id^=show_comment_]")
@@ -437,7 +452,8 @@ object BookWyrmScraper {
                     actorName = actorName.ifBlank { "Usuario" },
                     actorAvatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
                     objectId = localId ?: statusId,
-                    isLikedByMe = isLikedByMe
+                    isLikedByMe = isLikedByMe,
+                    isBoostedByMe = isBoostedByMe
                 )
                 
                 if (item.actorName == "Usuario" && item.content == "Sin contenido" && item.bookCoverUrl.isNullOrEmpty()) {

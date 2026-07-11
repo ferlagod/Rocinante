@@ -62,7 +62,9 @@ data class TimelineUiItem(
     // ID real del objeto de la actividad (necesario para responder o dar Like al objeto, no a la acción)
     val objectId: String = "",
     // Indica si el usuario actual ha dado 'Me gusta' a esta actividad desde la web o la app
-    val isLikedByMe: Boolean = false
+    val isLikedByMe: Boolean = false,
+    // Indica si el usuario actual ha difundido esta actividad desde la web o la app
+    val isBoostedByMe: Boolean = false
 )
 
 /**
