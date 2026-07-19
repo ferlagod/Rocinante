@@ -92,6 +92,21 @@ fun BookDetailsDialog(
     var showMyActivityDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
 
+    // Progreso de lectura actual (solo relevante mientras el libro está en lectura).
+    // Se recarga cada vez que cambia el libro o tras una actualización correcta.
+    var readingProgress by remember { mutableStateOf<BookWyrmScraper.ReadingProgressInfo?>(null) }
+    var isLoadingProgress by remember { mutableStateOf(false) }
+    var progressRefreshKey by remember { mutableStateOf(0) }
+    LaunchedEffect(activeBookKey, progressRefreshKey) {
+        if (currentShelf == "reading") {
+            isLoadingProgress = true
+            readingProgress = runCatching { BookWyrmScraper.getReadingProgress(api, activeBookKey) }.getOrNull()
+            isLoadingProgress = false
+        } else {
+            readingProgress = null
+        }
+    }
+
     // Reseñas ordenadas de más reciente a más antigua. BookWyrm renderiza la fecha en
     // formato legible (p. ej. "Aug. 22, 2024"), así que se parsea a una fecha comparable.
     // Las reseñas con fecha no reconocida se colocan al final.
@@ -142,6 +157,61 @@ fun BookDetailsDialog(
                         text = stringResource(R.string.book_pages, bookDetails.pages.toString()),
                         style = MaterialTheme.typography.bodySmall
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // Mientras se obtiene el progreso (puede tardar varios segundos), mostrar
+                // una barra indeterminada animada hasta que llegue el valor real.
+                if (isLoadingProgress && readingProgress == null) {
+                    Text(
+                        text = stringResource(R.string.book_current_progress),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                readingProgress?.let { rp ->
+                    val totalPages = bookDetails.pages
+                    // Fracción 0..1 para la barra. En modo páginas requiere total conocido.
+                    val fraction = when {
+                        rp.mode == "PCT" -> rp.progress / 100f
+                        totalPages != null && totalPages > 0 -> rp.progress.toFloat() / totalPages
+                        else -> null
+                    }?.coerceIn(0f, 1f)
+
+                    val progressLabel = when {
+                        rp.mode == "PCT" -> stringResource(R.string.book_progress_percent, rp.progress)
+                        totalPages != null && totalPages > 0 -> stringResource(
+                            R.string.book_progress_pages,
+                            rp.progress,
+                            totalPages,
+                            (rp.progress * 100 / totalPages)
+                        )
+                        else -> stringResource(R.string.book_progress_pages_no_total, rp.progress)
+                    }
+
+                    Text(
+                        text = stringResource(R.string.book_current_progress),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = progressLabel,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (fraction != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = { fraction },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
@@ -401,8 +471,15 @@ fun BookDetailsDialog(
             context = context,
             coroutineScope = coroutineScope,
             onDismiss = { showProgressDialog = false },
-            onSuccess = {
+            onSuccess = { newProgress ->
                 showProgressDialog = false
+                // Reflejar el nuevo progreso al instante con el valor enviado.
+                // Si por algún motivo no llegó el valor, recargar desde la red como respaldo.
+                if (newProgress != null) {
+                    readingProgress = newProgress
+                } else {
+                    progressRefreshKey++
+                }
                 onShelved?.invoke()
             }
         )
@@ -486,7 +563,7 @@ private fun ReadingProgressDialog(
     context: Context,
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
-    onSuccess: () -> Unit
+    onSuccess: (BookWyrmScraper.ReadingProgressInfo?) -> Unit
 ) {
     // Estado del formulario
     var progressInput by remember { mutableStateOf("") }
@@ -764,7 +841,11 @@ private fun ReadingProgressDialog(
                                     return@launch
                                 }
 
-                                // 2. Enviar actualización detallada
+                                // 2. Enviar actualización detallada.
+                                // Se usa el valor de la cookie csrftoken (no el token enmascarado
+                                // del HTML) para garantizar que coincida con la cookie enviada.
+                                val csrfForForm = com.ferlagod.rocinante.data.api.NetworkClient
+                                    .currentCsrfToken() ?: progressContext.csrfToken
                                 val response = api.updateProgressDetailed(
                                     bookIdPath = bookId,
                                     readthroughId = progressContext.readthroughId,
@@ -775,13 +856,21 @@ private fun ReadingProgressDialog(
                                     postStatus = if (postToFeed) "on" else "",
                                     privacy = selectedPrivacy,
                                     content = commentText,
-                                    contentWarning = if (includeSpoiler) spoilerText else ""
+                                    contentWarning = if (includeSpoiler) spoilerText else "",
+                                    csrfToken = csrfForForm
                                 )
 
                                 val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
                                 if ((response.isSuccessful || response.code() == 302) && !isRedirectToLogin) {
                                     Toast.makeText(context, context.getString(R.string.progress_success), Toast.LENGTH_SHORT).show()
-                                    onSuccess()
+                                    // Actualización optimista: informar al diálogo del nuevo progreso
+                                    // con el valor recién enviado, sin volver a consultar la red.
+                                    val newProgress = progressInput.toIntOrNull()
+                                    onSuccess(
+                                        newProgress?.let {
+                                            BookWyrmScraper.ReadingProgressInfo(it, if (isPages) "PG" else "PCT")
+                                        }
+                                    )
                                 } else if (isRedirectToLogin) {
                                     Toast.makeText(context, context.getString(R.string.auth_login_required), Toast.LENGTH_SHORT).show()
                                 } else {

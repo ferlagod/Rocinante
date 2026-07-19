@@ -92,10 +92,23 @@ object NetworkClient {
     var lastOkHttpClient: OkHttpClient? = null
         private set
 
+    /**
+     * Valor actual de la cookie csrftoken (el secreto que se enviará como Cookie).
+     * Enviarlo como campo de formulario garantiza que el token coincida con la cookie,
+     * evitando el 403 que produce el token enmascarado extraído del HTML.
+     */
+    fun currentCsrfToken(): String? =
+        (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.currentCsrfToken()
+
     fun createAuthenticatedApi(baseUrl: String, cookieString: String): BookWyrmApi {
         val cleanUrl = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
         val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
         val host = finalUrl.toHttpUrlOrNull()?.host ?: cleanUrl
+        // Referer con host normalizado en minúsculas. Django compara el Referer contra
+        // el host de la petición de forma sensible a mayúsculas (is_same_domain solo
+        // pasa el patrón a minúsculas, no el host del Referer); un "BookWyrm.social"
+        // frente a "bookwyrm.social" hace fallar la verificación CSRF con un 403.
+        val refererHeader = finalUrl.toHttpUrlOrNull()?.toString() ?: finalUrl
 
         // CookieJar con las cookies de sesión iniciales
         val cookieJar = SessionCookieJar(cookieString, host)
@@ -105,7 +118,7 @@ object NetworkClient {
             val csrfToken = cookieJar.currentCsrfToken()
 
             val requestBuilder = chain.request().newBuilder()
-                .addHeader("Referer", finalUrl)
+                .addHeader("Referer", refererHeader)
                 .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Rocinante/1.0")
 
             val acceptHeader = chain.request().header("Accept")
