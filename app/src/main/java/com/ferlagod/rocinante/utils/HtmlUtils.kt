@@ -18,7 +18,6 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.utils
-import com.ferlagod.rocinante.data.model.*
 
 
 /**

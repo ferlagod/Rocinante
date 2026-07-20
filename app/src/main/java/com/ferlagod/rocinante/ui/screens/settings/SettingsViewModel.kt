@@ -18,21 +18,18 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.settings
-import com.ferlagod.rocinante.data.model.*
 
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.local.SettingsData
 import com.ferlagod.rocinante.data.local.SettingsPreferences
 import com.ferlagod.rocinante.data.local.ThemeMode
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 /**

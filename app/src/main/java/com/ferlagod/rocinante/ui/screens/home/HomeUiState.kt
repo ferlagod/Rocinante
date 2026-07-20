@@ -18,7 +18,6 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
-import com.ferlagod.rocinante.data.model.*
 
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem

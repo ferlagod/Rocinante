@@ -112,4 +112,4 @@ Consulta el archivo [LICENSE](LICENSE) completo para más detalles.
 
 [![Apóyame en Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/ferlagod./)
 
-*Desarrollado con ❤️ y mucho café por [ferlagod](https://frikiverse.zone/@ferlagod).*
+*Desarrollado con ❤️ y mucho café por [ferlagod](https://ferlagod.eu).*

@@ -18,7 +18,6 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.api
-import com.ferlagod.rocinante.data.model.*
 
 
 import okhttp3.Cookie

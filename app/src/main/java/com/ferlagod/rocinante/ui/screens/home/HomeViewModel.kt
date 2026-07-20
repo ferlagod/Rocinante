@@ -18,24 +18,22 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
-import com.ferlagod.rocinante.data.model.*
 
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.local.TimelineCache
-import com.ferlagod.rocinante.data.repository.UserRepository
-import com.ferlagod.rocinante.data.repository.TimelineRepository
 import com.ferlagod.rocinante.data.repository.InteractionRepository
+import com.ferlagod.rocinante.data.repository.TimelineRepository
+import com.ferlagod.rocinante.data.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import com.ferlagod.rocinante.R
-
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 /**

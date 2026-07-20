@@ -18,19 +18,18 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.ui.screens.home
-import com.ferlagod.rocinante.data.model.*
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.data.api.BookWyrmApi
+import com.ferlagod.rocinante.data.local.FollowListCache
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.FollowUserItem
-import com.ferlagod.rocinante.data.local.FollowListCache
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.ferlagod.rocinante.utils.BookWyrmUtils
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -38,10 +37,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
 
 /**
  * Enum que define si la lista a cargar corresponde a seguidores o usuarios seguidos.

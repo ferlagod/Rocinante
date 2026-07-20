@@ -1,22 +1,38 @@
+/*
+ * Rocinante - Cliente Android para BookWyrm
+ * Copyright (C) 2026 ferlagod
+ *
+ * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada
+ * por la Fundación para el Software Libre, ya sea la versión 3
+ * de la Licencia, o (a su elección) cualquier versión posterior.
+ *
+ * Este programa se distribuye con la esperanza de que sea útil, pero
+ * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
+ * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
+ * Consulte los detalles de la Licencia Pública General GNU para obtener
+ * una información más detallada.
+ *
+ * Debería haber recibido una copia de la Licencia Pública General GNU
+ * junto a este programa.
+ * En caso contrario, consulte <https://www.gnu.org/licenses/>.
+ */
 package com.ferlagod.rocinante.ui.screens.notifications
-import com.ferlagod.rocinante.data.model.*
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
-import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.local.SessionStorage
 import com.ferlagod.rocinante.data.model.NotificationUiItem
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import com.ferlagod.rocinante.R
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 /**

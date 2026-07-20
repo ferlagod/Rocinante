@@ -18,18 +18,17 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.data.api
-import com.ferlagod.rocinante.data.model.*
 
-import com.ferlagod.rocinante.utils.BookWyrmUtils
-import com.ferlagod.rocinante.data.model.NotificationUiItem
-import com.ferlagod.rocinante.data.model.NotificationType
-import com.ferlagod.rocinante.data.model.BookWyrmProfile
-import com.ferlagod.rocinante.data.model.SuggestedUser
 import com.ferlagod.rocinante.data.model.ActivityPubActivity
 import com.ferlagod.rocinante.data.model.ActivityPubObject
-import okhttp3.ResponseBody.Companion.toResponseBody
-import kotlinx.coroutines.withContext
+import com.ferlagod.rocinante.data.model.BookWyrmProfile
+import com.ferlagod.rocinante.data.model.NotificationType
+import com.ferlagod.rocinante.data.model.NotificationUiItem
+import com.ferlagod.rocinante.data.model.SuggestedUser
+import com.ferlagod.rocinante.utils.BookWyrmUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody.Companion.toResponseBody
 
 object BookWyrmScraper {
 

@@ -18,7 +18,6 @@
  * En caso contrario, consulte <https://www.gnu.org/licenses/>.
  */
 package com.ferlagod.rocinante.workers
-import com.ferlagod.rocinante.data.model.*
 
 
 import android.content.Context

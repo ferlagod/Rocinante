@@ -19,25 +19,12 @@
  */
 package com.ferlagod.rocinante.data.repository
 
-import com.ferlagod.rocinante.data.model.*
-
-import com.ferlagod.rocinante.utils.HtmlUtils
-import com.ferlagod.rocinante.data.model.ActivityPubActivity
-import com.ferlagod.rocinante.data.model.ActivityPubObject
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
-import com.ferlagod.rocinante.data.model.BookSearchResult
-import com.ferlagod.rocinante.data.model.TimelineUiItem
-import com.ferlagod.rocinante.utils.BookWyrmUtils
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 
 
 class UserRepository(
