@@ -125,6 +125,8 @@ data class FollowingPage(
     @SerializedName("orderedItems") val orderedItems: List<String>?
 )
 
+// Serializable para poder conservar los resultados de búsqueda con rememberSaveable
+// y que sobrevivan a cambios de configuración (p. ej. rotar la pantalla).
 data class BookSearchResult(
     val key: String?,
     val title: String?,
@@ -133,7 +135,7 @@ data class BookSearchResult(
     val cover: String?,
     val isRemote: Boolean = false,
     val remoteId: String? = null
-)
+) : java.io.Serializable
 
 /**
  * Representa los detalles ampliados y estructurados de un libro
@@ -169,9 +171,10 @@ data class ShelfBookCover(
     val url: String?
 )
 
+// Serializable para conservar los resultados de búsqueda de usuarios al rotar.
 data class SuggestedUser(
     val name: String,
     val handle: String,
     val avatarUrl: String,
     val profileUrl: String
-)
+) : java.io.Serializable
