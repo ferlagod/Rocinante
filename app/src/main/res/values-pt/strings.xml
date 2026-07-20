@@ -249,4 +249,5 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="changelog_text_v1_1_3">Novidades da versão 1.1.3:
 * **Notificações:** Exibição corrigida na lista e adicionado suporte para visualizar o conteúdo completo ao tocar nelas.</string>
     <string name="changelog_text_v1_1_5">Novidades da versão 1.1.5:\n* **Correções de bugs:** Foi corrigido um problema de compatibilidade que causava o travamento do aplicativo em dispositivos com Android 14 ou inferior ao visualizar notificações.</string>
+    <string name="changelog_text_v1_1_6">NOVIDADES\n• Progresso de leitura: O progresso de leitura atual agora é exibido diretamente na página de detalhes do livro.\n• Preparação para produção: Ajustes internos e configuração final para o lançamento oficial do aplicativo na Google Play Store.\n\nCORREÇÕES\n• Corrigido o erro que impedia a atualização correta do progresso de leitura (problema técnico com o Referer CSRF resolvido).\n\nUm agradecimento especial a @HBB pela sua contribuição nesta atualização!</string>
 </resources>

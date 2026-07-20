@@ -249,4 +249,5 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="changelog_text_v1_1_3">Nyheter i version 1.1.3:
 * **Meddelanden:** Åtgärdad visning i listan och lagt till stöd för att se fullständigt innehåll när du trycker på dem.</string>
     <string name="changelog_text_v1_1_5">Nyheter i version 1.1.5:\n* **Buggfixar:** Åtgärdat ett kompatibilitetsproblem som orsakade att appen kraschade på enheter med Android 14 eller äldre när aviseringar visades.</string>
+    <string name="changelog_text_v1_1_6">NYHETER\n• Läsutveckling: Den nuvarande läsutvecklingen visas nu direkt på bokens detaljsida.\n• Förberedelse för produktion: Interna justeringar och slutlig konfiguration för den officiella lanseringen av applikationen i Google Play Store.\n\nFIXAR\n• Fixade buggen som hindrade läsutvecklingen från att uppdateras korrekt (löst tekniskt problem med CSRF Referer).\n\nEtt speciellt tack till @HBB för dennes bidrag till denna uppdatering!</string>
 </resources>

@@ -249,4 +249,5 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="changelog_text_v1_1_3">Noutăți în versiunea 1.1.3:
 * **Notificări:** Afișarea în listă a fost corectată și a fost adăugat suport pentru vizualizarea conținutului complet la apăsarea pe ele.</string>
     <string name="changelog_text_v1_1_5">Noutăți în versiunea 1.1.5:\n* **Remedieri de erori:** S-a remediat o problemă de compatibilitate care a cauzat blocarea aplicației pe dispozitivele cu Android 14 sau mai vechi la vizualizarea notificărilor.</string>
+    <string name="changelog_text_v1_1_6">NOUTĂȚI\n• Progresul lecturii: Progresul actual al lecturii este acum afișat direct pe pagina cu detalii a cărții.\n• Pregătire pentru producție: Ajustări interne și configurarea finală pentru lansarea oficială a aplicației în Google Play Store.\n\nCORECȚII\n• S-a remediat eroarea care împiedica actualizarea corectă a progresului lecturii (s-a rezolvat problema tehnică legată de Referer CSRF).\n\nMulțumiri speciale utilizatorului @HBB pentru contribuția sa la această actualizare!</string>
 </resources>

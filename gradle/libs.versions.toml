@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.3.0"
 appcompat = "1.6.1"
 coilCompose = "2.6.0"
 converterGson = "2.9.0"
@@ -21,7 +21,7 @@ workRuntimeKtx = "2.9.0"
 zxingAndroidEmbedded = "4.3.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.2.0"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.2"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }

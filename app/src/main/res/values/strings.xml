@@ -279,4 +279,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="quotation_quote_prefix">Cita: </string>
         <string name="activity_boost">Boost</string>
     <string name="changelog_text_v1_1_5">What\'s new in version 1.1.5:\n* **Bug fixes:** Fixed a compatibility issue that caused the app to crash on Android 14 and older devices when viewing notifications.</string>
+    <string name="changelog_text_v1_1_6">WHAT\'S NEW\n• Reading Progress: The current reading progress is now displayed directly on the book\'s details page.\n• Production Readiness: Internal adjustments and final configuration for the official launch of the application on the Google Play Store.\n\nFIXES\n• Fixed the bug that prevented reading progress from updating correctly (resolved technical issue with CSRF Referer).\n\nSpecial thanks to @HBB for their contribution to this update!</string>
 </resources>
