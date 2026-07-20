@@ -149,11 +149,9 @@ fun SearchScreen(
     // remotas vía conectores— cuando no hay resultado local. Así se conserva el flujo
     // "escanear un libro que aún no tengo" sin depender de la coincidencia difusa.
     val performScanSearch: (String) -> Unit = { scanned ->
-        val digits = scanned.filter { it.isDigit() || it == 'X' || it == 'x' }.uppercase()
-        val isIsbn = digits.length == 13 || digits.length == 10
         searchQuery = scanned
         searchMode = SearchMode.BOOKS
-        if (!isIsbn) {
+        if (!com.ferlagod.rocinante.utils.IsbnUtils.isIsbn(scanned)) {
             performSearch()
         } else {
             isSearching = true
@@ -161,7 +159,7 @@ fun SearchScreen(
             coroutineScope.launch {
                 try {
                     val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
-                    val exact = repo.searchByIsbn(digits)
+                    val exact = repo.searchByIsbn(com.ferlagod.rocinante.utils.IsbnUtils.normalize(scanned))
                     val results = if (exact.isNotEmpty()) exact else repo.searchBooksScraped(scanned, instanceUrl)
                     searchResults = results
                     userSearchResults = emptyList()
