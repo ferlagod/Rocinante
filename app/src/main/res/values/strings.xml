@@ -63,6 +63,10 @@
     <string name="book_no_reviews">No written reviews found for this edition.</string>
     <string name="book_review_date_unknown">Unknown date</string>
     <string name="book_update_progress">Update reading progress</string>
+    <string name="book_current_progress">Your progress</string>
+    <string name="book_progress_pages">Page %1$d of %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Page %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
     <string name="book_close">Close</string>
     <string name="shelf_chip_to_read">To read</string>
     <string name="shelf_chip_reading">Reading</string>

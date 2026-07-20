@@ -61,6 +61,10 @@
     <string name="book_no_reviews">No se hallaron reseñas escritas para esta edición.</string>
     <string name="book_review_date_unknown">Fecha indefinida</string>
     <string name="book_update_progress">Actualizar progreso de lectura</string>
+    <string name="book_current_progress">Tu progreso</string>
+    <string name="book_progress_pages">Página %1$d de %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Página %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
     <string name="book_close">Cerrar</string>
     <string name="shelf_chip_to_read">Por leer</string>
     <string name="shelf_chip_reading">Leyendo</string>

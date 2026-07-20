@@ -164,7 +164,10 @@ interface BookWyrmApi {
         @Field("post-status") postStatus: String = "on",
         @Field("privacy") privacy: String = "public",
         @Field("content") content: String = "",
-        @Field("content_warning") contentWarning: String = ""
+        @Field("content_warning") contentWarning: String = "",
+        // Token CSRF de formulario (además de la cabecera X-CSRFToken). Necesario en
+        // instancias Django donde la cabecera por sí sola no supera la verificación CSRF.
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
     ): retrofit2.Response<ResponseBody>
 
     /**

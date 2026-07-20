@@ -38,7 +38,12 @@ object BookWyrmScraper {
     data class ProgressContext(
         val readthroughId: String,
         val userId: String,
-        val localBookId: String
+        val localBookId: String,
+        // Token CSRF (masked) extraído del render de la página del libro.
+        // BookWyrm (Django) valida este token de formulario contra la cookie csrftoken;
+        // enviarlo como campo evita el 403 en instancias donde la cabecera X-CSRFToken
+        // no es suficiente. Puede quedar vacío si no se encuentra en el HTML.
+        val csrfToken: String = ""
     )
     /**
      * Contexto temporal utilizado al vincular un usuario y un libro en una reseña.
@@ -136,6 +141,19 @@ object BookWyrmScraper {
     }
 
     /**
+     * Extrae el token CSRF (csrfmiddlewaretoken) del HTML de una página renderizada.
+     * Django puede emitir los atributos en cualquier orden (name antes o después de value),
+     * así que se intentan ambos patrones. Devuelve "" si no se encuentra.
+     */
+    private fun extractCsrfToken(html: String): String {
+        val nameFirst = """name=["']csrfmiddlewaretoken["']\s+value=["']([^"']+)["']""".toRegex()
+        nameFirst.find(html)?.groupValues?.get(1)?.let { return it }
+        val valueFirst = """value=["']([^"']+)["']\s+name=["']csrfmiddlewaretoken["']""".toRegex()
+        valueFirst.find(html)?.groupValues?.get(1)?.let { return it }
+        return ""
+    }
+
+    /**
      * Obtiene el contexto necesario para actualizar el progreso (readthrough ID y user ID).
      */
     suspend fun getProgressContext(api: BookWyrmApi, bookUrl: String): ProgressContext? {
@@ -176,14 +194,14 @@ object BookWyrmScraper {
                     val userRegex = """name=["']user["']\s+value=["'](\d+)["']""".toRegex()
                     val userMatch = userRegex.find(html)
                     val userId = userMatch?.groupValues?.get(1)
-                    
+
                     if (readthroughId != null && userId != null) {
-                        return@withContext ProgressContext(readthroughId, userId, localBookId)
+                        return@withContext ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html))
                     } else {
                         return@withContext null
                     }
                 }
-                
+
                 val html = response.body()?.string() ?: return@withContext null
 
                 val regex = """<form[^>]*name=["']reading-progress-[^>]*>.*?name=["']id["'][^>]*value=["'](\d+)["']""".toRegex(RegexOption.DOT_MATCHES_ALL)
@@ -195,13 +213,59 @@ object BookWyrmScraper {
                 val userId = userMatch?.groupValues?.get(1)
 
                 if (readthroughId != null && userId != null) {
-                    ProgressContext(readthroughId, userId, localBookId)
+                    ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html))
                 } else null
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 null
             }
         }
+    }
+
+    /**
+     * Progreso de lectura actual de un libro para el usuario logueado.
+     * @property progress Valor numérico (páginas si mode == "PG", porcentaje si "PCT").
+     * @property mode "PG" (páginas) o "PCT" (porcentaje).
+     */
+    data class ReadingProgressInfo(
+        val progress: Int,
+        val mode: String
+    )
+
+    /**
+     * Obtiene el progreso de lectura actual leyendo el formulario de actualización
+     * (reading-progress-…) que BookWyrm renderiza pre-rellenado con readthrough.progress.
+     * Devuelve null si el libro no está en lectura o no se encuentra el progreso.
+     */
+    suspend fun getReadingProgress(api: BookWyrmApi, bookUrl: String): ReadingProgressInfo? {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+                if (html.isEmpty()) return@withContext null
+                parseReadingProgress(html)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                null
+            }
+        }
+    }
+
+    /**
+     * Extrae progreso y modo del bloque <form name="reading-progress-…">.
+     * El input de progreso se acota a su propia etiqueta para no confundirlo
+     * con el campo oculto "id" (readthrough) cuando el progreso está vacío.
+     */
+    private fun parseReadingProgress(html: String): ReadingProgressInfo? {
+        val formBlock = """<form[^>]*name=["']reading-progress-[\s\S]*?</form>"""
+            .toRegex().find(html)?.value ?: return null
+        val inputTag = """<input[^>]*name=["']progress["'][^>]*>"""
+            .toRegex().find(formBlock)?.value ?: return null
+        val progress = """value=["'](\d+)["']"""
+            .toRegex().find(inputTag)?.groupValues?.get(1)?.toIntOrNull() ?: return null
+        val isPct = """value=["']PCT["']\s*selected""".toRegex().containsMatchIn(formBlock)
+        return ReadingProgressInfo(progress, if (isPct) "PCT" else "PG")
     }
 
     suspend fun scrapeHomeFeed(
