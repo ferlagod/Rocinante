@@ -19,6 +19,8 @@
  */
 package com.ferlagod.rocinante.data.repository
 
+import android.content.Context
+import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.model.ActivityPubActivity
 import com.ferlagod.rocinante.data.model.ActivityPubObject
@@ -47,7 +49,8 @@ private val IGNORED_ACTIVITY_TYPES = setOf("Delete", "Undo", "Update", "Like", "
 
 class TimelineRepository(
     private val api: BookWyrmApi,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val context: Context
 ) {
     /**
      * Carga la línea de tiempo combinando:
@@ -348,8 +351,8 @@ class TimelineRepository(
                 // Según la spec ActivityPub + BookWyrm, Create envuelve el objeto real
                 // (Review, Comment, Quotation, Note). El tipo del objeto es más informativo.
                 val resolvedType = when (activity.type) {
-                    "Create" -> currentObjectData?.type ?: activity.type ?: "Actividad"
-                    else -> activity.type ?: "Actividad"
+                    "Create" -> currentObjectData?.type ?: activity.type ?: context.getString(R.string.activity_fallback_type)
+                    else -> activity.type ?: context.getString(R.string.activity_fallback_type)
                 }
 
                 // Para actividades Add (añadir libro a estantería), construir contenido descriptivo
@@ -358,15 +361,15 @@ class TimelineRepository(
 
                 val rawContent = when {
                     isAddActivity && !bookTitle.isNullOrBlank() ->
-                        "Añadió \"$bookTitle\" a su estantería de lectura"
+                        context.getString(R.string.activity_added_book_to_shelf_named, bookTitle)
                     isAddActivity ->
-                        "Añadió un libro a su estantería de lectura"
+                        context.getString(R.string.activity_added_book_to_shelf)
                     else ->
                         currentObjectData?.content
                             ?: currentObjectData?.name
                             ?: activity.content
                             ?: activity.name
-                            ?: "Sin contenido"
+                            ?: context.getString(R.string.text_no_content)
                 }
 
                 // Portada: preferimos el primer attachment de tipo imagen o directamente el campo cover (si es un libro)
@@ -408,10 +411,10 @@ class TimelineRepository(
                     id = activity.id.orEmpty(),
                     type = resolvedType,
                     published = activity.published ?: "",
-                    content = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) "Añadió un libro a su estantería" else "Sin contenido" },
+                    content = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) context.getString(R.string.activity_added_book_generic) else context.getString(R.string.text_no_content) },
                     bookCoverUrl = bookCoverUrl,
                     bookUrl = bookUrl,
-                    actorName = resolvedActorName.ifBlank { "Usuario" },
+                    actorName = resolvedActorName.ifBlank { context.getString(R.string.activity_unknown_user) },
                     actorAvatarUrl = resolvedActorAvatar,
                     objectId = currentObjectData?.id ?: activity.id.orEmpty()
                 )

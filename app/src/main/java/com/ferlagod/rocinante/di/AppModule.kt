@@ -239,8 +239,12 @@ object AppModule {
      */
     @Provides
     @Singleton
-    fun provideTimelineRepository(api: BookWyrmApi, userRepository: UserRepository): TimelineRepository {
-        return TimelineRepository(api, userRepository)
+    fun provideTimelineRepository(
+        api: BookWyrmApi,
+        userRepository: UserRepository,
+        @ApplicationContext context: Context
+    ): TimelineRepository {
+        return TimelineRepository(api, userRepository, context)
     }
 
     /**
