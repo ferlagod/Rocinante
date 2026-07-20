@@ -143,13 +143,44 @@ fun SearchScreen(
         }
     }
 
+    // Búsqueda a partir de un código escaneado. Si el contenido es un ISBN válido,
+    // consulta primero el endpoint JSON estable /isbn/<isbn>.json (coincidencia local
+    // exacta) y solo recurre a la búsqueda por texto —que sí encuentra ediciones
+    // remotas vía conectores— cuando no hay resultado local. Así se conserva el flujo
+    // "escanear un libro que aún no tengo" sin depender de la coincidencia difusa.
+    val performScanSearch: (String) -> Unit = { scanned ->
+        val digits = scanned.filter { it.isDigit() || it == 'X' || it == 'x' }.uppercase()
+        val isIsbn = digits.length == 13 || digits.length == 10
+        searchQuery = scanned
+        searchMode = SearchMode.BOOKS
+        if (!isIsbn) {
+            performSearch()
+        } else {
+            isSearching = true
+            keyboardController?.hide()
+            coroutineScope.launch {
+                try {
+                    val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
+                    val exact = repo.searchByIsbn(digits)
+                    val results = if (exact.isNotEmpty()) exact else repo.searchBooksScraped(scanned, instanceUrl)
+                    searchResults = results
+                    userSearchResults = emptyList()
+                    errorMessage = if (results.isEmpty()) context.getString(R.string.search_books_empty) else null
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    errorMessage = context.getString(R.string.search_error, e.message)
+                } finally {
+                    isSearching = false
+                }
+            }
+        }
+    }
+
     val barcodeLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = ScanContract()
     ) { result ->
         if (result.contents != null) {
-            searchQuery = result.contents
-            searchMode = SearchMode.BOOKS
-            performSearch()
+            performScanSearch(result.contents)
         }
     }
 
