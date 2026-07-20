@@ -92,6 +92,18 @@ object NetworkClient {
         private set
 
     /**
+     * User-Agent que se envía en TODAS las peticiones HTTP. Debe coincidir con el del
+     * WebView de login, porque es a ese UA al que la instancia (y protecciones tipo
+     * Anubis) emitió la cookie de sesión/clearance; un UA distinto al reproducir esa
+     * cookie puede rechazarse. [RocinanteApplication] lo inicializa con el UA real del
+     * WebView del sistema más el sufijo "Rocinante/<versión>"; hasta entonces sirve
+     * este valor de respaldo, que también se usa si el WebView no está disponible.
+     */
+    @Volatile
+    var userAgent: String =
+        "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Rocinante/1.0"
+
+    /**
      * Valor actual de la cookie csrftoken (el secreto que se enviará como Cookie).
      * Enviarlo como campo de formulario garantiza que el token coincida con la cookie,
      * evitando el 403 que produce el token enmascarado extraído del HTML.
@@ -118,7 +130,7 @@ object NetworkClient {
 
             val requestBuilder = chain.request().newBuilder()
                 .addHeader("Referer", refererHeader)
-                .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Rocinante/1.0")
+                .addHeader("User-Agent", userAgent)
 
             val acceptHeader = chain.request().header("Accept")
             if (acceptHeader?.contains("text/html") != true) {

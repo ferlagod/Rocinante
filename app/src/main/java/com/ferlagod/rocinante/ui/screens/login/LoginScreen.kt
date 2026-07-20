@@ -274,6 +274,9 @@ fun BookWyrmLoginWebView(
             WebView(context).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                // Fijar el UA del WebView al mismo que reproducirá OkHttp, para que la
+                // cookie de sesión/clearance emitida durante el login sea válida después.
+                settings.userAgentString = com.ferlagod.rocinante.data.api.NetworkClient.userAgent
 
                 if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
                     WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, isDarkTheme)
