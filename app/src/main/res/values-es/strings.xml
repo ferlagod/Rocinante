@@ -283,4 +283,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="activity_added_book_to_shelf">Añadió un libro a su estantería de lectura</string>
     <string name="activity_added_book_generic">Añadió un libro a su estantería</string>
     <string name="activity_fallback_type">Actividad</string>
+    <string name="text_someone">Alguien</string>
+    <string name="text_no_name">Sin nombre</string>
+    <string name="share_on_bookwyrm"> en BookWyrm:</string>
 </resources>

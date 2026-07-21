@@ -250,4 +250,23 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
 * **Benachrichtigungen:** Anzeige in der Liste korrigiert und Unterstützung für die Anzeige des vollständigen Inhalts beim Antippen hinzugefügt.</string>
     <string name="changelog_text_v1_1_5">Neu in Version 1.1.5:\n* **Fehlerbehebungen:** Ein Kompatibilitätsproblem wurde behoben, das zum Absturz der App auf Geräten mit Android 14 oder älter beim Anzeigen von Benachrichtigungen führte.</string>
     <string name="changelog_text_v1_1_6">NEUIGKEITEN\n• Lesefortschritt: Der aktuelle Lesefortschritt wird jetzt direkt auf der Detailseite des Buches angezeigt.\n• Produktionsvorbereitung: Interne Anpassungen und endgültige Konfiguration für den offiziellen Start der Anwendung im Google Play Store.\n\nFEHLERBEHEBUNGEN\n• Es wurde ein Fehler behoben, der verhinderte, dass der Lesefortschritt korrekt aktualisiert wurde (technisches Problem mit dem CSRF-Referer gelöst).\n\nBesonderer Dank geht an @HBB für seinen Beitrag zu diesem Update!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Sitzungsdaten fehlen.</string>
+    <string name="error_loading_data">Fehler beim Laden der Daten: %1$s</string>
+    <string name="text_no_content">Kein Inhalt</string>
+    <string name="text_see_more">…mehr anzeigen</string>
+    <string name="activity_type_cita">Zitat</string>
+    <string name="quotation_page_format">S. %1$s</string>
+    <string name="quotation_quote_prefix">Zitat: </string>
+    <string name="time_just_now">Gerade eben</string>
+    <string name="book_my_quotes_reviews">Meine Zitate und Rezensionen</string>
+    <string name="post_validation_error">Validierungsfehler beim Veröffentlichen</string>
+    <string name="session_expired">Deine Sitzung ist abgelaufen</string>
+    <string name="session_invalid">Ungültige Sitzung</string>
+    <string name="cannot_interact_post">Mit diesem Beitrag kann nicht interagiert werden</string>
+    <string name="activity_added_book_to_shelf_named">Hat „%1$s“ zum Leseregal hinzugefügt</string>
+    <string name="activity_added_book_to_shelf">Hat ein Buch zum Leseregal hinzugefügt</string>
+    <string name="activity_added_book_generic">Hat ein Buch zum Regal hinzugefügt</string>
+    <string name="activity_fallback_type">Aktivität</string>
 </resources>

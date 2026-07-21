@@ -250,4 +250,23 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
 * **Notifications :** Affichage corrigé dans la liste et ajout de la prise en charge de la visualisation du contenu complet lors d\'un clic dessus.</string>
     <string name="changelog_text_v1_1_5">Nouveautés de la version 1.1.5 :\n* **Corrections de bugs :** Résolution d\'un problème de compatibilité entraînant le plantage de l\'application sur les appareils sous Android 14 ou version antérieure lors de l\'affichage des notifications.</string>
     <string name="changelog_text_v1_1_6">NOUVEAUTÉS\n• Progression de lecture : La progression de lecture actuelle est maintenant affichée directement sur la page de détails du livre.\n• Préparation pour la production : Ajustements internes et configuration finale pour le lancement officiel de l\'application sur le Google Play Store.\n\nCORRECTIONS\n• Correction du bug qui empêchait la progression de lecture de se mettre à jour correctement (problème technique résolu avec le Referer CSRF).\n\nRemerciements particuliers à @HBB pour sa contribution à cette mise à jour !</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Données de session manquantes.</string>
+    <string name="error_loading_data">Erreur lors du chargement des données : %1$s</string>
+    <string name="text_no_content">Aucun contenu</string>
+    <string name="text_see_more">…voir plus</string>
+    <string name="activity_type_cita">Citation</string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Citation : </string>
+    <string name="time_just_now">À l\'instant</string>
+    <string name="book_my_quotes_reviews">Mes citations et critiques</string>
+    <string name="post_validation_error">Erreur de validation lors de la publication</string>
+    <string name="session_expired">Votre session a expiré</string>
+    <string name="session_invalid">Session non valide</string>
+    <string name="cannot_interact_post">Impossible d\'interagir avec cette publication</string>
+    <string name="activity_added_book_to_shelf_named">A ajouté « %1$s » à son étagère de lecture</string>
+    <string name="activity_added_book_to_shelf">A ajouté un livre à son étagère de lecture</string>
+    <string name="activity_added_book_generic">A ajouté un livre à son étagère</string>
+    <string name="activity_fallback_type">Activité</string>
 </resources>

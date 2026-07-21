@@ -250,4 +250,23 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
 * **Notifiche:** Corretta la visualizzazione nell\'elenco e aggiunto il supporto per visualizzare il contenuto completo toccandole.</string>
     <string name="changelog_text_v1_1_5">Novità della versione 1.1.5:\n* **Correzioni di bug:** Risolto un problema di compatibilità che causava l\'arresto anomalo dell\'app sui dispositivi con Android 14 o versioni precedenti durante la visualizzazione delle notifiche.</string>
     <string name="changelog_text_v1_1_6">NOVITÀ\n• Avanzamento di lettura: L\'avanzamento di lettura attuale è ora visualizzato direttamente nella pagina dei dettagli del libro.\n• Preparazione per la produzione: Regolazioni interne e configurazione finale per il lancio ufficiale dell\'applicazione sul Google Play Store.\n\nCORREZIONI\n• Risolto il bug che impediva all\'avanzamento di lettura di aggiornarsi correttamente (risolto problema tecnico con il Referer CSRF).\n\nUn ringraziamento speciale a @HBB per il suo contributo a questo aggiornamento!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Dati di sessione mancanti.</string>
+    <string name="error_loading_data">Errore durante il caricamento dei dati: %1$s</string>
+    <string name="text_no_content">Nessun contenuto</string>
+    <string name="text_see_more">…mostra altro</string>
+    <string name="activity_type_cita">Citazione</string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Citazione: </string>
+    <string name="time_just_now">Proprio ora</string>
+    <string name="book_my_quotes_reviews">Le mie citazioni e recensioni</string>
+    <string name="post_validation_error">Errore di convalida durante la pubblicazione</string>
+    <string name="session_expired">La tua sessione è scaduta</string>
+    <string name="session_invalid">Sessione non valida</string>
+    <string name="cannot_interact_post">Impossibile interagire con questo post</string>
+    <string name="activity_added_book_to_shelf_named">Ha aggiunto «%1$s» al suo scaffale di lettura</string>
+    <string name="activity_added_book_to_shelf">Ha aggiunto un libro al suo scaffale di lettura</string>
+    <string name="activity_added_book_generic">Ha aggiunto un libro al suo scaffale</string>
+    <string name="activity_fallback_type">Attività</string>
 </resources>

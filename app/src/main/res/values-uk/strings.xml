@@ -250,4 +250,23 @@
 * **Сповіщення:** Виправлено відображення у списку та додано підтримку перегляду повного вмісту при натисканні на них.</string>
     <string name="changelog_text_v1_1_5">Що нового у версії 1.1.5:\n* **Виправлення помилок:** Вирішено проблему сумісності, яка призводила до збою програми на пристроях з Android 14 і старіших під час перегляду сповіщень.</string>
     <string name="changelog_text_v1_1_6">ЩО НОВОГО\n• Прогрес читання: Поточний прогрес читання тепер відображається безпосередньо на сторінці з деталями книги.\n• Підготовка до виробництва: Внутрішні налаштування та остаточна конфігурація для офіційного запуску програми в Google Play Store.\n\nВИПРАВЛЕННЯ\n• Виправлено помилку, яка перешкоджала правильному оновленню прогресу читання (вирішено технічну проблему з CSRF Referer).\n\nОсоблива подяка @HBB за внесок у це оновлення!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Відсутні дані сесії.</string>
+    <string name="error_loading_data">Помилка завантаження даних: %1$s</string>
+    <string name="text_no_content">Немає вмісту</string>
+    <string name="text_see_more">…показати більше</string>
+    <string name="activity_type_cita">Цитата</string>
+    <string name="quotation_page_format">с. %1$s</string>
+    <string name="quotation_quote_prefix">Цитата: </string>
+    <string name="time_just_now">Щойно</string>
+    <string name="book_my_quotes_reviews">Мої цитати та рецензії</string>
+    <string name="post_validation_error">Помилка перевірки під час публікації</string>
+    <string name="session_expired">Термін дії сесії завершився</string>
+    <string name="session_invalid">Недійсна сесія</string>
+    <string name="cannot_interact_post">Неможливо взаємодіяти з цією публікацією</string>
+    <string name="activity_added_book_to_shelf_named">Додав(-ла) «%1$s» на свою полицю для читання</string>
+    <string name="activity_added_book_to_shelf">Додав(-ла) книгу на свою полицю для читання</string>
+    <string name="activity_added_book_generic">Додав(-ла) книгу на свою полицю</string>
+    <string name="activity_fallback_type">Активність</string>
 </resources>
