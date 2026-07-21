@@ -284,7 +284,7 @@ fun HomeScreen(
                         val shareText = buildString {
                             append(item.actorName.ifEmpty { context.getString(R.string.text_someone) })
                             append(context.getString(R.string.share_on_bookwyrm))
-                            if (item.content.isNotBlank() && item.content != context.getString(R.string.text_no_content)) {
+                            if (item.content.isNotBlank()) {
                                 append("\n\n\"")
                                 append(item.content.take(200))
                                 if (item.content.length > 200) append("...")
@@ -1006,7 +1006,7 @@ private fun ActivityItemCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                if (item.content.isNotBlank() && item.content != stringResource(R.string.text_no_content)) {
+                if (item.content.isNotBlank()) {
                     Text(
                         text = item.content,
                         style = MaterialTheme.typography.bodyMedium,
@@ -1745,7 +1745,7 @@ fun ActivityDetailsDialog(
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = item.content,
+                        text = item.content.ifBlank { stringResource(R.string.text_no_content) },
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = if (isTextExpanded) Int.MAX_VALUE else 6,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
