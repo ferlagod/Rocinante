@@ -502,7 +502,8 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "sv" to "Svenska",
         "el" to "Ελληνικά",
         "fi" to "Suomi",
-        "uk" to "Українська"
+        "uk" to "Українська",
+        "da" to "Dansk"
     )
 
     AlertDialog(
