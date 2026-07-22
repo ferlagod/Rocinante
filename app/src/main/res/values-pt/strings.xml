@@ -250,4 +250,23 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
 * **Notificações:** Exibição corrigida na lista e adicionado suporte para visualizar o conteúdo completo ao tocar nelas.</string>
     <string name="changelog_text_v1_1_5">Novidades da versão 1.1.5:\n* **Correções de bugs:** Foi corrigido um problema de compatibilidade que causava o travamento do aplicativo em dispositivos com Android 14 ou inferior ao visualizar notificações.</string>
     <string name="changelog_text_v1_1_6">NOVIDADES\n• Progresso de leitura: O progresso de leitura atual agora é exibido diretamente na página de detalhes do livro.\n• Preparação para produção: Ajustes internos e configuração final para o lançamento oficial do aplicativo na Google Play Store.\n\nCORREÇÕES\n• Corrigido o erro que impedia a atualização correta do progresso de leitura (problema técnico com o Referer CSRF resolvido).\n\nUm agradecimento especial a @HBB pela sua contribuição nesta atualização!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Faltam dados da sessão.</string>
+    <string name="error_loading_data">Erro ao carregar os dados: %1$s</string>
+    <string name="text_no_content">Sem conteúdo</string>
+    <string name="text_see_more">...ver mais</string>
+    <string name="activity_type_cita">Citação</string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Citação: </string>
+    <string name="time_just_now">Agora mesmo</string>
+    <string name="book_my_quotes_reviews">As minhas citações e críticas</string>
+    <string name="post_validation_error">Erro de validação ao publicar</string>
+    <string name="session_expired">A tua sessão expirou</string>
+    <string name="session_invalid">Sessão inválida</string>
+    <string name="cannot_interact_post">Não é possível interagir com esta publicação</string>
+    <string name="activity_added_book_to_shelf_named">Adicionou «%1$s» à sua estante de leitura</string>
+    <string name="activity_added_book_to_shelf">Adicionou um livro à sua estante de leitura</string>
+    <string name="activity_added_book_generic">Adicionou um livro à sua estante</string>
+    <string name="activity_fallback_type">Atividade</string>
 </resources>

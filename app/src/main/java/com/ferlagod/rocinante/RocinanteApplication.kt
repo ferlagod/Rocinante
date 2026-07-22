@@ -20,6 +20,8 @@
 package com.ferlagod.rocinante
 
 import android.app.Application
+import android.webkit.WebSettings
+import com.ferlagod.rocinante.data.api.NetworkClient
 import dagger.hilt.android.HiltAndroidApp
 
 /**
@@ -30,4 +32,34 @@ import dagger.hilt.android.HiltAndroidApp
  * inyección de dependencias a nivel de aplicación (Application-level dependency container).
  */
 @HiltAndroidApp
-class RocinanteApplication : Application()
+class RocinanteApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        initUserAgent()
+    }
+
+    /**
+     * Fija el User-Agent de las peticiones OkHttp al mismo que usa el WebView del
+     * sistema (con el que se hace el login y se obtiene la cookie de sesión/clearance),
+     * añadiendo el sufijo honesto "Rocinante/<versión>". Así OkHttp y el WebView
+     * presentan un UA idéntico y las protecciones que lo verifican no rechazan la
+     * cookie al reproducirla. Si el WebView no está disponible se conserva el valor
+     * de respaldo de [NetworkClient.userAgent].
+     */
+    private fun initUserAgent() {
+        try {
+            val webViewUa = WebSettings.getDefaultUserAgent(this)
+            if (webViewUa.isNullOrBlank()) return
+            val version = try {
+                packageManager.getPackageInfo(packageName, 0).versionName
+            } catch (_: Exception) {
+                null
+            }
+            NetworkClient.userAgent =
+                if (version.isNullOrBlank()) "$webViewUa Rocinante" else "$webViewUa Rocinante/$version"
+        } catch (_: Exception) {
+            // WebView ausente o no inicializable: se mantiene el UA de respaldo.
+        }
+    }
+}

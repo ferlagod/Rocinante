@@ -250,4 +250,23 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
 * **Meldingen:** Weergave in de lijst gecorrigeerd en ondersteuning toegevoegd voor het bekijken van volledige inhoud bij het aantikken.</string>
     <string name="changelog_text_v1_1_5">Nieuw in versie 1.1.5:\n* **Bugfixes:** Een compatibiliteitsprobleem opgelost waardoor de app vastliep op apparaten met Android 14 of ouder bij het bekijken van meldingen.</string>
     <string name="changelog_text_v1_1_6">WAT IS ER NIEUW\n• Leesvoortgang: De huidige leesvoortgang wordt nu direct weergegeven op de detailpagina van het boek.\n• Productiegereedheid: Interne aanpassingen en definitieve configuratie voor de officiële lancering van de applicatie in de Google Play Store.\n\nBUGFIXES\n• De bug verholpen die verhinderde dat de leesvoortgang correct werd bijgewerkt (technisch probleem opgelost met de CSRF Referer).\n\nSpeciale dank aan @HBB voor hun bijdrage aan deze update!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Sessiegegevens ontbreken.</string>
+    <string name="error_loading_data">Fout bij het laden van gegevens: %1$s</string>
+    <string name="text_no_content">Geen inhoud</string>
+    <string name="text_see_more">…meer weergeven</string>
+    <string name="activity_type_cita">Citaat</string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Citaat: </string>
+    <string name="time_just_now">Zojuist</string>
+    <string name="book_my_quotes_reviews">Mijn citaten en recensies</string>
+    <string name="post_validation_error">Validatiefout bij het plaatsen</string>
+    <string name="session_expired">Je sessie is verlopen</string>
+    <string name="session_invalid">Ongeldige sessie</string>
+    <string name="cannot_interact_post">Kan niet met dit bericht communiceren</string>
+    <string name="activity_added_book_to_shelf_named">Heeft „%1$s” aan de leesplank toegevoegd</string>
+    <string name="activity_added_book_to_shelf">Heeft een boek aan de leesplank toegevoegd</string>
+    <string name="activity_added_book_generic">Heeft een boek aan de plank toegevoegd</string>
+    <string name="activity_fallback_type">Activiteit</string>
 </resources>

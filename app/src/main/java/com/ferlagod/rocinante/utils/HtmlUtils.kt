@@ -56,38 +56,26 @@ object HtmlUtils {
      * @param value Cadena de fecha en formato ISO 8601 (ej. "2026-05-26T13:00:00Z").
      * @return Cadena de texto relativo, o null si la entrada es nula o no parseable.
      */
-    fun formatRelativeDate(value: String?): String? {
+    fun formatRelativeDate(context: android.content.Context, value: String?): String? {
         if (value.isNullOrBlank()) return null
         return try {
             val normalized = value.replace("Z", "+00:00")
             val instant = java.time.OffsetDateTime.parse(normalized).toInstant()
-            val now = java.time.Instant.now()
-            val diffSeconds = java.time.Duration.between(instant, now).seconds
+            val nowMillis = System.currentTimeMillis()
+            val timeMillis = instant.toEpochMilli()
 
-            when {
-                diffSeconds < 60 -> "ahora mismo"
-                diffSeconds < 3600 -> {
-                    val mins = diffSeconds / 60
-                    "hace ${mins} ${if (mins == 1L) "minuto" else "minutos"}"
-                }
-                diffSeconds < 86400 -> {
-                    val hours = diffSeconds / 3600
-                    "hace ${hours} ${if (hours == 1L) "hora" else "horas"}"
-                }
-                diffSeconds < 172800 -> "ayer"
-                diffSeconds < 604800 -> {
-                    val days = diffSeconds / 86400
-                    "hace ${days} días"
-                }
-                else -> {
-                    // Para fechas más antiguas de 7 días: formato "26 may. 2026"
-                    val localDate = java.time.OffsetDateTime.parse(normalized).toLocalDate()
-                    val formatter = java.time.format.DateTimeFormatter.ofPattern(
-                        "d MMM yyyy",
-                        java.util.Locale.forLanguageTag("es-ES")
-                    )
-                    localDate.format(formatter)
-                }
+            if (nowMillis - timeMillis < 60_000L) {
+                // Menos de un minuto: DateUtils mostraría "hace 0 minutos", feo.
+                context.getString(com.ferlagod.rocinante.R.string.time_just_now)
+            } else {
+                // DateUtils localiza automáticamente ("hace 5 minutos" / "5 minutes ago"
+                // / etc.) según el idioma del dispositivo, y para fechas antiguas muestra
+                // una fecha localizada. Reemplaza el texto español que estaba fijo en código.
+                android.text.format.DateUtils.getRelativeTimeSpanString(
+                    timeMillis,
+                    nowMillis,
+                    android.text.format.DateUtils.MINUTE_IN_MILLIS
+                ).toString()
             }
         } catch (_: Exception) {
             // Si no es parseable como ISO-8601, devolvemos el valor original.

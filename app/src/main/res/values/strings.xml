@@ -258,26 +258,37 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_1_2">- Boost button: Added the option to boost posts to share them directly on your activity timeline.\n\n- Reviews and quotes: You can now read community reviews and quotes directly from each book\'s details page.</string>
     <string name="changelog_text_v1_1_3">What\'s new in version 1.1.3:
 * **Notifications:** Fixed list rendering and added support for viewing full content when tapping on them.</string>
-<string name="error_missing_session_data">Faltan datos de sesión.</string>
-    <string name="error_loading_data">Error cargando datos: %1$s</string>
+<string name="error_missing_session_data">Session data is missing.</string>
+    <string name="error_loading_data">Error loading data: %1$s</string>
     <string name="error_unknown">Unknown error</string>
-    <string name="text_someone">Alguien</string>
-    <string name="text_no_content">Sin contenido</string>
-    <string name="text_see_more">...ver más</string>
-    <string name="text_no_name">Sin nombre</string>
-    <string name="share_on_bookwyrm"> en BookWyrm:</string>
+    <string name="text_someone">Someone</string>
+    <string name="text_no_content">No content</string>
+    <string name="text_see_more">...see more</string>
+    <string name="text_no_name">No name</string>
+    <string name="share_on_bookwyrm"> on BookWyrm:</string>
     <string name="activity_type_note">Note</string>
     <string name="activity_type_comment_en">Comment</string>
     <string name="activity_type_announce_en">Announce</string>
     <string name="activity_type_review_en">Review</string>
     <string name="activity_type_quotation">Quotation</string>
-    <string name="activity_type_cita">Cita</string>
+    <string name="activity_type_cita">Quote</string>
     <string name="activity_type_add_en">Add</string>
     <string name="activity_type_create">Create</string>
     <string name="error_network_error">Network error</string>
-    <string name="quotation_page_format">Pág. %1$s</string>
-    <string name="quotation_quote_prefix">Cita: </string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Quote: </string>
         <string name="activity_boost">Boost</string>
     <string name="changelog_text_v1_1_5">What\'s new in version 1.1.5:\n* **Bug fixes:** Fixed a compatibility issue that caused the app to crash on Android 14 and older devices when viewing notifications.</string>
     <string name="changelog_text_v1_1_6">WHAT\'S NEW\n• Reading Progress: The current reading progress is now displayed directly on the book\'s details page.\n• Production Readiness: Internal adjustments and final configuration for the official launch of the application on the Google Play Store.\n\nFIXES\n• Fixed the bug that prevented reading progress from updating correctly (resolved technical issue with CSRF Referer).\n\nSpecial thanks to @HBB for their contribution to this update!</string>
+    <!-- i18n: extraídas de literales hardcodeados en Kotlin -->
+    <string name="time_just_now">Just now</string>
+    <string name="book_my_quotes_reviews">My quotes and reviews</string>
+    <string name="post_validation_error">Validation error when posting</string>
+    <string name="session_expired">Your session has expired</string>
+    <string name="session_invalid">Invalid session</string>
+    <string name="cannot_interact_post">Can\'t interact with this post</string>
+    <string name="activity_added_book_to_shelf_named">Added \"%1$s\" to their reading shelf</string>
+    <string name="activity_added_book_to_shelf">Added a book to their reading shelf</string>
+    <string name="activity_added_book_generic">Added a book to their shelf</string>
+    <string name="activity_fallback_type">Activity</string>
 </resources>

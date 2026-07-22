@@ -252,4 +252,23 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
 * **Notificacións:** Corrixiuse a visualización na lista e engadiuse soporte para ver o contido completo ao premer sobre elas.</string>
     <string name="changelog_text_v1_1_5">Novidades da versión 1.1.5:\n* **Corrección de erros:** Solucionouse un problema de compatibilidade que causaba peches inesperados da aplicación en dispositivos con Android 14 ou inferior ao ver as notificacións.</string>
     <string name="changelog_text_v1_1_6">NOVIDADES\n• Progreso de lectura: Agora móstrase o progreso de lectura actual directamente na ficha do libro.\n• Preparación para produción: Axustes internos e configuración final para o lanzamento oficial da aplicación en Google Play Store.\n\nCORRECCIÓNS\n• Corrixido o erro que impedía actualizar correctamente o progreso de lectura (solucionado problema técnico co Referer CSRF).\n\nAgradecemento especial a @HBB pola súa contribución nesta actualización!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Faltan datos de sesión.</string>
+    <string name="error_loading_data">Erro ao cargar os datos: %1$s</string>
+    <string name="text_no_content">Sen contido</string>
+    <string name="text_see_more">...ver máis</string>
+    <string name="activity_type_cita">Cita</string>
+    <string name="quotation_page_format">páx. %1$s</string>
+    <string name="quotation_quote_prefix">Cita: </string>
+    <string name="time_just_now">Agora mesmo</string>
+    <string name="book_my_quotes_reviews">As miñas citas e recensións</string>
+    <string name="post_validation_error">Erro de validación ao publicar</string>
+    <string name="session_expired">A túa sesión caducou</string>
+    <string name="session_invalid">Sesión non válida</string>
+    <string name="cannot_interact_post">Non se pode interactuar con esta publicación</string>
+    <string name="activity_added_book_to_shelf_named">Engadiu «%1$s» ao seu andel de lectura</string>
+    <string name="activity_added_book_to_shelf">Engadiu un libro ao seu andel de lectura</string>
+    <string name="activity_added_book_generic">Engadiu un libro ao seu andel</string>
+    <string name="activity_fallback_type">Actividade</string>
 </resources>

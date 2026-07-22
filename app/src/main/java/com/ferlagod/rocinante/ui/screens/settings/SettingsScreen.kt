@@ -486,7 +486,7 @@ fun Divider() {
 @Composable
 fun LanguageDialog(onDismiss: () -> Unit) {
     val languages = listOf(
-        "" to "Sistema",
+        "" to stringResource(R.string.settings_theme_system),
         "es" to "Español",
         "en" to "English",
         "gl" to "Galego",
@@ -502,7 +502,8 @@ fun LanguageDialog(onDismiss: () -> Unit) {
         "sv" to "Svenska",
         "el" to "Ελληνικά",
         "fi" to "Suomi",
-        "uk" to "Українська"
+        "uk" to "Українська",
+        "da" to "Dansk"
     )
 
     AlertDialog(

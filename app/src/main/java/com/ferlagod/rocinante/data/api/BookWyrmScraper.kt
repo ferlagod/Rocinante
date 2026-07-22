@@ -509,17 +509,18 @@ object BookWyrmScraper {
                     id = statusId,
                     type = statusType,
                     published = publishedDate,
-                    content = displayContent.ifBlank { "Sin contenido" },
+                    content = displayContent,
                     bookCoverUrl = bookCoverUrl,
                     bookUrl = bookUrl,
-                    actorName = actorName.ifBlank { "Usuario" },
+                    actorName = actorName,
                     actorAvatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
                     objectId = localId ?: statusId,
                     isLikedByMe = isLikedByMe,
                     isBoostedByMe = isBoostedByMe
                 )
                 
-                if (item.actorName == "Usuario" && item.content == "Sin contenido" && item.bookCoverUrl.isNullOrEmpty()) {
+                // Ítem vacío (sin autor, sin texto y sin portada): no aporta nada, se descarta.
+                if (item.actorName.isBlank() && item.content.isBlank() && item.bookCoverUrl.isNullOrEmpty()) {
                     continue
                 }
                 

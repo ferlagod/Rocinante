@@ -21,6 +21,7 @@ package com.ferlagod.rocinante.di
 
 import android.content.Context
 import com.ferlagod.rocinante.data.api.BookWyrmApi
+import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.local.SessionStorage
 import com.ferlagod.rocinante.data.repository.InteractionRepository
 import com.ferlagod.rocinante.data.repository.SearchRepository
@@ -127,7 +128,7 @@ object AppModule {
 
                 // Add authentication and standard headers (same as NetworkClient)
                 requestBuilder.addHeader("Referer", finalUrl)
-                requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Rocinante/1.0")
+                requestBuilder.addHeader("User-Agent", NetworkClient.userAgent)
                 
                 val acceptHeader = chain.request().header("Accept")
                 if (acceptHeader?.contains("text/html") != true) {
@@ -239,8 +240,12 @@ object AppModule {
      */
     @Provides
     @Singleton
-    fun provideTimelineRepository(api: BookWyrmApi, userRepository: UserRepository): TimelineRepository {
-        return TimelineRepository(api, userRepository)
+    fun provideTimelineRepository(
+        api: BookWyrmApi,
+        userRepository: UserRepository,
+        @ApplicationContext context: Context
+    ): TimelineRepository {
+        return TimelineRepository(api, userRepository, context)
     }
 
     /**

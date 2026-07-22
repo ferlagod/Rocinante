@@ -250,4 +250,23 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
 * **Notificări:** Afișarea în listă a fost corectată și a fost adăugat suport pentru vizualizarea conținutului complet la apăsarea pe ele.</string>
     <string name="changelog_text_v1_1_5">Noutăți în versiunea 1.1.5:\n* **Remedieri de erori:** S-a remediat o problemă de compatibilitate care a cauzat blocarea aplicației pe dispozitivele cu Android 14 sau mai vechi la vizualizarea notificărilor.</string>
     <string name="changelog_text_v1_1_6">NOUTĂȚI\n• Progresul lecturii: Progresul actual al lecturii este acum afișat direct pe pagina cu detalii a cărții.\n• Pregătire pentru producție: Ajustări interne și configurarea finală pentru lansarea oficială a aplicației în Google Play Store.\n\nCORECȚII\n• S-a remediat eroarea care împiedica actualizarea corectă a progresului lecturii (s-a rezolvat problema tehnică legată de Referer CSRF).\n\nMulțumiri speciale utilizatorului @HBB pentru contribuția sa la această actualizare!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Lipsesc datele sesiunii.</string>
+    <string name="error_loading_data">Eroare la încărcarea datelor: %1$s</string>
+    <string name="text_no_content">Fără conținut</string>
+    <string name="text_see_more">…vezi mai mult</string>
+    <string name="activity_type_cita">Citat</string>
+    <string name="quotation_page_format">p. %1$s</string>
+    <string name="quotation_quote_prefix">Citat: </string>
+    <string name="time_just_now">Chiar acum</string>
+    <string name="book_my_quotes_reviews">Citatele și recenziile mele</string>
+    <string name="post_validation_error">Eroare de validare la publicare</string>
+    <string name="session_expired">Sesiunea ta a expirat</string>
+    <string name="session_invalid">Sesiune nevalidă</string>
+    <string name="cannot_interact_post">Nu se poate interacționa cu această postare</string>
+    <string name="activity_added_book_to_shelf_named">A adăugat „%1$s” în raftul său de lectură</string>
+    <string name="activity_added_book_to_shelf">A adăugat o carte în raftul său de lectură</string>
+    <string name="activity_added_book_generic">A adăugat o carte în raftul său</string>
+    <string name="activity_fallback_type">Activitate</string>
 </resources>

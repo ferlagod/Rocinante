@@ -250,4 +250,23 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
 * **Meddelanden:** Åtgärdad visning i listan och lagt till stöd för att se fullständigt innehåll när du trycker på dem.</string>
     <string name="changelog_text_v1_1_5">Nyheter i version 1.1.5:\n* **Buggfixar:** Åtgärdat ett kompatibilitetsproblem som orsakade att appen kraschade på enheter med Android 14 eller äldre när aviseringar visades.</string>
     <string name="changelog_text_v1_1_6">NYHETER\n• Läsutveckling: Den nuvarande läsutvecklingen visas nu direkt på bokens detaljsida.\n• Förberedelse för produktion: Interna justeringar och slutlig konfiguration för den officiella lanseringen av applikationen i Google Play Store.\n\nFIXAR\n• Fixade buggen som hindrade läsutvecklingen från att uppdateras korrekt (löst tekniskt problem med CSRF Referer).\n\nEtt speciellt tack till @HBB för dennes bidrag till denna uppdatering!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Sessionsdata saknas.</string>
+    <string name="error_loading_data">Fel vid inläsning av data: %1$s</string>
+    <string name="text_no_content">Inget innehåll</string>
+    <string name="text_see_more">…visa mer</string>
+    <string name="activity_type_cita">Citat</string>
+    <string name="quotation_page_format">s. %1$s</string>
+    <string name="quotation_quote_prefix">Citat: </string>
+    <string name="time_just_now">Just nu</string>
+    <string name="book_my_quotes_reviews">Mina citat och recensioner</string>
+    <string name="post_validation_error">Valideringsfel vid publicering</string>
+    <string name="session_expired">Din session har gått ut</string>
+    <string name="session_invalid">Ogiltig session</string>
+    <string name="cannot_interact_post">Det går inte att interagera med det här inlägget</string>
+    <string name="activity_added_book_to_shelf_named">Lade till ”%1$s” i sin läshylla</string>
+    <string name="activity_added_book_to_shelf">Lade till en bok i sin läshylla</string>
+    <string name="activity_added_book_generic">Lade till en bok i sin hylla</string>
+    <string name="activity_fallback_type">Aktivitet</string>
 </resources>

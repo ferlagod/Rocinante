@@ -250,4 +250,23 @@
 * **Ειδοποιήσεις:** Διορθώθηκε η εμφάνιση στη λίστα και προστέθηκε υποστήριξη για προβολή πλήρους περιεχομένου με πάτημα.</string>
     <string name="changelog_text_v1_1_5">Τι νέο υπάρχει στην έκδοση 1.1.5:\n* **Διορθώσεις σφαλμάτων:** Διορθώθηκε ένα πρόβλημα συμβατότητας που προκαλούσε διακοπή λειτουργίας της εφαρμογής σε συσκευές με Android 14 ή παλαιότερες κατά την προβολή ειδοποιήσεων.</string>
     <string name="changelog_text_v1_1_6">ΤΙ ΝΕΟ ΥΠΑΡΧΕΙ\n• Πρόοδος ανάγνωσης: Η τρέχουσα πρόοδος ανάγνωσης εμφανίζεται πλέον απευθείας στη σελίδα λεπτομερειών του βιβλίου.\n• Προετοιμασία για παραγωγή: Εσωτερικές ρυθμίσεις και τελική διαμόρφωση για την επίσημη κυκλοφορία της εφαρμογής στο Google Play Store.\n\nΔΙΟΡΘΩΣΕΙΣ\n• Διορθώθηκε το σφάλμα που εμπόδιζε τη σωστή ενημέρωση της προόδου ανάγνωσης (επιλύθηκε τεχνικό πρόβλημα με το CSRF Referer).\n\nΙδιαίτερες ευχαριστίες στον @HBB για τη συνεισφορά του σε αυτήν την ενημέρωση!</string>
+
+    <!-- Cadenas externalizadas desde el codigo (i18n) -->
+    <string name="error_missing_session_data">Λείπουν τα δεδομένα της συνεδρίας.</string>
+    <string name="error_loading_data">Σφάλμα κατά τη φόρτωση δεδομένων: %1$s</string>
+    <string name="text_no_content">Χωρίς περιεχόμενο</string>
+    <string name="text_see_more">…δείτε περισσότερα</string>
+    <string name="activity_type_cita">Απόσπασμα</string>
+    <string name="quotation_page_format">σελ. %1$s</string>
+    <string name="quotation_quote_prefix">Απόσπασμα: </string>
+    <string name="time_just_now">Μόλις τώρα</string>
+    <string name="book_my_quotes_reviews">Τα αποσπάσματα και οι κριτικές μου</string>
+    <string name="post_validation_error">Σφάλμα επικύρωσης κατά τη δημοσίευση</string>
+    <string name="session_expired">Η συνεδρία σας έληξε</string>
+    <string name="session_invalid">Μη έγκυρη συνεδρία</string>
+    <string name="cannot_interact_post">Δεν είναι δυνατή η αλληλεπίδραση με αυτήν τη δημοσίευση</string>
+    <string name="activity_added_book_to_shelf_named">Πρόσθεσε το «%1$s» στο ράφι ανάγνωσης</string>
+    <string name="activity_added_book_to_shelf">Πρόσθεσε ένα βιβλίο στο ράφι ανάγνωσης</string>
+    <string name="activity_added_book_generic">Πρόσθεσε ένα βιβλίο στο ράφι</string>
+    <string name="activity_fallback_type">Δραστηριότητα</string>
 </resources>

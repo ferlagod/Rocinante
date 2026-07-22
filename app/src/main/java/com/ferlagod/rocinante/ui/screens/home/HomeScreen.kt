@@ -268,14 +268,14 @@ fun HomeScreen(
                     onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
                     onLikeClick = { item -> 
                         if (item.objectId.startsWith("scraped-")) {
-                            android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.cannot_interact_post), android.widget.Toast.LENGTH_SHORT).show()
                         } else {
                             viewModel.toggleLike(item.objectId, instanceUrl)
                         }
                     },
                     onBoostClick = { item -> 
                         if (item.objectId.startsWith("scraped-")) {
-                            android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.cannot_interact_post), android.widget.Toast.LENGTH_SHORT).show()
                         } else {
                             viewModel.toggleBoost(item.objectId, instanceUrl)
                         }
@@ -284,7 +284,7 @@ fun HomeScreen(
                         val shareText = buildString {
                             append(item.actorName.ifEmpty { context.getString(R.string.text_someone) })
                             append(context.getString(R.string.share_on_bookwyrm))
-                            if (item.content.isNotBlank() && item.content != context.getString(R.string.text_no_content)) {
+                            if (item.content.isNotBlank()) {
                                 append("\n\n\"")
                                 append(item.content.take(200))
                                 if (item.content.length > 200) append("...")
@@ -456,14 +456,14 @@ fun HomeScreen(
                 isBoosted = uiState.boostedStatusIds.contains(activity.objectId),
                 onLikeClick = { 
                     if (activity.objectId.startsWith("scraped-")) {
-                        android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.cannot_interact_post), android.widget.Toast.LENGTH_SHORT).show()
                     } else {
                         viewModel.toggleLike(activity.objectId, instanceUrl)
                     }
                 },
                 onBoostClick = { 
                     if (activity.objectId.startsWith("scraped-")) {
-                        android.widget.Toast.makeText(context, "No se puede interactuar con esta publicación", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.cannot_interact_post), android.widget.Toast.LENGTH_SHORT).show()
                     } else {
                         viewModel.toggleBoost(activity.objectId, instanceUrl)
                     }
@@ -938,6 +938,7 @@ private fun ActivityItemCard(
     onClick: () -> Unit,
     onBookClick: (String, String?) -> Unit = { _, _ -> }
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val displayAvatarUrl = item.actorAvatarUrl?.takeIf { it.isNotEmpty() }
         ?: currentUserProfile?.icon?.url
     val displayName = item.actorName.takeIf { it.isNotEmpty() }
@@ -989,7 +990,7 @@ private fun ActivityItemCard(
                         Text(text = "·", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = HtmlUtils.formatRelativeDate(item.published) ?: stringResource(R.string.date_unknown),
+                            text = HtmlUtils.formatRelativeDate(context, item.published) ?: stringResource(R.string.date_unknown),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -1005,7 +1006,7 @@ private fun ActivityItemCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                if (item.content.isNotBlank() && item.content != stringResource(R.string.text_no_content)) {
+                if (item.content.isNotBlank()) {
                     Text(
                         text = item.content,
                         style = MaterialTheme.typography.bodyMedium,
@@ -1744,7 +1745,7 @@ fun ActivityDetailsDialog(
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = item.content,
+                        text = item.content.ifBlank { stringResource(R.string.text_no_content) },
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = if (isTextExpanded) Int.MAX_VALUE else 6,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,

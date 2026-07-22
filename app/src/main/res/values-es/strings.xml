@@ -265,4 +265,25 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="activity_boost">Difundir</string>
     <string name="changelog_text_v1_1_5">Novedades de la versión 1.1.5:\n* **Corrección de errores:** Solucionado un problema de compatibilidad que causaba cierres inesperados de la aplicación en dispositivos con Android 14 o inferior al ver las notificaciones.</string>
     <string name="changelog_text_v1_1_6">NOVEDADES\n• Progreso de lectura: Ahora se muestra el progreso de lectura actual directamente en la ficha del libro.\n• Preparación para producción: Ajustes internos y configuración final para el lanzamiento oficial de la aplicación en Google Play Store.\n\nCORRECCIONES\n• Corregido el error que impedía actualizar correctamente el progreso de lectura (solucionado problema técnico con el Referer CSRF).\n\n¡Agradecimiento especial a @HBB por su contribución en esta actualización!</string>
+    <!-- i18n: extraídas de literales hardcodeados en Kotlin -->
+    <string name="error_missing_session_data">Faltan datos de sesión.</string>
+    <string name="error_loading_data">Error cargando datos: %1$s</string>
+    <string name="text_no_content">Sin contenido</string>
+    <string name="text_see_more">...ver más</string>
+    <string name="activity_type_cita">Cita</string>
+    <string name="quotation_page_format">Pág. %1$s</string>
+    <string name="quotation_quote_prefix">Cita: </string>
+    <string name="time_just_now">Ahora mismo</string>
+    <string name="book_my_quotes_reviews">Mis citas y reseñas</string>
+    <string name="post_validation_error">Error de validación al publicar</string>
+    <string name="session_expired">La sesión ha expirado</string>
+    <string name="session_invalid">Sesión no válida</string>
+    <string name="cannot_interact_post">No se puede interactuar con esta publicación</string>
+    <string name="activity_added_book_to_shelf_named">Añadió \"%1$s\" a su estantería de lectura</string>
+    <string name="activity_added_book_to_shelf">Añadió un libro a su estantería de lectura</string>
+    <string name="activity_added_book_generic">Añadió un libro a su estantería</string>
+    <string name="activity_fallback_type">Actividad</string>
+    <string name="text_someone">Alguien</string>
+    <string name="text_no_name">Sin nombre</string>
+    <string name="share_on_bookwyrm"> en BookWyrm:</string>
 </resources>

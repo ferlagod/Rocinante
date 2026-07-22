@@ -89,6 +89,18 @@ interface BookWyrmApi {
         @Query("q") query: String
     ): retrofit2.Response<ResponseBody>
 
+    // Búsqueda exacta por ISBN contra el endpoint JSON estable de BookWyrm
+    // (/isbn/<isbn>.json). Devuelve una lista de resultados de la BASE DE DATOS
+    // LOCAL únicamente (no consulta conectores remotos), por lo que quien lo use
+    // debe recurrir a la búsqueda por texto como respaldo si viene vacío.
+    /**
+     * Busca una edición por su ISBN exacto en la instancia local.
+     */
+    @GET("isbn/{isbn}.json")
+    suspend fun searchByIsbn(
+        @Path("isbn") isbn: String
+    ): retrofit2.Response<ResponseBody>
+
     /**
      * Descarga los detalles de un libro (ActivityPub Object).
      */

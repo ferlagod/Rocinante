@@ -140,6 +140,31 @@ class SearchRepository(
         }
     }
     /**
+     * Busca una edición por ISBN exacto contra /isbn/<isbn>.json, un endpoint JSON
+     * estable de BookWyrm. Solo consulta la base de datos LOCAL de la instancia; si la
+     * obra aún no existe localmente devuelve una lista vacía, y quien llama debe recurrir
+     * a [searchBooksScraped] (que sí encuentra ediciones remotas vía conectores).
+     *
+     * @return resultados locales exactos, o lista vacía si no hay coincidencia local.
+     */
+    suspend fun searchByIsbn(isbn: String): List<BookSearchResult> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.searchByIsbn(isbn)
+            if (!response.isSuccessful) return@withContext emptyList()
+
+            val body = response.body()?.string()?.trimStart() ?: return@withContext emptyList()
+            // El endpoint devuelve un array JSON de resultados (title, key, author, year, cover).
+            if (!body.startsWith("[")) return@withContext emptyList()
+
+            val typeToken = object : com.google.gson.reflect.TypeToken<List<BookSearchResult>>() {}.type
+            Gson().fromJson<List<BookSearchResult>>(body, typeToken)?.filter { !it.key.isNullOrBlank() } ?: emptyList()
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
+    }
+
+    /**
      * Realiza una búsqueda de usuarios devolviendo el HTML y raspando los resultados.
      */
     suspend fun searchUsersScraped(query: String, instanceUrl: String): List<com.ferlagod.rocinante.data.model.SuggestedUser> = withContext(Dispatchers.IO) {

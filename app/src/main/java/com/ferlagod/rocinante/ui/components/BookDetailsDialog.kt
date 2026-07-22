@@ -365,7 +365,7 @@ fun BookDetailsDialog(
                             onClick = { showMyActivityDialog = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Mis citas y reseñas")
+                            Text(stringResource(R.string.book_my_quotes_reviews))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -1211,7 +1211,7 @@ private fun ReviewDialog(
                                 if (response.isSuccessful) {
                                     val bodyString = response.body()?.string() ?: ""
                                     if (bodyString.contains("class=\"errorlist\"") || bodyString.contains("error_1_id_")) {
-                                        Toast.makeText(context, "Error de validación al publicar", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.post_validation_error), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
@@ -1219,7 +1219,7 @@ private fun ReviewDialog(
                                 } else if (response.code() == 302) {
                                     val location = response.headers()["Location"]
                                     if (location?.contains("/login") == true) {
-                                        Toast.makeText(context, "La sesión ha expirado", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.session_expired), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
@@ -1509,7 +1509,7 @@ private fun QuotationDialog(
                                     // Comprobar si devolvió 200 pero es el HTML del formulario con errores (el HTML tiene <form y no es JSON)
                                     val bodyString = response.body()?.string() ?: ""
                                     if (bodyString.contains("class=\"errorlist\"") || bodyString.contains("error_1_id_")) {
-                                        Toast.makeText(context, "Error de validación al publicar", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.post_validation_error), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
@@ -1517,7 +1517,7 @@ private fun QuotationDialog(
                                 } else if (response.code() == 302) {
                                     val location = response.headers()["Location"]
                                     if (location?.contains("/login") == true) {
-                                        Toast.makeText(context, "La sesión ha expirado", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.session_expired), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
@@ -1802,7 +1802,7 @@ fun MyBookActivityDialog(
             val username = currentSession?.username
             val instanceUrl = currentSession?.instanceUrl ?: ""
             if (username.isNullOrBlank() || instanceUrl.isBlank()) {
-                errorMessage = "Sesión no válida"
+                errorMessage = context.getString(R.string.session_invalid)
                 isLoading = false
                 return@LaunchedEffect
             }
@@ -1811,7 +1811,7 @@ fun MyBookActivityDialog(
             val outboxUrl = "${cleanInstance.trimEnd('/')}/user/${username.removePrefix("@").substringBefore("@")}/outbox"
             
             val userRepository = com.ferlagod.rocinante.data.repository.UserRepository(api, java.util.concurrent.ConcurrentHashMap())
-            val timelineRepo = com.ferlagod.rocinante.data.repository.TimelineRepository(api, userRepository)
+            val timelineRepo = com.ferlagod.rocinante.data.repository.TimelineRepository(api, userRepository, context)
             
             val allOutbox = timelineRepo.loadOutboxActivities(
                 outboxUrl = outboxUrl,
