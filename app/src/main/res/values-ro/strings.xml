@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Cititorul tău social BookWyrm</string>
     <string name="login_card_title">Conectare la instanță</string>
     <string name="login_field_instance">Instanță (ex: bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
 * **Notificări:** Afișarea în listă a fost corectată și a fost adăugat suport pentru vizualizarea conținutului complet la apăsarea pe ele.</string>
     <string name="changelog_text_v1_1_5">Noutăți în versiunea 1.1.5:\n* **Remedieri de erori:** S-a remediat o problemă de compatibilitate care a cauzat blocarea aplicației pe dispozitivele cu Android 14 sau mai vechi la vizualizarea notificărilor.</string>
     <string name="changelog_text_v1_1_6">NOUTĂȚI\n• Progresul lecturii: Progresul actual al lecturii este acum afișat direct pe pagina cu detalii a cărții.\n• Pregătire pentru producție: Ajustări interne și configurarea finală pentru lansarea oficială a aplicației în Google Play Store.\n\nCORECȚII\n• S-a remediat eroarea care împiedica actualizarea corectă a progresului lecturii (s-a rezolvat problema tehnică legată de Referer CSRF).\n\nMulțumiri speciale utilizatorului @HBB pentru contribuția sa la această actualizare!</string>
+    <string name="changelog_text_v1_1_7">NOUTĂȚI\n• Limba daneză: A fost adăugat suportul pentru limba daneză.\n• Îmbunătățiri ale traducerilor: Textele în spaniolă codificate fix au fost extrase și s-au completat traducerile lipsă în toate limbile.\n\nCORECȚII\n• Stare căutare: Starea căutării este păstrată la rotirea ecranului.\n• Detectare ISBN: Logica de detectare ISBN a fost refactorizată și îmbunătățită.\n• Conectare/OkHttp: User-Agent a fost unificat între OkHttp și WebView-ul de conectare.\n• Marcatori Scraper: Au fost eliminați marcatorii în spaniolă codificați fix din scraper.\n\nMulțumiri speciale lui @HBB pentru toate contribuțiile sale incredibile la această versiune!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Lipsesc datele sesiunii.</string>
@@ -270,3 +271,4 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="activity_added_book_generic">A adăugat o carte în raftul său</string>
     <string name="activity_fallback_type">Activitate</string>
 </resources>
+

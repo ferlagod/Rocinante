@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Votre lecteur social BookWyrm</string>
     <string name="login_card_title">Connecter une instance</string>
     <string name="login_field_instance">Instance (ex. : bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
 * **Notifications :** Affichage corrigé dans la liste et ajout de la prise en charge de la visualisation du contenu complet lors d\'un clic dessus.</string>
     <string name="changelog_text_v1_1_5">Nouveautés de la version 1.1.5 :\n* **Corrections de bugs :** Résolution d\'un problème de compatibilité entraînant le plantage de l\'application sur les appareils sous Android 14 ou version antérieure lors de l\'affichage des notifications.</string>
     <string name="changelog_text_v1_1_6">NOUVEAUTÉS\n• Progression de lecture : La progression de lecture actuelle est maintenant affichée directement sur la page de détails du livre.\n• Préparation pour la production : Ajustements internes et configuration finale pour le lancement officiel de l\'application sur le Google Play Store.\n\nCORRECTIONS\n• Correction du bug qui empêchait la progression de lecture de se mettre à jour correctement (problème technique résolu avec le Referer CSRF).\n\nRemerciements particuliers à @HBB pour sa contribution à cette mise à jour !</string>
+    <string name="changelog_text_v1_1_7">NOUVEAUTÉS\n• Langue danoise : Ajout de la prise en charge du danois.\n• Améliorations de traduction : Extraction des textes en espagnol codés en dur et ajout des traductions manquantes dans toutes les langues.\n\nCORRECTIONS\n• État de la recherche : L\'état de la recherche est conservé lors de la rotation de l\'écran.\n• Détection d\'ISBN : Refonte et amélioration de la logique de détection d\'ISBN.\n• Connexion/OkHttp : Unification du User-Agent entre OkHttp et la WebView de connexion.\n• Marqueurs du Scraper : Les marqueurs espagnols codés en dur ont été supprimés du scraper.\n\nUn grand merci à @HBB pour ses incroyables contributions à cette version !</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Données de session manquantes.</string>
@@ -270,3 +271,4 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="activity_added_book_generic">A ajouté un livre à son étagère</string>
     <string name="activity_fallback_type">Activité</string>
 </resources>
+

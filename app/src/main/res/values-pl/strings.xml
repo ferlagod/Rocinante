@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Twój czytnik społecznościowy BookWyrm</string>
     <string name="login_card_title">Połącz z instancją</string>
     <string name="login_field_instance">Instancja (np. bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
 * **Powiadomienia:** Poprawiono wyświetlanie na liście i dodano obsługę wyświetlania pełnej zawartości po ich dotknięciu.</string>
     <string name="changelog_text_v1_1_5">Co nowego w wersji 1.1.5:\n* **Poprawki błędów:** Rozwiązano problem ze zgodnością, który powodował awarię aplikacji na urządzeniach z systemem Android 14 lub starszym podczas przeglądania powiadomień.</string>
     <string name="changelog_text_v1_1_6">CO NOWEGO\n• Postęp czytania: Aktualny postęp czytania jest teraz wyświetlany bezpośrednio na stronie ze szczegółami książki.\n• Przygotowanie do produkcji: Wewnętrzne poprawki i ostateczna konfiguracja przed oficjalnym wydaniem aplikacji w Google Play Store.\n\nPOPRAWKI\n• Naprawiono błąd, który uniemożliwiał prawidłową aktualizację postępu czytania (rozwiązano problem techniczny z CSRF Referer).\n\nSpecjalne podziękowania dla @HBB za jego wkład w tę aktualizację!</string>
+    <string name="changelog_text_v1_1_7">CO NOWEGO\n• Język duński: Dodano obsługę języka duńskiego.\n• Ulepszenia tłumaczeń: Wyodrębniono hiszpańskie teksty zakodowane na sztywno i uzupełniono brakujące tłumaczenia we wszystkich językach.\n\nPOPRAWKI\n• Stan wyszukiwania: Stan wyszukiwania jest zachowywany podczas obracania ekranu.\n• Wykrywanie ISBN: Zrefaktoryzowano i ulepszono logikę wykrywania ISBN.\n• Logowanie/OkHttp: Ujednolicono User-Agent między OkHttp a WebView logowania.\n• Znaczniki scrapera: Usunięto hiszpańskie znaczniki ze scrapera.\n\nSpecjalne podziękowania dla @HBB za jego niezwykły wkład w tę wersję!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Brak danych sesji.</string>
@@ -270,3 +271,4 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="activity_added_book_generic">Dodał(a) książkę do swojej półki</string>
     <string name="activity_fallback_type">Aktywność</string>
 </resources>
+

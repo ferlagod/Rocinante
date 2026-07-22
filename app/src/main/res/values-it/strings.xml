@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Il tuo lettore social BookWyrm</string>
     <string name="login_card_title">Collega istanza</string>
     <string name="login_field_instance">Istanza (es. bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
 * **Notifiche:** Corretta la visualizzazione nell\'elenco e aggiunto il supporto per visualizzare il contenuto completo toccandole.</string>
     <string name="changelog_text_v1_1_5">Novità della versione 1.1.5:\n* **Correzioni di bug:** Risolto un problema di compatibilità che causava l\'arresto anomalo dell\'app sui dispositivi con Android 14 o versioni precedenti durante la visualizzazione delle notifiche.</string>
     <string name="changelog_text_v1_1_6">NOVITÀ\n• Avanzamento di lettura: L\'avanzamento di lettura attuale è ora visualizzato direttamente nella pagina dei dettagli del libro.\n• Preparazione per la produzione: Regolazioni interne e configurazione finale per il lancio ufficiale dell\'applicazione sul Google Play Store.\n\nCORREZIONI\n• Risolto il bug che impediva all\'avanzamento di lettura di aggiornarsi correttamente (risolto problema tecnico con il Referer CSRF).\n\nUn ringraziamento speciale a @HBB per il suo contributo a questo aggiornamento!</string>
+    <string name="changelog_text_v1_1_7">NOVITÀ\n• Lingua danese: Aggiunto il supporto per la lingua danese.\n• Miglioramenti della traduzione: Estratti i testi spagnoli codificati in modo fisso e completate le traduzioni mancanti in tutte le lingue.\n\nCORREZIONI\n• Stato di ricerca: Lo stato di ricerca viene ora mantenuto ruotando lo schermo.\n• Rilevamento ISBN: Rifattorizzata e migliorata la logica di rilevamento ISBN.\n• Accesso/OkHttp: Unificato lo User-Agent tra OkHttp e la WebView di accesso.\n• Marcatori dello Scraper: Rimossi i marcatori spagnoli codificati in modo fisso dallo scraper.\n\nUn ringraziamento speciale a @HBB per tutti i suoi incredibili contributi a questa versione!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Dati di sessione mancanti.</string>
@@ -270,3 +271,4 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="activity_added_book_generic">Ha aggiunto un libro al suo scaffale</string>
     <string name="activity_fallback_type">Attività</string>
 </resources>
+

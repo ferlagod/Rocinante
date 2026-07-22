@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Jouw sociale BookWyrm-lezer</string>
     <string name="login_card_title">Verbind instantie</string>
     <string name="login_field_instance">Instantie (bijv. bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
 * **Meldingen:** Weergave in de lijst gecorrigeerd en ondersteuning toegevoegd voor het bekijken van volledige inhoud bij het aantikken.</string>
     <string name="changelog_text_v1_1_5">Nieuw in versie 1.1.5:\n* **Bugfixes:** Een compatibiliteitsprobleem opgelost waardoor de app vastliep op apparaten met Android 14 of ouder bij het bekijken van meldingen.</string>
     <string name="changelog_text_v1_1_6">WAT IS ER NIEUW\n• Leesvoortgang: De huidige leesvoortgang wordt nu direct weergegeven op de detailpagina van het boek.\n• Productiegereedheid: Interne aanpassingen en definitieve configuratie voor de officiële lancering van de applicatie in de Google Play Store.\n\nBUGFIXES\n• De bug verholpen die verhinderde dat de leesvoortgang correct werd bijgewerkt (technisch probleem opgelost met de CSRF Referer).\n\nSpeciale dank aan @HBB voor hun bijdrage aan deze update!</string>
+    <string name="changelog_text_v1_1_7">WAT IS ER NIEUW\n• Deense taal: Ondersteuning toegevoegd voor het Deens.\n• Vertalingsverbeteringen: Hardcoded Spaanse teksten geëxtraheerd en ontbrekende vertalingen in alle talen voltooid.\n\nBUGFIXES\n• Zoekstatus: De zoekstatus blijft behouden bij het roteren van het scherm.\n• ISBN-detectie: Logica voor ISBN-detectie gerefactored en verbeterd.\n• Login/OkHttp: User-Agent verenigd tussen OkHttp en de login WebView.\n• Scraper-markeringen: Hardcoded Spaanse markeringen verwijderd uit de scraper.\n\nSpeciale dank aan @HBB voor al zijn geweldige bijdragen aan deze release!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Sessiegegevens ontbreken.</string>
@@ -270,3 +271,4 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="activity_added_book_generic">Heeft een boek aan de plank toegevoegd</string>
     <string name="activity_fallback_type">Activiteit</string>
 </resources>
+

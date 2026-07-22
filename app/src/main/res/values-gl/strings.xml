@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name" translatable="false">Rocinante</string>
     <string name="brand_bookwyrm" translatable="false">BookWyrm</string>
     <string name="login_subtitle">A lectura social en BookWyrm</string>
@@ -252,6 +252,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
 * **Notificacións:** Corrixiuse a visualización na lista e engadiuse soporte para ver o contido completo ao premer sobre elas.</string>
     <string name="changelog_text_v1_1_5">Novidades da versión 1.1.5:\n* **Corrección de erros:** Solucionouse un problema de compatibilidade que causaba peches inesperados da aplicación en dispositivos con Android 14 ou inferior ao ver as notificacións.</string>
     <string name="changelog_text_v1_1_6">NOVIDADES\n• Progreso de lectura: Agora móstrase o progreso de lectura actual directamente na ficha do libro.\n• Preparación para produción: Axustes internos e configuración final para o lanzamento oficial da aplicación en Google Play Store.\n\nCORRECCIÓNS\n• Corrixido o erro que impedía actualizar correctamente o progreso de lectura (solucionado problema técnico co Referer CSRF).\n\nAgradecemento especial a @HBB pola súa contribución nesta actualización!</string>
+    <string name="changelog_text_v1_1_7">NOVIDADES\n• Idioma dinamarqués: Engadiuse soporte para o idioma dinamarqués.\n• Melloras de tradución: Externalizáronse os textos fixos en español e completáronse as traducións que faltaban en todos os idiomas.\n\nCORRECCIÓNS\n• Busca: Consérvase o estado da busca ao rotar a pantalla.\n• Detección ISBN: Refactorizada e mellorada a lóxica de detección de ISBN.\n• Login/OkHttp: Unificado o User-Agent entre OkHttp e o WebView de inicio de sesión.\n• Marcadores do Scraper: Eliminados os marcadores en español incrustados directamente no scraper.\n\nUn agradecemento moi especial a @HBB por todas as súas incribles contribucións para esta versión!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Faltan datos de sesión.</string>
@@ -272,3 +273,4 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="activity_added_book_generic">Engadiu un libro ao seu andel</string>
     <string name="activity_fallback_type">Actividade</string>
 </resources>
+

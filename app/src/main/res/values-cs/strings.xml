@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Vaše sociální čtečka BookWyrm</string>
     <string name="login_card_title">Připojit instanci</string>
     <string name="login_field_instance">Instance (např. bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
 * **Oznámení:** Opraveno zobrazení v seznamu a přidána podpora pro zobrazení celého obsahu při klepnutí na ně.</string>
     <string name="changelog_text_v1_1_5">Co je nového ve verzi 1.1.5:\n* **Opravy chyb:** Byla opravena chyba kompatibility, která způsobovala pády aplikace na zařízeních s Androidem 14 a starších při prohlížení oznámení.</string>
     <string name="changelog_text_v1_1_6">CO JE NOVÉHO\n• Postup čtení: Aktuální postup čtení se nyní zobrazuje přímo na stránce s podrobnostmi o knize.\n• Příprava na produkci: Interní úpravy a finální konfigurace pro oficiální vydání aplikace v obchodě Google Play.\n\nOPRAVY\n• Byla opravena chyba, která bránila správné aktualizaci postupu čtení (vyřešen technický problém s CSRF Referer).\n\nZvláštní poděkování patří uživateli @HBB za jeho příspěvek k této aktualizaci!</string>
+    <string name="changelog_text_v1_1_7">CO JE NOVÉHO\n• Dánština: Byla přidána podpora dánštiny.\n• Vylepšení překladů: Byly extrahovány pevné španělské texty a dokončeny chybějící překlady do všech jazyků.\n\nOPRAVY\n• Stav vyhledávání: Zachování stavu vyhledávání při otočení obrazovky.\n• Detekce ISBN: Refaktorována a vylepšena logika detekce ISBN.\n• Přihlášení/OkHttp: Sjednocen User-Agent mezi OkHttp a přihlašovacím WebView.\n• Značky scraperu: Odstraněny pevně dané španělské značky ze scraperu.\n\nZvláštní poděkování @HBB za všechny jeho neuvěřitelné příspěvky k této verzi!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Chybí data relace.</string>
@@ -270,3 +271,4 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="activity_added_book_generic">Přidal(a) knihu do své police</string>
     <string name="activity_fallback_type">Aktivita</string>
 </resources>
+

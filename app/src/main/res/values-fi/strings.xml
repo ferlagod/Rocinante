@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">BookWyrm-yhteisön lukusovellus</string>
     <string name="login_card_title">Yhdistä instanssiin</string>
     <string name="login_field_instance">Instanssi (esim. bookwyrm.social)</string>
@@ -251,6 +251,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
 * **Ilmoitukset:** Korjattu näyttö luettelossa ja lisätty tuki koko sisällön tarkastelemiseen napsauttamalla.</string>
     <string name="changelog_text_v1_1_5">Uutta versiossa 1.1.5:\n* **Virheenkorjauksia:** Korjattu yhteensopivuusongelma, joka aiheutti sovelluksen kaatumisen Android 14 -laitteilla ja sitä vanhemmilla laitteilla ilmoituksia katseltaessa.</string>
     <string name="changelog_text_v1_1_6">UUTTA\n• Lukemisen edistyminen: Nykyinen lukemisen edistyminen näkyy nyt suoraan kirjan tietosivulla.\n• Tuotantovalmius: Sisäiset säädöt ja lopullinen asetus sovelluksen virallista julkaisua varten Google Play -kaupassa.\n\nKORJAUKSET\n• Korjattu virhe, joka esti lukemisen edistymisen päivittymisen oikein (ratkaistu tekninen ongelma CSRF Refererin kanssa).\n\nErityiskiitokset @HBB:lle hänen panoksestaan tähän päivitykseen!</string>
+    <string name="changelog_text_v1_1_7">UUTTA\n• Tanskan kieli: Lisätty tanskan kielen tuki.\n• Käännösparannukset: Koodiin upotetut espanjankieliset tekstit on erotettu ja puuttuvat käännökset on täydennetty kaikilla kielillä.\n\nKORJAUKSET\n• Hakutila: Hakutila säilyy nyt näyttöä käännettäessä.\n• ISBN-tunnistus: ISBN-tunnistuksen logiikkaa on uudistettu ja parannettu.\n• Kirjautuminen/OkHttp: User-Agent yhtenäistetty OkHttp:n ja kirjautumisen WebView\'n välillä.\n• Scraper-merkit: Espanjankieliset kiinteät merkit on poistettu scraperista.\n\nErityiskiitokset @HBB:lle hänen uskomattomasta panoksestaan tähän julkaisuun!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Istuntotiedot puuttuvat.</string>
@@ -271,3 +272,4 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="activity_added_book_generic">Lisäsi kirjan hyllyynsä</string>
     <string name="activity_fallback_type">Toiminta</string>
 </resources>
+

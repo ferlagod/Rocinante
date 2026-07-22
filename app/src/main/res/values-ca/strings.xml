@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">El teu lector social de BookWyrm</string>
     <string name="login_card_title">Connectar a instància</string>
     <string name="login_field_instance">Instància (ex: bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
 * **Notificacions:** Corregida la visualització a la llista i afegit suport per veure el contingut complet en prémer sobre elles.</string>
     <string name="changelog_text_v1_1_5">Novetats de la versió 1.1.5:\n* **Correcció d\'errors:** S\'ha solucionat un problema de compatibilitat que provocava tancaments inesperats a l\'aplicació en dispositius amb Android 14 o inferior en veure les notificacions.</string>
     <string name="changelog_text_v1_1_6">NOVETATS\n• Progrés de lectura: Ara es mostra el progrés de lectura actual directament a la fitxa del llibre.\n• Preparació per a producció: Ajustos interns i configuració final per al llançament oficial de l\'aplicació a Google Play Store.\n\nCORRECCIONS\n• S\'ha corregit l\'error que impedia actualitzar correctament el progrés de lectura (solucionat problema tècnic amb el Referer CSRF).\n\nAgraïment especial a @HBB per la seva contribució en aquesta actualització!</string>
+    <string name="changelog_text_v1_1_7">NOVETATS\n• Idioma danès: S\'ha afegit suport per a l\'idioma danès.\n• Millores de traducció: S\'han extret els textos fixos en espanyol i s\'han completat les traduccions que faltaven en tots els idiomes.\n\nCORRECCIONS\n• Estat de cerca: Es conserva l\'estat de la cerca en girar la pantalla.\n• Detecció d\'ISBN: Refactoritzada i millorada la lògica de detecció d\'ISBN.\n• Login/OkHttp: S\'ha unificat l\'User-Agent entre OkHttp i el WebView d\'inici de sessió.\n• Marcadors de l\'Scraper: Eliminats els marcadors en espanyol de l\'scraper.\n\nUn agraïment molt especial a @HBB per totes les seves increïbles contribucions en aquesta versió!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Falten dades de sessió.</string>
@@ -270,3 +271,4 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="activity_added_book_generic">Ha afegit un llibre a la seva prestatgeria</string>
     <string name="activity_fallback_type">Activitat</string>
 </resources>
+

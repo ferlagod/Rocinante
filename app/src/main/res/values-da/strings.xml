@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Din sociale BookWyrm-læser</string>
     <string name="login_card_title">Forbind til instans</string>
@@ -266,6 +266,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
 * **Notifikationer:** Rettet visningen i listen og tilføjet understøttelse af at se hele indholdet, når man trykker på dem.</string>
     <string name="changelog_text_v1_1_5">Nyheder i version 1.1.5:\n* **Fejlrettelser:** Rettet et kompatibilitetsproblem, der fik appen til at gå ned på Android 14 og ældre enheder ved visning af notifikationer.</string>
     <string name="changelog_text_v1_1_6">NYHEDER\n• Læseprogression: Din nuværende læseprogression vises nu direkte på bogens detaljeside.\n• Klar til produktion: Interne justeringer og endelig konfiguration til den officielle lancering af appen i Google Play Butik.\n\nRETTELSER\n• Rettet fejlen, der forhindrede læseprogressionen i at blive opdateret korrekt (teknisk problem med CSRF Referer løst).\n\nSærlig tak til @HBB for bidraget til denne opdatering!</string>
+    <string name="changelog_text_v1_1_7">NYHEDER\n• Dansk sprog: Tilføjet understøttelse af dansk.\n• Oversættelsesforbedringer: Udtrukket fastkodede spanske tekster og færdiggjort manglende oversættelser på alle sprog.\n\nRETTELSER\n• Søgestatus: Bevaret søgestatus ved rotering af skærmen.\n• ISBN-detektion: Omstruktureret og forbedret logik for ISBN-detektion.\n• Login/OkHttp: Forenet User-Agent mellem OkHttp og login WebView.\n• Scraper-markører: Fjernet fastkodede spanske markører fra scraperen.\n\nEn særlig tak til @HBB for alle deres utrolige bidrag til denne udgivelse!</string>
     <string name="activity_boost">Boost</string>
     <string name="error_unknown">Ukendt fejl</string>
     <string name="error_network_error">Netværksfejl</string>
@@ -300,3 +301,4 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="activity_added_book_generic">Føjede en bog til sin hylde</string>
     <string name="activity_fallback_type">Aktivitet</string>
 </resources>
+

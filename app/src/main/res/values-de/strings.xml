@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">Dein sozialer BookWyrm-Reader</string>
     <string name="login_card_title">Instanz verbinden</string>
     <string name="login_field_instance">Instanz (z. B. bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
 * **Benachrichtigungen:** Anzeige in der Liste korrigiert und Unterstützung für die Anzeige des vollständigen Inhalts beim Antippen hinzugefügt.</string>
     <string name="changelog_text_v1_1_5">Neu in Version 1.1.5:\n* **Fehlerbehebungen:** Ein Kompatibilitätsproblem wurde behoben, das zum Absturz der App auf Geräten mit Android 14 oder älter beim Anzeigen von Benachrichtigungen führte.</string>
     <string name="changelog_text_v1_1_6">NEUIGKEITEN\n• Lesefortschritt: Der aktuelle Lesefortschritt wird jetzt direkt auf der Detailseite des Buches angezeigt.\n• Produktionsvorbereitung: Interne Anpassungen und endgültige Konfiguration für den offiziellen Start der Anwendung im Google Play Store.\n\nFEHLERBEHEBUNGEN\n• Es wurde ein Fehler behoben, der verhinderte, dass der Lesefortschritt korrekt aktualisiert wurde (technisches Problem mit dem CSRF-Referer gelöst).\n\nBesonderer Dank geht an @HBB für seinen Beitrag zu diesem Update!</string>
+    <string name="changelog_text_v1_1_7">NEUIGKEITEN\n• Dänische Sprache: Unterstützung für Dänisch hinzugefügt.\n• Übersetzungsverbesserungen: Fest codierte spanische Texte extrahiert und fehlende Übersetzungen in allen Sprachen vervollständigt.\n\nFEHLERBEHEBUNGEN\n• Suchstatus: Der Suchstatus bleibt beim Drehen des Bildschirms erhalten.\n• ISBN-Erkennung: Die Logik der ISBN-Erkennung wurde überarbeitet und verbessert.\n• Login/OkHttp: User-Agent zwischen OkHttp und der Login-WebView vereinheitlicht.\n• Scraper-Markierungen: Fest codierte spanische Markierungen aus dem Scraper entfernt.\n\nEin besonderer Dank geht an @HBB für all seine unglaublichen Beiträge zu dieser Version!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Sitzungsdaten fehlen.</string>
@@ -270,3 +271,4 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="activity_added_book_generic">Hat ein Buch zum Regal hinzugefügt</string>
     <string name="activity_fallback_type">Aktivität</string>
 </resources>
+

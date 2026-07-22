@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="login_subtitle">O seu leitor social BookWyrm</string>
     <string name="login_card_title">Conectar instância</string>
     <string name="login_field_instance">Instância (ex: bookwyrm.social)</string>
@@ -250,6 +250,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
 * **Notificações:** Exibição corrigida na lista e adicionado suporte para visualizar o conteúdo completo ao tocar nelas.</string>
     <string name="changelog_text_v1_1_5">Novidades da versão 1.1.5:\n* **Correções de bugs:** Foi corrigido um problema de compatibilidade que causava o travamento do aplicativo em dispositivos com Android 14 ou inferior ao visualizar notificações.</string>
     <string name="changelog_text_v1_1_6">NOVIDADES\n• Progresso de leitura: O progresso de leitura atual agora é exibido diretamente na página de detalhes do livro.\n• Preparação para produção: Ajustes internos e configuração final para o lançamento oficial do aplicativo na Google Play Store.\n\nCORREÇÕES\n• Corrigido o erro que impedia a atualização correta do progresso de leitura (problema técnico com o Referer CSRF resolvido).\n\nUm agradecimento especial a @HBB pela sua contribuição nesta atualização!</string>
+    <string name="changelog_text_v1_1_7">NOVIDADES\n• Idioma Dinamarquês: Adicionado suporte para o idioma dinamarquês.\n• Melhorias de Tradução: Textos fixos em espanhol foram extraídos e as traduções ausentes foram concluídas em todos os idiomas.\n\nCORREÇÕES\n• Estado da Pesquisa: O estado da pesquisa é preservado ao girar a tela.\n• Detecção de ISBN: A lógica de detecção de ISBN foi refatorada e melhorada.\n• Login/OkHttp: O User-Agent foi unificado entre o OkHttp e o WebView de login.\n• Marcadores do Scraper: Os marcadores em espanhol codificados de forma rígida foram removidos do scraper.\n\nUm agradecimento muito especial a @HBB por todas as suas incríveis contribuições para esta versão!</string>
 
     <!-- Cadenas externalizadas desde el codigo (i18n) -->
     <string name="error_missing_session_data">Faltam dados da sessão.</string>
@@ -270,3 +271,4 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="activity_added_book_generic">Adicionou um livro à sua estante</string>
     <string name="activity_fallback_type">Atividade</string>
 </resources>
+
