@@ -23,7 +23,7 @@ Rocinante es una aplicación nativa para Android diseñada para conectarse a cua
     <img src="assets/obtainium_badge.png" height="55" alt="Consíguelo en Obtainium"/>
   </a>
   <a href="https://play.google.com/store/apps/details?id=com.ferlagod.rocinante">
-    <img alt="Disponible en Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/es_badge_web_generic.png" height=55>
+    <img alt="Disponible en Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/es_badge_web_generic.png" height="55">
   </a>
 </div>
 
