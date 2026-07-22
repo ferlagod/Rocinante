@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -92,11 +93,15 @@ fun SearchScreen(
         api ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
     }
     val context = LocalContext.current
-    var searchQuery by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf<List<BookSearchResult>>(emptyList()) }
-    var userSearchResults by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
-    var searchMode by remember { mutableStateOf(SearchMode.BOOKS) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // rememberSaveable: la consulta y los resultados sobreviven a cambios de
+    // configuración (rotar la pantalla), que recrean la Activity y borrarían el
+    // estado de un simple remember. Antes, rotar tras escanear vaciaba el campo de
+    // búsqueda y la lista de libros.
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchResults by rememberSaveable { mutableStateOf<List<BookSearchResult>>(emptyList()) }
+    var userSearchResults by rememberSaveable { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
+    var searchMode by rememberSaveable { mutableStateOf(SearchMode.BOOKS) }
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var isSearching by remember { mutableStateOf(false) }
     var isLoadingDetails by remember { mutableStateOf(false) }
 
