@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Unbekanntes Datum</string>
     <string name="book_update_progress">Lesefortschritt aktualisieren</string>
     <string name="book_close">Schließen</string>
+    <string name="book_tab_synopsis">Inhalt</string>
+    <string name="book_tab_reviews">Rezensionen</string>
+    <string name="book_tab_misc">Mehr</string>
+    <string name="book_move_confirm">Nach «%1$s» verschieben?</string>
+    <string name="book_move_confirm_yes">Verschieben</string>
+    <string name="book_more_actions">Weitere Aktionen</string>
     <string name="shelf_chip_to_read">Zu lesen</string>
     <string name="shelf_chip_reading">Lese ich</string>
     <string name="shelf_chip_read">Gelesen</string>
@@ -285,6 +291,8 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="activity_added_book_generic">Hat ein Buch zum Regal hinzugefügt</string>
     <string name="activity_fallback_type">Aktivität</string>
     <string name="book_finish_reading">Lesen beenden</string>
+    <string name="book_start_reading">Lesen beginnen</string>
+    <string name="book_reading_actions">Leseaktionen</string>
     <string name="book_finish">Beenden</string>
     <string name="changelog_text_v1_1_8">NEUHEITEN\n• Lesen beenden: Du kannst jetzt das Lesen eines Buches direkt aus den Buchdetails abschließen. Diese Aktion schließt die Lesesitzung ab und zählt das Buch zu deinem Leseziel (genau wie auf der Bookwyrm-Website).</string>
 </resources>

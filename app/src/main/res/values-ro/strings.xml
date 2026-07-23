@@ -63,6 +63,12 @@
     <string name="book_review_date_unknown">Dată necunoscută</string>
     <string name="book_update_progress">Actualizează progresul lecturii</string>
     <string name="book_close">Închide</string>
+    <string name="book_tab_synopsis">Rezumat</string>
+    <string name="book_tab_reviews">Recenzii</string>
+    <string name="book_tab_misc">Mai multe</string>
+    <string name="book_move_confirm">Muți în «%1$s»?</string>
+    <string name="book_move_confirm_yes">Mută</string>
+    <string name="book_more_actions">Mai multe acțiuni</string>
     <string name="shelf_chip_to_read">De citit</string>
     <string name="shelf_chip_reading">Citesc</string>
     <string name="shelf_chip_read">Citit</string>
@@ -286,6 +292,8 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="activity_added_book_generic">A adăugat o carte în raftul său</string>
     <string name="activity_fallback_type">Activitate</string>
     <string name="book_finish_reading">Termină lectura</string>
+    <string name="book_start_reading">Începe lectura</string>
+    <string name="book_reading_actions">Acțiuni de lectură</string>
     <string name="book_finish">Termină</string>
     <string name="changelog_text_v1_1_8">NOUTĂȚI\n• Termină lectura: Acum poți finaliza direct lectura unei cărți din fișa cărții. Această acțiune va închide sesiunea de lectură și va adăuga cartea la obiectivul tău de lectură (la fel ca pe site-ul Bookwyrm).</string>
 </resources>

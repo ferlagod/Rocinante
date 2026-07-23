@@ -73,6 +73,12 @@
     <string name="book_review_date_unknown">Data sen definir</string>
     <string name="book_update_progress">Actualizar o progreso da lectura</string>
     <string name="book_close">Fechar</string>
+    <string name="book_tab_synopsis">Sinopse</string>
+    <string name="book_tab_reviews">Recensións</string>
+    <string name="book_tab_misc">Máis</string>
+    <string name="book_move_confirm">Mover a «%1$s»?</string>
+    <string name="book_move_confirm_yes">Mover</string>
+    <string name="book_more_actions">Máis accións</string>
     <string name="shelf_chip_to_read">Pendente</string>
     <string name="shelf_chip_reading">Lendo</string>
     <string name="shelf_chip_read">Lido</string>
@@ -287,6 +293,8 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="activity_added_book_generic">Engadiu un libro ao seu andel</string>
     <string name="activity_fallback_type">Actividade</string>
     <string name="book_finish_reading">Rematar de ler</string>
+    <string name="book_start_reading">Comezar a ler</string>
+    <string name="book_reading_actions">Accións de lectura</string>
     <string name="book_finish">Rematar</string>
     <string name="changelog_text_v1_1_8">NOVIDADES\n• Rematar de ler: Agora podes rematar directamente a lectura dun libro en curso desde a ficha do libro. Esta acción pechará a sesión de lectura e sumará o libro ao teu obxectivo de lectura (igual que na web de Bookwyrm).</string>
 </resources>

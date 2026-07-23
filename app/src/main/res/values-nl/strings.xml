@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Onbekende datum</string>
     <string name="book_update_progress">Leesvoortgang bijwerken</string>
     <string name="book_close">Sluiten</string>
+    <string name="book_tab_synopsis">Synopsis</string>
+    <string name="book_tab_reviews">Recensies</string>
+    <string name="book_tab_misc">Meer</string>
+    <string name="book_move_confirm">Verplaatsen naar «%1$s»?</string>
+    <string name="book_move_confirm_yes">Verplaatsen</string>
+    <string name="book_more_actions">Meer acties</string>
     <string name="shelf_chip_to_read">Nog lezen</string>
     <string name="shelf_chip_reading">Lezend</string>
     <string name="shelf_chip_read">Gelezen</string>
@@ -285,6 +291,8 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="activity_added_book_generic">Heeft een boek aan de plank toegevoegd</string>
     <string name="activity_fallback_type">Activiteit</string>
     <string name="book_finish_reading">Lezen voltooien</string>
+    <string name="book_start_reading">Beginnen met lezen</string>
+    <string name="book_reading_actions">Leesacties</string>
     <string name="book_finish">Voltooien</string>
     <string name="changelog_text_v1_1_8">NIEUW\n• Lezen voltooien: Je kunt nu het lezen van een boek direct vanuit de boekdetails voltooien. Deze actie sluit de leessessie af en telt het boek mee voor je leesdoel (net als op de Bookwyrm-website).</string>
 </resources>

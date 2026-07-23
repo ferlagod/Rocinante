@@ -28,6 +28,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -40,6 +44,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
@@ -51,9 +61,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -67,8 +79,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,8 +98,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
@@ -111,6 +130,39 @@ import kotlinx.coroutines.launch
  * @param onDismiss Ejecuta la lógica para destruir o cerrar la pantalla modal actual.
  * @param onShelved Callback opcional invocado al clasificar el libro en un estante exitosamente.
  */
+/** Fila de 5 estrellas (llena / media / vacía) para una valoración de 0.5 a 5.0. */
+@Composable
+private fun BookRatingStars(rating: Double) {
+    val starColor = Color(0xFFF5A623)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        for (i in 1..5) {
+            val icon = when {
+                rating >= i -> Icons.Filled.Star
+                rating >= i - 0.5 -> Icons.Filled.StarHalf
+                else -> Icons.Filled.StarBorder
+            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = starColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/** Formatea una fecha ISO (yyyy-MM-dd) al formato medio del idioma del dispositivo. */
+private fun formatDetailDate(iso: String?): String? {
+    if (iso.isNullOrBlank()) return null
+    return try {
+        val parser = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        val parsed = parser.parse(iso) ?: return iso
+        java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(parsed)
+    } catch (e: Exception) {
+        iso
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookDetailsDialog(
@@ -123,9 +175,13 @@ fun BookDetailsDialog(
     context: Context,
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
-    onShelved: (() -> Unit)? = null
+    onShelved: (() -> Unit)? = null,
+    // Datos enriquecidos ya conocidos por quien abre la ficha (p. ej. la caché de la
+    // estantería), para mostrar las estrellas al instante mientras se refresca en segundo plano.
+    initialEnrichment: com.ferlagod.rocinante.data.model.BookEnrichment? = null
 ) {
     var showProgressDialog by remember { mutableStateOf(false) }
+    var showReadingActionsDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
     var showQuotationDialog by remember { mutableStateOf(false) }
     var showMyActivityDialog by remember { mutableStateOf(false) }
@@ -147,6 +203,89 @@ fun BookDetailsDialog(
         }
     }
 
+    // Datos enriquecidos del libro (autor, valoración, fechas, idioma) leídos de su página
+    // HTML — no vienen en el .json. Se cargan una vez al abrir la ficha.
+    var enrichment by remember { mutableStateOf(initialEnrichment) }
+    LaunchedEffect(activeBookKey) {
+        val fresh = runCatching { BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey) }.getOrNull()
+        if (fresh != null) enrichment = fresh
+    }
+
+    // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
+    var overflowExpanded by remember { mutableStateOf(false) }
+    // Estante pendiente de confirmar: (slug, etiqueta, etiqueta de aviso).
+    var pendingShelf by remember { mutableStateOf<Triple<String, String, String>?>(null) }
+
+    // Ejecuta el cambio de estante (llamado tras confirmar en el diálogo).
+    fun moveToShelf(slug: String, toastLabel: String) {
+        coroutineScope.launch {
+            try {
+                val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey) ?: activeBookKey
+                val bookId = BookWyrmUtils.extractBookId(localUrl)
+                if (bookId.isBlank()) {
+                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                val mappedStatus = mapOf("to-read" to "want", "reading" to "start", "read" to "finish")[slug]
+                val response = if (mappedStatus != null) {
+                    api.updateReadingStatus(mappedStatus, bookId)
+                } else {
+                    api.shelveBook(bookId, slug)
+                }
+                if (response.isSuccessful || response.code() == 302) {
+                    Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
+                    onShelved?.invoke()
+                    if (slug == "read") {
+                        showReviewDialog = true
+                    } else {
+                        onDismiss()
+                    }
+                } else {
+                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Termina de leer: cierra el readthrough, mueve a «Leídos» y suma al objetivo anual
+    // (lógica de v1.1.8, reubicada aquí para reutilizarla desde el diálogo de acciones).
+    fun finishReading() {
+        coroutineScope.launch {
+            isFinishing = true
+            try {
+                val contextData = BookWyrmScraper.getProgressContext(api, activeBookKey)
+                if (contextData != null) {
+                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    val today = formatter.format(java.util.Date())
+                    val response = api.finishReadingDetailed(
+                        bookIdPath = contextData.localBookId,
+                        readthroughId = contextData.readthroughId,
+                        startDate = contextData.startDate,
+                        finishDate = today,
+                        csrfToken = contextData.csrfToken
+                    )
+                    if (response.isSuccessful || response.code() == 302) {
+                        Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
+                        onShelved?.invoke()
+                        showReviewDialog = true
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+            } finally {
+                isFinishing = false
+            }
+        }
+    }
+
     // Reseñas ordenadas de más reciente a más antigua. BookWyrm renderiza la fecha en
     // formato legible (p. ej. "Aug. 22, 2024"), así que se parsea a una fecha comparable.
     // Las reseñas con fecha no reconocida se colocan al final.
@@ -156,187 +295,302 @@ fun BookDetailsDialog(
         }
     }
 
-    AlertDialog(
+    // Desde el estante "Leyendo" arrancamos en la pestaña Diverse (progreso); si no, en Resumen.
+    var selectedTab by remember { mutableStateOf(if (currentShelf == "reading") 2 else 0) }
+    val cleanDesc = HtmlUtils.stripHtml(bookDetails.description ?: stringResource(R.string.book_no_description))
+
+    Dialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = bookDetails.title ?: stringResource(R.string.book_details_fallback),
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                val detailCoverUrl = bookDetails.cover?.url ?: fallbackCoverUrl
-                if (detailCoverUrl.isNotBlank()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        AsyncImage(
-                            model = detailCoverUrl,
-                            contentDescription = stringResource(R.string.book_cover_detail_desc),
-                            modifier = Modifier
-                                .width(110.dp)
-                                .height(165.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
-
-                if (bookDetails.publishedDate != null) {
-                    Text(
-                        text = stringResource(R.string.book_published_date, bookDetails.publishedDate),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                if (bookDetails.pages != null) {
-                    Text(
-                        text = stringResource(R.string.book_pages, bookDetails.pages.toString()),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                // Mientras se obtiene el progreso (puede tardar varios segundos), mostrar
-                // una barra indeterminada animada hasta que llegue el valor real.
-                if (isLoadingProgress && readingProgress == null) {
-                    Text(
-                        text = stringResource(R.string.book_current_progress),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                readingProgress?.let { rp ->
-                    val totalPages = bookDetails.pages
-                    // Fracción 0..1 para la barra. En modo páginas requiere total conocido.
-                    val fraction = when {
-                        rp.mode == "PCT" -> rp.progress / 100f
-                        totalPages != null && totalPages > 0 -> rp.progress.toFloat() / totalPages
-                        else -> null
-                    }?.coerceIn(0f, 1f)
-
-                    val progressLabel = when {
-                        rp.mode == "PCT" -> stringResource(R.string.book_progress_percent, rp.progress)
-                        totalPages != null && totalPages > 0 -> stringResource(
-                            R.string.book_progress_pages,
-                            rp.progress,
-                            totalPages,
-                            (rp.progress * 100 / totalPages)
-                        )
-                        else -> stringResource(R.string.book_progress_pages_no_total, rp.progress)
-                    }
-
-                    Text(
-                        text = stringResource(R.string.book_current_progress),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = progressLabel,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    if (fraction != null) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LinearProgressIndicator(
-                            progress = { fraction },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                val rawDesc = bookDetails.description ?: stringResource(R.string.book_no_description)
-                val cleanDesc = HtmlUtils.stripHtml(rawDesc)
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 280.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.book_change_shelf),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            val targetShelves = listOf(
-                                Triple("to-read", stringResource(R.string.shelf_chip_to_read), stringResource(R.string.shelf_toast_pending)),
-                                Triple("reading", stringResource(R.string.shelf_chip_reading), stringResource(R.string.shelf_toast_reading)),
-                                Triple("read", stringResource(R.string.shelf_chip_read), stringResource(R.string.shelf_toast_read))
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = bookDetails.title ?: stringResource(R.string.book_details_fallback),
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onDismiss) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.book_close)
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { overflowExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = stringResource(R.string.book_more_actions)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = overflowExpanded,
+                                onDismissRequest = { overflowExpanded = false }
+                            ) {
+                                // Cambiar de estante (etiqueta + opciones, con confirmación)
+                                DropdownMenuItem(
+                                    enabled = false,
+                                    text = { Text(stringResource(R.string.book_change_shelf), style = MaterialTheme.typography.labelSmall) },
+                                    onClick = {}
+                                )
+                                listOf(
+                                    Triple("to-read", stringResource(R.string.shelf_chip_to_read), stringResource(R.string.shelf_toast_pending)),
+                                    Triple("reading", stringResource(R.string.shelf_chip_reading), stringResource(R.string.shelf_toast_reading)),
+                                    Triple("read", stringResource(R.string.shelf_chip_read), stringResource(R.string.shelf_toast_read))
+                                ).forEach { target ->
+                                    if (target.first != currentShelf) {
+                                        DropdownMenuItem(
+                                            text = { Text("     " + target.second) },
+                                            onClick = {
+                                                overflowExpanded = false
+                                                pendingShelf = target
+                                            }
+                                        )
+                                    }
+                                }
+                                HorizontalDivider()
+                                if (currentShelf == "reading") {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.book_update_progress)) },
+                                        onClick = { overflowExpanded = false; showProgressDialog = true }
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.book_add_quote)) },
+                                    onClick = { overflowExpanded = false; showQuotationDialog = true }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.book_write_review)) },
+                                    onClick = { overflowExpanded = false; showReviewDialog = true }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.book_my_quotes_reviews)) },
+                                    onClick = { overflowExpanded = false; showMyActivityDialog = true }
+                                )
+                            }
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    // ── Cabecera: portada con las estrellas debajo ──
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        val detailCoverUrl = bookDetails.cover?.url ?: fallbackCoverUrl
+                        if (detailCoverUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = detailCoverUrl,
+                                contentDescription = stringResource(R.string.book_cover_detail_desc),
+                                modifier = Modifier.width(120.dp).height(180.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        enrichment?.rating?.let { r ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            BookRatingStars(r)
+                        }
+                    }
 
-                            targetShelves.forEach { (slug, label, toastLabel) ->
-                                if (slug != currentShelf) {
-                                    SuggestionChip(
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                try {
-                                                    val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey) ?: activeBookKey
-                                                    val bookId = BookWyrmUtils.extractBookId(localUrl)
-                                                    if (bookId.isBlank()) {
-                                                        Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
-                                                        return@launch
-                                                    }
+                    // ── Pestañas: Resumen / Reseñas / Diverse ──
+                    TabRow(selectedTabIndex = selectedTab) {
+                        Tab(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            text = { Text(stringResource(R.string.book_tab_synopsis)) }
+                        )
+                        Tab(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            text = { Text(stringResource(R.string.book_tab_reviews)) }
+                        )
+                        Tab(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
+                            text = { Text(stringResource(R.string.book_tab_misc)) }
+                        )
+                    }
 
-                                                    val statusMap = mapOf(
-                                                        "to-read" to "want",
-                                                        "reading" to "start",
-                                                        "read" to "finish"
+                    when (selectedTab) {
+                        // ── Resumen (sinopsis) ──
+                        0 -> Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(24.dp)
+                        ) {
+                            Text(text = cleanDesc, style = MaterialTheme.typography.bodyMedium)
+                        }
+
+                        // ── Reseñas de la comunidad ──
+                        1 -> if (sortedReviews.isEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.book_no_reviews),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                FilledTonalButton(onClick = { showReviewDialog = true }) {
+                                    Text(stringResource(R.string.book_write_review))
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(sortedReviews) { review ->
+                                    val rawContent = review.objectData?.content ?: review.content ?: ""
+                                    val cleanReview = HtmlUtils.stripHtml(rawContent).trim()
+                                    val rating = review.objectData?.rating
+                                    if (cleanReview.isNotBlank() || rating != null) {
+                                        ElevatedCard(
+                                            onClick = { selectedReviewForDetail = review },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                val avatarUrl = review.actorAvatarUrl
+                                                if (!avatarUrl.isNullOrBlank()) {
+                                                    AsyncImage(
+                                                        model = avatarUrl,
+                                                        contentDescription = stringResource(R.string.profile_avatar_desc),
+                                                        modifier = Modifier.size(36.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                                                        contentScale = ContentScale.Crop
                                                     )
-                                                    val mappedStatus = statusMap[slug]
-                                                    
-                                                    val response = if (mappedStatus != null) {
-                                                        api.updateReadingStatus(mappedStatus, bookId)
-                                                    } else {
-                                                        api.shelveBook(bookId, slug)
-                                                    }
-
-                                                    if (response.isSuccessful || response.code() == 302) {
-                                                        Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
-                                                        onShelved?.invoke()
-                                                        if (slug == "read") {
-                                                            showReviewDialog = true
-                                                        } else {
-                                                            onDismiss()
+                                                } else {
+                                                    Surface(
+                                                        modifier = Modifier.size(36.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                                                        color = MaterialTheme.colorScheme.surfaceVariant
+                                                    ) {
+                                                        Box(contentAlignment = Alignment.Center) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Person,
+                                                                contentDescription = stringResource(R.string.profile_default_avatar_desc),
+                                                                modifier = Modifier.size(18.dp),
+                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
                                                         }
-                                                    } else {
-                                                        Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
                                                     }
-                                                } catch (e: Exception) {
-                                                    if (e is kotlinx.coroutines.CancellationException) throw e
-                                                    Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                                }
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        val reviewerName = review.name ?: stringResource(R.string.progress_privacy_private)
+                                                        Text(
+                                                            text = reviewerName,
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MaterialTheme.colorScheme.onSurface
+                                                        )
+                                                        if (rating != null && rating in 1..5) {
+                                                            Text(
+                                                                text = "★".repeat(rating) + "☆".repeat(5 - rating),
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = MaterialTheme.colorScheme.tertiary
+                                                            )
+                                                        }
+                                                    }
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    val dateStr = review.published ?: ""
+                                                    val shortDate = when {
+                                                        dateStr.isBlank() -> stringResource(R.string.book_review_date_unknown)
+                                                        dateStr.contains("T") -> dateStr.substringBefore("T")
+                                                        else -> dateStr
+                                                    }
+                                                    Text(
+                                                        text = shortDate,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.secondary
+                                                    )
                                                 }
                                             }
-                                        },
-                                        label = { Text(label, style = MaterialTheme.typography.labelSmall) }
-                                    )
+                                        }
+                                    }
+                                }
+                                item {
+                                    FilledTonalButton(
+                                        onClick = { showReviewDialog = true },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(stringResource(R.string.book_write_review))
+                                    }
                                 }
                             }
                         }
 
-                        if (currentShelf == "reading") {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                        // ── Diverse: datos del libro + funciones ──
+                        else -> Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            enrichment?.authorName?.takeIf { it.isNotBlank() }?.let {
+                                Text(text = "👤 $it", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            bookDetails.pages?.let {
+                                Text(
+                                    text = "📖 " + stringResource(R.string.book_pages, it.toString()),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            enrichment?.language?.let { lang ->
+                                val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
+                                Text(
+                                    text = (flag?.plus("  ") ?: "") + lang,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            enrichment?.finished?.let { iso ->
+                                Text(
+                                    text = "✅ " + stringResource(R.string.shelf_read_title) + ": " + (formatDetailDate(iso) ?: iso),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            if (bookDetails.publishedDate != null) {
+                                Text(
+                                    text = "📅 " + stringResource(R.string.book_published_date, bookDetails.publishedDate),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+
+                            // Acción contextual según el estante:
+                            // - «Pendiente»: empezar a leer.
+                            // - «Leyendo» sin barra de progreso todavía: actualizar progreso.
+                            if (currentShelf == "to-read") {
+                                Button(
+                                    onClick = {
+                                        moveToShelf("reading", context.getString(R.string.shelf_chip_reading))
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(stringResource(R.string.book_start_reading))
+                                }
+                            } else if (currentShelf == "reading" && readingProgress == null && !isLoadingProgress) {
                                 Button(
                                     onClick = { showProgressDialog = true },
                                     modifier = Modifier.fillMaxWidth()
@@ -344,212 +598,136 @@ fun BookDetailsDialog(
                                     Text(stringResource(R.string.book_update_progress))
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Button(
-                                    onClick = { 
-                                        coroutineScope.launch {
-                                            isFinishing = true
-                                            try {
-                                                val contextData = BookWyrmScraper.getProgressContext(api, activeBookKey)
-                                                if (contextData != null) {
-                                                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                                                    val today = formatter.format(java.util.Date())
-                                                    val response = api.finishReadingDetailed(
-                                                        bookIdPath = contextData.localBookId,
-                                                        readthroughId = contextData.readthroughId,
-                                                        startDate = contextData.startDate,
-                                                        finishDate = today,
-                                                        csrfToken = contextData.csrfToken
-                                                    )
-                                                    if (response.isSuccessful || response.code() == 302) {
-                                                        Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
-                                                        onShelved?.invoke()
-                                                        showReviewDialog = true
-                                                    } else {
-                                                        Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                } else {
-                                                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
-                                                }
-                                            } catch (e: Exception) {
-                                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
-                                            } finally {
-                                                isFinishing = false
-                                            }
-                                        }
-                                    },
-                                    enabled = !isFinishing,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                                ) {
-                                    Text(if (isFinishing) "..." else stringResource(R.string.book_finish_reading))
+
+                            // Progreso de lectura (si está leyendo)
+                            if (isLoadingProgress && readingProgress == null) {
+                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            }
+                            readingProgress?.let { rp ->
+                                val totalPages = bookDetails.pages
+                                val fraction = when {
+                                    rp.mode == "PCT" -> rp.progress / 100f
+                                    totalPages != null && totalPages > 0 -> rp.progress.toFloat() / totalPages
+                                    else -> null
+                                }?.coerceIn(0f, 1f)
+                                val progressLabel = when {
+                                    rp.mode == "PCT" -> stringResource(R.string.book_progress_percent, rp.progress)
+                                    totalPages != null && totalPages > 0 -> stringResource(
+                                        R.string.book_progress_pages,
+                                        rp.progress,
+                                        totalPages,
+                                        (rp.progress * 100 / totalPages)
+                                    )
+                                    else -> stringResource(R.string.book_progress_pages_no_total, rp.progress)
                                 }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = { showQuotationDialog = true },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(stringResource(R.string.book_add_quote))
-                            }
-                            OutlinedButton(
-                                onClick = { showReviewDialog = true },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(stringResource(R.string.book_write_review))
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = { showMyActivityDialog = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(stringResource(R.string.book_my_quotes_reviews))
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.book_synopsis),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = cleanDesc,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.book_community_reviews),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    if (sortedReviews.isEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.book_no_reviews),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    } else {
-                        items(sortedReviews) { review ->
-                            // BookWyrm puede devolver la reseña en la raíz de la actividad (ActivityStreams extendido)
-                            // o dentro del envoltorio "objectData" (ActivityStreams estándar). Se comprueban ambas vías.
-                            val rawContent = review.objectData?.content ?: review.content ?: ""
-                            val cleanReview = HtmlUtils.stripHtml(rawContent).trim()
-
-                            // El campo de calificación (rating) también puede estar en la raíz o anidado
-                            val rating = review.objectData?.rating
-
-                            // Se descartan objetos de actividad vacíos (e.g. tipo "Announce" / Boost sin texto)
-                            if (cleanReview.isNotBlank() || rating != null) {
-                                ElevatedCard(
-                                    onClick = { selectedReviewForDetail = review },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(
+                                        text = stringResource(R.string.book_current_progress),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    // Progreso (etiqueta + barra) con un botón de lápiz alto a la
+                                    // derecha que abarca ambas líneas.
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
+                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        // Avatar del autor
-                                        val avatarUrl = review.actorAvatarUrl
-                                        if (!avatarUrl.isNullOrBlank()) {
-                                            AsyncImage(
-                                                model = avatarUrl,
-                                                contentDescription = stringResource(R.string.profile_avatar_desc),
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape),
-                                                contentScale = ContentScale.Crop
-                                            )
-                                        } else {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape),
-                                                color = MaterialTheme.colorScheme.surfaceVariant
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Person,
-                                                        contentDescription = stringResource(R.string.profile_default_avatar_desc),
-                                                        modifier = Modifier.size(18.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Text(text = progressLabel, style = MaterialTheme.typography.bodyMedium)
+                                            if (fraction != null) {
+                                                LinearProgressIndicator(
+                                                    progress = { fraction },
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
                                             }
                                         }
-
-                                        // Contenedor de texto y puntuación
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                val reviewerName = review.name ?: stringResource(R.string.progress_privacy_private)
-                                                Text(
-                                                    text = reviewerName,
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                if (rating != null && rating in 1..5) {
-                                                    Text(
-                                                        text = "★".repeat(rating) + "☆".repeat(5 - rating),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = MaterialTheme.colorScheme.tertiary
-                                                    )
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            val dateStr = review.published ?: ""
-                                            val shortDate = when {
-                                                dateStr.isBlank() -> stringResource(R.string.book_review_date_unknown)
-                                                dateStr.contains("T") -> dateStr.substringBefore("T")
-                                                else -> dateStr
-                                            }
-                                            Text(
-                                                text = shortDate,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.secondary
+                                        FilledTonalButton(
+                                            onClick = { showReadingActionsDialog = true },
+                                            enabled = !isFinishing,
+                                            modifier = Modifier.fillMaxHeight()
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = stringResource(R.string.book_reading_actions)
                                             )
                                         }
                                     }
                                 }
                             }
+
+                            // Las funciones (cambiar de estante, progreso, citar, reseñar,
+                            // mis citas/reseñas) están en el menú de tres puntos (⋮) de la barra.
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.book_close))
-            }
         }
-    )
+    }
+
+    // ── Confirmación antes de cambiar de estante ──
+    pendingShelf?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingShelf = null },
+            title = { Text(stringResource(R.string.book_change_shelf)) },
+            text = { Text(stringResource(R.string.book_move_confirm, target.second)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingShelf = null
+                    moveToShelf(target.first, target.third)
+                }) {
+                    Text(stringResource(R.string.book_move_confirm_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingShelf = null }) {
+                    Text(stringResource(R.string.progress_btn_cancel))
+                }
+            }
+        )
+    }
+
+    // ── Diálogo de acciones de lectura (actualizar progreso / terminar) ──
+    if (showReadingActionsDialog) {
+        AlertDialog(
+            onDismissRequest = { showReadingActionsDialog = false },
+            title = { Text(stringResource(R.string.book_reading_actions)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            showReadingActionsDialog = false
+                            showProgressDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.book_update_progress))
+                    }
+                    Button(
+                        onClick = {
+                            showReadingActionsDialog = false
+                            finishReading()
+                        },
+                        enabled = !isFinishing,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text(stringResource(R.string.book_finish_reading))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showReadingActionsDialog = false }) {
+                    Text(stringResource(R.string.progress_btn_cancel))
+                }
+            }
+        )
+    }
 
     // ── Diálogo de progreso de lectura (rediseñado según la UI de BookWyrm) ──
     if (showProgressDialog) {

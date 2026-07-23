@@ -64,6 +64,12 @@
     <string name="book_review_date_unknown">Nieznana data</string>
     <string name="book_update_progress">Zaktualizuj postępy czytania</string>
     <string name="book_close">Zamknij</string>
+    <string name="book_tab_synopsis">Opis</string>
+    <string name="book_tab_reviews">Recenzje</string>
+    <string name="book_tab_misc">Więcej</string>
+    <string name="book_move_confirm">Przenieść do «%1$s»?</string>
+    <string name="book_move_confirm_yes">Przenieś</string>
+    <string name="book_more_actions">Więcej akcji</string>
     <string name="shelf_chip_to_read">Do przeczytania</string>
     <string name="shelf_chip_reading">Czytam</string>
     <string name="shelf_chip_read">Przeczytane</string>
@@ -287,6 +293,8 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="activity_added_book_generic">Dodał(a) książkę do swojej półki</string>
     <string name="activity_fallback_type">Aktywność</string>
     <string name="book_finish_reading">Zakończ czytanie</string>
+    <string name="book_start_reading">Zacznij czytać</string>
+    <string name="book_reading_actions">Akcje czytania</string>
     <string name="book_finish">Zakończ</string>
     <string name="changelog_text_v1_1_8">NOWOŚCI\n• Zakończ czytanie: Możesz teraz zakończyć czytanie książki bezpośrednio z jej szczegółów. Ta akcja zamknie sesję czytania i doliczy książkę do Twojego celu czytelniczego (tak jak na stronie Bookwyrm).</string>
 </resources>

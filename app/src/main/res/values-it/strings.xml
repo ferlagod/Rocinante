@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Data sconosciuta</string>
     <string name="book_update_progress">Aggiorna i progressi di lettura</string>
     <string name="book_close">Chiudi</string>
+    <string name="book_tab_synopsis">Sinossi</string>
+    <string name="book_tab_reviews">Recensioni</string>
+    <string name="book_tab_misc">Altro</string>
+    <string name="book_move_confirm">Spostare in «%1$s»?</string>
+    <string name="book_move_confirm_yes">Sposta</string>
+    <string name="book_more_actions">Altre azioni</string>
     <string name="shelf_chip_to_read">Da leggere</string>
     <string name="shelf_chip_reading">In lettura</string>
     <string name="shelf_chip_read">Letto</string>
@@ -285,6 +291,8 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="activity_added_book_generic">Ha aggiunto un libro al suo scaffale</string>
     <string name="activity_fallback_type">Attività</string>
     <string name="book_finish_reading">Termina la lettura</string>
+    <string name="book_start_reading">Inizia la lettura</string>
+    <string name="book_reading_actions">Azioni di lettura</string>
     <string name="book_finish">Termina</string>
     <string name="changelog_text_v1_1_8">NOVITÀ\n• Termina la lettura: Ora puoi terminare la lettura di un libro direttamente dalla sua scheda. Questa azione chiuderà la sessione di lettura e aggiungerà il libro al tuo obiettivo di lettura (proprio come sul sito Bookwyrm).</string>
 </resources>

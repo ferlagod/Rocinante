@@ -828,7 +828,9 @@ fun ShelfNativeDetailScreen(
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
-            onShelved = { refreshTrigger++ }
+            onShelved = { refreshTrigger++ },
+            // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
+            initialEnrichment = enrichment[activeBookUrl]
         )
     }
 

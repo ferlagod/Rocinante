@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Data desconeguda</string>
     <string name="book_update_progress">Actualitza el progrés de lectura</string>
     <string name="book_close">Tanca</string>
+    <string name="book_tab_synopsis">Sinopsi</string>
+    <string name="book_tab_reviews">Ressenyes</string>
+    <string name="book_tab_misc">Més</string>
+    <string name="book_move_confirm">Mou a «%1$s»?</string>
+    <string name="book_move_confirm_yes">Mou</string>
+    <string name="book_more_actions">Més accions</string>
     <string name="shelf_chip_to_read">Per llegir</string>
     <string name="shelf_chip_reading">Llegint</string>
     <string name="shelf_chip_read">Llegit</string>
@@ -285,6 +291,8 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="activity_added_book_generic">Ha afegit un llibre a la seva prestatgeria</string>
     <string name="activity_fallback_type">Activitat</string>
     <string name="book_finish_reading">Acabar de llegir</string>
+    <string name="book_start_reading">Començar a llegir</string>
+    <string name="book_reading_actions">Accions de lectura</string>
     <string name="book_finish">Acabar</string>
     <string name="changelog_text_v1_1_8">NOVETATS\n• Acabar de llegir: Ara pots finalitzar directament la lectura d\'\'un llibre en curs des de la fitxa del llibre. Aquesta acció tancarà la sessió de lectura i sumarà el llibre al teu objectiu de lectura (igual que a la web de Bookwyrm).</string>
 </resources>

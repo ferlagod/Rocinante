@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Okänt datum</string>
     <string name="book_update_progress">Uppdatera läsframsteg</string>
     <string name="book_close">Stäng</string>
+    <string name="book_tab_synopsis">Sammanfattning</string>
+    <string name="book_tab_reviews">Recensioner</string>
+    <string name="book_tab_misc">Mer</string>
+    <string name="book_move_confirm">Flytta till «%1$s»?</string>
+    <string name="book_move_confirm_yes">Flytta</string>
+    <string name="book_more_actions">Fler åtgärder</string>
     <string name="shelf_chip_to_read">Att läsa</string>
     <string name="shelf_chip_reading">Läser</string>
     <string name="shelf_chip_read">Läst</string>
@@ -285,6 +291,8 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="activity_added_book_generic">Lade till en bok i sin hylla</string>
     <string name="activity_fallback_type">Aktivitet</string>
     <string name="book_finish_reading">Avsluta läsning</string>
+    <string name="book_start_reading">Börja läsa</string>
+    <string name="book_reading_actions">Läsåtgärder</string>
     <string name="book_finish">Avsluta</string>
     <string name="changelog_text_v1_1_8">NYHETER\n• Avsluta läsning: Du kan nu avsluta läsningen av en bok direkt från bokens detaljer. Denna åtgärd stänger lässessionen och lägger till boken i ditt läsmål (precis som på Bookwyrm-webbplatsen).</string>
 </resources>

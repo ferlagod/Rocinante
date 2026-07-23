@@ -64,6 +64,12 @@
     <string name="book_review_date_unknown">Невідома дата</string>
     <string name="book_update_progress">Оновити прогрес читання</string>
     <string name="book_close">Закрити</string>
+    <string name="book_tab_synopsis">Опис</string>
+    <string name="book_tab_reviews">Відгуки</string>
+    <string name="book_tab_misc">Більше</string>
+    <string name="book_move_confirm">Перемістити до «%1$s»?</string>
+    <string name="book_move_confirm_yes">Перемістити</string>
+    <string name="book_more_actions">Більше дій</string>
     <string name="shelf_chip_to_read">До прочитання</string>
     <string name="shelf_chip_reading">Читаю</string>
     <string name="shelf_chip_read">Прочитано</string>
@@ -287,6 +293,8 @@
     <string name="activity_added_book_generic">Додав(-ла) книгу на свою полицю</string>
     <string name="activity_fallback_type">Активність</string>
     <string name="book_finish_reading">Завершити читання</string>
+    <string name="book_start_reading">Почати читання</string>
+    <string name="book_reading_actions">Дії читання</string>
     <string name="book_finish">Завершити</string>
     <string name="changelog_text_v1_1_8">НОВОВВЕДЕННЯ\n• Завершити читання: Тепер ви можете завершити читання книги безпосередньо з її деталей. Ця дія закриє сеанс читання та додасть книгу до вашої мети читання (як на веб-сайті Bookwyrm).</string>
 </resources>
