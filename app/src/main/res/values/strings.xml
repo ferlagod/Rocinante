@@ -44,6 +44,16 @@
     <string name="shelf_sort_default">Default order</string>
     <string name="shelf_sort_title_asc">Title A–Z</string>
     <string name="shelf_sort_title_desc">Title Z–A</string>
+    <string name="shelf_sort_finished_desc">Finished (newest)</string>
+    <string name="shelf_sort_finished_asc">Finished (oldest)</string>
+    <string name="shelf_sort_rating_desc">Rating (high–low)</string>
+    <string name="shelf_sort_rating_asc">Rating (low–high)</string>
+    <string name="shelf_resync">Refresh data</string>
+    <string name="shelf_loading_data">Loading data… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
     <string name="search_books_empty">No books found</string>
     <string name="shelf_to_read_title">To read</string>
     <string name="shelf_to_read_desc">Books you want to read soon</string>

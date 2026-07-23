@@ -277,6 +277,69 @@ object BookWyrmScraper {
         return ReadingProgressInfo(progress, if (isPct) "PCT" else "PG")
     }
 
+    /**
+     * Raspa de la página HTML del libro los datos que NO están en el .json de la estantería:
+     * nombre del autor, valoración del usuario (admite medias estrellas) y fechas de lectura
+     * en ISO. Reutiliza la misma descarga de página que [getProgressContext]/[getReadingProgress].
+     *
+     * @param bookUrl id/URL del libro (se usa tal cual como clave de caché).
+     * @return [com.ferlagod.rocinante.data.model.BookEnrichment] o null si la página no se pudo leer.
+     */
+    suspend fun scrapeBookEnrichment(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): com.ferlagod.rocinante.data.model.BookEnrichment? = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+            val doc = org.jsoup.Jsoup.parse(html)
+
+            // Autor: microdatos schema.org en el subtítulo; reserva a la meta DC.Creator del <head>.
+            val authorName = doc.select("a.author span[itemprop=name]")
+                .map { it.text().trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .joinToString(", ")
+                .ifEmpty {
+                    doc.select("meta[name=DC.Creator]")
+                        .mapNotNull { it.attr("content").trim().ifEmpty { null } }
+                        .distinct()
+                        .joinToString(", ")
+                }
+                .ifEmpty { null }
+
+            // Valoración del usuario: el formulario "rate" pre-marca (checked) todos los radios
+            // hasta el valor actual; la valoración = máximo valor marcado (admite medias estrellas).
+            val rating = doc.select("form[name=rate] input[name=rating]")
+                .filter { it.hasAttr("checked") }
+                .mapNotNull { it.attr("value").toDoubleOrNull() }
+                .maxOrNull()
+
+            // Fechas de lectura en ISO (yyyy-MM-dd) desde los inputs date de los modales
+            // edit_readthrough_*; con varias lecturas se toma la fin más reciente y el inicio más antiguo.
+            val finished = doc.select("[id^=edit_readthrough_] input[name=finish_date]")
+                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
+                .maxOrNull()
+            val started = doc.select("[id^=edit_readthrough_] input[name=start_date]")
+                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
+                .minOrNull()
+
+            com.ferlagod.rocinante.data.model.BookEnrichment(
+                bookId = bookUrl,
+                authorName = authorName,
+                rating = rating,
+                finished = finished,
+                started = started,
+                fetchedAt = System.currentTimeMillis()
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
     suspend fun scrapeHomeFeed(
         api: BookWyrmApi,
         instanceUrl: String,

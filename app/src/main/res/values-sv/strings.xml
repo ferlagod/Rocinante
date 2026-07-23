@@ -29,6 +29,16 @@
     <string name="shelf_sort_default">Standardordning</string>
     <string name="shelf_sort_title_asc">Titel A–Ö</string>
     <string name="shelf_sort_title_desc">Titel Ö–A</string>
+    <string name="shelf_sort_finished_desc">Läst (senaste)</string>
+    <string name="shelf_sort_finished_asc">Läst (äldsta)</string>
+    <string name="shelf_sort_rating_desc">Betyg (högt–lågt)</string>
+    <string name="shelf_sort_rating_asc">Betyg (lågt–högt)</string>
+    <string name="shelf_resync">Uppdatera data</string>
+    <string name="shelf_loading_data">Läser in data… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d dag</item>
+        <item quantity="other">%d dagar</item>
+    </plurals>
     <string name="shelf_to_read_title">Att läsa</string>
     <string name="shelf_to_read_desc">Böcker du vill läsa snart</string>
     <string name="shelf_reading_title">Läser</string>

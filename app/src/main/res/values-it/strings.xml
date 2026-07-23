@@ -29,6 +29,16 @@
     <string name="shelf_sort_default">Ordine predefinito</string>
     <string name="shelf_sort_title_asc">Titolo A–Z</string>
     <string name="shelf_sort_title_desc">Titolo Z–A</string>
+    <string name="shelf_sort_finished_desc">Finito (recenti)</string>
+    <string name="shelf_sort_finished_asc">Finito (meno recenti)</string>
+    <string name="shelf_sort_rating_desc">Valutazione (alta–bassa)</string>
+    <string name="shelf_sort_rating_asc">Valutazione (bassa–alta)</string>
+    <string name="shelf_resync">Aggiorna i dati</string>
+    <string name="shelf_loading_data">Caricamento dati… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d giorno</item>
+        <item quantity="other">%d giorni</item>
+    </plurals>
     <string name="shelf_to_read_title">Da leggere</string>
     <string name="shelf_to_read_desc">Libri che vuoi leggere presto</string>
     <string name="shelf_reading_title">In lettura</string>

@@ -42,6 +42,16 @@
     <string name="shelf_sort_default">Standardrækkefølge</string>
     <string name="shelf_sort_title_asc">Titel A–Å</string>
     <string name="shelf_sort_title_desc">Titel Å–A</string>
+    <string name="shelf_sort_finished_desc">Færdiglæst (nyeste)</string>
+    <string name="shelf_sort_finished_asc">Færdiglæst (ældste)</string>
+    <string name="shelf_sort_rating_desc">Vurdering (høj–lav)</string>
+    <string name="shelf_sort_rating_asc">Vurdering (lav–høj)</string>
+    <string name="shelf_resync">Opdatér data</string>
+    <string name="shelf_loading_data">Henter data… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d dag</item>
+        <item quantity="other">%d dage</item>
+    </plurals>
     <string name="search_books_empty">Ingen bøger fundet</string>
     <string name="shelf_to_read_title">Vil læse</string>
     <string name="shelf_to_read_desc">Bøger du gerne vil læse snart</string>

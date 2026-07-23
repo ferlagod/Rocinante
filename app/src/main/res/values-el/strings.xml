@@ -29,6 +29,16 @@
     <string name="shelf_sort_default">Προεπιλεγμένη σειρά</string>
     <string name="shelf_sort_title_asc">Τίτλος Α–Ω</string>
     <string name="shelf_sort_title_desc">Τίτλος Ω–Α</string>
+    <string name="shelf_sort_finished_desc">Ολοκληρώθηκε (πρόσφατα)</string>
+    <string name="shelf_sort_finished_asc">Ολοκληρώθηκε (παλαιότερα)</string>
+    <string name="shelf_sort_rating_desc">Βαθμολογία (υψηλή)</string>
+    <string name="shelf_sort_rating_asc">Βαθμολογία (χαμηλή)</string>
+    <string name="shelf_resync">Ανανέωση δεδομένων</string>
+    <string name="shelf_loading_data">Φόρτωση δεδομένων… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d μέρα</item>
+        <item quantity="other">%d μέρες</item>
+    </plurals>
     <string name="shelf_to_read_title">Προς ανάγνωση</string>
     <string name="shelf_to_read_desc">Βιβλία που θέλετε να διαβάσετε σύντομα</string>
     <string name="shelf_reading_title">Διαβάζω τώρα</string>

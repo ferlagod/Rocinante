@@ -29,6 +29,17 @@
     <string name="shelf_sort_default">Ordine implicită</string>
     <string name="shelf_sort_title_asc">Titlu A–Z</string>
     <string name="shelf_sort_title_desc">Titlu Z–A</string>
+    <string name="shelf_sort_finished_desc">Terminat (recente)</string>
+    <string name="shelf_sort_finished_asc">Terminat (vechi)</string>
+    <string name="shelf_sort_rating_desc">Evaluare (mare–mică)</string>
+    <string name="shelf_sort_rating_asc">Evaluare (mică–mare)</string>
+    <string name="shelf_resync">Actualizează datele</string>
+    <string name="shelf_loading_data">Se încarcă datele… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d zi</item>
+        <item quantity="few">%d zile</item>
+        <item quantity="other">%d de zile</item>
+    </plurals>
     <string name="shelf_to_read_title">De citit</string>
     <string name="shelf_to_read_desc">Cărți pe care dorești să le citești în curând</string>
     <string name="shelf_reading_title">În curs de citire</string>

@@ -29,6 +29,18 @@
     <string name="shelf_sort_default">Типовий порядок</string>
     <string name="shelf_sort_title_asc">Назва А–Я</string>
     <string name="shelf_sort_title_desc">Назва Я–А</string>
+    <string name="shelf_sort_finished_desc">Прочитано (найновіші)</string>
+    <string name="shelf_sort_finished_asc">Прочитано (найстаріші)</string>
+    <string name="shelf_sort_rating_desc">Оцінка (від вищої)</string>
+    <string name="shelf_sort_rating_asc">Оцінка (від нижчої)</string>
+    <string name="shelf_resync">Оновити дані</string>
+    <string name="shelf_loading_data">Завантаження даних… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d день</item>
+        <item quantity="few">%d дні</item>
+        <item quantity="many">%d днів</item>
+        <item quantity="other">%d дня</item>
+    </plurals>
     <string name="shelf_to_read_title">До прочитання</string>
     <string name="shelf_to_read_desc">Книги, які ви хочете прочитати незабаром</string>
     <string name="shelf_reading_title">Читаю</string>
