@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Seleziona uno scaffale per visualizzare i tuoi progressi.</string>
     <string name="shelf_back">Indietro</string>
     <string name="shelf_empty">Questo scaffale è vuoto.</string>
+    <string name="shelf_sort">Ordina</string>
+    <string name="shelf_sort_default">Ordine predefinito</string>
+    <string name="shelf_sort_title_asc">Titolo A–Z</string>
+    <string name="shelf_sort_title_desc">Titolo Z–A</string>
     <string name="shelf_to_read_title">Da leggere</string>
     <string name="shelf_to_read_desc">Libri che vuoi leggere presto</string>
     <string name="shelf_reading_title">In lettura</string>

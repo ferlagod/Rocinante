@@ -39,6 +39,10 @@
     <string name="shelf_screen_subtitle">Seleccionar una estantería para visualizar el progreso.</string>
     <string name="shelf_back">Volver</string>
     <string name="shelf_empty">La estantería se encuentra vacía.</string>
+    <string name="shelf_sort">Ordenar</string>
+    <string name="shelf_sort_default">Orden predeterminado</string>
+    <string name="shelf_sort_title_asc">Título A–Z</string>
+    <string name="shelf_sort_title_desc">Título Z–A</string>
     <string name="shelf_to_read_title">Por leer</string>
     <string name="shelf_to_read_desc">Libros que quieres leer próximamente</string>
     <string name="shelf_reading_title">Leyendo</string>

@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Selectează un raft pentru a-ți vizualiza progresul.</string>
     <string name="shelf_back">Înapoi</string>
     <string name="shelf_empty">Acest raft este gol.</string>
+    <string name="shelf_sort">Sortează</string>
+    <string name="shelf_sort_default">Ordine implicită</string>
+    <string name="shelf_sort_title_asc">Titlu A–Z</string>
+    <string name="shelf_sort_title_desc">Titlu Z–A</string>
     <string name="shelf_to_read_title">De citit</string>
     <string name="shelf_to_read_desc">Cărți pe care dorești să le citești în curând</string>
     <string name="shelf_reading_title">În curs de citire</string>

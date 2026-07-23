@@ -38,6 +38,10 @@
     <string name="shelf_screen_subtitle">Vælg en hylde for at se din læseprogression.</string>
     <string name="shelf_back">Tilbage</string>
     <string name="shelf_empty">Denne hylde er tom.</string>
+    <string name="shelf_sort">Sortér</string>
+    <string name="shelf_sort_default">Standardrækkefølge</string>
+    <string name="shelf_sort_title_asc">Titel A–Å</string>
+    <string name="shelf_sort_title_desc">Titel Å–A</string>
     <string name="search_books_empty">Ingen bøger fundet</string>
     <string name="shelf_to_read_title">Vil læse</string>
     <string name="shelf_to_read_desc">Bøger du gerne vil læse snart</string>

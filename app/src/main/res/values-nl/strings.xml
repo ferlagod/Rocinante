@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Selecteer een plank om je leesvoortgang te bekijken.</string>
     <string name="shelf_back">Terug</string>
     <string name="shelf_empty">Deze plank is leeg.</string>
+    <string name="shelf_sort">Sorteren</string>
+    <string name="shelf_sort_default">Standaardvolgorde</string>
+    <string name="shelf_sort_title_asc">Titel A–Z</string>
+    <string name="shelf_sort_title_desc">Titel Z–A</string>
     <string name="shelf_to_read_title">Nog lezen</string>
     <string name="shelf_to_read_desc">Boeken die je binnenkort wilt lezen</string>
     <string name="shelf_reading_title">Aan het lezen</string>

@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Selecione uma estante para visualizar o seu progresso.</string>
     <string name="shelf_back">Voltar</string>
     <string name="shelf_empty">Esta estante está vazia.</string>
+    <string name="shelf_sort">Ordenar</string>
+    <string name="shelf_sort_default">Ordem predefinida</string>
+    <string name="shelf_sort_title_asc">Título A–Z</string>
+    <string name="shelf_sort_title_desc">Título Z–A</string>
     <string name="shelf_to_read_title">Para ler</string>
     <string name="shelf_to_read_desc">Livros que você quer ler em breve</string>
     <string name="shelf_reading_title">Lendo</string>

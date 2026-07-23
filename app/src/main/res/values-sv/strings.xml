@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Välj en hylla för att se dina framsteg.</string>
     <string name="shelf_back">Tillbaka</string>
     <string name="shelf_empty">Den här hyllan är tom.</string>
+    <string name="shelf_sort">Sortera</string>
+    <string name="shelf_sort_default">Standardordning</string>
+    <string name="shelf_sort_title_asc">Titel A–Ö</string>
+    <string name="shelf_sort_title_desc">Titel Ö–A</string>
     <string name="shelf_to_read_title">Att läsa</string>
     <string name="shelf_to_read_desc">Böcker du vill läsa snart</string>
     <string name="shelf_reading_title">Läser</string>

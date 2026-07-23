@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Wybierz półkę, aby zobaczyć swoje postępy.</string>
     <string name="shelf_back">Wróć</string>
     <string name="shelf_empty">Ta półka jest pusta.</string>
+    <string name="shelf_sort">Sortuj</string>
+    <string name="shelf_sort_default">Kolejność domyślna</string>
+    <string name="shelf_sort_title_asc">Tytuł A–Z</string>
+    <string name="shelf_sort_title_desc">Tytuł Z–A</string>
     <string name="shelf_to_read_title">Do przeczytania</string>
     <string name="shelf_to_read_desc">Książki, które chcesz wkrótce przeczytać</string>
     <string name="shelf_reading_title">Czytam</string>

@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Wähle ein Regal, um deinen Lesefortschritt zu sehen.</string>
     <string name="shelf_back">Zurück</string>
     <string name="shelf_empty">Dieses Regal ist leer.</string>
+    <string name="shelf_sort">Sortieren</string>
+    <string name="shelf_sort_default">Standardreihenfolge</string>
+    <string name="shelf_sort_title_asc">Titel A–Z</string>
+    <string name="shelf_sort_title_desc">Titel Z–A</string>
     <string name="shelf_to_read_title">Zu lesen</string>
     <string name="shelf_to_read_desc">Bücher, die du bald lesen möchtest</string>
     <string name="shelf_reading_title">Lese ich gerade</string>

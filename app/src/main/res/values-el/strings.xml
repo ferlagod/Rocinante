@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Επιλέξτε ένα ράφι για να δείτε την πρόοδό σας.</string>
     <string name="shelf_back">Πίσω</string>
     <string name="shelf_empty">Αυτό το ράφι είναι άδειο.</string>
+    <string name="shelf_sort">Ταξινόμηση</string>
+    <string name="shelf_sort_default">Προεπιλεγμένη σειρά</string>
+    <string name="shelf_sort_title_asc">Τίτλος Α–Ω</string>
+    <string name="shelf_sort_title_desc">Τίτλος Ω–Α</string>
     <string name="shelf_to_read_title">Προς ανάγνωση</string>
     <string name="shelf_to_read_desc">Βιβλία που θέλετε να διαβάσετε σύντομα</string>
     <string name="shelf_reading_title">Διαβάζω τώρα</string>

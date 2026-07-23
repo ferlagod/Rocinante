@@ -161,6 +161,8 @@ data class ShelfPage(
 data class ShelfBookItem(
     val id: String?,
     val title: String?,
+    // Título normalizado por el servidor (artículos eliminados) para ordenar alfabéticamente.
+    val sortTitle: String? = null,
     val cover: ShelfBookCover?
 )
 

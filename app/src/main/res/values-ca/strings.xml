@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Selecciona una prestatgeria per a veure el teu progrés.</string>
     <string name="shelf_back">Torna</string>
     <string name="shelf_empty">Aquesta prestatgeria està buida.</string>
+    <string name="shelf_sort">Ordena</string>
+    <string name="shelf_sort_default">Ordre predeterminat</string>
+    <string name="shelf_sort_title_asc">Títol A–Z</string>
+    <string name="shelf_sort_title_desc">Títol Z–A</string>
     <string name="shelf_to_read_title">Per llegir</string>
     <string name="shelf_to_read_desc">Llibres que vols llegir aviat</string>
     <string name="shelf_reading_title">Llegint</string>

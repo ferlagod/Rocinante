@@ -25,6 +25,10 @@
     <string name="shelf_screen_subtitle">Виберіть полицю, щоб переглянути свій прогрес.</string>
     <string name="shelf_back">Назад</string>
     <string name="shelf_empty">Ця полиця порожня.</string>
+    <string name="shelf_sort">Сортувати</string>
+    <string name="shelf_sort_default">Типовий порядок</string>
+    <string name="shelf_sort_title_asc">Назва А–Я</string>
+    <string name="shelf_sort_title_desc">Назва Я–А</string>
     <string name="shelf_to_read_title">До прочитання</string>
     <string name="shelf_to_read_desc">Книги, які ви хочете прочитати незабаром</string>
     <string name="shelf_reading_title">Читаю</string>

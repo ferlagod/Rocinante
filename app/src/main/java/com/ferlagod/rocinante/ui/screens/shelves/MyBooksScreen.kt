@@ -44,6 +44,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
@@ -51,8 +52,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -103,6 +107,12 @@ data class ShelfUiItem(
     val description: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
+
+/**
+ * Modos de ordenación disponibles para el listado de una estantería.
+ * DEFAULT conserva el orden que devuelve el servidor.
+ */
+private enum class ShelfSortMode { DEFAULT, TITLE_ASC, TITLE_DESC }
 
 /**
  * Pantalla que muestra y permite interactuar con los estantes personales del usuario 
@@ -242,6 +252,14 @@ fun ShelfNativeDetailScreen(
     var refreshTrigger by remember { mutableStateOf(0) }
     var isNetworkRefreshed by remember { mutableStateOf(false) }
 
+    var sortMode by remember { mutableStateOf(ShelfSortMode.DEFAULT) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
+    // Collator con nivel PRIMARY: ignora mayúsculas/acentos pero respeta el orden
+    // alfabético del idioma (p. ej. æ/ø/å en danés se colocan correctamente).
+    val collator = remember {
+        java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
+    }
+
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var fallbackCoverUrl by remember { mutableStateOf("") }
@@ -302,6 +320,28 @@ fun ShelfNativeDetailScreen(
         }
     }
 
+    // Lista mostrada: aplica la ordenación elegida sobre los libros ya cargados.
+    val displayedBooks = remember(books, sortMode) {
+        val cmp = Comparator<ShelfBookItem> { a, b ->
+            collator.compare(a.sortTitle ?: a.title ?: "", b.sortTitle ?: b.title ?: "")
+        }
+        when (sortMode) {
+            ShelfSortMode.DEFAULT -> books
+            ShelfSortMode.TITLE_ASC -> books.sortedWith(cmp)
+            ShelfSortMode.TITLE_DESC -> books.sortedWith(cmp).reversed()
+        }
+    }
+
+    // Con una ordenación activa cargamos el resto de páginas para ordenar la
+    // estantería completa y no solo la porción ya visible (el .json ignora ?sort=).
+    LaunchedEffect(sortMode, hasMorePages, isPaginating, isLoading, isNetworkRefreshed) {
+        if (sortMode != ShelfSortMode.DEFAULT && hasMorePages &&
+            !isPaginating && !isLoading && isNetworkRefreshed
+        ) {
+            currentPage++
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -315,8 +355,34 @@ fun ShelfNativeDetailScreen(
             }
             Text(
                 text = shelf.title,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
             )
+            Box {
+                IconButton(onClick = { sortMenuExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                        contentDescription = stringResource(R.string.shelf_sort)
+                    )
+                }
+                DropdownMenu(
+                    expanded = sortMenuExpanded,
+                    onDismissRequest = { sortMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_default)) },
+                        onClick = { sortMode = ShelfSortMode.DEFAULT; sortMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_title_asc)) },
+                        onClick = { sortMode = ShelfSortMode.TITLE_ASC; sortMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_title_desc)) },
+                        onClick = { sortMode = ShelfSortMode.TITLE_DESC; sortMenuExpanded = false }
+                    )
+                }
+            }
         }
 
         if (errorMessage != null) {
@@ -401,9 +467,9 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
-                items(books.size) { index ->
-                    val book = books[index]
-                    if (index >= books.size - 5 && !isLoading && !isPaginating && hasMorePages && isNetworkRefreshed) {
+                items(displayedBooks.size) { index ->
+                    val book = displayedBooks[index]
+                    if (index >= displayedBooks.size - 5 && !isLoading && !isPaginating && hasMorePages && isNetworkRefreshed) {
                         LaunchedEffect(index) {
                             currentPage++
                         }
