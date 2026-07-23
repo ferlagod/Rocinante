@@ -300,5 +300,8 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="activity_added_book_to_shelf">Føjede en bog til sin læsehylde</string>
     <string name="activity_added_book_generic">Føjede en bog til sin hylde</string>
     <string name="activity_fallback_type">Aktivitet</string>
+    <string name="book_finish_reading">Afslut læsning</string>
+    <string name="book_finish">Afslut</string>
+    <string name="changelog_text_v1_1_8">NYHEDER\n• Afslut læsning: Du kan nu afslutte læsning af en bog direkte fra bogens detaljer. Denne handling lukker læsesessionen og tilføjer bogen til dit læsemål (ligesom på Bookwyrm-websiden).</string>
 </resources>
 

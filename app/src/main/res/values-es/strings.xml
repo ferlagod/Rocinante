@@ -266,9 +266,12 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="changelog_text_v1_1_5">Novedades de la versión 1.1.5:\n* **Corrección de errores:** Solucionado un problema de compatibilidad que causaba cierres inesperados de la aplicación en dispositivos con Android 14 o inferior al ver las notificaciones.</string>
     <string name="changelog_text_v1_1_6">NOVEDADES\n• Progreso de lectura: Ahora se muestra el progreso de lectura actual directamente en la ficha del libro.\n• Preparación para producción: Ajustes internos y configuración final para el lanzamiento oficial de la aplicación en Google Play Store.\n\nCORRECCIONES\n• Corregido el error que impedía actualizar correctamente el progreso de lectura (solucionado problema técnico con el Referer CSRF).\n\n¡Agradecimiento especial a @HBB por su contribución en esta actualización!</string>
     <string name="changelog_text_v1_1_7">NOVEDADES\n• Idioma Danés: Se ha añadido soporte para el idioma danés.\n• Mejoras de Traducción: Externalizados textos fijos en español y completadas las traducciones faltantes en todos los idiomas.\n\nCORRECCIONES\n• Búsqueda: Se conserva el estado de la búsqueda al rotar la pantalla.\n• Detección ISBN: Refactorizada y mejorada la lógica de detección de ISBN.\n• Login/OkHttp: Unificado el User-Agent entre OkHttp y el WebView de inicio de sesión.\n• Marcadores del Scraper: Eliminados marcadores en español incrustados directamente en el scraper.\n\n¡Un agradecimiento muy especial a @HBB por todas sus increíbles contribuciones para esta versión!</string>
+    <string name="changelog_text_v1_1_8">NOVEDADES\n• Terminar de leer: Ahora puedes finalizar directamente la lectura de un libro en curso desde la ficha del libro o en tu perfil. Esta acción cerrará la sesión de lectura y sumará el libro a tu objetivo de lectura (al igual que en la web de Bookwyrm).</string>
     <!-- i18n: extraídas de literales hardcodeados en Kotlin -->
     <string name="error_missing_session_data">Faltan datos de sesión.</string>
     <string name="error_loading_data">Error cargando datos: %1$s</string>
+    <string name="book_finish_reading">Terminar de leer</string>
+    <string name="book_finish">Terminar</string>
     <string name="text_no_content">Sin contenido</string>
     <string name="text_see_more">...ver más</string>
     <string name="activity_type_cita">Cita</string>

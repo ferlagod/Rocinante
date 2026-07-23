@@ -1418,38 +1418,70 @@ fun ProfileTab(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(readingBooks) { book ->
-                        val coverUrl = book.cover?.url
-                        if (!coverUrl.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = coverUrl,
-                                contentDescription = stringResource(R.string.book_cover_desc),
-                                modifier = Modifier
-                                    .width(90.dp)
-                                    .height(135.dp)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .clickable {
-                                        if (!book.id.isNullOrEmpty()) {
-                                            activeBookKey = book.id
-                                            fallbackCoverUrl = book.cover?.url ?: ""
-                                            coroutineScope.launch {
-                                                try {
-                                                    val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
-                                                    selectedBookDetails = api.getBookDetails(detailsUrl)
-                                                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            val coverUrl = book.cover?.url
+                            if (!coverUrl.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = coverUrl,
+                                    contentDescription = stringResource(R.string.book_cover_desc),
+                                    modifier = Modifier
+                                        .width(90.dp)
+                                        .height(135.dp)
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable {
+                                            if (!book.id.isNullOrEmpty()) {
+                                                activeBookKey = book.id
+                                                fallbackCoverUrl = book.cover.url ?: ""
+                                                coroutineScope.launch {
                                                     try {
-                                                        selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                    } catch (_: Exception) {
-                                                        selectedBookReviews = emptyList()
+                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
+                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
+                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                        try {
+                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
+                                                        } catch (_: Exception) {
+                                                            selectedBookReviews = emptyList()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        if (e is kotlinx.coroutines.CancellationException) throw e
+                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
                                                     }
-                                                } catch (e: Exception) {
-                                                    if (e is kotlinx.coroutines.CancellationException) throw e
-                                                    Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
                                                 }
                                             }
-                                        }
-                                    },
-                                contentScale = ContentScale.Crop
-                            )
+                                        },
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .width(90.dp)
+                                        .height(135.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
+                                        .clickable {
+                                            if (!book.id.isNullOrEmpty()) {
+                                                activeBookKey = book.id
+                                                coroutineScope.launch {
+                                                    try {
+                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
+                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
+                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                        try {
+                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
+                                                        } catch (_: Exception) {
+                                                            selectedBookReviews = emptyList()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        if (e is kotlinx.coroutines.CancellationException) throw e
+                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
                         }
                     }
                 }

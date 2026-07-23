@@ -270,5 +270,8 @@
     <string name="activity_added_book_to_shelf">Додав(-ла) книгу на свою полицю для читання</string>
     <string name="activity_added_book_generic">Додав(-ла) книгу на свою полицю</string>
     <string name="activity_fallback_type">Активність</string>
+    <string name="book_finish_reading">Завершити читання</string>
+    <string name="book_finish">Завершити</string>
+    <string name="changelog_text_v1_1_8">НОВОВВЕДЕННЯ\n• Завершити читання: Тепер ви можете завершити читання книги безпосередньо з її деталей. Ця дія закриє сеанс читання та додасть книгу до вашої мети читання (як на веб-сайті Bookwyrm).</string>
 </resources>
 

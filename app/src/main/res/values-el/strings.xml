@@ -270,5 +270,8 @@
     <string name="activity_added_book_to_shelf">Πρόσθεσε ένα βιβλίο στο ράφι ανάγνωσης</string>
     <string name="activity_added_book_generic">Πρόσθεσε ένα βιβλίο στο ράφι</string>
     <string name="activity_fallback_type">Δραστηριότητα</string>
+    <string name="book_finish_reading">Ολοκλήρωση ανάγνωσης</string>
+    <string name="book_finish">Ολοκλήρωση</string>
+    <string name="changelog_text_v1_1_8">ΝΕΟΤΕΡΑ\n• Ολοκλήρωση ανάγνωσης: Μπορείτε πλέον να ολοκληρώσετε την ανάγνωση ενός βιβλίου απευθείας από τις λεπτομέρειές του. Αυτή η ενέργεια κλείνει τη συνεδρία ανάγνωσης και προσθέτει το βιβλίο στον στόχο ανάγνωσής σας (όπως στον ιστότοπο Bookwyrm).</string>
 </resources>
 

@@ -130,6 +130,7 @@ fun BookDetailsDialog(
     var showQuotationDialog by remember { mutableStateOf(false) }
     var showMyActivityDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
+    var isFinishing by remember { mutableStateOf(false) }
 
     // Progreso de lectura actual (solo relevante mientras el libro está en lectura).
     // Se recarga cada vez que cambia el libro o tras una actualización correcta.
@@ -333,11 +334,60 @@ fun BookDetailsDialog(
 
                         if (currentShelf == "reading") {
                             Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = { showProgressDialog = true },
+                            Row(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(stringResource(R.string.book_update_progress))
+                                Button(
+                                    onClick = { showProgressDialog = true },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(stringResource(R.string.book_update_progress))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Button(
+                                    onClick = { 
+                                        coroutineScope.launch {
+                                            isFinishing = true
+                                            try {
+                                                val contextData = BookWyrmScraper.getProgressContext(api, activeBookKey)
+                                                if (contextData != null) {
+                                                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                                    val today = formatter.format(java.util.Date())
+                                                    val response = api.finishReadingDetailed(
+                                                        bookIdPath = contextData.localBookId,
+                                                        readthroughId = contextData.readthroughId,
+                                                        startDate = contextData.startDate,
+                                                        finishDate = today,
+                                                        csrfToken = contextData.csrfToken
+                                                    )
+                                                    if (response.isSuccessful || response.code() == 302) {
+                                                        Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
+                                                        onShelved?.invoke()
+                                                        showReviewDialog = true
+                                                    } else {
+                                                        Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } else {
+                                                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                            } finally {
+                                                isFinishing = false
+                                            }
+                                        }
+                                    },
+                                    enabled = !isFinishing,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                ) {
+                                    Text(if (isFinishing) "..." else stringResource(R.string.book_finish_reading))
+                                }
                             }
                         }
 

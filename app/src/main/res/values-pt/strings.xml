@@ -270,5 +270,8 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="activity_added_book_to_shelf">Adicionou um livro à sua estante de leitura</string>
     <string name="activity_added_book_generic">Adicionou um livro à sua estante</string>
     <string name="activity_fallback_type">Atividade</string>
+    <string name="book_finish_reading">Terminar a leitura</string>
+    <string name="book_finish">Terminar</string>
+    <string name="changelog_text_v1_1_8">NOVIDADES\n• Terminar a leitura: Agora podes terminar diretamente a leitura de um livro em curso a partir da ficha do livro. Esta ação encerrará a sessão de leitura e adicionará o livro ao teu objetivo de leitura (tal como no site do Bookwyrm).</string>
 </resources>
 

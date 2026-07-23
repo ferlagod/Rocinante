@@ -43,7 +43,8 @@ object BookWyrmScraper {
         // BookWyrm (Django) valida este token de formulario contra la cookie csrftoken;
         // enviarlo como campo evita el 403 en instancias donde la cabecera X-CSRFToken
         // no es suficiente. Puede quedar vacío si no se encuentra en el HTML.
-        val csrfToken: String = ""
+        val csrfToken: String = "",
+        val startDate: String? = null
     )
     /**
      * Contexto temporal utilizado al vincular un usuario y un libro en una reseña.
@@ -195,8 +196,12 @@ object BookWyrmScraper {
                     val userMatch = userRegex.find(html)
                     val userId = userMatch?.groupValues?.get(1)
 
+                    val startDateRegex = """name=["']start_date["']\s+value=["']([^"']+)["']""".toRegex()
+                    val startDateMatch = startDateRegex.find(html)
+                    val startDate = startDateMatch?.groupValues?.get(1)?.takeIf { it.isNotBlank() }
+
                     if (readthroughId != null && userId != null) {
-                        return@withContext ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html))
+                        return@withContext ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
                     } else {
                         return@withContext null
                     }
@@ -212,8 +217,12 @@ object BookWyrmScraper {
                 val userMatch = userRegex.find(html)
                 val userId = userMatch?.groupValues?.get(1)
 
+                val startDateRegex = """name=["']start_date["']\s+value=["']([^"']+)["']""".toRegex()
+                val startDateMatch = startDateRegex.find(html)
+                val startDate = startDateMatch?.groupValues?.get(1)?.takeIf { it.isNotBlank() }
+
                 if (readthroughId != null && userId != null) {
-                    ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html))
+                    ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
                 } else null
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e

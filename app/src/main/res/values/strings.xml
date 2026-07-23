@@ -281,9 +281,12 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_1_5">What\'s new in version 1.1.5:\n* **Bug fixes:** Fixed a compatibility issue that caused the app to crash on Android 14 and older devices when viewing notifications.</string>
     <string name="changelog_text_v1_1_6">WHAT\'S NEW\n• Reading Progress: The current reading progress is now displayed directly on the book\'s details page.\n• Production Readiness: Internal adjustments and final configuration for the official launch of the application on the Google Play Store.\n\nFIXES\n• Fixed the bug that prevented reading progress from updating correctly (resolved technical issue with CSRF Referer).\n\nSpecial thanks to @HBB for their contribution to this update!</string>
     <string name="changelog_text_v1_1_7">WHAT\'S NEW\n• Danish Language: Added support for Danish.\n• Translation Improvements: Extracted hardcoded Spanish texts and completed missing translations across all languages.\n\nFIXES\n• Search State: Preserved the search state when rotating the screen.\n• ISBN Detection: Refactored and improved ISBN detection logic.\n• Login/OkHttp: Unified the User-Agent between OkHttp and the login WebView.\n• Scraper Markers: Removed hardcoded Spanish markers from the scraper.\n\nSpecial thanks to @HBB for all their incredible contributions to this release!</string>
+    <string name="changelog_text_v1_1_8">WHAT\'S NEW\n• Finish reading: You can now mark a book as finished directly from its details or your profile. This action will close the reading session and add the book to your reading goal (just like on the Bookwyrm website).</string>
     <!-- i18n: extraídas de literales hardcodeados en Kotlin -->
     <string name="time_just_now">Just now</string>
     <string name="book_my_quotes_reviews">My quotes and reviews</string>
+    <string name="book_finish_reading">Finish reading</string>
+    <string name="book_finish">Finish</string>
     <string name="post_validation_error">Validation error when posting</string>
     <string name="session_expired">Your session has expired</string>
     <string name="session_invalid">Invalid session</string>

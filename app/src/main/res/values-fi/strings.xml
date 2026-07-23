@@ -271,5 +271,8 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="activity_added_book_to_shelf">Lisäsi kirjan lukuhyllyynsä</string>
     <string name="activity_added_book_generic">Lisäsi kirjan hyllyynsä</string>
     <string name="activity_fallback_type">Toiminta</string>
+    <string name="book_finish_reading">Lopeta lukeminen</string>
+    <string name="book_finish">Lopeta</string>
+    <string name="changelog_text_v1_1_8">UUTUUDET\n• Lopeta lukeminen: Voit nyt lopettaa kirjan lukemisen suoraan kirjan tiedoista. Tämä toiminto sulkee lukusession ja lisää kirjan lukutavoitteeseesi (kuten Bookwyrm-verkkosivustolla).</string>
 </resources>
 

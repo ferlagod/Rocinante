@@ -270,5 +270,8 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="activity_added_book_to_shelf">Přidal(a) knihu do své police ke čtení</string>
     <string name="activity_added_book_generic">Přidal(a) knihu do své police</string>
     <string name="activity_fallback_type">Aktivita</string>
+    <string name="book_finish_reading">Dočíst</string>
+    <string name="book_finish">Dokončit</string>
+    <string name="changelog_text_v1_1_8">NOVINKY\n• Dokončit čtení: Nyní můžete dokončit čtení knihy přímo z jejího detailu. Tato akce uzavře relaci čtení a přidá knihu k vašemu cíli čtení (stejně jako na webu Bookwyrm).</string>
 </resources>
 

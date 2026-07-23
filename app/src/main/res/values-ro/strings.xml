@@ -270,5 +270,8 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="activity_added_book_to_shelf">A adăugat o carte în raftul său de lectură</string>
     <string name="activity_added_book_generic">A adăugat o carte în raftul său</string>
     <string name="activity_fallback_type">Activitate</string>
+    <string name="book_finish_reading">Termină lectura</string>
+    <string name="book_finish">Termină</string>
+    <string name="changelog_text_v1_1_8">NOUTĂȚI\n• Termină lectura: Acum poți finaliza direct lectura unei cărți din fișa cărții. Această acțiune va închide sesiunea de lectură și va adăuga cartea la obiectivul tău de lectură (la fel ca pe site-ul Bookwyrm).</string>
 </resources>
 

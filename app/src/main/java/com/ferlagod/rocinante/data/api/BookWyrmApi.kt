@@ -183,6 +183,24 @@ interface BookWyrmApi {
     ): retrofit2.Response<ResponseBody>
 
     /**
+     * Termina de leer un libro, cerrando el readthrough y sumando al objetivo de lectura.
+     * POST a /reading-status/finish/{bookId}/ — el estado (finish) viene dado por la URL,
+     * no se necesita un campo 'reading_status' extra.
+     * El campo 'shelf' se omite porque BookWyrm espera un ID numérico de estantería
+     * (para la función "mover") y enviarlo como texto causa un error 500.
+     */
+    @FormUrlEncoded
+    @POST("reading-status/finish/{bookIdPath}/")
+    suspend fun finishReadingDetailed(
+        @Path("bookIdPath") bookIdPath: String,
+        @Field("id") readthroughId: String,
+        @Field("start_date") startDate: String?,
+        @Field("finish_date") finishDate: String,
+        @Field("privacy") privacy: String = "public",
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
+    /**
      * Publica una reseña (review) de un libro.
      */
     @FormUrlEncoded

@@ -270,5 +270,8 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="activity_added_book_to_shelf">Dodał(a) książkę do swojej półki z lekturami</string>
     <string name="activity_added_book_generic">Dodał(a) książkę do swojej półki</string>
     <string name="activity_fallback_type">Aktywność</string>
+    <string name="book_finish_reading">Zakończ czytanie</string>
+    <string name="book_finish">Zakończ</string>
+    <string name="changelog_text_v1_1_8">NOWOŚCI\n• Zakończ czytanie: Możesz teraz zakończyć czytanie książki bezpośrednio z jej szczegółów. Ta akcja zamknie sesję czytania i doliczy książkę do Twojego celu czytelniczego (tak jak na stronie Bookwyrm).</string>
 </resources>
 
