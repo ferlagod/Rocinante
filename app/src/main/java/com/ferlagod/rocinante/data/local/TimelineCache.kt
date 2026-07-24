@@ -156,6 +156,37 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Carga el mapa de datos enriquecidos por libro (autor, valoración, fechas de lectura)
+     * obtenidos de la página HTML de cada libro. Clave = id/URL del libro.
+     *
+     * @return Mapa mutable id→[com.ferlagod.rocinante.data.model.BookEnrichment]; vacío si no hay caché.
+     */
+    suspend fun loadEnrichment(): MutableMap<String, com.ferlagod.rocinante.data.model.BookEnrichment> = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "enrichment_cache.json")
+            if (!file.exists()) return@withContext mutableMapOf()
+            val type = object : TypeToken<MutableMap<String, com.ferlagod.rocinante.data.model.BookEnrichment>>() {}.type
+            gson.fromJson<MutableMap<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(file.readText(), type)
+                ?: mutableMapOf()
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            mutableMapOf()
+        }
+    }
+
+    /**
+     * Guarda el mapa completo de datos enriquecidos por libro.
+     */
+    suspend fun saveEnrichment(data: Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>) = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "enrichment_cache.json")
+            file.writeText(gson.toJson(data))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /**
      * Carga los usuarios sugeridos de la caché.
      */
     suspend fun loadSuggestedUsers(): List<com.ferlagod.rocinante.data.model.SuggestedUser>? = withContext(Dispatchers.IO) {

@@ -25,6 +25,20 @@
     <string name="shelf_screen_subtitle">Selecteer een plank om je leesvoortgang te bekijken.</string>
     <string name="shelf_back">Terug</string>
     <string name="shelf_empty">Deze plank is leeg.</string>
+    <string name="shelf_sort">Sorteren</string>
+    <string name="shelf_sort_default">Standaardvolgorde</string>
+    <string name="shelf_sort_title_asc">Titel A–Z</string>
+    <string name="shelf_sort_title_desc">Titel Z–A</string>
+    <string name="shelf_sort_finished_desc">Uitgelezen (nieuwste)</string>
+    <string name="shelf_sort_finished_asc">Uitgelezen (oudste)</string>
+    <string name="shelf_sort_rating_desc">Beoordeling (hoog–laag)</string>
+    <string name="shelf_sort_rating_asc">Beoordeling (laag–hoog)</string>
+    <string name="shelf_resync">Gegevens vernieuwen</string>
+    <string name="shelf_loading_data">Gegevens laden… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d dag</item>
+        <item quantity="other">%d dagen</item>
+    </plurals>
     <string name="shelf_to_read_title">Nog lezen</string>
     <string name="shelf_to_read_desc">Boeken die je binnenkort wilt lezen</string>
     <string name="shelf_reading_title">Aan het lezen</string>

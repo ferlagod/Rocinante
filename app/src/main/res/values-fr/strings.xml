@@ -25,6 +25,20 @@
     <string name="shelf_screen_subtitle">Sélectionnez une étagère pour voir votre progression.</string>
     <string name="shelf_back">Retour</string>
     <string name="shelf_empty">Cette étagère est vide.</string>
+    <string name="shelf_sort">Trier</string>
+    <string name="shelf_sort_default">Ordre par défaut</string>
+    <string name="shelf_sort_title_asc">Titre A–Z</string>
+    <string name="shelf_sort_title_desc">Titre Z–A</string>
+    <string name="shelf_sort_finished_desc">Terminé (récents)</string>
+    <string name="shelf_sort_finished_asc">Terminé (anciens)</string>
+    <string name="shelf_sort_rating_desc">Note (élevée–basse)</string>
+    <string name="shelf_sort_rating_asc">Note (basse–élevée)</string>
+    <string name="shelf_resync">Actualiser les données</string>
+    <string name="shelf_loading_data">Chargement des données… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d jour</item>
+        <item quantity="other">%d jours</item>
+    </plurals>
     <string name="shelf_to_read_title">À lire</string>
     <string name="shelf_to_read_desc">Livres que vous souhaitez lire prochainement</string>
     <string name="shelf_reading_title">En cours</string>

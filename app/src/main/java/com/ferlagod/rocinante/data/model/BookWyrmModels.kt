@@ -161,7 +161,35 @@ data class ShelfPage(
 data class ShelfBookItem(
     val id: String?,
     val title: String?,
-    val cover: ShelfBookCover?
+    // Título normalizado por el servidor (artículos eliminados) para ordenar alfabéticamente.
+    val sortTitle: String? = null,
+    val cover: ShelfBookCover?,
+    // Campos que ya vienen en el Edition del .json de la estantería (antes se descartaban):
+    // número de páginas, idiomas y URLs de autores. No requieren peticiones adicionales.
+    val pages: Int? = null,
+    val languages: List<String>? = null,
+    val authors: List<String>? = null
+)
+
+/**
+ * Datos por libro que NO están en el .json de la estantería y se obtienen raspando
+ * la página HTML del libro (una sola vez por libro, cacheados localmente): nombre del
+ * autor, valoración del usuario (admite medias estrellas), y fechas de lectura en ISO.
+ *
+ * @property bookId URL/identificador del libro (misma clave que [ShelfBookItem.id]).
+ * @property authorName Nombre legible del autor (el .json solo trae la URL).
+ * @property rating Valoración del usuario (0.5–5.0) o null si no la ha valorado.
+ * @property finished Fecha de fin de lectura en formato ISO (yyyy-MM-dd) o null.
+ * @property started Fecha de inicio de lectura en formato ISO (yyyy-MM-dd) o null.
+ * @property fetchedAt Marca de tiempo (epoch ms) de cuándo se obtuvo, para el resincronizado.
+ */
+data class BookEnrichment(
+    val bookId: String,
+    val authorName: String? = null,
+    val rating: Double? = null,
+    val finished: String? = null,
+    val started: String? = null,
+    val fetchedAt: Long? = null
 )
 
 /**

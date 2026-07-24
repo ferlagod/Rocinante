@@ -25,6 +25,20 @@
     <string name="shelf_screen_subtitle">Selecciona una prestatgeria per a veure el teu progrés.</string>
     <string name="shelf_back">Torna</string>
     <string name="shelf_empty">Aquesta prestatgeria està buida.</string>
+    <string name="shelf_sort">Ordena</string>
+    <string name="shelf_sort_default">Ordre predeterminat</string>
+    <string name="shelf_sort_title_asc">Títol A–Z</string>
+    <string name="shelf_sort_title_desc">Títol Z–A</string>
+    <string name="shelf_sort_finished_desc">Acabat (recents)</string>
+    <string name="shelf_sort_finished_asc">Acabat (antics)</string>
+    <string name="shelf_sort_rating_desc">Valoració (alta–baixa)</string>
+    <string name="shelf_sort_rating_asc">Valoració (baixa–alta)</string>
+    <string name="shelf_resync">Actualitza les dades</string>
+    <string name="shelf_loading_data">S\'estan carregant les dades… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d dia</item>
+        <item quantity="other">%d dies</item>
+    </plurals>
     <string name="shelf_to_read_title">Per llegir</string>
     <string name="shelf_to_read_desc">Llibres que vols llegir aviat</string>
     <string name="shelf_reading_title">Llegint</string>

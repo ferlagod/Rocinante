@@ -25,6 +25,20 @@
     <string name="shelf_screen_subtitle">Selecione uma estante para visualizar o seu progresso.</string>
     <string name="shelf_back">Voltar</string>
     <string name="shelf_empty">Esta estante está vazia.</string>
+    <string name="shelf_sort">Ordenar</string>
+    <string name="shelf_sort_default">Ordem predefinida</string>
+    <string name="shelf_sort_title_asc">Título A–Z</string>
+    <string name="shelf_sort_title_desc">Título Z–A</string>
+    <string name="shelf_sort_finished_desc">Terminado (recentes)</string>
+    <string name="shelf_sort_finished_asc">Terminado (antigos)</string>
+    <string name="shelf_sort_rating_desc">Avaliação (alta–baixa)</string>
+    <string name="shelf_sort_rating_asc">Avaliação (baixa–alta)</string>
+    <string name="shelf_resync">Atualizar dados</string>
+    <string name="shelf_loading_data">A carregar dados… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d dia</item>
+        <item quantity="other">%d dias</item>
+    </plurals>
     <string name="shelf_to_read_title">Para ler</string>
     <string name="shelf_to_read_desc">Livros que você quer ler em breve</string>
     <string name="shelf_reading_title">Lendo</string>

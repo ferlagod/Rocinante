@@ -44,15 +44,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -73,10 +82,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
@@ -103,6 +115,91 @@ data class ShelfUiItem(
     val description: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
+
+/**
+ * Modos de ordenación disponibles para el listado de una estantería.
+ * DEFAULT conserva el orden que devuelve el servidor. Los modos FINISHED_* y RATING_*
+ * dependen de los datos enriquecidos (fecha de fin y valoración) obtenidos por libro.
+ */
+private enum class ShelfSortMode {
+    DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC
+}
+
+/**
+ * Comparador que mantiene los valores nulos SIEMPRE al final (en ambas direcciones),
+ * para que los libros sin dato enriquecido queden abajo en vez de mezclarse.
+ */
+private fun <T : Comparable<T>> nullsLastComparator(
+    descending: Boolean,
+    selector: (ShelfBookItem) -> T?
+): Comparator<ShelfBookItem> = Comparator { a, b ->
+    val x = selector(a)
+    val y = selector(b)
+    when {
+        x == null && y == null -> 0
+        x == null -> 1
+        y == null -> -1
+        else -> if (descending) y.compareTo(x) else x.compareTo(y)
+    }
+}
+
+/**
+ * Fila de 5 estrellas (llena / media / vacía) que representa una valoración de 0.5 a 5.0.
+ */
+@Composable
+private fun RatingStars(rating: Double) {
+    val starColor = Color(0xFFF5A623)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        for (i in 1..5) {
+            val icon = when {
+                rating >= i -> Icons.Filled.Star
+                rating >= i - 0.5 -> Icons.Filled.StarHalf
+                else -> Icons.Filled.StarBorder
+            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = starColor,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Formatea una fecha ISO (yyyy-MM-dd) al formato medio del idioma del dispositivo
+ * (p. ej. "1. jan. 2025" en danés). Null si la entrada es nula/vacía; si no se puede
+ * parsear, devuelve la cadena original.
+ */
+private fun formatDisplayDate(iso: String?): String? {
+    if (iso.isNullOrBlank()) return null
+    return try {
+        val parser = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        val parsed = parser.parse(iso) ?: return iso
+        java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(parsed)
+    } catch (e: Exception) {
+        iso
+    }
+}
+
+/**
+ * Nº de días de lectura (inclusivo: mismo día = 1) a partir de las fechas ISO de inicio
+ * y fin. Devuelve null si falta alguna fecha, no se pueden parsear o el fin es anterior
+ * al inicio, de modo que solo se muestra cuando hay información válida.
+ */
+private fun readingDays(startIso: String?, finishIso: String?): Int? {
+    if (startIso.isNullOrBlank() || finishIso.isNullOrBlank()) return null
+    return try {
+        val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        val start = fmt.parse(startIso) ?: return null
+        val finish = fmt.parse(finishIso) ?: return null
+        val diffMs = finish.time - start.time
+        if (diffMs < 0) return null
+        (diffMs / (1000L * 60 * 60 * 24)).toInt() + 1
+    } catch (e: Exception) {
+        null
+    }
+}
 
 /**
  * Pantalla que muestra y permite interactuar con los estantes personales del usuario 
@@ -242,6 +339,23 @@ fun ShelfNativeDetailScreen(
     var refreshTrigger by remember { mutableStateOf(0) }
     var isNetworkRefreshed by remember { mutableStateOf(false) }
 
+    var sortMode by remember { mutableStateOf(ShelfSortMode.DEFAULT) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
+    // Collator con nivel PRIMARY: ignora mayúsculas/acentos pero respeta el orden
+    // alfabético del idioma (p. ej. æ/ø/å en danés se colocan correctamente).
+    val collator = remember {
+        java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
+    }
+
+    // Datos enriquecidos por libro (autor, valoración, fechas) obtenidos de la página HTML,
+    // cacheados localmente. Clave = ShelfBookItem.id.
+    var enrichment by remember { mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap()) }
+    var isEnriching by remember { mutableStateOf(false) }
+    var enrichDone by remember { mutableStateOf(0) }
+    var enrichTotal by remember { mutableStateOf(0) }
+    // Se incrementa al pedir un resincronizado manual para forzar volver a obtener todo.
+    var resyncTrigger by remember { mutableStateOf(0) }
+
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var fallbackCoverUrl by remember { mutableStateOf("") }
@@ -302,6 +416,69 @@ fun ShelfNativeDetailScreen(
         }
     }
 
+    // Lista mostrada: aplica la ordenación elegida. FINISHED_* y RATING_* usan los datos
+    // enriquecidos; los libros sin dato quedan al final. Se recalcula al llegar más datos.
+    val displayedBooks = remember(books, sortMode, enrichment) {
+        val byTitle = Comparator<ShelfBookItem> { a, b ->
+            collator.compare(a.sortTitle ?: a.title ?: "", b.sortTitle ?: b.title ?: "")
+        }
+        fun finishedOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.finished }
+        fun ratingOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.rating }
+        when (sortMode) {
+            ShelfSortMode.DEFAULT -> books
+            ShelfSortMode.TITLE_ASC -> books.sortedWith(byTitle)
+            ShelfSortMode.TITLE_DESC -> books.sortedWith(byTitle).reversed()
+            ShelfSortMode.FINISHED_DESC -> books.sortedWith(nullsLastComparator(true) { finishedOf(it) })
+            ShelfSortMode.FINISHED_ASC -> books.sortedWith(nullsLastComparator(false) { finishedOf(it) })
+            ShelfSortMode.RATING_DESC -> books.sortedWith(nullsLastComparator(true) { ratingOf(it) })
+            ShelfSortMode.RATING_ASC -> books.sortedWith(nullsLastComparator(false) { ratingOf(it) })
+        }
+    }
+
+    // Cargamos todas las páginas de la estantería (son pocas y personales). Es necesario
+    // para ordenar y enriquecer la estantería completa, ya que el .json ignora ?sort=.
+    LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
+        if (hasMorePages && !isPaginating && !isLoading && isNetworkRefreshed) {
+            currentPage++
+        }
+    }
+
+    // Carga inicial de la caché de enriquecimiento (autor, valoración, fechas por libro).
+    LaunchedEffect(Unit) {
+        enrichment = dataCache.loadEnrichment()
+    }
+
+    // Primera vez (o resincronizado): una vez cargada TODA la estantería, se obtienen los
+    // datos que faltan libro a libro, de forma secuencial y suave, mostrando una barra de
+    // progreso. Al terminar queda todo cacheado y las siguientes aperturas son inmediatas.
+    LaunchedEffect(books, hasMorePages, resyncTrigger) {
+        if (books.isEmpty() || hasMorePages || isEnriching) return@LaunchedEffect
+        val ids = books.mapNotNull { it.id }
+        val snapshot = enrichment
+        val missing = ids.filter { it !in snapshot }
+        if (missing.isEmpty()) return@LaunchedEffect
+
+        isEnriching = true
+        enrichDone = 0
+        enrichTotal = missing.size
+        val working = snapshot.toMutableMap()
+        try {
+            for (id in missing) {
+                val enriched = BookWyrmScraper.scrapeBookEnrichment(api, id)
+                if (enriched != null) {
+                    working[id] = enriched
+                    enrichment = working.toMap()
+                }
+                enrichDone++
+                dataCache.saveEnrichment(working)
+                kotlinx.coroutines.delay(250)
+            }
+        } finally {
+            dataCache.saveEnrichment(working)
+            isEnriching = false
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -315,8 +492,77 @@ fun ShelfNativeDetailScreen(
             }
             Text(
                 text = shelf.title,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
             )
+            Box {
+                IconButton(onClick = { sortMenuExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                        contentDescription = stringResource(R.string.shelf_sort)
+                    )
+                }
+                DropdownMenu(
+                    expanded = sortMenuExpanded,
+                    onDismissRequest = { sortMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_default)) },
+                        onClick = { sortMode = ShelfSortMode.DEFAULT; sortMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_title_asc)) },
+                        onClick = { sortMode = ShelfSortMode.TITLE_ASC; sortMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_sort_title_desc)) },
+                        onClick = { sortMode = ShelfSortMode.TITLE_DESC; sortMenuExpanded = false }
+                    )
+                    if (shelf.slug == "read") {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.shelf_sort_finished_desc)) },
+                            onClick = { sortMode = ShelfSortMode.FINISHED_DESC; sortMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.shelf_sort_finished_asc)) },
+                            onClick = { sortMode = ShelfSortMode.FINISHED_ASC; sortMenuExpanded = false }
+                        )
+                    }
+                    if (shelf.slug == "read" || shelf.slug == "reading") {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.shelf_sort_rating_desc)) },
+                            onClick = { sortMode = ShelfSortMode.RATING_DESC; sortMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.shelf_sort_rating_asc)) },
+                            onClick = { sortMode = ShelfSortMode.RATING_ASC; sortMenuExpanded = false }
+                        )
+                    }
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.shelf_resync)) },
+                        onClick = {
+                            enrichment = emptyMap()
+                            resyncTrigger++
+                            sortMenuExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        if (isEnriching && enrichTotal > 0) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+                Text(
+                    text = stringResource(R.string.shelf_loading_data, enrichDone, enrichTotal),
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = { if (enrichTotal > 0) enrichDone.toFloat() / enrichTotal else 0f },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         if (errorMessage != null) {
@@ -401,13 +647,8 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
-                items(books.size) { index ->
-                    val book = books[index]
-                    if (index >= books.size - 5 && !isLoading && !isPaginating && hasMorePages && isNetworkRefreshed) {
-                        LaunchedEffect(index) {
-                            currentPage++
-                        }
-                    }
+                items(displayedBooks.size) { index ->
+                    val book = displayedBooks[index]
 
                     Card(
                         modifier = Modifier
@@ -441,6 +682,26 @@ fun ShelfNativeDetailScreen(
                                             } finally {
                                                 isLoadingDetails = false
                                             }
+
+                                            // Oportunista: refrescamos los datos enriquecidos de este libro con la
+                                            // barra de progreso etiquetada (1/1), para que se vea qué está pasando.
+                                            if (!isEnriching) {
+                                                isEnriching = true
+                                                enrichDone = 0
+                                                enrichTotal = 1
+                                                try {
+                                                    BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
+                                                        val updated = enrichment.toMutableMap().apply { put(bookUrl, enriched) }
+                                                        enrichment = updated
+                                                        dataCache.saveEnrichment(updated)
+                                                    }
+                                                } catch (e: Exception) {
+                                                    if (e is kotlinx.coroutines.CancellationException) throw e
+                                                } finally {
+                                                    enrichDone = 1
+                                                    isEnriching = false
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -448,8 +709,14 @@ fun ShelfNativeDetailScreen(
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
+                            val enrich = book.id?.let { enrichment[it] }
+                            val lang = book.languages?.firstOrNull()
+                            val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
+                            val rating = enrich?.rating
+                            val flagText = flag ?: lang?.takeIf { it.isNotBlank() }
+
                             val coverUrl = book.cover?.url
                             if (!coverUrl.isNullOrEmpty()) {
                                 AsyncImage(
@@ -465,11 +732,80 @@ fun ShelfNativeDetailScreen(
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
+                                // Título centrado en la parte superior.
                                 Text(
                                     text = book.title ?: stringResource(R.string.book_no_title),
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
+
+                                // Estrellas centradas, justo bajo el título.
+                                if (rating != null) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        RatingStars(rating = rating)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Autor (izquierda), con un pequeño icono de persona.
+                                enrich?.authorName?.takeIf { it.isNotBlank() }?.let { author ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Person,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = author,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                // Nº de páginas seguido de la bandera del idioma.
+                                val pagesFlag = buildList {
+                                    book.pages?.let { add("📖 $it") }
+                                    flagText?.let { add(it) }
+                                }.joinToString("  ")
+                                if (pagesFlag.isNotEmpty()) {
+                                    Text(
+                                        text = pagesFlag,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Fecha (fin de lectura en "read", inicio en "reading").
+                                val rawDate = when (shelf.slug) {
+                                    "read" -> enrich?.finished
+                                    "reading" -> enrich?.started
+                                    else -> null
+                                }
+                                formatDisplayDate(rawDate)?.let { dateStr ->
+                                    // En "read", si hay fecha de inicio y de fin, añadimos "(N días)".
+                                    val days = if (shelf.slug == "read") {
+                                        readingDays(enrich?.started, enrich?.finished)
+                                    } else null
+                                    val dateText = if (days != null) {
+                                        "📅 $dateStr (${pluralStringResource(R.plurals.reading_days, days, days)})"
+                                    } else {
+                                        "📅 $dateStr"
+                                    }
+                                    Text(
+                                        text = dateText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }

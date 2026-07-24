@@ -25,6 +25,22 @@
     <string name="shelf_screen_subtitle">Vyberte poličku a prohlédněte si svůj pokrok.</string>
     <string name="shelf_back">Zpět</string>
     <string name="shelf_empty">Tato polička je prázdná.</string>
+    <string name="shelf_sort">Seřadit</string>
+    <string name="shelf_sort_default">Výchozí řazení</string>
+    <string name="shelf_sort_title_asc">Název A–Z</string>
+    <string name="shelf_sort_title_desc">Název Z–A</string>
+    <string name="shelf_sort_finished_desc">Dočteno (nejnovější)</string>
+    <string name="shelf_sort_finished_asc">Dočteno (nejstarší)</string>
+    <string name="shelf_sort_rating_desc">Hodnocení (nejvyšší)</string>
+    <string name="shelf_sort_rating_asc">Hodnocení (nejnižší)</string>
+    <string name="shelf_resync">Obnovit data</string>
+    <string name="shelf_loading_data">Načítání dat… %1$d/%2$d</string>
+    <plurals name="reading_days">
+        <item quantity="one">%d den</item>
+        <item quantity="few">%d dny</item>
+        <item quantity="many">%d dne</item>
+        <item quantity="other">%d dní</item>
+    </plurals>
     <string name="shelf_to_read_title">K přečtení</string>
     <string name="shelf_to_read_desc">Knihy, které si chcete brzy přečíst</string>
     <string name="shelf_reading_title">Právě čtu</string>
