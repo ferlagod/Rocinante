@@ -81,9 +81,7 @@ object BookWyrmScraper {
                 }
             }
 
-            val userRegex = """name=["']user["']\s+value=["'](\d+)["']""".toRegex()
-            val userMatch = userRegex.find(html)
-            val userId = userMatch?.groupValues?.get(1)
+            val userId = extractHiddenFieldValue(html, "user")
 
             if (userId != null) {
                 ReviewContext(userId, bookId)
@@ -147,11 +145,36 @@ object BookWyrmScraper {
      * así que se intentan ambos patrones. Devuelve "" si no se encuentra.
      */
     private fun extractCsrfToken(html: String): String {
-        val nameFirst = """name=["']csrfmiddlewaretoken["']\s+value=["']([^"']+)["']""".toRegex()
+        return extractHiddenFieldValue(html, "csrfmiddlewaretoken") ?: ""
+    }
+
+    /**
+     * Extrae el valor de un campo oculto (`<input name="..." value="...">`)
+     * del HTML de una página renderizada. Django puede emitir los atributos en
+     * cualquier orden (name antes o después de value), así que se intentan
+     * ambos patrones. Devuelve null si no se encuentra.
+     */
+    private fun extractHiddenFieldValue(html: String, fieldName: String): String? {
+        // Patrón 1: name antes de value  →  name="fieldName" ... value="XXX"
+        val nameFirst = """name=["']${Regex.escape(fieldName)}["']\s+value=["']([^"']+)["']""".toRegex()
         nameFirst.find(html)?.groupValues?.get(1)?.let { return it }
-        val valueFirst = """value=["']([^"']+)["']\s+name=["']csrfmiddlewaretoken["']""".toRegex()
+        // Patrón 2: value antes de name  →  value="XXX" ... name="fieldName"
+        val valueFirst = """value=["']([^"']+)["']\s+name=["']${Regex.escape(fieldName)}["']""".toRegex()
         valueFirst.find(html)?.groupValues?.get(1)?.let { return it }
-        return ""
+        return null
+    }
+
+    /**
+     * Extrae el readthrough ID del formulario de progreso de lectura.
+     * Busca el `<form name="reading-progress-...">` y dentro de él, el input
+     * `<input name="id" value="(\d+)">` en cualquier orden de atributos.
+     */
+    private fun extractReadthroughId(html: String): String? {
+        // Localizar el bloque del formulario de progreso
+        val formRegex = """<form[^>]*name=["']reading-progress-[\s\S]*?</form>""".toRegex()
+        val formBlock = formRegex.find(html)?.value ?: return null
+        // Dentro del formulario, buscar el campo "id" en ambos órdenes
+        return extractHiddenFieldValue(formBlock, "id")
     }
 
     /**
@@ -188,17 +211,9 @@ object BookWyrmScraper {
                     }
                     if (html.isEmpty()) return@withContext null
                     
-                    val regex = """<form[^>]*name=["']reading-progress-[^>]*>.*?name=["']id["'][^>]*value=["'](\d+)["']""".toRegex(RegexOption.DOT_MATCHES_ALL)
-                    val match = regex.find(html)
-                    val readthroughId = match?.groupValues?.get(1)
-                    
-                    val userRegex = """name=["']user["']\s+value=["'](\d+)["']""".toRegex()
-                    val userMatch = userRegex.find(html)
-                    val userId = userMatch?.groupValues?.get(1)
-
-                    val startDateRegex = """name=["']start_date["']\s+value=["']([^"']+)["']""".toRegex()
-                    val startDateMatch = startDateRegex.find(html)
-                    val startDate = startDateMatch?.groupValues?.get(1)?.takeIf { it.isNotBlank() }
+                    val readthroughId = extractReadthroughId(html)
+                    val userId = extractHiddenFieldValue(html, "user")
+                    val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
 
                     if (readthroughId != null && userId != null) {
                         return@withContext ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
@@ -209,17 +224,9 @@ object BookWyrmScraper {
 
                 val html = response.body()?.string() ?: return@withContext null
 
-                val regex = """<form[^>]*name=["']reading-progress-[^>]*>.*?name=["']id["'][^>]*value=["'](\d+)["']""".toRegex(RegexOption.DOT_MATCHES_ALL)
-                val match = regex.find(html)
-                val readthroughId = match?.groupValues?.get(1)
-
-                val userRegex = """name=["']user["']\s+value=["'](\d+)["']""".toRegex()
-                val userMatch = userRegex.find(html)
-                val userId = userMatch?.groupValues?.get(1)
-
-                val startDateRegex = """name=["']start_date["']\s+value=["']([^"']+)["']""".toRegex()
-                val startDateMatch = startDateRegex.find(html)
-                val startDate = startDateMatch?.groupValues?.get(1)?.takeIf { it.isNotBlank() }
+                val readthroughId = extractReadthroughId(html)
+                val userId = extractHiddenFieldValue(html, "user")
+                val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
 
                 if (readthroughId != null && userId != null) {
                     ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
@@ -520,10 +527,14 @@ object BookWyrmScraper {
                 }
 
                 val coverImg = element.selectFirst("img[src*=covers]")
+                    ?: element.selectFirst("img[src*=images/covers]")
                     ?: element.selectFirst("img[alt*=cover]")
                     ?: element.selectFirst(".book-cover img")
                     ?: element.selectFirst(".cover-container img")
-                val coverSrc = coverImg?.attr("src") ?: ""
+                    ?: element.selectFirst("img.book-preview-image")
+                    ?: element.selectFirst("[itemprop=image] img")
+                    ?: element.selectFirst("a[href*='/book/'] img")
+                val coverSrc = coverImg?.attr("src")?.ifEmpty { coverImg.attr("data-src") } ?: ""
                 val bookCoverUrl = resolveUrl(coverSrc, cleanBase).takeIf { it.isNotEmpty() }
 
                 val bookLink = element.selectFirst("a[href*='/book/']")
