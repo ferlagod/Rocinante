@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
@@ -1172,7 +1173,27 @@ fun ProfileTab(
     }
 
     var readingBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
+    var toReadBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
     var suggestedUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
+
+    // Estadísticas de lectura: se calculan con lo que ya hay en caché (estantería "Leídos"
+    // y datos enriquecidos), así que no añaden ninguna petición al abrir el perfil. Si la
+    // estantería no se ha abierto nunca todavía, no hay nada que mostrar.
+    val today = remember { java.time.LocalDate.now() }
+    val currentYear = today.year
+    var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
+
+    // Orden y visibilidad de los bloques, elegidos por el usuario y guardados en ajustes.
+    val settingsPreferences = remember(context) {
+        com.ferlagod.rocinante.data.local.SettingsPreferences(context)
+    }
+    val settingsState by settingsPreferences.settingsFlow.collectAsStateWithLifecycle(
+        initialValue = com.ferlagod.rocinante.data.local.SettingsData()
+    )
+    val profileLayout = remember(settingsState.profileLayout) {
+        com.ferlagod.rocinante.utils.ProfileLayout.decode(settingsState.profileLayout)
+    }
+    var showLayoutDialog by remember { mutableStateOf(false) }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
@@ -1180,6 +1201,20 @@ fun ProfileTab(
     var isSubmitting by remember { mutableStateOf(false) }
 
     var refreshTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(refreshTrigger) {
+        val dataCache = com.ferlagod.rocinante.data.local.TimelineCache(context)
+        val readShelf = dataCache.loadShelfBooks("read").orEmpty()
+        readingStats = if (readShelf.isEmpty()) {
+            null
+        } else {
+            com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
+                books = readShelf,
+                enrichment = dataCache.loadEnrichment(),
+                currentYear = currentYear
+            )
+        }
+    }
 
     var summary by remember { mutableStateOf("") }
     var rawFollowersCount by remember { mutableStateOf(0) }
@@ -1205,6 +1240,30 @@ fun ProfileTab(
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
+
+    // Abre la ficha del libro desde cualquiera de las filas de portadas del perfil.
+    val openBook: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit = { book ->
+        val bookId = book.id
+        if (!bookId.isNullOrEmpty()) {
+            activeBookKey = bookId
+            fallbackCoverUrl = book.cover?.url ?: ""
+            coroutineScope.launch {
+                try {
+                    val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId)
+                    selectedBookDetails = api.getBookDetails(detailsUrl)
+                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                    selectedBookReviews = try {
+                        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     var followSheetDirection by remember { mutableStateOf<FollowListDirection?>(null) }
     var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
@@ -1279,6 +1338,10 @@ fun ProfileTab(
         if (cachedReading != null && readingBooks.isEmpty()) {
             readingBooks = cachedReading
         }
+        val cachedToRead = dataCache.loadShelfBooks("to-read")
+        if (cachedToRead != null && toReadBooks.isEmpty()) {
+            toReadBooks = cachedToRead
+        }
         val cachedUsers = dataCache.loadSuggestedUsers()
         if (cachedUsers != null && suggestedUsers.isEmpty()) {
             suggestedUsers = cachedUsers
@@ -1295,6 +1358,25 @@ fun ProfileTab(
             val fetchedItems = response.orderedItems ?: emptyList()
             readingBooks = fetchedItems
             dataCache.saveShelfBooks("reading", fetchedItems)
+        } catch (_: Exception) {
+        }
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val cleanUser = username.removePrefix("@").substringBefore("@").trim()
+            // Solo la primera página: aquí basta con las portadas más recientes para la fila.
+            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/to-read.json?page=1"
+            val response = api.getShelfData(shelfJsonUrl)
+            val fetchedItems = response.orderedItems ?: emptyList()
+            if (fetchedItems.isNotEmpty()) {
+                toReadBooks = fetchedItems
+                // "Por leer" puede ser una estantería larga y la pantalla de estanterías guarda
+                // la lista completa. No se sobrescribe con una sola página: solo se siembra la
+                // caché cuando aún no hay nada.
+                if (dataCache.loadShelfBooks("to-read").isNullOrEmpty()) {
+                    dataCache.saveShelfBooks("to-read", fetchedItems)
+                }
+            }
         } catch (_: Exception) {
         }
         try {
@@ -1406,215 +1488,204 @@ fun ProfileTab(
             }
         }
 
-        if (readingBooks.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.profile_currently_reading),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(readingBooks) { book ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val coverUrl = book.cover?.url
-                            if (!coverUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = stringResource(R.string.book_cover_desc),
-                                    modifier = Modifier
-                                        .width(90.dp)
-                                        .height(135.dp)
-                                        .clip(MaterialTheme.shapes.small)
-                                        .clickable {
-                                            if (!book.id.isNullOrEmpty()) {
-                                                activeBookKey = book.id
-                                                fallbackCoverUrl = book.cover.url ?: ""
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
-                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
-                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                        try {
-                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                        } catch (_: Exception) {
-                                                            selectedBookReviews = emptyList()
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        if (e is kotlinx.coroutines.CancellationException) throw e
-                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .width(90.dp)
-                                        .height(135.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
-                                        .clickable {
-                                            if (!book.id.isNullOrEmpty()) {
-                                                activeBookKey = book.id
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
-                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
-                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                        try {
-                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                        } catch (_: Exception) {
-                                                            selectedBookReviews = emptyList()
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        if (e is kotlinx.coroutines.CancellationException) throw e
-                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
+        profileLayout.visibleSections.forEach { section ->
+            when (section) {
+                com.ferlagod.rocinante.utils.ProfileSection.READING_STATS -> {
+                    readingStats?.let { stats ->
+                        item {
+                            com.ferlagod.rocinante.ui.components.ReadingStatsCard(
+                                stats = stats,
+                                currentYear = currentYear,
+                                modifier = Modifier.padding(top = 12.dp)
+                            )
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.CURRENTLY_READING -> {
+                    if (readingBooks.isNotEmpty()) {
+                        item {
+                            ProfileBookCoverRow(
+                                title = stringResource(R.string.profile_currently_reading),
+                                books = readingBooks,
+                                onBookClick = openBook
+                            )
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.TO_READ -> {
+                    if (toReadBooks.isNotEmpty()) {
+                        item {
+                            ProfileBookCoverRow(
+                                title = stringResource(R.string.shelf_to_read_title),
+                                books = toReadBooks,
+                                onBookClick = openBook
+                            )
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.BIO -> {
+                    item {
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(
+                                        text = stringResource(R.string.profile_bio_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(
+                                    text = cleanSummary.ifBlank {
+                                        stringResource(R.string.profile_bio_empty)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
                             }
                         }
                     }
                 }
-            }
-        }
-
-        item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.profile_bio_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = cleanSummary.ifBlank {
-                            stringResource(R.string.profile_bio_empty)
-                        },
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
-
-        profile?.readingGoal?.let { goal ->
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.profile_reading_goal_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        val progressRatio = if (goal.max > 0) (goal.value.toFloat() / goal.max.toFloat()).coerceIn(0f, 1f) else 0f
-                        LinearProgressIndicator(
-                            progress = { progressRatio },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(MaterialTheme.shapes.small),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = stringResource(R.string.profile_reading_goal_progress, goal.value, goal.max),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-
-        if (suggestedUsers.isNotEmpty()) {
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = stringResource(R.string.profile_who_to_follow),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        androidx.compose.foundation.lazy.LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(suggestedUsers) { user ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier
-                                        .width(100.dp)
-                                        .clickable { selectedSuggestedUser = user }
-                                        .padding(4.dp)
-                                ) {
-                                    if (user.avatarUrl.isNotEmpty()) {
-                                        AsyncImage(
-                                            model = user.avatarUrl,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(64.dp).clip(CircleShape),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    } else {
+                com.ferlagod.rocinante.utils.ProfileSection.READING_GOAL -> {
+                    profile?.readingGoal?.let { goal ->
+                        item {
+                            // Con contorno, igual que las tarjetas de estadísticas: el reto de lectura
+                            // muestra cifras del mismo tipo y debe leerse como parte del mismo grupo.
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            imageVector = Icons.Default.Person,
+                                            imageVector = Icons.Default.EmojiEvents,
                                             contentDescription = null,
-                                            modifier = Modifier.size(64.dp).clip(CircleShape)
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.profile_reading_goal_title),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    val progressRatio = if (goal.max > 0) (goal.value.toFloat() / goal.max.toFloat()).coerceIn(0f, 1f) else 0f
+                                    LinearProgressIndicator(
+                                        progress = { progressRatio },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(8.dp)
+                                            .clip(MaterialTheme.shapes.small),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+
                                     Spacer(modifier = Modifier.height(8.dp))
+
                                     Text(
-                                        text = user.name,
+                                        text = stringResource(R.string.profile_reading_goal_progress, goal.value, goal.max),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+
+                                    readingStats?.let { stats ->
+                                        com.ferlagod.rocinante.ui.components.ReadingGoalPaceSection(
+                                            stats = stats,
+                                            booksAheadOfSchedule = com.ferlagod.rocinante.utils.ReadingGoalPace
+                                                .booksAheadOfSchedule(goal.value, goal.max, today)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.TOP_AUTHORS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.RATINGS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.LANGUAGES -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.LanguagesCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.FORMATS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.FormatsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.SUGGESTED_USERS -> {
+                    if (suggestedUsers.isNotEmpty()) {
+                        item {
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
                                     Text(
-                                        text = user.handle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        text = stringResource(R.string.profile_who_to_follow),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    androidx.compose.foundation.lazy.LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        items(suggestedUsers) { user ->
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier
+                                                    .width(100.dp)
+                                                    .clickable { selectedSuggestedUser = user }
+                                                    .padding(4.dp)
+                                            ) {
+                                                if (user.avatarUrl.isNotEmpty()) {
+                                                    AsyncImage(
+                                                        model = user.avatarUrl,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(64.dp).clip(CircleShape),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Person,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(64.dp).clip(CircleShape)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = user.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = user.handle,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.secondary,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1622,6 +1693,36 @@ fun ProfileTab(
                 }
             }
         }
+
+        // Ajustes de la propia página, al final del todo: se usa una vez y no debe competir
+        // con el contenido.
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TextButton(onClick = { showLayoutDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.profile_edit_layout))
+                }
+            }
+        }
+    }
+
+    if (showLayoutDialog) {
+        com.ferlagod.rocinante.ui.components.ProfileLayoutDialog(
+            initialLayout = profileLayout,
+            onDismiss = { showLayoutDialog = false },
+            onSave = { updated ->
+                showLayoutDialog = false
+                coroutineScope.launch { settingsPreferences.setProfileLayout(updated.encode()) }
+            }
+        )
     }
 
     if (showEditDialog) {
@@ -1895,4 +1996,53 @@ fun ActivityDetailsDialog(
             }
         }
     )
+}
+
+/**
+ * Fila horizontal de portadas para el perfil ("Leyendo actualmente", "Por leer"…).
+ * Solo portada: el título y el resto de datos están a un toque de distancia, en la ficha.
+ */
+@Composable
+private fun ProfileBookCoverRow(
+    title: String,
+    books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>,
+    onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+    androidx.compose.foundation.lazy.LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(books) { book ->
+            val coverModifier = Modifier
+                .width(90.dp)
+                .height(135.dp)
+                .clip(MaterialTheme.shapes.small)
+                .clickable { onBookClick(book) }
+            val coverUrl = book.cover?.url
+            if (!coverUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = book.title ?: stringResource(R.string.book_cover_desc),
+                    modifier = coverModifier,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = coverModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = book.title ?: stringResource(R.string.book_cover_desc),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
 }

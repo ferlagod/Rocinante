@@ -315,5 +315,80 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="share_on_bookwyrm"> pe BookWyrm:</string>
     <string name="text_no_name">Fără nume</string>
     <string name="text_someone">Cineva</string>
+    <!-- Estadísticas de lectura del perfil -->
+    <string name="profile_stats_books">Cărți</string>
+    <string name="profile_stats_this_year">Anul acesta</string>
+    <string name="profile_stats_pages">Pagini</string>
+    <string name="profile_stats_per_year">Cărți pe an</string>
+    <string name="profile_stats_chart_desc">Cărți pe an: %1$s</string>
+    <string name="profile_stats_top_authors">Cei mai citiți autori</string>
+    <string name="profile_stats_authors_desc">Cei mai citiți autori: %1$s</string>
+    <string name="profile_stats_ratings">Evaluările tale</string>
+    <string name="profile_stats_average_rating">Media: %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Evaluări acordate: %1$s</string>
+    <string name="profile_stats_days_this_year">Zile per carte anul acesta</string>
+    <string name="profile_stats_days_total">Zile per carte în total</string>
+    <string name="profile_stats_days_basis">Calculat pe %1$d din %2$d cărți cu ambele date</string>
+    <string name="profile_goal_on_track">Ești în grafic cu obiectivul tău</string>
+    <string name="profile_stats_languages">Limbi</string>
+    <string name="profile_stats_languages_desc">Limbi citite: %1$s</string>
+    <string name="profile_stats_formats">Formate</string>
+    <string name="profile_stats_formats_desc">Formate citite: %1$s</string>
+    <string name="book_format_hardcover">Copertă cartonată</string>
+    <string name="book_format_paperback">Broșată</string>
+    <string name="book_format_ebook">Carte electronică</string>
+    <string name="book_format_audiobook">Audiobook</string>
+    <string name="book_format_graphic_novel">Roman grafic</string>
+    <string name="profile_edit_layout">Editează pagina</string>
+    <string name="profile_layout_title">Editează pagina</string>
+    <string name="profile_layout_help">Activează sau dezactivează blocurile și trage de mâner pentru a le reordona.</string>
+    <string name="profile_layout_reset">Resetează</string>
+    <string name="profile_layout_drag_desc">Trage pentru a muta %1$s</string>
+    <string name="profile_section_stats">Statistici de lectură</string>
+    <plurals name="profile_stats_missing_dates">
+        <item quantity="one">%d carte nu are dată de final și nu apare în grafic</item>
+        <item quantity="few">%d cărți nu au dată de final și nu apar în grafic</item>
+        <item quantity="other">%d de cărți nu au dată de final și nu apar în grafic</item>
+    </plurals>
+    <plurals name="profile_stats_missing_pages">
+        <item quantity="one">%d carte nu indică paginile și nu intră în total</item>
+        <item quantity="few">%d cărți nu indică paginile și nu intră în total</item>
+        <item quantity="other">%d de cărți nu indică paginile și nu intră în total</item>
+    </plurals>
+    <plurals name="profile_stats_missing_authors">
+        <item quantity="one">%d carte nu are date despre autor</item>
+        <item quantity="few">%d cărți nu au date despre autor</item>
+        <item quantity="other">%d de cărți nu au date despre autor</item>
+    </plurals>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d carte evaluată</item>
+        <item quantity="few">%d cărți evaluate</item>
+        <item quantity="other">%d de cărți evaluate</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d carte fără evaluare</item>
+        <item quantity="few">%d cărți fără evaluare</item>
+        <item quantity="other">%d de cărți fără evaluare</item>
+    </plurals>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">Ești cu %d carte înaintea obiectivului</item>
+        <item quantity="few">Ești cu %d cărți înaintea obiectivului</item>
+        <item quantity="other">Ești cu %d de cărți înaintea obiectivului</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">Ești cu %d carte în urma obiectivului</item>
+        <item quantity="few">Ești cu %d cărți în urma obiectivului</item>
+        <item quantity="other">Ești cu %d de cărți în urma obiectivului</item>
+    </plurals>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d carte nu indică limba</item>
+        <item quantity="few">%d cărți nu indică limba</item>
+        <item quantity="other">%d de cărți nu indică limba</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d carte nu indică formatul</item>
+        <item quantity="few">%d cărți nu indică formatul</item>
+        <item quantity="other">%d de cărți nu indică formatul</item>
+    </plurals>
 </resources>
 

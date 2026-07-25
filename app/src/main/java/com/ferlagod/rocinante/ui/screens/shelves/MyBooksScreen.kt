@@ -92,6 +92,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
+import com.ferlagod.rocinante.ui.components.RatingStars
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.api.NetworkClient
@@ -140,29 +141,6 @@ private fun <T : Comparable<T>> nullsLastComparator(
         x == null -> 1
         y == null -> -1
         else -> if (descending) y.compareTo(x) else x.compareTo(y)
-    }
-}
-
-/**
- * Fila de 5 estrellas (llena / media / vacía) que representa una valoración de 0.5 a 5.0.
- */
-@Composable
-private fun RatingStars(rating: Double) {
-    val starColor = Color(0xFFF5A623)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        for (i in 1..5) {
-            val icon = when {
-                rating >= i -> Icons.Filled.Star
-                rating >= i - 0.5 -> Icons.Filled.StarHalf
-                else -> Icons.Filled.StarBorder
-            }
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = starColor,
-                modifier = Modifier.size(16.dp)
-            )
-        }
     }
 }
 
@@ -370,9 +348,11 @@ fun ShelfNativeDetailScreen(
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
+        var hadCompleteCache = false
         if (currentPage == 1) {
             isNetworkRefreshed = false
             val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
+            hadCompleteCache = !cachedBooks.isNullOrEmpty()
             if (cachedBooks != null && books.isEmpty()) {
                 books = cachedBooks
                 isLoading = false
@@ -398,7 +378,10 @@ fun ShelfNativeDetailScreen(
             
             if (currentPage == 1) {
                 books = fetchedItems
-                dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                // Guardar aquí la primera página truncaría una lista completa ya cacheada
+                // (y con ella las estadísticas del perfil) hasta que terminase la paginación.
+                // Solo se guarda si aún no había nada; la lista entera se persiste al final.
+                if (!hadCompleteCache) dataCache.saveShelfBooks(shelf.slug, fetchedItems)
                 isNetworkRefreshed = true
             } else {
                 // Deduplicar: solo añadir libros cuyo id no esté ya en la lista,
@@ -444,6 +427,15 @@ fun ShelfNativeDetailScreen(
     LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
         if (hasMorePages && !isPaginating && !isLoading && isNetworkRefreshed) {
             currentPage++
+        }
+    }
+
+    // Al guardar solo la primera página, la caché dejaba la estantería truncada: sin conexión
+    // se veían diez libros y las estadísticas del perfil contaban de menos. Una vez recorridas
+    // todas las páginas se persiste la lista completa.
+    LaunchedEffect(books, hasMorePages, isNetworkRefreshed) {
+        if (!hasMorePages && isNetworkRefreshed && books.isNotEmpty()) {
+            dataCache.saveShelfBooks(shelf.slug, books)
         }
     }
 
