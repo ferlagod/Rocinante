@@ -189,6 +189,8 @@ data class BookEnrichment(
     val rating: Double? = null,
     val finished: String? = null,
     val started: String? = null,
+    // Idioma legible del libro (p. ej. "Danish"), leído de la página HTML del libro.
+    val language: String? = null,
     val fetchedAt: Long? = null
 )
 

@@ -64,6 +64,12 @@
     <string name="book_review_date_unknown">Neznámé datum</string>
     <string name="book_update_progress">Aktualizovat postup čtení</string>
     <string name="book_close">Zavřít</string>
+    <string name="book_tab_synopsis">Synopse</string>
+    <string name="book_tab_reviews">Recenze</string>
+    <string name="book_tab_misc">Více</string>
+    <string name="book_move_confirm">Přesunout do «%1$s»?</string>
+    <string name="book_move_confirm_yes">Přesunout</string>
+    <string name="book_more_actions">Další akce</string>
     <string name="shelf_chip_to_read">K přečtení</string>
     <string name="shelf_chip_reading">Čtu</string>
     <string name="shelf_chip_read">Přečteno</string>
@@ -287,6 +293,8 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="activity_added_book_generic">Přidal(a) knihu do své police</string>
     <string name="activity_fallback_type">Aktivita</string>
     <string name="book_finish_reading">Dočíst</string>
+    <string name="book_start_reading">Začít číst</string>
+    <string name="book_reading_actions">Akce čtení</string>
     <string name="book_finish">Dokončit</string>
     <string name="changelog_text_v1_1_8">NOVINKY\n• Dokončit čtení: Nyní můžete dokončit čtení knihy přímo z jejího detailu. Tato akce uzavře relaci čtení a přidá knihu k vašemu cíli čtení (stejně jako na webu Bookwyrm).</string>
 </resources>

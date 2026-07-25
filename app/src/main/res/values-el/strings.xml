@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Άγνωστη ημερομηνία</string>
     <string name="book_update_progress">Ενημέρωση προόδου ανάγνωσης</string>
     <string name="book_close">Κλείσιμο</string>
+    <string name="book_tab_synopsis">Σύνοψη</string>
+    <string name="book_tab_reviews">Κριτικές</string>
+    <string name="book_tab_misc">Περισσότερα</string>
+    <string name="book_move_confirm">Μετακίνηση σε «%1$s»;</string>
+    <string name="book_move_confirm_yes">Μετακίνηση</string>
+    <string name="book_more_actions">Περισσότερες ενέργειες</string>
     <string name="shelf_chip_to_read">Προς ανάγνωση</string>
     <string name="shelf_chip_reading">Διαβάζω</string>
     <string name="shelf_chip_read">Διαβασμένο</string>
@@ -285,6 +291,8 @@
     <string name="activity_added_book_generic">Πρόσθεσε ένα βιβλίο στο ράφι</string>
     <string name="activity_fallback_type">Δραστηριότητα</string>
     <string name="book_finish_reading">Ολοκλήρωση ανάγνωσης</string>
+    <string name="book_start_reading">Έναρξη ανάγνωσης</string>
+    <string name="book_reading_actions">Ενέργειες ανάγνωσης</string>
     <string name="book_finish">Ολοκλήρωση</string>
     <string name="changelog_text_v1_1_8">ΝΕΟΤΕΡΑ\n• Ολοκλήρωση ανάγνωσης: Μπορείτε πλέον να ολοκληρώσετε την ανάγνωση ενός βιβλίου απευθείας από τις λεπτομέρειές του. Αυτή η ενέργεια κλείνει τη συνεδρία ανάγνωσης και προσθέτει το βιβλίο στον στόχο ανάγνωσής σας (όπως στον ιστότοπο Bookwyrm).</string>
 </resources>

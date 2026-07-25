@@ -71,6 +71,12 @@
     <string name="book_review_date_unknown">Tuntematon päivämäärä</string>
     <string name="book_update_progress">Päivitä lukemisen edistyminen</string>
     <string name="book_close">Sulje</string>
+    <string name="book_tab_synopsis">Kuvaus</string>
+    <string name="book_tab_reviews">Arvostelut</string>
+    <string name="book_tab_misc">Lisää</string>
+    <string name="book_move_confirm">Siirretäänkö kohteeseen «%1$s»?</string>
+    <string name="book_move_confirm_yes">Siirrä</string>
+    <string name="book_more_actions">Lisää toimintoja</string>
     <string name="shelf_chip_to_read">Lukujono</string>
     <string name="shelf_chip_reading">Luettavana</string>
     <string name="shelf_chip_read">Luettu</string>
@@ -286,6 +292,8 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="activity_added_book_generic">Lisäsi kirjan hyllyynsä</string>
     <string name="activity_fallback_type">Toiminta</string>
     <string name="book_finish_reading">Lopeta lukeminen</string>
+    <string name="book_start_reading">Aloita lukeminen</string>
+    <string name="book_reading_actions">Lukutoiminnot</string>
     <string name="book_finish">Lopeta</string>
     <string name="changelog_text_v1_1_8">UUTUUDET\n• Lopeta lukeminen: Voit nyt lopettaa kirjan lukemisen suoraan kirjan tiedoista. Tämä toiminto sulkee lukusession ja lisää kirjan lukutavoitteeseesi (kuten Bookwyrm-verkkosivustolla).</string>
 </resources>

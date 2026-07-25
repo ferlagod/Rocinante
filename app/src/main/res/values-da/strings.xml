@@ -80,6 +80,12 @@
     <string name="book_progress_pages_no_total">Side %1$d</string>
     <string name="book_progress_percent">%1$d%%</string>
     <string name="book_close">Luk</string>
+    <string name="book_tab_synopsis">Resumé</string>
+    <string name="book_tab_reviews">Anmeldelser</string>
+    <string name="book_tab_misc">Diverse</string>
+    <string name="book_move_confirm">Flyt til \"%1$s\"?</string>
+    <string name="book_move_confirm_yes">Flyt</string>
+    <string name="book_more_actions">Flere handlinger</string>
     <string name="shelf_chip_to_read">Vil læse</string>
     <string name="shelf_chip_reading">Læser</string>
     <string name="shelf_chip_read">Læst</string>
@@ -315,6 +321,8 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="activity_added_book_generic">Føjede en bog til sin hylde</string>
     <string name="activity_fallback_type">Aktivitet</string>
     <string name="book_finish_reading">Afslut læsning</string>
+    <string name="book_start_reading">Start at læse</string>
+    <string name="book_reading_actions">Læsehandlinger</string>
     <string name="book_finish">Afslut</string>
     <string name="changelog_text_v1_1_8">NYHEDER\n• Afslut læsning: Du kan nu afslutte læsning af en bog direkte fra bogens detaljer. Denne handling lukker læsesessionen og tilføjer bogen til dit læsemål (ligesom på Bookwyrm-websiden).</string>
 </resources>

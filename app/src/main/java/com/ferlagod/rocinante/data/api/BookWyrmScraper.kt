@@ -333,12 +333,17 @@ object BookWyrmScraper {
                 .mapNotNull { it.attr("value").trim().ifEmpty { null } }
                 .minOrNull()
 
+            // Idioma legible (microdatos schema.org), p. ej. "Danish".
+            val language = doc.selectFirst("meta[itemprop=inLanguage]")
+                ?.attr("content")?.trim()?.ifEmpty { null }
+
             com.ferlagod.rocinante.data.model.BookEnrichment(
                 bookId = bookUrl,
                 authorName = authorName,
                 rating = rating,
                 finished = finished,
                 started = started,
+                language = language,
                 fetchedAt = System.currentTimeMillis()
             )
         } catch (e: Exception) {

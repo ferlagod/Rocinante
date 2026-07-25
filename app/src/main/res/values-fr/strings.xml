@@ -62,6 +62,12 @@
     <string name="book_review_date_unknown">Date inconnue</string>
     <string name="book_update_progress">Mettre à jour la progression</string>
     <string name="book_close">Fermer</string>
+    <string name="book_tab_synopsis">Résumé</string>
+    <string name="book_tab_reviews">Avis</string>
+    <string name="book_tab_misc">Plus</string>
+    <string name="book_move_confirm">Déplacer vers « %1$s » ?</string>
+    <string name="book_move_confirm_yes">Déplacer</string>
+    <string name="book_more_actions">Plus d\'actions</string>
     <string name="shelf_chip_to_read">À lire</string>
     <string name="shelf_chip_reading">En cours</string>
     <string name="shelf_chip_read">Lu</string>
@@ -285,6 +291,8 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="activity_added_book_generic">A ajouté un livre à son étagère</string>
     <string name="activity_fallback_type">Activité</string>
     <string name="book_finish_reading">Terminer la lecture</string>
+    <string name="book_start_reading">Commencer la lecture</string>
+    <string name="book_reading_actions">Actions de lecture</string>
     <string name="book_finish">Terminer</string>
     <string name="changelog_text_v1_1_8">NOUVEAUTÉS\n• Terminer la lecture: Vous pouvez maintenant terminer la lecture d\'\'un livre directement depuis sa fiche. Cette action clôturera la session de lecture et ajoutera le livre à votre objectif de lecture (comme sur le site Bookwyrm).</string>
 </resources>
