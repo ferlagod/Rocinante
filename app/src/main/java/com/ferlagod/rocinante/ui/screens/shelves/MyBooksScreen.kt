@@ -370,9 +370,11 @@ fun ShelfNativeDetailScreen(
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
+        var hadCompleteCache = false
         if (currentPage == 1) {
             isNetworkRefreshed = false
             val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
+            hadCompleteCache = !cachedBooks.isNullOrEmpty()
             if (cachedBooks != null && books.isEmpty()) {
                 books = cachedBooks
                 isLoading = false
@@ -398,7 +400,10 @@ fun ShelfNativeDetailScreen(
             
             if (currentPage == 1) {
                 books = fetchedItems
-                dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                // Guardar aquí la primera página truncaría una lista completa ya cacheada
+                // (y con ella las estadísticas del perfil) hasta que terminase la paginación.
+                // Solo se guarda si aún no había nada; la lista entera se persiste al final.
+                if (!hadCompleteCache) dataCache.saveShelfBooks(shelf.slug, fetchedItems)
                 isNetworkRefreshed = true
             } else {
                 // Deduplicar: solo añadir libros cuyo id no esté ya en la lista,
@@ -444,6 +449,15 @@ fun ShelfNativeDetailScreen(
     LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
         if (hasMorePages && !isPaginating && !isLoading && isNetworkRefreshed) {
             currentPage++
+        }
+    }
+
+    // Al guardar solo la primera página, la caché dejaba la estantería truncada: sin conexión
+    // se veían diez libros y las estadísticas del perfil contaban de menos. Una vez recorridas
+    // todas las páginas se persiste la lista completa.
+    LaunchedEffect(books, hasMorePages, isNetworkRefreshed) {
+        if (!hasMorePages && isNetworkRefreshed && books.isNotEmpty()) {
+            dataCache.saveShelfBooks(shelf.slug, books)
         }
     }
 
