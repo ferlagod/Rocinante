@@ -340,5 +340,11 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog mangler sidetal og er ikke med i totalen</item>
         <item quantity="other">%d bøger mangler sidetal og er ikke med i totalen</item>
     </plurals>
+    <string name="profile_stats_top_authors">Mest læste forfattere</string>
+    <string name="profile_stats_authors_desc">Mest læste forfattere: %1$s</string>
+    <plurals name="profile_stats_missing_authors">
+        <item quantity="one">%d bog mangler forfatteroplysninger</item>
+        <item quantity="other">%d bøger mangler forfatteroplysninger</item>
+    </plurals>
 </resources>
 

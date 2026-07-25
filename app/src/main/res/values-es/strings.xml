@@ -338,4 +338,10 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro no indica páginas y no suma en el total</item>
         <item quantity="other">%d libros no indican páginas y no suman en el total</item>
     </plurals>
+    <string name="profile_stats_top_authors">Autores más leídos</string>
+    <string name="profile_stats_authors_desc">Autores más leídos: %1$s</string>
+    <plurals name="profile_stats_missing_authors">
+        <item quantity="one">%d libro no tiene datos de autor</item>
+        <item quantity="other">%d libros no tienen datos de autor</item>
+    </plurals>
 </resources>

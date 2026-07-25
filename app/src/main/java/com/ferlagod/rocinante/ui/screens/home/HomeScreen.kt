@@ -1579,6 +1579,12 @@ fun ProfileTab(
             }
         }
 
+        readingStats?.let { stats ->
+            item {
+                com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats)
+            }
+        }
+
         if (suggestedUsers.isNotEmpty()) {
             item {
                 ElevatedCard(

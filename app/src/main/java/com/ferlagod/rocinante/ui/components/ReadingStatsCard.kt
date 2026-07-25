@@ -20,12 +20,19 @@
 package com.ferlagod.rocinante.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -132,6 +139,97 @@ fun ReadingStatsCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
             )
+        }
+    }
+}
+
+/**
+ * Autores más leídos, en barras horizontales: los nombres son textos largos y en vertical
+ * no cabrían. Cada fila lleva su cifra al final, que aquí es el contenido y no un adorno.
+ *
+ * Como el resto de la tarjeta, se calcula con lo que ya está cacheado.
+ */
+@Composable
+fun TopAuthorsCard(
+    stats: ReadingStats,
+    modifier: Modifier = Modifier
+) {
+    if (!stats.hasAuthorData) return
+
+    val maxCount = stats.topAuthors.maxOf { it.count }.coerceAtLeast(1)
+    val barColor = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+
+    val chartDescription = stringResource(
+        R.string.profile_stats_authors_desc,
+        stats.topAuthors.joinToString(", ") { "${it.name}: ${it.count}" }
+    )
+
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .semantics { contentDescription = chartDescription }
+        ) {
+            Text(
+                text = stringResource(R.string.profile_stats_top_authors),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            stats.topAuthors.forEach { author ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = author.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(0.42f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(0.48f)
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(trackColor)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(author.count / maxCount.toFloat())
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(barColor)
+                        )
+                    }
+                    Text(
+                        text = author.count.toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(0.10f)
+                    )
+                }
+            }
+
+            if (stats.booksWithoutAuthor > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.profile_stats_missing_authors,
+                        stats.booksWithoutAuthor,
+                        stats.booksWithoutAuthor
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
