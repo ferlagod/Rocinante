@@ -92,6 +92,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
+import com.ferlagod.rocinante.ui.components.RatingStars
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.api.NetworkClient
@@ -140,29 +141,6 @@ private fun <T : Comparable<T>> nullsLastComparator(
         x == null -> 1
         y == null -> -1
         else -> if (descending) y.compareTo(x) else x.compareTo(y)
-    }
-}
-
-/**
- * Fila de 5 estrellas (llena / media / vacía) que representa una valoración de 0.5 a 5.0.
- */
-@Composable
-private fun RatingStars(rating: Double) {
-    val starColor = Color(0xFFF5A623)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        for (i in 1..5) {
-            val icon = when {
-                rating >= i -> Icons.Filled.Star
-                rating >= i - 0.5 -> Icons.Filled.StarHalf
-                else -> Icons.Filled.StarBorder
-            }
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = starColor,
-                modifier = Modifier.size(16.dp)
-            )
-        }
     }
 }
 
