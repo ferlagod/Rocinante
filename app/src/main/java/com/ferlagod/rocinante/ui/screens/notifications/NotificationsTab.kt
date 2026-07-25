@@ -98,9 +98,14 @@ fun NotificationsTab(
                 FloatingActionButton(
                     onClick = {
                         isClearing = true
-                        viewModel.clearAllNotifications {
+                        viewModel.clearAllNotifications(api) { result ->
                             isClearing = false
-                            Toast.makeText(context, R.string.notifications_cleared, Toast.LENGTH_SHORT).show()
+                            val message = if (result.success) {
+                                context.getString(R.string.notifications_cleared)
+                            } else {
+                                context.getString(R.string.error_generic, result.detail)
+                            }
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         }
                     }
                 ) {
