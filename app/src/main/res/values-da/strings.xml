@@ -346,5 +346,16 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog mangler forfatteroplysninger</item>
         <item quantity="other">%d bøger mangler forfatteroplysninger</item>
     </plurals>
+    <string name="profile_stats_ratings">Dine vurderinger</string>
+    <string name="profile_stats_average_rating">Gennemsnit: %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Givne vurderinger: %1$s</string>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d vurderet bog</item>
+        <item quantity="other">%d vurderede bøger</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d bog er ikke vurderet</item>
+        <item quantity="other">%d bøger er ikke vurderet</item>
+    </plurals>
 </resources>
 

@@ -338,4 +338,15 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book has no author information</item>
         <item quantity="other">%d books have no author information</item>
     </plurals>
+    <string name="profile_stats_ratings">Your ratings</string>
+    <string name="profile_stats_average_rating">Average: %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Ratings given: %1$s</string>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d rated book</item>
+        <item quantity="other">%d rated books</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d book has no rating</item>
+        <item quantity="other">%d books have no rating</item>
+    </plurals>
 </resources>

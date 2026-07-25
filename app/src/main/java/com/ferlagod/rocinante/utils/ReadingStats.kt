@@ -40,6 +40,12 @@ import com.ferlagod.rocinante.data.model.ShelfBookItem
  *   alfabético para que la lista no baile entre aperturas).
  * @property booksWithoutAuthor libros de los que no se conoce el autor; no cuentan en
  *   [topAuthors] y la interfaz lo advierte.
+ * @property averageRating media de las valoraciones propias, o null si no hay ninguna.
+ * @property ratedBooks cuántos libros llevan valoración (la base de [averageRating]).
+ * @property ratingDistribution reparto de valoraciones, de mayor a menor. Incluye siempre
+ *   las cinco estrellas enteras —aunque estén a cero, para que se vea la forma del
+ *   reparto— y además las medias estrellas que realmente se han usado.
+ * @property booksWithoutRating libros sin valorar; no entran en la media.
  */
 data class ReadingStats(
     val totalBooks: Int,
@@ -49,17 +55,26 @@ data class ReadingStats(
     val booksWithoutFinishDate: Int,
     val booksWithoutPages: Int,
     val topAuthors: List<AuthorCount>,
-    val booksWithoutAuthor: Int
+    val booksWithoutAuthor: Int,
+    val averageRating: Double?,
+    val ratedBooks: Int,
+    val ratingDistribution: List<RatingBucket>,
+    val booksWithoutRating: Int
 ) {
     data class YearCount(val year: Int, val count: Int)
 
     data class AuthorCount(val name: String, val count: Int)
+
+    data class RatingBucket(val rating: Double, val count: Int)
 
     /** Un solo año no es una serie temporal: no merece gráfico, solo los totales. */
     val hasChartData: Boolean get() = booksPerYear.size >= 2
 
     /** Con un único autor el gráfico no compara nada. */
     val hasAuthorData: Boolean get() = topAuthors.size >= 2
+
+    /** Sin ninguna valoración no hay media ni reparto que enseñar. */
+    val hasRatingData: Boolean get() = ratedBooks > 0
 }
 
 object ReadingStatsCalculator {
@@ -123,6 +138,19 @@ object ReadingStatsCalculator {
             .take(TOP_AUTHORS)
             .map { ReadingStats.AuthorCount(it.key, it.value) }
 
+        val ratings = books.mapNotNull { book ->
+            book.id?.let { enrichment[it]?.rating }?.takeIf { it in 0.5..5.0 }
+        }
+        val ratingCounts = ratings.groupingBy { it }.eachCount()
+        // Las cinco estrellas enteras salen siempre, aunque estén a cero: así se ve la forma
+        // del reparto. Las medias solo si se han usado, para no llenar el gráfico de huecos.
+        val ratingValues = ((1..5).map { it.toDouble() } + ratings.filter { it % 1.0 != 0.0 })
+            .distinct()
+            .sortedDescending()
+        val distribution = ratingValues.map {
+            ReadingStats.RatingBucket(it, ratingCounts[it] ?: 0)
+        }
+
         return ReadingStats(
             totalBooks = books.size,
             booksThisYear = counts[currentYear] ?: 0,
@@ -131,7 +159,11 @@ object ReadingStatsCalculator {
             booksWithoutFinishDate = books.size - years.size,
             booksWithoutPages = books.count { (it.pages ?: 0) <= 0 },
             topAuthors = topAuthors,
-            booksWithoutAuthor = books.size - authorNames.size
+            booksWithoutAuthor = books.size - authorNames.size,
+            averageRating = ratings.average().takeIf { ratings.isNotEmpty() },
+            ratedBooks = ratings.size,
+            ratingDistribution = distribution,
+            booksWithoutRating = books.size - ratings.size
         )
     }
 }

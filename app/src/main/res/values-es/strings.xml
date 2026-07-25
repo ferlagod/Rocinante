@@ -344,4 +344,15 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro no tiene datos de autor</item>
         <item quantity="other">%d libros no tienen datos de autor</item>
     </plurals>
+    <string name="profile_stats_ratings">Tus valoraciones</string>
+    <string name="profile_stats_average_rating">Media: %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Valoraciones dadas: %1$s</string>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d libro valorado</item>
+        <item quantity="other">%d libros valorados</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d libro sin valorar</item>
+        <item quantity="other">%d libros sin valorar</item>
+    </plurals>
 </resources>

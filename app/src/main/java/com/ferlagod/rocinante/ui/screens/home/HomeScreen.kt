@@ -1583,6 +1583,9 @@ fun ProfileTab(
             item {
                 com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats)
             }
+            item {
+                com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats)
+            }
         }
 
         if (suggestedUsers.isNotEmpty()) {

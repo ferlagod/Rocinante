@@ -125,6 +125,44 @@ class ReadingStatsTest {
     }
 
     @Test
+    fun `promedia las valoraciones y reparte por estrellas`() {
+        val books = (1..4).map { book("b$it") }
+        val enrichment = mapOf(
+            "b1" to BookEnrichment(bookId = "b1", rating = 5.0),
+            "b2" to BookEnrichment(bookId = "b2", rating = 4.5),
+            "b3" to BookEnrichment(bookId = "b3", rating = 3.0),
+            "b4" to BookEnrichment(bookId = "b4", rating = null)
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(3, stats.ratedBooks)
+        assertEquals(1, stats.booksWithoutRating)
+        assertEquals(4.166, stats.averageRating!!, 0.001)
+        // Las cinco enteras siempre, más la media estrella usada (4,5); nada de 0,5 ni 1,5…
+        assertEquals(
+            listOf(5.0, 4.5, 4.0, 3.0, 2.0, 1.0),
+            stats.ratingDistribution.map { it.rating }
+        )
+        assertEquals(
+            listOf(1, 1, 0, 1, 0, 0),
+            stats.ratingDistribution.map { it.count }
+        )
+    }
+
+    @Test
+    fun `sin valoraciones no hay media`() {
+        val stats = ReadingStatsCalculator.compute(
+            listOf(book("a")),
+            mapOf("a" to BookEnrichment(bookId = "a")),
+            currentYear = 2026
+        )
+
+        assertEquals(null, stats.averageRating)
+        assertFalse(stats.hasRatingData)
+    }
+
+    @Test
     fun `un solo año no da serie temporal`() {
         val books = listOf(book("a"), book("b"))
         val enrichment = mapOf(finished("a", "2026-01-01"), finished("b", "2026-02-01"))

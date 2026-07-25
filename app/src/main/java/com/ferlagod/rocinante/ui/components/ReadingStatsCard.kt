@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -179,41 +180,19 @@ fun TopAuthorsCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             stats.topAuthors.forEach { author ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                HorizontalBarRow(
+                    count = author.count,
+                    maxCount = maxCount,
+                    labelWeight = 0.42f,
+                    barColor = barColor,
+                    trackColor = trackColor
                 ) {
                     Text(
                         text = author.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(0.42f)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(0.48f)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(trackColor)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(author.count / maxCount.toFloat())
-                                .fillMaxHeight()
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(barColor)
-                        )
-                    }
-                    Text(
-                        text = author.count.toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.weight(0.10f)
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -231,6 +210,137 @@ fun TopAuthorsCard(
                 )
             }
         }
+    }
+}
+
+/**
+ * Reparto de las valoraciones propias, con la misma anatomía que los autores más leídos:
+ * la etiqueta a la izquierda —aquí las estrellas—, la barra en medio y la cifra al final.
+ */
+@Composable
+fun RatingsCard(
+    stats: ReadingStats,
+    modifier: Modifier = Modifier
+) {
+    if (!stats.hasRatingData) return
+
+    val numberFormat = remember { NumberFormat.getInstance() }
+    val averageText = stats.averageRating?.let { numberFormat.format(it) } ?: ""
+    val maxCount = stats.ratingDistribution.maxOf { it.count }.coerceAtLeast(1)
+    val barColor = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+
+    val chartDescription = stringResource(
+        R.string.profile_stats_ratings_desc,
+        stats.ratingDistribution.joinToString(", ") {
+            "${numberFormat.format(it.rating)}: ${it.count}"
+        }
+    )
+
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .semantics { contentDescription = chartDescription }
+        ) {
+            Text(
+                text = stringResource(R.string.profile_stats_ratings),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(R.string.profile_stats_average_rating, averageText) +
+                    "  ·  " +
+                    pluralStringResource(
+                        R.plurals.profile_stats_rating_count,
+                        stats.ratedBooks,
+                        stats.ratedBooks
+                    ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            stats.ratingDistribution.forEach { bucket ->
+                HorizontalBarRow(
+                    count = bucket.count,
+                    maxCount = maxCount,
+                    labelWeight = 0.30f,
+                    barColor = barColor,
+                    trackColor = trackColor
+                ) {
+                    RatingStars(rating = bucket.rating, starSize = 14.dp)
+                }
+            }
+
+            if (stats.booksWithoutRating > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.profile_stats_missing_ratings,
+                        stats.booksWithoutRating,
+                        stats.booksWithoutRating
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Una fila del gráfico de barras horizontales: etiqueta, barra y cifra. La etiqueta es un
+ * bloque libre para que cada gráfico ponga lo suyo —un nombre de autor o unas estrellas—
+ * sin que las dos filas se separen visualmente.
+ *
+ * La barra va sobre una pista tenue para que las filas cortas sigan leyéndose como una escala.
+ */
+@Composable
+private fun HorizontalBarRow(
+    count: Int,
+    maxCount: Int,
+    labelWeight: Float,
+    barColor: Color,
+    trackColor: Color,
+    label: @Composable () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.weight(labelWeight),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            label()
+        }
+        Box(
+            modifier = Modifier
+                .weight(0.90f - labelWeight)
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(trackColor)
+        ) {
+            if (count > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(count / maxCount.toFloat())
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(barColor)
+                )
+            }
+        }
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(0.10f)
+        )
     }
 }
 
