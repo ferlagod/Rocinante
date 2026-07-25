@@ -297,6 +297,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="book_reading_actions">Akce čtení</string>
     <string name="book_finish">Dokončit</string>
     <string name="changelog_text_v1_1_8">NOVINKY\n• Dokončit čtení: Nyní můžete dokončit čtení knihy přímo z jejího detailu. Tato akce uzavře relaci čtení a přidá knihu k vašemu cíli čtení (stejně jako na webu Bookwyrm).</string>
+    <string name="changelog_text_v1_1_9">NOVINKY\n• Detail knihy: Zobrazení detailu knihy je nyní celostránková stránka se záložkami (Shrnutí, Recenze a Podrobnosti) místo vyskakovacího dialogu. Tlačítko zpět se vrátí na předchozí seznam bez ztráty pozice posouvání.\n• Vylepšené police: Karty knih nyní zobrazují autora, hodnocení uživatele (s půlhvězdičkami), počet stran, jazyk (jako vlajku) a data čtení. Data se načtou jednou a ukládají se lokálně.\n• Řazení: Nyní můžete řadit své police podle názvu (A–Z / Z–A), data dokončení (nejnovější/nejstarší) a hodnocení (nejvyšší/nejnižší).\n\nOPRAVY\n• Scraping: Opraveny tři chyby, které bránily získávání citátů, aktualizaci pokroku čtení a zobrazení některých obálek.\n• Zobrazení: Opraven bug způsobující duplicitní knihy při řazení nebo stránkování polic.\n• Překlady: Doplněny všechny chybějící překlady v 16 podporovaných jazycích.\n\nZvláštní poděkování @HBB za jejich vynikající příspěvky k tomuto vydání!</string>
     <!-- i18n: chybějící překlady -->
     <string name="activity_type_note">Poznámka</string>
     <string name="activity_type_comment_en">Komentář</string>

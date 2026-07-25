@@ -1,4 +1,4 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="login_subtitle">Din sociale BookWyrm-læser</string>
     <string name="login_card_title">Forbind til instans</string>
@@ -325,5 +325,6 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="book_reading_actions">Læsehandlinger</string>
     <string name="book_finish">Afslut</string>
     <string name="changelog_text_v1_1_8">NYHEDER\n• Afslut læsning: Du kan nu afslutte læsning af en bog direkte fra bogens detaljer. Denne handling lukker læsesessionen og tilføjer bogen til dit læsemål (ligesom på Bookwyrm-websiden).</string>
+    <string name="changelog_text_v1_1_9">NYHEDER\n• Bogdetaljer: Bogdetaljerne er nu en helskærmsside med faner (Resumé, Anmeldelser og Detaljer) i stedet for en pop-up-dialog. Tilbageknappen vender tilbage til den forrige liste uden at miste din scrollposition.\n• Forbedrede reoler: Bogkortene viser nu forfatter, brugerbedømmelse (med halve stjerner), antal sider, sprog (som flag) og læsedatoer. Data hentes én gang og gemmes lokalt.\n• Sortering: Du kan nu sortere dine reoler efter titel (A–Å / Å–A), slutdato (nyeste/ældste) og bedømmelse (højeste/laveste).\n\nRETTELSER\n• Scraping: Rettet tre fejl, der forhindrede hentning af citater, opdatering af læsefremskridt og visning af nogle bogomslag.\n• Visning: Rettet en fejl, der forårsagede duplikerede bøger ved sortering eller paginering af reoler.\n• Oversættelser: Alle manglende oversættelser på tværs af de 16 understøttede sprog er nu fuldført.\n\nSærlig tak til @HBB for deres fremragende bidrag til denne udgivelse!</string>
 </resources>
 
