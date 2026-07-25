@@ -314,5 +314,71 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="share_on_bookwyrm"> sur BookWyrm :</string>
     <string name="text_no_name">Sans nom</string>
     <string name="text_someone">Quelqu\'un</string>
+    <!-- Estadísticas de lectura del perfil -->
+    <string name="profile_stats_books">Livres</string>
+    <string name="profile_stats_this_year">Cette année</string>
+    <string name="profile_stats_pages">Pages</string>
+    <string name="profile_stats_per_year">Livres par an</string>
+    <string name="profile_stats_chart_desc">Livres par an : %1$s</string>
+    <string name="profile_stats_top_authors">Auteurs les plus lus</string>
+    <string name="profile_stats_authors_desc">Auteurs les plus lus : %1$s</string>
+    <string name="profile_stats_ratings">Vos notes</string>
+    <string name="profile_stats_average_rating">Moyenne : %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Notes attribuées : %1$s</string>
+    <string name="profile_stats_days_this_year">Jours par livre cette année</string>
+    <string name="profile_stats_days_total">Jours par livre au total</string>
+    <string name="profile_stats_days_basis">Calculé sur %1$d livres sur %2$d ayant les deux dates</string>
+    <string name="profile_goal_on_track">Vous êtes dans les temps pour votre objectif</string>
+    <string name="profile_stats_languages">Langues</string>
+    <string name="profile_stats_languages_desc">Langues lues : %1$s</string>
+    <string name="profile_stats_formats">Formats</string>
+    <string name="profile_stats_formats_desc">Formats lus : %1$s</string>
+    <string name="book_format_hardcover">Couverture rigide</string>
+    <string name="book_format_paperback">Poche</string>
+    <string name="book_format_ebook">Livre numérique</string>
+    <string name="book_format_audiobook">Livre audio</string>
+    <string name="book_format_graphic_novel">Roman graphique</string>
+    <string name="profile_edit_layout">Modifier la page</string>
+    <string name="profile_layout_title">Modifier la page</string>
+    <string name="profile_layout_help">Activez ou désactivez les blocs et faites glisser la poignée pour les réordonner.</string>
+    <string name="profile_layout_reset">Réinitialiser</string>
+    <string name="profile_layout_drag_desc">Faites glisser pour déplacer %1$s</string>
+    <string name="profile_section_stats">Statistiques de lecture</string>
+    <plurals name="profile_stats_missing_dates">
+        <item quantity="one">%d livre n\'a pas de date de fin et n\'apparaît pas dans le graphique</item>
+        <item quantity="other">%d livres n\'ont pas de date de fin et n\'apparaissent pas dans le graphique</item>
+    </plurals>
+    <plurals name="profile_stats_missing_pages">
+        <item quantity="one">%d livre n\'indique pas de pages et n\'est pas compté</item>
+        <item quantity="other">%d livres n\'indiquent pas de pages et ne sont pas comptés</item>
+    </plurals>
+    <plurals name="profile_stats_missing_authors">
+        <item quantity="one">%d livre sans information d\'auteur</item>
+        <item quantity="other">%d livres sans information d\'auteur</item>
+    </plurals>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d livre noté</item>
+        <item quantity="other">%d livres notés</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d livre sans note</item>
+        <item quantity="other">%d livres sans note</item>
+    </plurals>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">Vous avez %d livre d\'avance sur votre objectif</item>
+        <item quantity="other">Vous avez %d livres d\'avance sur votre objectif</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">Vous avez %d livre de retard sur votre objectif</item>
+        <item quantity="other">Vous avez %d livres de retard sur votre objectif</item>
+    </plurals>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d livre sans langue indiquée</item>
+        <item quantity="other">%d livres sans langue indiquée</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d livre sans format indiqué</item>
+        <item quantity="other">%d livres sans format indiqué</item>
+    </plurals>
 </resources>
 

@@ -314,5 +314,71 @@
     <string name="share_on_bookwyrm"> στο BookWyrm:</string>
     <string name="text_no_name">Χωρίς όνομα</string>
     <string name="text_someone">Κάποιος</string>
+    <!-- Estadísticas de lectura del perfil -->
+    <string name="profile_stats_books">Βιβλία</string>
+    <string name="profile_stats_this_year">Φέτος</string>
+    <string name="profile_stats_pages">Σελίδες</string>
+    <string name="profile_stats_per_year">Βιβλία ανά έτος</string>
+    <string name="profile_stats_chart_desc">Βιβλία ανά έτος: %1$s</string>
+    <string name="profile_stats_top_authors">Οι πιο διαβασμένοι συγγραφείς</string>
+    <string name="profile_stats_authors_desc">Οι πιο διαβασμένοι συγγραφείς: %1$s</string>
+    <string name="profile_stats_ratings">Οι βαθμολογίες σου</string>
+    <string name="profile_stats_average_rating">Μέσος όρος: %1$s ★</string>
+    <string name="profile_stats_ratings_desc">Βαθμολογίες που έδωσες: %1$s</string>
+    <string name="profile_stats_days_this_year">Ημέρες ανά βιβλίο φέτος</string>
+    <string name="profile_stats_days_total">Ημέρες ανά βιβλίο συνολικά</string>
+    <string name="profile_stats_days_basis">Υπολογισμένο σε %1$d από %2$d βιβλία με τις δύο ημερομηνίες</string>
+    <string name="profile_goal_on_track">Είσαι εντός στόχου</string>
+    <string name="profile_stats_languages">Γλώσσες</string>
+    <string name="profile_stats_languages_desc">Γλώσσες που διάβασες: %1$s</string>
+    <string name="profile_stats_formats">Μορφές</string>
+    <string name="profile_stats_formats_desc">Μορφές που διάβασες: %1$s</string>
+    <string name="book_format_hardcover">Σκληρόδετο</string>
+    <string name="book_format_paperback">Χαρτόδετο</string>
+    <string name="book_format_ebook">Ηλεκτρονικό βιβλίο</string>
+    <string name="book_format_audiobook">Ηχητικό βιβλίο</string>
+    <string name="book_format_graphic_novel">Γκράφικ νόβελ</string>
+    <string name="profile_edit_layout">Επεξεργασία σελίδας</string>
+    <string name="profile_layout_title">Επεξεργασία σελίδας</string>
+    <string name="profile_layout_help">Ενεργοποίησε ή απενεργοποίησε τα μπλοκ και σύρε τη λαβή για να τα αναδιατάξεις.</string>
+    <string name="profile_layout_reset">Επαναφορά</string>
+    <string name="profile_layout_drag_desc">Σύρε για να μετακινήσεις %1$s</string>
+    <string name="profile_section_stats">Στατιστικά ανάγνωσης</string>
+    <plurals name="profile_stats_missing_dates">
+        <item quantity="one">%d βιβλίο δεν έχει ημερομηνία ολοκλήρωσης και δεν εμφανίζεται στο γράφημα</item>
+        <item quantity="other">%d βιβλία δεν έχουν ημερομηνία ολοκλήρωσης και δεν εμφανίζονται στο γράφημα</item>
+    </plurals>
+    <plurals name="profile_stats_missing_pages">
+        <item quantity="one">%d βιβλίο δεν δηλώνει σελίδες και δεν προσμετράται</item>
+        <item quantity="other">%d βιβλία δεν δηλώνουν σελίδες και δεν προσμετρώνται</item>
+    </plurals>
+    <plurals name="profile_stats_missing_authors">
+        <item quantity="one">%d βιβλίο χωρίς στοιχεία συγγραφέα</item>
+        <item quantity="other">%d βιβλία χωρίς στοιχεία συγγραφέα</item>
+    </plurals>
+    <plurals name="profile_stats_rating_count">
+        <item quantity="one">%d βαθμολογημένο βιβλίο</item>
+        <item quantity="other">%d βαθμολογημένα βιβλία</item>
+    </plurals>
+    <plurals name="profile_stats_missing_ratings">
+        <item quantity="one">%d βιβλίο χωρίς βαθμολογία</item>
+        <item quantity="other">%d βιβλία χωρίς βαθμολογία</item>
+    </plurals>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">Είσαι %d βιβλίο μπροστά από τον στόχο σου</item>
+        <item quantity="other">Είσαι %d βιβλία μπροστά από τον στόχο σου</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">Είσαι %d βιβλίο πίσω από τον στόχο σου</item>
+        <item quantity="other">Είσαι %d βιβλία πίσω από τον στόχο σου</item>
+    </plurals>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d βιβλίο χωρίς δηλωμένη γλώσσα</item>
+        <item quantity="other">%d βιβλία χωρίς δηλωμένη γλώσσα</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d βιβλίο χωρίς δηλωμένη μορφή</item>
+        <item quantity="other">%d βιβλία χωρίς δηλωμένη μορφή</item>
+    </plurals>
 </resources>
 
