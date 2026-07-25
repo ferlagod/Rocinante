@@ -32,6 +32,9 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 
 object BookWyrmScraper {
 
+    /** Etiqueta de logcat para diagnosticar el borrado de notificaciones. */
+    private const val TAG_CLEAR = "RocinanteNotif"
+
     /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
      */
@@ -896,24 +899,63 @@ object BookWyrmScraper {
         }
     }
 
-    suspend fun clearNotifications(api: BookWyrmApi, instanceUrl: String): Boolean = withContext(Dispatchers.IO) {
+    /**
+     * Resultado de [clearNotifications]. [detail] indica el motivo del fallo (código HTTP o
+     * etapa) para poder informar al usuario en lugar de fallar en silencio.
+     */
+    data class ClearResult(val success: Boolean, val detail: String)
+
+    /**
+     * Borra en el servidor las notificaciones ya leídas.
+     *
+     * @param api debe ser el cliente creado por [NetworkClient.createAuthenticatedApi]
+     *   (el que mantiene el CookieJar de sesión); con otro cliente el POST recibe un 403.
+     */
+    suspend fun clearNotifications(api: BookWyrmApi, instanceUrl: String): ClearResult = withContext(Dispatchers.IO) {
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val notifUrl = "${baseUrl}notifications"
             
+            // Esta descarga también marca las notificaciones como leídas: BookWyrm solo borra
+            // las leídas (`notification_set.filter(read=True).delete()`) al recibir el POST.
             val html = fetchHtmlWithRedirects(api, notifUrl, baseUrl)
-            if (html.isEmpty()) return@withContext false
-            val csrfToken = org.jsoup.Jsoup.parse(html).select("input[name=csrfmiddlewaretoken]").attr("value")
-            
-            if (csrfToken.isEmpty()) return@withContext false
-            
+            if (html.isEmpty()) {
+                android.util.Log.w(TAG_CLEAR, "GET $notifUrl devolvió HTML vacío")
+                return@withContext ClearResult(false, "HTML")
+            }
+
+            // Se envía el valor de la cookie csrftoken, no el token enmascarado del HTML:
+            // Django valida el campo del formulario contra la cookie que viaja en la petición,
+            // y solo el CookieJar de [NetworkClient] refleja las rotaciones de csrftoken.
+            // El token del HTML queda como respaldo. Mismo criterio que la actualización de
+            // progreso (BookDetailsDialog). IMPORTANTE: el POST debe hacerlo el mismo cliente
+            // cuyo jar se consulta aquí; usar el api inyectado por Hilt (sin CookieJar) da 403.
+            val csrfToken = NetworkClient.currentCsrfToken()
+                ?: org.jsoup.Jsoup.parse(html).select("input[name=csrfmiddlewaretoken]").attr("value")
+
+            if (csrfToken.isEmpty()) {
+                android.util.Log.w(TAG_CLEAR, "no se encontró ningún token CSRF")
+                return@withContext ClearResult(false, "CSRF")
+            }
+
             val response = api.postClearNotifications(csrfToken)
-            response.isSuccessful
+            // La vista de BookWyrm borra y termina con `redirect("/notifications")`, así que la
+            // respuesta normal es un 302. El cliente de sesión no sigue redirecciones
+            // (followRedirects(false)), por lo que un 3xx cuenta como éxito igual que un 2xx.
+            val success = response.isSuccessful || response.code() in 300..399
+            if (!success) {
+                android.util.Log.w(
+                    TAG_CLEAR,
+                    "POST notifications → HTTP ${response.code()} " +
+                        "cuerpo=${response.errorBody()?.string()?.take(200)?.replace("\n", " ")}"
+                )
+            }
+            ClearResult(success, "HTTP ${response.code()}")
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            e.printStackTrace()
-            false
+            android.util.Log.e(TAG_CLEAR, "clearNotifications falló", e)
+            ClearResult(false, e.message ?: e.javaClass.simpleName)
         }
     }
 }

@@ -111,22 +111,27 @@ class NotificationsViewModel @Inject constructor(
 
     /**
      * Limpia todas las notificaciones leídas enviando una petición al servidor.
-     * Si la petición tiene éxito, se actualiza el estado a una lista vacía.
+     * Si la petición tiene éxito, se actualiza el estado a una lista vacía; si falla,
+     * se recarga la lista real y se informa del motivo en [onComplete].
+     *
+     * @param sessionApi cliente de [com.ferlagod.rocinante.data.api.NetworkClient] con el
+     *   CookieJar de la sesión. El api inyectado por Hilt no conserva las cookies rotadas,
+     *   por lo que el POST del formulario sería rechazado con un 403 de CSRF.
      */
-    fun clearAllNotifications(onComplete: () -> Unit) {
+    fun clearAllNotifications(sessionApi: BookWyrmApi, onComplete: (BookWyrmScraper.ClearResult) -> Unit) {
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                val success = BookWyrmScraper.clearNotifications(api, instanceUrl)
-                if (success) {
+                val result = BookWyrmScraper.clearNotifications(sessionApi, instanceUrl)
+                if (result.success) {
                     _state.value = NotificationsState.Success(emptyList())
                 } else {
                     val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
                     _state.value = NotificationsState.Success(items)
                 }
-                onComplete()
+                onComplete(result)
             } catch (e: Exception) {
-                onComplete()
+                onComplete(BookWyrmScraper.ClearResult(false, e.message ?: e.javaClass.simpleName))
             } finally {
                 _isRefreshing.value = false
             }
