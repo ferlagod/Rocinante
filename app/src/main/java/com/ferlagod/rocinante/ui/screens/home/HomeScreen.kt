@@ -1178,7 +1178,8 @@ fun ProfileTab(
     // Estadísticas de lectura: se calculan con lo que ya hay en caché (estantería "Leídos"
     // y datos enriquecidos), así que no añaden ninguna petición al abrir el perfil. Si la
     // estantería no se ha abierto nunca todavía, no hay nada que mostrar.
-    val currentYear = remember { java.time.LocalDate.now().year }
+    val today = remember { java.time.LocalDate.now() }
+    val currentYear = today.year
     var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
 
     var showEditDialog by remember { mutableStateOf(false) }
@@ -1535,7 +1536,9 @@ fun ProfileTab(
 
         profile?.readingGoal?.let { goal ->
             item {
-                ElevatedCard(
+                // Con contorno, igual que las tarjetas de estadísticas: el reto de lectura
+                // muestra cifras del mismo tipo y debe leerse como parte del mismo grupo.
+                OutlinedCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
@@ -1574,6 +1577,14 @@ fun ProfileTab(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+
+                        readingStats?.let { stats ->
+                            com.ferlagod.rocinante.ui.components.ReadingGoalPaceSection(
+                                stats = stats,
+                                booksAheadOfSchedule = com.ferlagod.rocinante.utils.ReadingGoalPace
+                                    .booksAheadOfSchedule(goal.value, goal.max, today)
+                            )
+                        }
                     }
                 }
             }

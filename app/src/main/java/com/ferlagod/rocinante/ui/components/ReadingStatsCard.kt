@@ -31,6 +31,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.HorizontalDivider
@@ -139,6 +145,99 @@ fun ReadingStatsCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Añadido del reto de lectura: si se va por delante o por detrás del ritmo, y cuántos días
+ * se tarda en leer un libro (este año y en total), con la misma anatomía que seguidores
+ * y seguidos.
+ *
+ * Va dentro de la tarjeta del reto, debajo de su barra de progreso.
+ *
+ * @param booksAheadOfSchedule libros de adelanto (positivo) o retraso (negativo); null si
+ *   la meta no permite calcularlo.
+ */
+@Composable
+fun ReadingGoalPaceSection(
+    stats: ReadingStats,
+    booksAheadOfSchedule: Int?,
+    modifier: Modifier = Modifier
+) {
+    if (booksAheadOfSchedule == null && !stats.hasReadingDays) return
+
+    val numberFormat = remember { NumberFormat.getInstance() }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (booksAheadOfSchedule != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            val onSchedule = booksAheadOfSchedule >= 0
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (onSchedule) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
+                    contentDescription = null,
+                    tint = if (onSchedule) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.tertiary
+                    },
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = when {
+                        booksAheadOfSchedule > 0 -> pluralStringResource(
+                            R.plurals.profile_goal_ahead,
+                            booksAheadOfSchedule,
+                            booksAheadOfSchedule
+                        )
+                        booksAheadOfSchedule < 0 -> pluralStringResource(
+                            R.plurals.profile_goal_behind,
+                            -booksAheadOfSchedule,
+                            -booksAheadOfSchedule
+                        )
+                        else -> stringResource(R.string.profile_goal_on_track)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        if (stats.hasReadingDays) {
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatCell(
+                    value = stats.avgReadingDaysThisYear?.let { numberFormat.format(it) } ?: "–",
+                    label = stringResource(R.string.profile_stats_days_this_year),
+                    modifier = Modifier.weight(1f)
+                )
+                VerticalDivider(modifier = Modifier.height(36.dp))
+                StatCell(
+                    value = stats.avgReadingDaysAllTime?.let { numberFormat.format(it) } ?: "–",
+                    label = stringResource(R.string.profile_stats_days_total),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            // La base es pequeña porque BookWyrm rara vez guarda la fecha de inicio: se dice
+            // sobre cuántos libros se ha calculado en lugar de presentarlo como la media de todos.
+            Text(
+                text = stringResource(
+                    R.string.profile_stats_days_basis,
+                    stats.booksWithReadingDays,
+                    stats.totalBooks
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

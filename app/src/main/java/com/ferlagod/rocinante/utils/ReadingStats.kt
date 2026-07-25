@@ -46,6 +46,12 @@ import com.ferlagod.rocinante.data.model.ShelfBookItem
  *   las cinco estrellas enteras —aunque estén a cero, para que se vea la forma del
  *   reparto— y además las medias estrellas que realmente se han usado.
  * @property booksWithoutRating libros sin valorar; no entran en la media.
+ * @property avgReadingDaysThisYear días de lectura por libro terminado este año, o null si
+ *   ninguno tiene las dos fechas.
+ * @property avgReadingDaysAllTime lo mismo para todos los años.
+ * @property booksWithReadingDays libros con fecha de inicio Y de fin, que son los únicos que
+ *   permiten medir cuánto se tardó. BookWyrm suele dejar vacía la de inicio, así que esta
+ *   base es pequeña y la interfaz debe decir sobre cuántos libros se calcula la media.
  */
 data class ReadingStats(
     val totalBooks: Int,
@@ -59,7 +65,10 @@ data class ReadingStats(
     val averageRating: Double?,
     val ratedBooks: Int,
     val ratingDistribution: List<RatingBucket>,
-    val booksWithoutRating: Int
+    val booksWithoutRating: Int,
+    val avgReadingDaysThisYear: Double?,
+    val avgReadingDaysAllTime: Double?,
+    val booksWithReadingDays: Int
 ) {
     data class YearCount(val year: Int, val count: Int)
 
@@ -75,6 +84,9 @@ data class ReadingStats(
 
     /** Sin ninguna valoración no hay media ni reparto que enseñar. */
     val hasRatingData: Boolean get() = ratedBooks > 0
+
+    /** Sin libros con las dos fechas no se puede medir cuánto se tarda en leer. */
+    val hasReadingDays: Boolean get() = booksWithReadingDays > 0
 }
 
 object ReadingStatsCalculator {
@@ -93,6 +105,12 @@ object ReadingStatsCalculator {
      * un solo autor, que es el error menos grave: agrupar de más nunca inventa a alguien
      * que no existe, mientras que separar de más produce autores fantasma.
      */
+    /** "2025-01-01" (o "2025-01-01T…") → fecha; null si BookWyrm no la trae o es ilegible. */
+    private fun parseIsoDate(value: String?): java.time.LocalDate? {
+        if (value.isNullOrBlank()) return null
+        return runCatching { java.time.LocalDate.parse(value.take(10)) }.getOrNull()
+    }
+
     fun splitAuthors(authorName: String): List<String> {
         val parts = authorName.split(", ").map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return listOf(authorName.trim()).filter { it.isNotEmpty() }
@@ -151,6 +169,17 @@ object ReadingStatsCalculator {
             ReadingStats.RatingBucket(it, ratingCounts[it] ?: 0)
         }
 
+        // Días de lectura: solo los libros que traen las dos fechas. Se descartan los tramos
+        // negativos (fechas invertidas al teclearlas), que falsearían la media.
+        val spans = books.mapNotNull { book ->
+            val enriched = book.id?.let { enrichment[it] } ?: return@mapNotNull null
+            val start = parseIsoDate(enriched.started) ?: return@mapNotNull null
+            val finish = parseIsoDate(enriched.finished) ?: return@mapNotNull null
+            val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
+            if (days < 0) null else days to finish.year
+        }
+        val spansThisYear = spans.filter { it.second == currentYear }
+
         return ReadingStats(
             totalBooks = books.size,
             booksThisYear = counts[currentYear] ?: 0,
@@ -163,7 +192,11 @@ object ReadingStatsCalculator {
             averageRating = ratings.average().takeIf { ratings.isNotEmpty() },
             ratedBooks = ratings.size,
             ratingDistribution = distribution,
-            booksWithoutRating = books.size - ratings.size
+            booksWithoutRating = books.size - ratings.size,
+            avgReadingDaysThisYear = spansThisYear.map { it.first }.average()
+                .takeIf { spansThisYear.isNotEmpty() },
+            avgReadingDaysAllTime = spans.map { it.first }.average().takeIf { spans.isNotEmpty() },
+            booksWithReadingDays = spans.size
         )
     }
 }

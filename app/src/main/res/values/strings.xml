@@ -349,4 +349,16 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book has no rating</item>
         <item quantity="other">%d books have no rating</item>
     </plurals>
+    <string name="profile_stats_days_this_year">Days per book this year</string>
+    <string name="profile_stats_days_total">Days per book overall</string>
+    <string name="profile_stats_days_basis">Based on %1$d of %2$d books with both dates</string>
+    <string name="profile_goal_on_track">You are on track with your goal</string>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">You are %d book ahead of your goal</item>
+        <item quantity="other">You are %d books ahead of your goal</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">You are %d book behind your goal</item>
+        <item quantity="other">You are %d books behind your goal</item>
+    </plurals>
 </resources>

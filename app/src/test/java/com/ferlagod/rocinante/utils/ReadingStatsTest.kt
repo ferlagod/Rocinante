@@ -163,6 +163,39 @@ class ReadingStatsTest {
     }
 
     @Test
+    fun `mide los días de lectura solo con las dos fechas`() {
+        val books = listOf(book("a"), book("b"), book("c"))
+        val enrichment = mapOf(
+            // 10 días, terminado este año.
+            "a" to BookEnrichment(bookId = "a", started = "2026-01-01", finished = "2026-01-11"),
+            // 20 días, de un año anterior.
+            "b" to BookEnrichment(bookId = "b", started = "2025-03-01", finished = "2025-03-21"),
+            // Sin fecha de inicio: no se puede medir, que es el caso más común en BookWyrm.
+            "c" to BookEnrichment(bookId = "c", finished = "2026-05-05")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(2, stats.booksWithReadingDays)
+        assertEquals(10.0, stats.avgReadingDaysThisYear!!, 0.001)
+        assertEquals(15.0, stats.avgReadingDaysAllTime!!, 0.001)
+    }
+
+    @Test
+    fun `descarta tramos con las fechas invertidas`() {
+        val books = listOf(book("a"))
+        val enrichment = mapOf(
+            "a" to BookEnrichment(bookId = "a", started = "2026-05-10", finished = "2026-05-01")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(0, stats.booksWithReadingDays)
+        assertEquals(null, stats.avgReadingDaysAllTime)
+        assertFalse(stats.hasReadingDays)
+    }
+
+    @Test
     fun `un solo año no da serie temporal`() {
         val books = listOf(book("a"), book("b"))
         val enrichment = mapOf(finished("a", "2026-01-01"), finished("b", "2026-02-01"))

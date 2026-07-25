@@ -357,5 +357,17 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog er ikke vurderet</item>
         <item quantity="other">%d bøger er ikke vurderet</item>
     </plurals>
+    <string name="profile_stats_days_this_year">Dage pr. bog i år</string>
+    <string name="profile_stats_days_total">Dage pr. bog samlet</string>
+    <string name="profile_stats_days_basis">Beregnet på %1$d af %2$d bøger med begge datoer</string>
+    <string name="profile_goal_on_track">Du er i takt med dit læsemål</string>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">Du er %d bog foran dit læsemål</item>
+        <item quantity="other">Du er %d bøger foran dit læsemål</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">Du er %d bog bagud for dit læsemål</item>
+        <item quantity="other">Du er %d bøger bagud for dit læsemål</item>
+    </plurals>
 </resources>
 

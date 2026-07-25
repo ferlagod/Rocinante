@@ -355,4 +355,16 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro sin valorar</item>
         <item quantity="other">%d libros sin valorar</item>
     </plurals>
+    <string name="profile_stats_days_this_year">Días por libro este año</string>
+    <string name="profile_stats_days_total">Días por libro en total</string>
+    <string name="profile_stats_days_basis">Calculado sobre %1$d de %2$d libros con ambas fechas</string>
+    <string name="profile_goal_on_track">Vas al día con tu reto</string>
+    <plurals name="profile_goal_ahead">
+        <item quantity="one">Vas %d libro por delante de tu reto</item>
+        <item quantity="other">Vas %d libros por delante de tu reto</item>
+    </plurals>
+    <plurals name="profile_goal_behind">
+        <item quantity="one">Vas %d libro por detrás de tu reto</item>
+        <item quantity="other">Vas %d libros por detrás de tu reto</item>
+    </plurals>
 </resources>
