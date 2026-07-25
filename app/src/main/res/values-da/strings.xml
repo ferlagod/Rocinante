@@ -386,5 +386,11 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog mangler formatangivelse</item>
         <item quantity="other">%d bøger mangler formatangivelse</item>
     </plurals>
+    <string name="profile_edit_layout">Rediger side</string>
+    <string name="profile_layout_title">Rediger side</string>
+    <string name="profile_layout_help">Slå bokse til og fra, og træk i grebet for at ændre rækkefølgen.</string>
+    <string name="profile_layout_reset">Nulstil</string>
+    <string name="profile_layout_drag_desc">Træk for at flytte %1$s</string>
+    <string name="profile_section_stats">Læsestatistik</string>
 </resources>
 

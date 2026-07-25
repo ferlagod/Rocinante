@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
@@ -1182,6 +1183,18 @@ fun ProfileTab(
     val currentYear = today.year
     var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
 
+    // Orden y visibilidad de los bloques, elegidos por el usuario y guardados en ajustes.
+    val settingsPreferences = remember(context) {
+        com.ferlagod.rocinante.data.local.SettingsPreferences(context)
+    }
+    val settingsState by settingsPreferences.settingsFlow.collectAsStateWithLifecycle(
+        initialValue = com.ferlagod.rocinante.data.local.SettingsData()
+    )
+    val profileLayout = remember(settingsState.profileLayout) {
+        com.ferlagod.rocinante.utils.ProfileLayout.decode(settingsState.profileLayout)
+    }
+    var showLayoutDialog by remember { mutableStateOf(false) }
+
     var showEditDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var editSummary by remember { mutableStateOf("") }
@@ -1475,188 +1488,204 @@ fun ProfileTab(
             }
         }
 
-        readingStats?.let { stats ->
-            item {
-                com.ferlagod.rocinante.ui.components.ReadingStatsCard(
-                    stats = stats,
-                    currentYear = currentYear,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-            }
-        }
-
-        if (readingBooks.isNotEmpty()) {
-            item {
-                ProfileBookCoverRow(
-                    title = stringResource(R.string.profile_currently_reading),
-                    books = readingBooks,
-                    onBookClick = openBook
-                )
-            }
-        }
-
-        if (toReadBooks.isNotEmpty()) {
-            item {
-                ProfileBookCoverRow(
-                    title = stringResource(R.string.shelf_to_read_title),
-                    books = toReadBooks,
-                    onBookClick = openBook
-                )
-            }
-        }
-
-        item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.profile_bio_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = cleanSummary.ifBlank {
-                            stringResource(R.string.profile_bio_empty)
-                        },
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
-
-        profile?.readingGoal?.let { goal ->
-            item {
-                // Con contorno, igual que las tarjetas de estadísticas: el reto de lectura
-                // muestra cifras del mismo tipo y debe leerse como parte del mismo grupo.
-                OutlinedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.profile_reading_goal_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        val progressRatio = if (goal.max > 0) (goal.value.toFloat() / goal.max.toFloat()).coerceIn(0f, 1f) else 0f
-                        LinearProgressIndicator(
-                            progress = { progressRatio },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(MaterialTheme.shapes.small),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = stringResource(R.string.profile_reading_goal_progress, goal.value, goal.max),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        readingStats?.let { stats ->
-                            com.ferlagod.rocinante.ui.components.ReadingGoalPaceSection(
+        profileLayout.visibleSections.forEach { section ->
+            when (section) {
+                com.ferlagod.rocinante.utils.ProfileSection.READING_STATS -> {
+                    readingStats?.let { stats ->
+                        item {
+                            com.ferlagod.rocinante.ui.components.ReadingStatsCard(
                                 stats = stats,
-                                booksAheadOfSchedule = com.ferlagod.rocinante.utils.ReadingGoalPace
-                                    .booksAheadOfSchedule(goal.value, goal.max, today)
+                                currentYear = currentYear,
+                                modifier = Modifier.padding(top = 12.dp)
                             )
                         }
                     }
                 }
-            }
-        }
-
-        readingStats?.let { stats ->
-            item {
-                com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats)
-            }
-            item {
-                com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats)
-            }
-            item {
-                com.ferlagod.rocinante.ui.components.LanguagesCard(stats = stats)
-            }
-            item {
-                com.ferlagod.rocinante.ui.components.FormatsCard(stats = stats)
-            }
-        }
-
-        if (suggestedUsers.isNotEmpty()) {
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = stringResource(R.string.profile_who_to_follow),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        androidx.compose.foundation.lazy.LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                com.ferlagod.rocinante.utils.ProfileSection.CURRENTLY_READING -> {
+                    if (readingBooks.isNotEmpty()) {
+                        item {
+                            ProfileBookCoverRow(
+                                title = stringResource(R.string.profile_currently_reading),
+                                books = readingBooks,
+                                onBookClick = openBook
+                            )
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.TO_READ -> {
+                    if (toReadBooks.isNotEmpty()) {
+                        item {
+                            ProfileBookCoverRow(
+                                title = stringResource(R.string.shelf_to_read_title),
+                                books = toReadBooks,
+                                onBookClick = openBook
+                            )
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.BIO -> {
+                    item {
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            items(suggestedUsers) { user ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier
-                                        .width(100.dp)
-                                        .clickable { selectedSuggestedUser = user }
-                                        .padding(4.dp)
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (user.avatarUrl.isNotEmpty()) {
-                                        AsyncImage(
-                                            model = user.avatarUrl,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(64.dp).clip(CircleShape),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    } else {
+                                    Text(
+                                        text = stringResource(R.string.profile_bio_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(
+                                    text = cleanSummary.ifBlank {
+                                        stringResource(R.string.profile_bio_empty)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.READING_GOAL -> {
+                    profile?.readingGoal?.let { goal ->
+                        item {
+                            // Con contorno, igual que las tarjetas de estadísticas: el reto de lectura
+                            // muestra cifras del mismo tipo y debe leerse como parte del mismo grupo.
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            imageVector = Icons.Default.Person,
+                                            imageVector = Icons.Default.EmojiEvents,
                                             contentDescription = null,
-                                            modifier = Modifier.size(64.dp).clip(CircleShape)
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.profile_reading_goal_title),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    val progressRatio = if (goal.max > 0) (goal.value.toFloat() / goal.max.toFloat()).coerceIn(0f, 1f) else 0f
+                                    LinearProgressIndicator(
+                                        progress = { progressRatio },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(8.dp)
+                                            .clip(MaterialTheme.shapes.small),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+
                                     Spacer(modifier = Modifier.height(8.dp))
+
                                     Text(
-                                        text = user.name,
+                                        text = stringResource(R.string.profile_reading_goal_progress, goal.value, goal.max),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+
+                                    readingStats?.let { stats ->
+                                        com.ferlagod.rocinante.ui.components.ReadingGoalPaceSection(
+                                            stats = stats,
+                                            booksAheadOfSchedule = com.ferlagod.rocinante.utils.ReadingGoalPace
+                                                .booksAheadOfSchedule(goal.value, goal.max, today)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.TOP_AUTHORS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.RATINGS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.LANGUAGES -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.LanguagesCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.FORMATS -> {
+                    readingStats?.let { stats ->
+                        item { com.ferlagod.rocinante.ui.components.FormatsCard(stats = stats) }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.SUGGESTED_USERS -> {
+                    if (suggestedUsers.isNotEmpty()) {
+                        item {
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
                                     Text(
-                                        text = user.handle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        text = stringResource(R.string.profile_who_to_follow),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    androidx.compose.foundation.lazy.LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        items(suggestedUsers) { user ->
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier
+                                                    .width(100.dp)
+                                                    .clickable { selectedSuggestedUser = user }
+                                                    .padding(4.dp)
+                                            ) {
+                                                if (user.avatarUrl.isNotEmpty()) {
+                                                    AsyncImage(
+                                                        model = user.avatarUrl,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(64.dp).clip(CircleShape),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Person,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(64.dp).clip(CircleShape)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = user.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = user.handle,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.secondary,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1664,6 +1693,36 @@ fun ProfileTab(
                 }
             }
         }
+
+        // Ajustes de la propia página, al final del todo: se usa una vez y no debe competir
+        // con el contenido.
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TextButton(onClick = { showLayoutDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.profile_edit_layout))
+                }
+            }
+        }
+    }
+
+    if (showLayoutDialog) {
+        com.ferlagod.rocinante.ui.components.ProfileLayoutDialog(
+            initialLayout = profileLayout,
+            onDismiss = { showLayoutDialog = false },
+            onSave = { updated ->
+                showLayoutDialog = false
+                coroutineScope.launch { settingsPreferences.setProfileLayout(updated.encode()) }
+            }
+        )
     }
 
     if (showEditDialog) {

@@ -384,4 +384,10 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro no indica formato</item>
         <item quantity="other">%d libros no indican formato</item>
     </plurals>
+    <string name="profile_edit_layout">Editar página</string>
+    <string name="profile_layout_title">Editar página</string>
+    <string name="profile_layout_help">Activa o desactiva los bloques y arrastra el asa para ordenarlos.</string>
+    <string name="profile_layout_reset">Restablecer</string>
+    <string name="profile_layout_drag_desc">Arrastra para mover %1$s</string>
+    <string name="profile_section_stats">Estadísticas de lectura</string>
 </resources>

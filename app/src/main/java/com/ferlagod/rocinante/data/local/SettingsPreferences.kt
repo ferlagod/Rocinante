@@ -60,7 +60,9 @@ data class SettingsData(
     val reminderEnabled: Boolean = false,
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
-    val lastChangelogVersion: String = ""
+    val lastChangelogVersion: String = "",
+    /** Orden y visibilidad de los bloques del perfil, codificados por [ProfileLayout]. */
+    val profileLayout: String = ""
 )
 
 /**
@@ -77,6 +79,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_REMINDER_HOUR = androidx.datastore.preferences.core.intPreferencesKey("reminder_hour")
         private val KEY_REMINDER_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("reminder_minute")
         private val KEY_LAST_CHANGELOG_VERSION = stringPreferencesKey("last_changelog_version")
+        private val KEY_PROFILE_LAYOUT = stringPreferencesKey("profile_layout")
     }
 
     /**
@@ -103,8 +106,17 @@ class SettingsPreferences(private val context: Context) {
             val reminderHour = prefs[KEY_REMINDER_HOUR] ?: 20
             val reminderMinute = prefs[KEY_REMINDER_MINUTE] ?: 0
             val lastChangelogVersion = prefs[KEY_LAST_CHANGELOG_VERSION] ?: ""
+            val profileLayout = prefs[KEY_PROFILE_LAYOUT] ?: ""
 
-            SettingsData(themeMode, openLinks, reminderEnabled, reminderHour, reminderMinute, lastChangelogVersion)
+            SettingsData(
+                themeMode,
+                openLinks,
+                reminderEnabled,
+                reminderHour,
+                reminderMinute,
+                lastChangelogVersion,
+                profileLayout
+            )
         }
 
     /**
@@ -150,6 +162,17 @@ class SettingsPreferences(private val context: Context) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_REMINDER_HOUR] = hour
             prefs[KEY_REMINDER_MINUTE] = minute
+        }
+    }
+
+    /**
+     * Guarda el orden y la visibilidad de los bloques del perfil.
+     *
+     * @param layout cadena generada por `ProfileLayout.encode()`.
+     */
+    suspend fun setProfileLayout(layout: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_PROFILE_LAYOUT] = layout
         }
     }
 

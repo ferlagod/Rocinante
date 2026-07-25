@@ -378,4 +378,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book has no format listed</item>
         <item quantity="other">%d books have no format listed</item>
     </plurals>
+    <string name="profile_edit_layout">Edit page</string>
+    <string name="profile_layout_title">Edit page</string>
+    <string name="profile_layout_help">Turn sections on or off, and drag the handle to reorder them.</string>
+    <string name="profile_layout_reset">Reset</string>
+    <string name="profile_layout_drag_desc">Drag to move %1$s</string>
+    <string name="profile_section_stats">Reading statistics</string>
 </resources>
