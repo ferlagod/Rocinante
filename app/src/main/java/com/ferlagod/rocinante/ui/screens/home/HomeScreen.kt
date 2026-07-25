@@ -1174,12 +1174,32 @@ fun ProfileTab(
     var readingBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
     var suggestedUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
 
+    // Estadísticas de lectura: se calculan con lo que ya hay en caché (estantería "Leídos"
+    // y datos enriquecidos), así que no añaden ninguna petición al abrir el perfil. Si la
+    // estantería no se ha abierto nunca todavía, no hay nada que mostrar.
+    val currentYear = remember { java.time.LocalDate.now().year }
+    var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
+
     var showEditDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var editSummary by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
 
     var refreshTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(refreshTrigger) {
+        val dataCache = com.ferlagod.rocinante.data.local.TimelineCache(context)
+        val readShelf = dataCache.loadShelfBooks("read").orEmpty()
+        readingStats = if (readShelf.isEmpty()) {
+            null
+        } else {
+            com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
+                books = readShelf,
+                enrichment = dataCache.loadEnrichment(),
+                currentYear = currentYear
+            )
+        }
+    }
 
     var summary by remember { mutableStateOf("") }
     var rawFollowersCount by remember { mutableStateOf(0) }
@@ -1403,6 +1423,16 @@ fun ProfileTab(
                         }
                     }
                 }
+            }
+        }
+
+        readingStats?.let { stats ->
+            item {
+                com.ferlagod.rocinante.ui.components.ReadingStatsCard(
+                    stats = stats,
+                    currentYear = currentYear,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
             }
         }
 

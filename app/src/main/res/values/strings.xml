@@ -318,4 +318,18 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="activity_added_book_to_shelf">Added a book to their reading shelf</string>
     <string name="activity_added_book_generic">Added a book to their shelf</string>
     <string name="activity_fallback_type">Activity</string>
+    <!-- Estadísticas de lectura del perfil -->
+    <string name="profile_stats_books">Books</string>
+    <string name="profile_stats_this_year">This year</string>
+    <string name="profile_stats_pages">Pages</string>
+    <string name="profile_stats_per_year">Books per year</string>
+    <string name="profile_stats_chart_desc">Books per year: %1$s</string>
+    <plurals name="profile_stats_missing_dates">
+        <item quantity="one">%d book has no finish date and is not in the chart</item>
+        <item quantity="other">%d books have no finish date and are not in the chart</item>
+    </plurals>
+    <plurals name="profile_stats_missing_pages">
+        <item quantity="one">%d book has no page count and is not in the page total</item>
+        <item quantity="other">%d books have no page count and are not in the page total</item>
+    </plurals>
 </resources>

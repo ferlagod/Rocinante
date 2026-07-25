@@ -324,4 +324,18 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="error_network_error">Error de red</string>
     <string name="error_unknown">Error desconocido</string>
     <string name="search_books_empty">No se encontraron libros</string>
+    <!-- Estadísticas de lectura del perfil -->
+    <string name="profile_stats_books">Libros</string>
+    <string name="profile_stats_this_year">Este año</string>
+    <string name="profile_stats_pages">Páginas</string>
+    <string name="profile_stats_per_year">Libros por año</string>
+    <string name="profile_stats_chart_desc">Libros por año: %1$s</string>
+    <plurals name="profile_stats_missing_dates">
+        <item quantity="one">%d libro no tiene fecha de fin y no aparece en el gráfico</item>
+        <item quantity="other">%d libros no tienen fecha de fin y no aparecen en el gráfico</item>
+    </plurals>
+    <plurals name="profile_stats_missing_pages">
+        <item quantity="one">%d libro no indica páginas y no suma en el total</item>
+        <item quantity="other">%d libros no indican páginas y no suman en el total</item>
+    </plurals>
 </resources>
