@@ -1172,6 +1172,7 @@ fun ProfileTab(
     }
 
     var readingBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
+    var toReadBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
     var suggestedUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>>(emptyList()) }
 
     // Estadísticas de lectura: se calculan con lo que ya hay en caché (estantería "Leídos"
@@ -1225,6 +1226,30 @@ fun ProfileTab(
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
+
+    // Abre la ficha del libro desde cualquiera de las filas de portadas del perfil.
+    val openBook: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit = { book ->
+        val bookId = book.id
+        if (!bookId.isNullOrEmpty()) {
+            activeBookKey = bookId
+            fallbackCoverUrl = book.cover?.url ?: ""
+            coroutineScope.launch {
+                try {
+                    val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId)
+                    selectedBookDetails = api.getBookDetails(detailsUrl)
+                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                    selectedBookReviews = try {
+                        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     var followSheetDirection by remember { mutableStateOf<FollowListDirection?>(null) }
     var selectedSuggestedUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
@@ -1299,6 +1324,10 @@ fun ProfileTab(
         if (cachedReading != null && readingBooks.isEmpty()) {
             readingBooks = cachedReading
         }
+        val cachedToRead = dataCache.loadShelfBooks("to-read")
+        if (cachedToRead != null && toReadBooks.isEmpty()) {
+            toReadBooks = cachedToRead
+        }
         val cachedUsers = dataCache.loadSuggestedUsers()
         if (cachedUsers != null && suggestedUsers.isEmpty()) {
             suggestedUsers = cachedUsers
@@ -1315,6 +1344,25 @@ fun ProfileTab(
             val fetchedItems = response.orderedItems ?: emptyList()
             readingBooks = fetchedItems
             dataCache.saveShelfBooks("reading", fetchedItems)
+        } catch (_: Exception) {
+        }
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val cleanUser = username.removePrefix("@").substringBefore("@").trim()
+            // Solo la primera página: aquí basta con las portadas más recientes para la fila.
+            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/to-read.json?page=1"
+            val response = api.getShelfData(shelfJsonUrl)
+            val fetchedItems = response.orderedItems ?: emptyList()
+            if (fetchedItems.isNotEmpty()) {
+                toReadBooks = fetchedItems
+                // "Por leer" puede ser una estantería larga y la pantalla de estanterías guarda
+                // la lista completa. No se sobrescribe con una sola página: solo se siembra la
+                // caché cuando aún no hay nada.
+                if (dataCache.loadShelfBooks("to-read").isNullOrEmpty()) {
+                    dataCache.saveShelfBooks("to-read", fetchedItems)
+                }
+            }
         } catch (_: Exception) {
         }
         try {
@@ -1438,83 +1486,21 @@ fun ProfileTab(
 
         if (readingBooks.isNotEmpty()) {
             item {
-                Text(
-                    text = stringResource(R.string.profile_currently_reading),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                ProfileBookCoverRow(
+                    title = stringResource(R.string.profile_currently_reading),
+                    books = readingBooks,
+                    onBookClick = openBook
                 )
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(readingBooks) { book ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val coverUrl = book.cover?.url
-                            if (!coverUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = stringResource(R.string.book_cover_desc),
-                                    modifier = Modifier
-                                        .width(90.dp)
-                                        .height(135.dp)
-                                        .clip(MaterialTheme.shapes.small)
-                                        .clickable {
-                                            if (!book.id.isNullOrEmpty()) {
-                                                activeBookKey = book.id
-                                                fallbackCoverUrl = book.cover.url ?: ""
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
-                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
-                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                        try {
-                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                        } catch (_: Exception) {
-                                                            selectedBookReviews = emptyList()
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        if (e is kotlinx.coroutines.CancellationException) throw e
-                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .width(90.dp)
-                                        .height(135.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
-                                        .clickable {
-                                            if (!book.id.isNullOrEmpty()) {
-                                                activeBookKey = book.id
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(book.id)
-                                                        selectedBookDetails = api.getBookDetails(detailsUrl)
-                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                        try {
-                                                            selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                        } catch (_: Exception) {
-                                                            selectedBookReviews = emptyList()
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        if (e is kotlinx.coroutines.CancellationException) throw e
-                                                        Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        }
-                    }
-                }
+            }
+        }
+
+        if (toReadBooks.isNotEmpty()) {
+            item {
+                ProfileBookCoverRow(
+                    title = stringResource(R.string.shelf_to_read_title),
+                    books = toReadBooks,
+                    onBookClick = openBook
+                )
             }
         }
 
@@ -1925,4 +1911,53 @@ fun ActivityDetailsDialog(
             }
         }
     )
+}
+
+/**
+ * Fila horizontal de portadas para el perfil ("Leyendo actualmente", "Por leer"…).
+ * Solo portada: el título y el resto de datos están a un toque de distancia, en la ficha.
+ */
+@Composable
+private fun ProfileBookCoverRow(
+    title: String,
+    books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>,
+    onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+    androidx.compose.foundation.lazy.LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(books) { book ->
+            val coverModifier = Modifier
+                .width(90.dp)
+                .height(135.dp)
+                .clip(MaterialTheme.shapes.small)
+                .clickable { onBookClick(book) }
+            val coverUrl = book.cover?.url
+            if (!coverUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = book.title ?: stringResource(R.string.book_cover_desc),
+                    modifier = coverModifier,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = coverModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = book.title ?: stringResource(R.string.book_cover_desc),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
 }
