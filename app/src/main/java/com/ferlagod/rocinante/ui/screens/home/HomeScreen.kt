@@ -1597,6 +1597,12 @@ fun ProfileTab(
             item {
                 com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats)
             }
+            item {
+                com.ferlagod.rocinante.ui.components.LanguagesCard(stats = stats)
+            }
+            item {
+                com.ferlagod.rocinante.ui.components.FormatsCard(stats = stats)
+            }
         }
 
         if (suggestedUsers.isNotEmpty()) {

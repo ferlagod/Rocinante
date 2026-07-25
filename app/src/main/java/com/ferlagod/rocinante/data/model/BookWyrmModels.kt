@@ -168,7 +168,10 @@ data class ShelfBookItem(
     // número de páginas, idiomas y URLs de autores. No requieren peticiones adicionales.
     val pages: Int? = null,
     val languages: List<String>? = null,
-    val authors: List<String>? = null
+    val authors: List<String>? = null,
+    // Formato del ejemplar, también incluido en el Edition: BookWyrm usa los valores
+    // "Hardcover", "Paperback", "EBook", "AudiobookFormat" y "GraphicNovel".
+    val physicalFormat: String? = null
 )
 
 /**

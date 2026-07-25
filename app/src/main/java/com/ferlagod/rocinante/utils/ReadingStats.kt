@@ -52,6 +52,11 @@ import com.ferlagod.rocinante.data.model.ShelfBookItem
  * @property booksWithReadingDays libros con fecha de inicio Y de fin, que son los únicos que
  *   permiten medir cuánto se tardó. BookWyrm suele dejar vacía la de inicio, así que esta
  *   base es pequeña y la interfaz debe decir sobre cuántos libros se calcula la media.
+ * @property languageDistribution idiomas leídos, de más a menos libros.
+ * @property booksWithoutLanguage libros sin idioma declarado.
+ * @property formatDistribution formatos leídos, con el valor tal cual lo da BookWyrm
+ *   ("Hardcover", "EBook"…); traducirlo es cosa de la interfaz.
+ * @property booksWithoutFormat libros sin formato declarado.
  */
 data class ReadingStats(
     val totalBooks: Int,
@@ -68,13 +73,25 @@ data class ReadingStats(
     val booksWithoutRating: Int,
     val avgReadingDaysThisYear: Double?,
     val avgReadingDaysAllTime: Double?,
-    val booksWithReadingDays: Int
+    val booksWithReadingDays: Int,
+    val languageDistribution: List<LanguageCount>,
+    val booksWithoutLanguage: Int,
+    val formatDistribution: List<FormatCount>,
+    val booksWithoutFormat: Int
 ) {
     data class YearCount(val year: Int, val count: Int)
 
     data class AuthorCount(val name: String, val count: Int)
 
     data class RatingBucket(val rating: Double, val count: Int)
+
+    /**
+     * @property label grafía del idioma más frecuente en la propia estantería.
+     * @property flag bandera del idioma, o null si no hay ninguna asociada.
+     */
+    data class LanguageCount(val label: String, val flag: String?, val count: Int)
+
+    data class FormatCount(val format: String, val count: Int)
 
     /** Un solo año no es una serie temporal: no merece gráfico, solo los totales. */
     val hasChartData: Boolean get() = booksPerYear.size >= 2
@@ -87,6 +104,10 @@ data class ReadingStats(
 
     /** Sin libros con las dos fechas no se puede medir cuánto se tarda en leer. */
     val hasReadingDays: Boolean get() = booksWithReadingDays > 0
+
+    val hasLanguageData: Boolean get() = languageDistribution.isNotEmpty()
+
+    val hasFormatData: Boolean get() = formatDistribution.isNotEmpty()
 }
 
 object ReadingStatsCalculator {
@@ -180,6 +201,37 @@ object ReadingStatsCalculator {
         }
         val spansThisYear = spans.filter { it.second == currentYear }
 
+        // Idiomas: se agrupan por BANDERA, no por el texto. BookWyrm guarda el idioma tal y
+        // como venga en la edición, así que una misma estantería mezcla "Danish" y "Dansk";
+        // agrupar por el texto los contaría como dos idiomas distintos. Como etiqueta se usa
+        // la grafía más repetida. Los idiomas sin bandera se agrupan por su texto en minúsculas.
+        val languageSpellings = mutableMapOf<String, MutableList<String>>()
+        var booksWithLanguage = 0
+        books.forEach { book ->
+            val languages = book.languages.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
+            if (languages.isEmpty()) return@forEach
+            booksWithLanguage++
+            languages
+                .map { it to (LanguageFlags.flagFor(it) ?: it.lowercase()) }
+                // Un libro solo cuenta una vez por idioma, aunque liste "Danish" y "Dansk".
+                .distinctBy { (_, key) -> key }
+                .forEach { (spelling, key) ->
+                    languageSpellings.getOrPut(key) { mutableListOf() }.add(spelling)
+                }
+        }
+        val languageDistribution = languageSpellings
+            .map { (_, spellings) ->
+                val label = spellings.groupingBy { it }.eachCount()
+                    .maxWithOrNull(compareBy({ it.value }, { it.key }))!!.key
+                ReadingStats.LanguageCount(label, LanguageFlags.flagFor(label), spellings.size)
+            }
+            .sortedWith(compareByDescending<ReadingStats.LanguageCount> { it.count }.thenBy { it.label })
+
+        val formats = books.mapNotNull { it.physicalFormat?.trim()?.takeIf { f -> f.isNotEmpty() } }
+        val formatDistribution = formats.groupingBy { it }.eachCount().entries
+            .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .map { ReadingStats.FormatCount(it.key, it.value) }
+
         return ReadingStats(
             totalBooks = books.size,
             booksThisYear = counts[currentYear] ?: 0,
@@ -196,7 +248,11 @@ object ReadingStatsCalculator {
             avgReadingDaysThisYear = spansThisYear.map { it.first }.average()
                 .takeIf { spansThisYear.isNotEmpty() },
             avgReadingDaysAllTime = spans.map { it.first }.average().takeIf { spans.isNotEmpty() },
-            booksWithReadingDays = spans.size
+            booksWithReadingDays = spans.size,
+            languageDistribution = languageDistribution,
+            booksWithoutLanguage = books.size - booksWithLanguage,
+            formatDistribution = formatDistribution,
+            booksWithoutFormat = books.size - formats.size
         )
     }
 }

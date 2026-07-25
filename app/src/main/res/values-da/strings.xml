@@ -369,5 +369,22 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">Du er %d bog bagud for dit læsemål</item>
         <item quantity="other">Du er %d bøger bagud for dit læsemål</item>
     </plurals>
+    <string name="profile_stats_languages">Sprog</string>
+    <string name="profile_stats_languages_desc">Læste sprog: %1$s</string>
+    <string name="profile_stats_formats">Formater</string>
+    <string name="profile_stats_formats_desc">Læste formater: %1$s</string>
+    <string name="book_format_hardcover">Indbundet</string>
+    <string name="book_format_paperback">Paperback</string>
+    <string name="book_format_ebook">E-bog</string>
+    <string name="book_format_audiobook">Lydbog</string>
+    <string name="book_format_graphic_novel">Grafisk roman</string>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d bog mangler sprogangivelse</item>
+        <item quantity="other">%d bøger mangler sprogangivelse</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d bog mangler formatangivelse</item>
+        <item quantity="other">%d bøger mangler formatangivelse</item>
+    </plurals>
 </resources>
 

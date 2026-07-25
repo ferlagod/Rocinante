@@ -389,6 +389,159 @@ fun RatingsCard(
 }
 
 /**
+ * Idiomas de lectura. La etiqueta lleva la bandera del idioma delante del nombre; los
+ * idiomas sin bandera se quedan solo con el nombre.
+ */
+@Composable
+fun LanguagesCard(
+    stats: ReadingStats,
+    modifier: Modifier = Modifier
+) {
+    if (!stats.hasLanguageData) return
+
+    val maxCount = stats.languageDistribution.maxOf { it.count }.coerceAtLeast(1)
+
+    BarChartCard(
+        title = stringResource(R.string.profile_stats_languages),
+        chartDescription = stringResource(
+            R.string.profile_stats_languages_desc,
+            stats.languageDistribution.joinToString(", ") { "${it.label}: ${it.count}" }
+        ),
+        caveat = if (stats.booksWithoutLanguage > 0) {
+            pluralStringResource(
+                R.plurals.profile_stats_missing_languages,
+                stats.booksWithoutLanguage,
+                stats.booksWithoutLanguage
+            )
+        } else {
+            null
+        },
+        modifier = modifier
+    ) { barColor, trackColor ->
+        stats.languageDistribution.forEach { language ->
+            HorizontalBarRow(
+                count = language.count,
+                maxCount = maxCount,
+                labelWeight = 0.42f,
+                barColor = barColor,
+                trackColor = trackColor
+            ) {
+                Text(
+                    text = language.flag?.let { "$it ${language.label}" } ?: language.label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Formatos de los ejemplares leídos (tapa dura, bolsillo, audiolibro…).
+ */
+@Composable
+fun FormatsCard(
+    stats: ReadingStats,
+    modifier: Modifier = Modifier
+) {
+    if (!stats.hasFormatData) return
+
+    val maxCount = stats.formatDistribution.maxOf { it.count }.coerceAtLeast(1)
+
+    BarChartCard(
+        title = stringResource(R.string.profile_stats_formats),
+        chartDescription = stringResource(
+            R.string.profile_stats_formats_desc,
+            stats.formatDistribution.joinToString(", ") { "${it.format}: ${it.count}" }
+        ),
+        caveat = if (stats.booksWithoutFormat > 0) {
+            pluralStringResource(
+                R.plurals.profile_stats_missing_formats,
+                stats.booksWithoutFormat,
+                stats.booksWithoutFormat
+            )
+        } else {
+            null
+        },
+        modifier = modifier
+    ) { barColor, trackColor ->
+        stats.formatDistribution.forEach { format ->
+            HorizontalBarRow(
+                count = format.count,
+                maxCount = maxCount,
+                labelWeight = 0.42f,
+                barColor = barColor,
+                trackColor = trackColor
+            ) {
+                Text(
+                    text = formatLabel(format.format),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Traduce los valores de formato de BookWyrm. Si aparece uno desconocido se muestra tal
+ * cual: es preferible un término en inglés que esconder un dato real.
+ */
+@Composable
+private fun formatLabel(rawFormat: String): String = when (rawFormat) {
+    "Hardcover" -> stringResource(R.string.book_format_hardcover)
+    "Paperback" -> stringResource(R.string.book_format_paperback)
+    "EBook" -> stringResource(R.string.book_format_ebook)
+    "AudiobookFormat" -> stringResource(R.string.book_format_audiobook)
+    "GraphicNovel" -> stringResource(R.string.book_format_graphic_novel)
+    else -> rawFormat
+}
+
+/**
+ * Envoltorio común de los gráficos de barras horizontales: título, filas y, si procede,
+ * la nota sobre los libros que no traen el dato.
+ */
+@Composable
+private fun BarChartCard(
+    title: String,
+    chartDescription: String,
+    caveat: String?,
+    modifier: Modifier = Modifier,
+    rows: @Composable (barColor: Color, trackColor: Color) -> Unit
+) {
+    val barColor = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .semantics { contentDescription = chartDescription }
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            rows(barColor, trackColor)
+            if (caveat != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = caveat,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
  * Una fila del gráfico de barras horizontales: etiqueta, barra y cifra. La etiqueta es un
  * bloque libre para que cada gráfico ponga lo suyo —un nombre de autor o unas estrellas—
  * sin que las dos filas se separen visualmente.

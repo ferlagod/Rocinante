@@ -361,4 +361,21 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">You are %d book behind your goal</item>
         <item quantity="other">You are %d books behind your goal</item>
     </plurals>
+    <string name="profile_stats_languages">Languages</string>
+    <string name="profile_stats_languages_desc">Languages read: %1$s</string>
+    <string name="profile_stats_formats">Formats</string>
+    <string name="profile_stats_formats_desc">Formats read: %1$s</string>
+    <string name="book_format_hardcover">Hardcover</string>
+    <string name="book_format_paperback">Paperback</string>
+    <string name="book_format_ebook">eBook</string>
+    <string name="book_format_audiobook">Audiobook</string>
+    <string name="book_format_graphic_novel">Graphic novel</string>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d book has no language listed</item>
+        <item quantity="other">%d books have no language listed</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d book has no format listed</item>
+        <item quantity="other">%d books have no format listed</item>
+    </plurals>
 </resources>

@@ -9,8 +9,19 @@ import org.junit.Test
 
 class ReadingStatsTest {
 
-    private fun book(id: String, pages: Int? = null) =
-        ShelfBookItem(id = id, title = id, cover = null, pages = pages)
+    private fun book(
+        id: String,
+        pages: Int? = null,
+        languages: List<String>? = null,
+        physicalFormat: String? = null
+    ) = ShelfBookItem(
+        id = id,
+        title = id,
+        cover = null,
+        pages = pages,
+        languages = languages,
+        physicalFormat = physicalFormat
+    )
 
     private fun finished(id: String, date: String?) =
         id to BookEnrichment(bookId = id, finished = date)
@@ -193,6 +204,57 @@ class ReadingStatsTest {
         assertEquals(0, stats.booksWithReadingDays)
         assertEquals(null, stats.avgReadingDaysAllTime)
         assertFalse(stats.hasReadingDays)
+    }
+
+    @Test
+    fun `agrupa el idioma por bandera aunque cambie la grafía`() {
+        // La misma estantería trae "Danish" y "Dansk": es un solo idioma, no dos.
+        val books = listOf(
+            book("a", languages = listOf("Danish")),
+            book("b", languages = listOf("Danish")),
+            book("c", languages = listOf("Dansk")),
+            book("d", languages = listOf("English")),
+            book("e")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, emptyMap(), currentYear = 2026)
+
+        assertEquals(2, stats.languageDistribution.size)
+        // Etiqueta = la grafía más repetida, y la cuenta suma las dos formas.
+        assertEquals("Danish", stats.languageDistribution[0].label)
+        assertEquals(3, stats.languageDistribution[0].count)
+        assertEquals(1, stats.booksWithoutLanguage)
+    }
+
+    @Test
+    fun `un libro no cuenta dos veces por listar el idioma dos veces`() {
+        val books = listOf(book("a", languages = listOf("Danish", "Dansk")))
+
+        val stats = ReadingStatsCalculator.compute(books, emptyMap(), currentYear = 2026)
+
+        assertEquals(1, stats.languageDistribution.size)
+        assertEquals(1, stats.languageDistribution[0].count)
+    }
+
+    @Test
+    fun `reparte los formatos y cuenta los que no lo declaran`() {
+        val books = listOf(
+            book("a", physicalFormat = "Paperback"),
+            book("b", physicalFormat = "Paperback"),
+            book("c", physicalFormat = "AudiobookFormat"),
+            book("d")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, emptyMap(), currentYear = 2026)
+
+        assertEquals(
+            listOf(
+                ReadingStats.FormatCount("Paperback", 2),
+                ReadingStats.FormatCount("AudiobookFormat", 1)
+            ),
+            stats.formatDistribution
+        )
+        assertEquals(1, stats.booksWithoutFormat)
     }
 
     @Test

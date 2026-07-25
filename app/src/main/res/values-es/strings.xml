@@ -367,4 +367,21 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">Vas %d libro por detrás de tu reto</item>
         <item quantity="other">Vas %d libros por detrás de tu reto</item>
     </plurals>
+    <string name="profile_stats_languages">Idiomas</string>
+    <string name="profile_stats_languages_desc">Idiomas leídos: %1$s</string>
+    <string name="profile_stats_formats">Formatos</string>
+    <string name="profile_stats_formats_desc">Formatos leídos: %1$s</string>
+    <string name="book_format_hardcover">Tapa dura</string>
+    <string name="book_format_paperback">Bolsillo</string>
+    <string name="book_format_ebook">Libro electrónico</string>
+    <string name="book_format_audiobook">Audiolibro</string>
+    <string name="book_format_graphic_novel">Novela gráfica</string>
+    <plurals name="profile_stats_missing_languages">
+        <item quantity="one">%d libro no indica idioma</item>
+        <item quantity="other">%d libros no indican idioma</item>
+    </plurals>
+    <plurals name="profile_stats_missing_formats">
+        <item quantity="one">%d libro no indica formato</item>
+        <item quantity="other">%d libros no indican formato</item>
+    </plurals>
 </resources>
