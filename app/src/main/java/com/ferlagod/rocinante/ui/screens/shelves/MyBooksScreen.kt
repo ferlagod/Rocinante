@@ -401,7 +401,11 @@ fun ShelfNativeDetailScreen(
                 dataCache.saveShelfBooks(shelf.slug, fetchedItems)
                 isNetworkRefreshed = true
             } else {
-                books = books + fetchedItems
+                // Deduplicar: solo añadir libros cuyo id no esté ya en la lista,
+                // para evitar repeticiones al re-ejecutarse el efecto.
+                val existingIds = books.mapNotNull { it.id }.toSet()
+                val newItems = fetchedItems.filter { it.id == null || it.id !in existingIds }
+                books = books + newItems
             }
             errorMessage = null
         } catch (e: Exception) {
@@ -647,7 +651,10 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
-                items(displayedBooks.size) { index ->
+                items(
+                    count = displayedBooks.size,
+                    key = { index -> displayedBooks[index].id ?: index }
+                ) { index ->
                     val book = displayedBooks[index]
 
                     Card(
