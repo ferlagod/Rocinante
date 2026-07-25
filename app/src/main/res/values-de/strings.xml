@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Dein sozialer BookWyrm-Reader</string>
     <string name="login_card_title">Instanz verbinden</string>
     <string name="login_field_instance">Instanz (z. B. bookwyrm.social)</string>
@@ -295,5 +295,23 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="book_reading_actions">Leseaktionen</string>
     <string name="book_finish">Beenden</string>
     <string name="changelog_text_v1_1_8">NEUHEITEN\n• Lesen beenden: Du kannst jetzt das Lesen eines Buches direkt aus den Buchdetails abschließen. Diese Aktion schließt die Lesesitzung ab und zählt das Buch zu deinem Leseziel (genau wie auf der Bookwyrm-Website).</string>
+    <!-- i18n: fehlende Übersetzungen -->
+    <string name="activity_type_note">Notiz</string>
+    <string name="activity_type_comment_en">Kommentar</string>
+    <string name="activity_type_announce_en">Ankündigung</string>
+    <string name="activity_type_review_en">Rezension</string>
+    <string name="activity_type_quotation">Zitat</string>
+    <string name="activity_type_add_en">Hinzufügen</string>
+    <string name="activity_type_create">Erstellen</string>
+    <string name="book_current_progress">Dein Fortschritt</string>
+    <string name="book_progress_pages">Seite %1$d von %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Seite %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Netzwerkfehler</string>
+    <string name="error_unknown">Unbekannter Fehler</string>
+    <string name="search_books_empty">Keine Bücher gefunden</string>
+    <string name="share_on_bookwyrm"> auf BookWyrm:</string>
+    <string name="text_no_name">Kein Name</string>
+    <string name="text_someone">Jemand</string>
 </resources>
 

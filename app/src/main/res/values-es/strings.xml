@@ -312,4 +312,15 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="text_someone">Alguien</string>
     <string name="text_no_name">Sin nombre</string>
     <string name="share_on_bookwyrm"> en BookWyrm:</string>
+    <!-- i18n: traducciones faltantes -->
+    <string name="activity_type_note">Nota</string>
+    <string name="activity_type_comment_en">Comentario</string>
+    <string name="activity_type_announce_en">Anuncio</string>
+    <string name="activity_type_review_en">Reseña</string>
+    <string name="activity_type_quotation">Cita</string>
+    <string name="activity_type_add_en">Añadir</string>
+    <string name="activity_type_create">Crear</string>
+    <string name="error_network_error">Error de red</string>
+    <string name="error_unknown">Error desconocido</string>
+    <string name="search_books_empty">No se encontraron libros</string>
 </resources>

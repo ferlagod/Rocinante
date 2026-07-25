@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Twój czytnik społecznościowy BookWyrm</string>
     <string name="login_card_title">Połącz z instancją</string>
     <string name="login_field_instance">Instancja (np. bookwyrm.social)</string>
@@ -297,5 +297,23 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="book_reading_actions">Akcje czytania</string>
     <string name="book_finish">Zakończ</string>
     <string name="changelog_text_v1_1_8">NOWOŚCI\n• Zakończ czytanie: Możesz teraz zakończyć czytanie książki bezpośrednio z jej szczegółów. Ta akcja zamknie sesję czytania i doliczy książkę do Twojego celu czytelniczego (tak jak na stronie Bookwyrm).</string>
+    <!-- i18n: brakujące tłumaczenia -->
+    <string name="activity_type_note">Notatka</string>
+    <string name="activity_type_comment_en">Komentarz</string>
+    <string name="activity_type_announce_en">Ogłoszenie</string>
+    <string name="activity_type_review_en">Recenzja</string>
+    <string name="activity_type_quotation">Cytat</string>
+    <string name="activity_type_add_en">Dodanie</string>
+    <string name="activity_type_create">Utworzenie</string>
+    <string name="book_current_progress">Twój postęp</string>
+    <string name="book_progress_pages">Strona %1$d z %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Strona %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Błąd sieci</string>
+    <string name="error_unknown">Nieznany błąd</string>
+    <string name="search_books_empty">Nie znaleziono książek</string>
+    <string name="share_on_bookwyrm"> na BookWyrm:</string>
+    <string name="text_no_name">Brak nazwy</string>
+    <string name="text_someone">Ktoś</string>
 </resources>
 

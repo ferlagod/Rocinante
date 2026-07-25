@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Jouw sociale BookWyrm-lezer</string>
     <string name="login_card_title">Verbind instantie</string>
     <string name="login_field_instance">Instantie (bijv. bookwyrm.social)</string>
@@ -295,5 +295,23 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="book_reading_actions">Leesacties</string>
     <string name="book_finish">Voltooien</string>
     <string name="changelog_text_v1_1_8">NIEUW\n• Lezen voltooien: Je kunt nu het lezen van een boek direct vanuit de boekdetails voltooien. Deze actie sluit de leessessie af en telt het boek mee voor je leesdoel (net als op de Bookwyrm-website).</string>
+    <!-- i18n: ontbrekende vertalingen -->
+    <string name="activity_type_note">Notitie</string>
+    <string name="activity_type_comment_en">Reactie</string>
+    <string name="activity_type_announce_en">Aankondiging</string>
+    <string name="activity_type_review_en">Recensie</string>
+    <string name="activity_type_quotation">Citaat</string>
+    <string name="activity_type_add_en">Toevoegen</string>
+    <string name="activity_type_create">Aanmaken</string>
+    <string name="book_current_progress">Je voortgang</string>
+    <string name="book_progress_pages">Pagina %1$d van %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Pagina %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Netwerkfout</string>
+    <string name="error_unknown">Onbekende fout</string>
+    <string name="search_books_empty">Geen boeken gevonden</string>
+    <string name="share_on_bookwyrm"> op BookWyrm:</string>
+    <string name="text_no_name">Geen naam</string>
+    <string name="text_someone">Iemand</string>
 </resources>
 

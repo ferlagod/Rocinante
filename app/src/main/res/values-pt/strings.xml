@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">O seu leitor social BookWyrm</string>
     <string name="login_card_title">Conectar instância</string>
     <string name="login_field_instance">Instância (ex: bookwyrm.social)</string>
@@ -295,5 +295,23 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="book_reading_actions">Ações de leitura</string>
     <string name="book_finish">Terminar</string>
     <string name="changelog_text_v1_1_8">NOVIDADES\n• Terminar a leitura: Agora podes terminar diretamente a leitura de um livro em curso a partir da ficha do livro. Esta ação encerrará a sessão de leitura e adicionará o livro ao teu objetivo de leitura (tal como no site do Bookwyrm).</string>
+    <!-- i18n: traduções em falta -->
+    <string name="activity_type_note">Nota</string>
+    <string name="activity_type_comment_en">Comentário</string>
+    <string name="activity_type_announce_en">Anúncio</string>
+    <string name="activity_type_review_en">Resenha</string>
+    <string name="activity_type_quotation">Citação</string>
+    <string name="activity_type_add_en">Adição</string>
+    <string name="activity_type_create">Criação</string>
+    <string name="book_current_progress">O seu progresso</string>
+    <string name="book_progress_pages">Página %1$d de %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Página %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Erro de rede</string>
+    <string name="error_unknown">Erro desconhecido</string>
+    <string name="search_books_empty">Nenhum livro encontrado</string>
+    <string name="share_on_bookwyrm"> no BookWyrm:</string>
+    <string name="text_no_name">Sem nome</string>
+    <string name="text_someone">Alguém</string>
 </resources>
 

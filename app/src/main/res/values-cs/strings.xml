@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Vaše sociální čtečka BookWyrm</string>
     <string name="login_card_title">Připojit instanci</string>
     <string name="login_field_instance">Instance (např. bookwyrm.social)</string>
@@ -297,5 +297,23 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="book_reading_actions">Akce čtení</string>
     <string name="book_finish">Dokončit</string>
     <string name="changelog_text_v1_1_8">NOVINKY\n• Dokončit čtení: Nyní můžete dokončit čtení knihy přímo z jejího detailu. Tato akce uzavře relaci čtení a přidá knihu k vašemu cíli čtení (stejně jako na webu Bookwyrm).</string>
+    <!-- i18n: chybějící překlady -->
+    <string name="activity_type_note">Poznámka</string>
+    <string name="activity_type_comment_en">Komentář</string>
+    <string name="activity_type_announce_en">Oznámení</string>
+    <string name="activity_type_review_en">Recenze</string>
+    <string name="activity_type_quotation">Citát</string>
+    <string name="activity_type_add_en">Přidání</string>
+    <string name="activity_type_create">Vytvoření</string>
+    <string name="book_current_progress">Tvůj pokrok</string>
+    <string name="book_progress_pages">Strana %1$d z %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Strana %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Chyba sítě</string>
+    <string name="error_unknown">Neznámá chyba</string>
+    <string name="search_books_empty">Žádné knihy nenalezeny</string>
+    <string name="share_on_bookwyrm"> na BookWyrm:</string>
+    <string name="text_no_name">Bez jména</string>
+    <string name="text_someone">Někdo</string>
 </resources>
 

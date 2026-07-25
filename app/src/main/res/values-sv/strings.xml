@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Din sociala BookWyrm-läsare</string>
     <string name="login_card_title">Anslut instans</string>
     <string name="login_field_instance">Instans (t.ex. bookwyrm.social)</string>
@@ -295,5 +295,23 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="book_reading_actions">Läsåtgärder</string>
     <string name="book_finish">Avsluta</string>
     <string name="changelog_text_v1_1_8">NYHETER\n• Avsluta läsning: Du kan nu avsluta läsningen av en bok direkt från bokens detaljer. Denna åtgärd stänger lässessionen och lägger till boken i ditt läsmål (precis som på Bookwyrm-webbplatsen).</string>
+    <!-- i18n: saknade översättningar -->
+    <string name="activity_type_note">Anteckning</string>
+    <string name="activity_type_comment_en">Kommentar</string>
+    <string name="activity_type_announce_en">Tillkännagivande</string>
+    <string name="activity_type_review_en">Recension</string>
+    <string name="activity_type_quotation">Citat</string>
+    <string name="activity_type_add_en">Tillägg</string>
+    <string name="activity_type_create">Skapande</string>
+    <string name="book_current_progress">Dina framsteg</string>
+    <string name="book_progress_pages">Sida %1$d av %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Sida %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Nätverksfel</string>
+    <string name="error_unknown">Okänt fel</string>
+    <string name="search_books_empty">Inga böcker hittades</string>
+    <string name="share_on_bookwyrm"> på BookWyrm:</string>
+    <string name="text_no_name">Inget namn</string>
+    <string name="text_someone">Någon</string>
 </resources>
 

@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name" translatable="false">Rocinante</string>
     <string name="brand_bookwyrm" translatable="false">BookWyrm</string>
     <string name="login_subtitle">A lectura social en BookWyrm</string>
@@ -297,5 +297,23 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="book_reading_actions">Accións de lectura</string>
     <string name="book_finish">Rematar</string>
     <string name="changelog_text_v1_1_8">NOVIDADES\n• Rematar de ler: Agora podes rematar directamente a lectura dun libro en curso desde a ficha do libro. Esta acción pechará a sesión de lectura e sumará o libro ao teu obxectivo de lectura (igual que na web de Bookwyrm).</string>
+    <!-- i18n: traducións que faltaban -->
+    <string name="activity_type_note">Nota</string>
+    <string name="activity_type_comment_en">Comentario</string>
+    <string name="activity_type_announce_en">Anuncio</string>
+    <string name="activity_type_review_en">Recensión</string>
+    <string name="activity_type_quotation">Cita</string>
+    <string name="activity_type_add_en">Engadir</string>
+    <string name="activity_type_create">Crear</string>
+    <string name="book_current_progress">O teu progreso</string>
+    <string name="book_progress_pages">Páxina %1$d de %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Páxina %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Erro de rede</string>
+    <string name="error_unknown">Erro descoñecido</string>
+    <string name="search_books_empty">Non se atoparon libros</string>
+    <string name="share_on_bookwyrm"> en BookWyrm:</string>
+    <string name="text_no_name">Sen nome</string>
+    <string name="text_someone">Alguén</string>
 </resources>
 

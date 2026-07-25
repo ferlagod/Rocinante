@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Ο δικός σας κοινωνικός αναγνώστης BookWyrm</string>
     <string name="login_card_title">Σύνδεση instace</string>
     <string name="login_field_instance">Instance (π.χ. bookwyrm.social)</string>
@@ -295,5 +295,23 @@
     <string name="book_reading_actions">Ενέργειες ανάγνωσης</string>
     <string name="book_finish">Ολοκλήρωση</string>
     <string name="changelog_text_v1_1_8">ΝΕΟΤΕΡΑ\n• Ολοκλήρωση ανάγνωσης: Μπορείτε πλέον να ολοκληρώσετε την ανάγνωση ενός βιβλίου απευθείας από τις λεπτομέρειές του. Αυτή η ενέργεια κλείνει τη συνεδρία ανάγνωσης και προσθέτει το βιβλίο στον στόχο ανάγνωσής σας (όπως στον ιστότοπο Bookwyrm).</string>
+    <!-- i18n: ελλιπείς μεταφράσεις -->
+    <string name="activity_type_note">Σημείωση</string>
+    <string name="activity_type_comment_en">Σχόλιο</string>
+    <string name="activity_type_announce_en">Ανακοίνωση</string>
+    <string name="activity_type_review_en">Κριτική</string>
+    <string name="activity_type_quotation">Παράθεση</string>
+    <string name="activity_type_add_en">Προσθήκη</string>
+    <string name="activity_type_create">Δημιουργία</string>
+    <string name="book_current_progress">Η πρόοδός σου</string>
+    <string name="book_progress_pages">Σελίδα %1$d από %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Σελίδα %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Σφάλμα δικτύου</string>
+    <string name="error_unknown">Άγνωστο σφάλμα</string>
+    <string name="search_books_empty">Δεν βρέθηκαν βιβλία</string>
+    <string name="share_on_bookwyrm"> στο BookWyrm:</string>
+    <string name="text_no_name">Χωρίς όνομα</string>
+    <string name="text_someone">Κάποιος</string>
 </resources>
 

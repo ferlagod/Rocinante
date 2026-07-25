@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">Cititorul tău social BookWyrm</string>
     <string name="login_card_title">Conectare la instanță</string>
     <string name="login_field_instance">Instanță (ex: bookwyrm.social)</string>
@@ -296,5 +296,23 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="book_reading_actions">Acțiuni de lectură</string>
     <string name="book_finish">Termină</string>
     <string name="changelog_text_v1_1_8">NOUTĂȚI\n• Termină lectura: Acum poți finaliza direct lectura unei cărți din fișa cărții. Această acțiune va închide sesiunea de lectură și va adăuga cartea la obiectivul tău de lectură (la fel ca pe site-ul Bookwyrm).</string>
+    <!-- i18n: traduceri lipsă -->
+    <string name="activity_type_note">Notă</string>
+    <string name="activity_type_comment_en">Comentariu</string>
+    <string name="activity_type_announce_en">Anunț</string>
+    <string name="activity_type_review_en">Recenzie</string>
+    <string name="activity_type_quotation">Citat</string>
+    <string name="activity_type_add_en">Adăugare</string>
+    <string name="activity_type_create">Creare</string>
+    <string name="book_current_progress">Progresul tău</string>
+    <string name="book_progress_pages">Pagina %1$d din %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Pagina %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Eroare de rețea</string>
+    <string name="error_unknown">Eroare necunoscută</string>
+    <string name="search_books_empty">Nu s-au găsit cărți</string>
+    <string name="share_on_bookwyrm"> pe BookWyrm:</string>
+    <string name="text_no_name">Fără nume</string>
+    <string name="text_someone">Cineva</string>
 </resources>
 

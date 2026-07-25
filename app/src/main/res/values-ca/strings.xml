@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="login_subtitle">El teu lector social de BookWyrm</string>
     <string name="login_card_title">Connectar a instància</string>
     <string name="login_field_instance">Instància (ex: bookwyrm.social)</string>
@@ -295,5 +295,23 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="book_reading_actions">Accions de lectura</string>
     <string name="book_finish">Acabar</string>
     <string name="changelog_text_v1_1_8">NOVETATS\n• Acabar de llegir: Ara pots finalitzar directament la lectura d\'\'un llibre en curs des de la fitxa del llibre. Aquesta acció tancarà la sessió de lectura i sumarà el llibre al teu objectiu de lectura (igual que a la web de Bookwyrm).</string>
+    <!-- i18n: traduccions que faltaven -->
+    <string name="activity_type_note">Nota</string>
+    <string name="activity_type_comment_en">Comentari</string>
+    <string name="activity_type_announce_en">Anunci</string>
+    <string name="activity_type_review_en">Ressenya</string>
+    <string name="activity_type_quotation">Citació</string>
+    <string name="activity_type_add_en">Afegir</string>
+    <string name="activity_type_create">Crear</string>
+    <string name="book_current_progress">El teu progrés</string>
+    <string name="book_progress_pages">Pàgina %1$d de %2$d (%3$d%%)</string>
+    <string name="book_progress_pages_no_total">Pàgina %1$d</string>
+    <string name="book_progress_percent">%1$d%%</string>
+    <string name="error_network_error">Error de xarxa</string>
+    <string name="error_unknown">Error desconegut</string>
+    <string name="search_books_empty">No s\'han trobat llibres</string>
+    <string name="share_on_bookwyrm"> a BookWyrm:</string>
+    <string name="text_no_name">Sense nom</string>
+    <string name="text_someone">Algú</string>
 </resources>
 
