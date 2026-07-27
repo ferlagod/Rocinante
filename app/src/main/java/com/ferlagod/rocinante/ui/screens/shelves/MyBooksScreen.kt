@@ -371,10 +371,21 @@ fun ShelfNativeDetailScreen(
 
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
+    // Estantería que se está trayendo de la red, aparte de la que se ve. Sustituir lo que
+    // hay en pantalla por la primera página encogía la lista a diez libros y la hacía crecer
+    // otra vez página a página: la vista daba tumbos, y un libro al que se acabara de saltar
+    // desaparecía a mitad de camino hasta que llegaba su página.
+    var incoming by remember { mutableStateOf<List<ShelfBookItem>>(emptyList()) }
+    // ¿Hay una lista cacheada en pantalla que merece la pena conservar mientras se refresca?
+    var keepingCache by remember { mutableStateOf(false) }
+    // Un refresco a medias no debe pisar ni la pantalla ni la caché con una lista truncada.
+    var refreshFailed by remember { mutableStateOf(false) }
+
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
         var hadCompleteCache = false
         if (currentPage == 1) {
             isNetworkRefreshed = false
+            refreshFailed = false
             val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
             hadCompleteCache = !cachedBooks.isNullOrEmpty()
             if (cachedBooks != null && books.isEmpty()) {
@@ -401,18 +412,24 @@ fun ShelfNativeDetailScreen(
             }
             
             if (currentPage == 1) {
-                books = fetchedItems
-                // Guardar aquí la primera página truncaría una lista completa ya cacheada
-                // (y con ella las estadísticas del perfil) hasta que terminase la paginación.
-                // Solo se guarda si aún no había nada; la lista entera se persiste al final.
-                if (!hadCompleteCache) dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                incoming = fetchedItems
+                // Con una lista cacheada delante no se toca la pantalla: se sigue viendo
+                // entera mientras por detrás se recompone la nueva, y se cambia de golpe al
+                // terminar. Guardar aquí la primera página truncaría además esa caché (y con
+                // ella las estadísticas del perfil) hasta que acabase la paginación.
+                keepingCache = hadCompleteCache && books.isNotEmpty()
+                if (!keepingCache) {
+                    books = incoming
+                    dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                }
                 isNetworkRefreshed = true
             } else {
                 // Deduplicar: solo añadir libros cuyo id no esté ya en la lista,
                 // para evitar repeticiones al re-ejecutarse el efecto.
-                val existingIds = books.mapNotNull { it.id }.toSet()
+                val existingIds = incoming.mapNotNull { it.id }.toSet()
                 val newItems = fetchedItems.filter { it.id == null || it.id !in existingIds }
-                books = books + newItems
+                incoming = incoming + newItems
+                if (!keepingCache) books = incoming
             }
             errorMessage = null
         } catch (e: Exception) {
@@ -420,6 +437,7 @@ fun ShelfNativeDetailScreen(
             if (books.isEmpty()) {
                 errorMessage = errorNetworkTemplate.format(e.message ?: "")
             }
+            refreshFailed = true
             hasMorePages = false
         } finally {
             isLoading = false
@@ -456,10 +474,19 @@ fun ShelfNativeDetailScreen(
 
     // Al guardar solo la primera página, la caché dejaba la estantería truncada: sin conexión
     // se veían diez libros y las estadísticas del perfil contaban de menos. Una vez recorridas
-    // todas las páginas se persiste la lista completa.
-    LaunchedEffect(books, hasMorePages, isNetworkRefreshed) {
-        if (!hasMorePages && isNetworkRefreshed && books.isNotEmpty()) {
-            dataCache.saveShelfBooks(shelf.slug, books)
+    // todas las páginas se persiste la lista completa y, si se venía mostrando la cacheada,
+    // se cambia por la nueva de una sola vez, sin encogimientos intermedios.
+    // Un refresco interrumpido a medias no toca nada: mejor la lista de antes, entera, que
+    // una nueva a trozos, tanto en pantalla como en disco.
+    LaunchedEffect(incoming, hasMorePages, isNetworkRefreshed, refreshFailed) {
+        if (!hasMorePages && isNetworkRefreshed && !refreshFailed) {
+            // La pantalla se cambia siempre, también si la estantería ha quedado vacía;
+            // si no, vaciarla desde la web dejaría los libros de antes ahí para siempre.
+            books = incoming
+            keepingCache = false
+            // La caché, en cambio, no se pisa con una lista vacía: una respuesta rara
+            // borraría la estantería entera y con ella las estadísticas del perfil.
+            if (incoming.isNotEmpty()) dataCache.saveShelfBooks(shelf.slug, incoming)
         }
     }
 
