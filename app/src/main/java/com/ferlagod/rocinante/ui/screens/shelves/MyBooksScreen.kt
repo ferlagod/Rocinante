@@ -188,6 +188,9 @@ private fun readingDays(startIso: String?, finishIso: String?): Int? {
  * @param cookie Token de sesión para autenticar llamadas a la API.
  * @param api Instancia opcional de [BookWyrmApi]. Si se provee, se reutiliza para eficiencia.
  * @param onNavigateToSettings Acción a ejecutar cuando se solicita navegar a los ajustes desde la pantalla de estantes.
+ * @param targetShelfSlug Estantería que hay que abrir automáticamente (viene de la búsqueda), o null.
+ * @param targetBookId Libro al que desplazarse y que se resalta dentro de esa estantería, o null.
+ * @param onTargetConsumed Se invoca cuando ya se ha saltado al libro, para no repetir el salto.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +199,10 @@ fun MyBooksScreen(
     username: String,
     cookie: String,
     api: BookWyrmApi? = null,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    targetShelfSlug: String? = null,
+    targetBookId: String? = null,
+    onTargetConsumed: () -> Unit = {}
 ) {
     val shelves = listOf(
         ShelfUiItem("to-read", stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder),
@@ -205,6 +211,12 @@ fun MyBooksScreen(
     )
 
     var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
+
+    // Al pulsar un libro de las estanterías en la búsqueda se abre aquí su estantería.
+    LaunchedEffect(targetShelfSlug) {
+        val slug = targetShelfSlug ?: return@LaunchedEffect
+        shelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
+    }
 
     if (selectedShelf == null) {
         LazyColumn(
@@ -270,7 +282,9 @@ fun MyBooksScreen(
                 sharedApi = api,
                 shelf = shelf,
                 onBack = { selectedShelf = null },
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
+                onHighlightConsumed = onTargetConsumed
             )
         }
     }
@@ -287,6 +301,8 @@ fun MyBooksScreen(
  * @param shelf Estantería a visualizar.
  * @param onBack Callback para volver atrás.
  * @param onNavigateToSettings Callback para navegar a la configuración.
+ * @param highlightBookId Libro al que desplazarse y resaltar al abrir la pantalla, o null.
+ * @param onHighlightConsumed Se invoca cuando ya se ha localizado el libro (o se sabe que no está).
  */
 @Composable
 fun ShelfNativeDetailScreen(
@@ -296,7 +312,9 @@ fun ShelfNativeDetailScreen(
     sharedApi: BookWyrmApi? = null,
     shelf: ShelfUiItem,
     onBack: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    highlightBookId: String? = null,
+    onHighlightConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -341,6 +359,10 @@ fun ShelfNativeDetailScreen(
     var isLoadingDetails by remember { mutableStateOf(false) }
 
     var showTimePicker by remember { mutableStateOf(false) }
+
+    // Estado de la lista, necesario para poder desplazarse hasta un libro concreto.
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    var highlightedBookId by remember { mutableStateOf<String?>(null) }
 
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
@@ -442,6 +464,32 @@ fun ShelfNativeDetailScreen(
     // Carga inicial de la caché de enriquecimiento (autor, valoración, fechas por libro).
     LaunchedEffect(Unit) {
         enrichment = dataCache.loadEnrichment()
+    }
+
+    // Salto al libro que se ha pulsado en la búsqueda: se desplaza hasta él y se resalta
+    // un momento para que se vea dónde ha caído dentro de la estantería.
+    LaunchedEffect(highlightBookId, displayedBooks, isLoading, hasMorePages) {
+        val targetId = highlightBookId ?: return@LaunchedEffect
+        val index = displayedBooks.indexOfFirst { it.id == targetId }
+        if (index < 0) {
+            // Puede que la estantería aún esté cargando; solo nos rendimos al terminar.
+            if (!isLoading && !hasMorePages) onHighlightConsumed()
+            return@LaunchedEffect
+        }
+        // Delante de los libros hay elementos propios de la lista que desplazan los índices.
+        val leadingItems = (if (isLoadingDetails) 1 else 0) + (if (shelf.slug == "reading") 1 else 0)
+        listState.animateScrollToItem((index + leadingItems).coerceAtLeast(0))
+        highlightedBookId = targetId
+        onHighlightConsumed()
+    }
+
+    // El resaltado se apaga en su propio efecto: descartar el objetivo cambia la clave del
+    // efecto anterior y lo cancela, así que una espera puesta allí no llegaría a terminar.
+    LaunchedEffect(highlightedBookId) {
+        if (highlightedBookId != null) {
+            kotlinx.coroutines.delay(2500)
+            highlightedBookId = null
+        }
     }
 
     // Primera vez (o resincronizado): una vez cargada TODA la estantería, se obtienen los
@@ -578,6 +626,7 @@ fun ShelfNativeDetailScreen(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -648,8 +697,15 @@ fun ShelfNativeDetailScreen(
                     key = { index -> displayedBooks[index].id ?: index }
                 ) { index ->
                     val book = displayedBooks[index]
+                    val isHighlighted = book.id != null && book.id == highlightedBookId
 
                     Card(
+                        border = if (isHighlighted) {
+                            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else null,
+                        colors = if (isHighlighted) {
+                            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        } else CardDefaults.cardColors(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {

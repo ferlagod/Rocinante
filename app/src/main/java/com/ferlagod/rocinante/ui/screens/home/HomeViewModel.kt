@@ -194,6 +194,31 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Salta a «Mis libros» para mostrar un libro concreto dentro de su estantería.
+     * El objetivo vive aquí y no en la pantalla porque el paginador descarta el estado
+     * de las pestañas que quedan fuera de la vista al cambiar de una a otra.
+     *
+     * @param shelfSlug Estantería que hay que abrir.
+     * @param bookId Identificador (URL) del libro al que desplazarse.
+     */
+    fun openBookInShelf(shelfSlug: String, bookId: String) {
+        _uiState.value = _uiState.value.copy(
+            selectedTab = 1,
+            shelfTarget = ShelfTarget(shelfSlug, bookId)
+        )
+    }
+
+    /**
+     * Descarta el objetivo pendiente una vez que la estantería ya se ha desplazado hasta él,
+     * para que volver a la pestaña no repita el salto.
+     */
+    fun consumeShelfTarget() {
+        if (_uiState.value.shelfTarget != null) {
+            _uiState.value = _uiState.value.copy(shelfTarget = null)
+        }
+    }
+
+    /**
      * Actualiza el perfil de usuario en el estado local de forma optimista
      * para reflejar los cambios en la UI antes de re-cargar desde el servidor.
      *

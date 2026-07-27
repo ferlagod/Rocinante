@@ -390,5 +390,12 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="few">%d cărți nu indică formatul</item>
         <item quantity="other">%d de cărți nu indică formatul</item>
     </plurals>
+    <string name="search_local_section">În rafturile tale</string>
+    <string name="search_instance_section">Pe această instanță</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…și încă %d în rafturile tale</item>
+        <item quantity="few">…și încă %d în rafturile tale</item>
+        <item quantity="other">…și încă %d de cărți în rafturile tale</item>
+    </plurals>
 </resources>
 

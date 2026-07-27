@@ -380,5 +380,11 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
         <item quantity="one">%d bok saknar format</item>
         <item quantity="other">%d böcker saknar format</item>
     </plurals>
+    <string name="search_local_section">I dina hyllor</string>
+    <string name="search_instance_section">På denna instans</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…och %d till i dina hyllor</item>
+        <item quantity="other">…och %d till i dina hyllor</item>
+    </plurals>
 </resources>
 

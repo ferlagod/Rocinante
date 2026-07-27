@@ -382,5 +382,11 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
         <item quantity="one">%d libro non indica formato</item>
         <item quantity="other">%d libros non indican formato</item>
     </plurals>
+    <string name="search_local_section">Nos teus estantes</string>
+    <string name="search_instance_section">Nesta instancia</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…e %d máis nos teus estantes</item>
+        <item quantity="other">…e %d máis nos teus estantes</item>
+    </plurals>
 </resources>
 

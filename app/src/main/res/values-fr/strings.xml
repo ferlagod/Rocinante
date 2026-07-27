@@ -380,5 +380,11 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
         <item quantity="one">%d livre sans format indiqué</item>
         <item quantity="other">%d livres sans format indiqué</item>
     </plurals>
+    <string name="search_local_section">Dans vos étagères</string>
+    <string name="search_instance_section">Sur cette instance</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…et %d de plus dans vos étagères</item>
+        <item quantity="other">…et %d de plus dans vos étagères</item>
+    </plurals>
 </resources>
 

@@ -380,5 +380,11 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
         <item quantity="one">%d boek zonder formaatvermelding</item>
         <item quantity="other">%d boeken zonder formaatvermelding</item>
     </plurals>
+    <string name="search_local_section">In je boekenplanken</string>
+    <string name="search_instance_section">Op deze instantie</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…en nog %d in je boekenplanken</item>
+        <item quantity="other">…en nog %d in je boekenplanken</item>
+    </plurals>
 </resources>
 

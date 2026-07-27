@@ -33,8 +33,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -73,6 +78,9 @@ import kotlinx.coroutines.launch
  */
 enum class SearchMode { BOOKS, USERS }
 
+/** Tope de libros propios que se listan, para no sepultar los resultados de la instancia. */
+private const val MAX_LOCAL_RESULTS = 25
+
 /**
  * Pantalla principal de búsqueda, permite buscar libros y usuarios en la instancia local
  * o en el ecosistema federado mediante el cliente de BookWyrm.
@@ -81,13 +89,16 @@ enum class SearchMode { BOOKS, USERS }
  * @param cookie Cookie de sesión autenticada.
  * @param api Cliente API para peticiones a BookWyrm.
  * @param modifier Modificador visual para el layout.
+ * @param onOpenInShelf Se invoca con (estantería, id del libro) al pulsar un resultado propio,
+ *        para saltar a ese libro dentro de «Mis libros».
  */
 @Composable
 fun SearchScreen(
     instanceUrl: String,
     cookie: String,
     api: BookWyrmApi? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenInShelf: (String, String) -> Unit = { _, _ -> }
 ) {
     val resolvedApi = remember(instanceUrl, cookie) {
         api ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -190,17 +201,42 @@ fun SearchScreen(
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
+    // Índice de las estanterías propias, hecho una vez a partir de la caché en disco. Como no
+    // hay red de por medio, estos resultados se filtran mientras se escribe, sin esperar al botón.
+    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+    var shelfIndex by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.data.repository.IndexedShelfBook>>(emptyList())
+    }
+    LaunchedEffect(Unit) {
+        val shelves = com.ferlagod.rocinante.data.repository.LocalShelfSearch.SHELF_ORDER
+            .mapNotNull { slug -> dataCache.loadShelfBooks(slug)?.let { slug to it } }
+            .toMap()
+        shelfIndex = com.ferlagod.rocinante.data.repository.LocalShelfSearch.buildIndex(
+            shelves,
+            dataCache.loadEnrichment()
+        )
+    }
+
+    val allLocalHits = remember(searchQuery, shelfIndex, searchMode) {
+        if (searchMode != SearchMode.BOOKS) emptyList()
+        else com.ferlagod.rocinante.data.repository.LocalShelfSearch.search(searchQuery, shelfIndex)
+    }
+    val localHits = allLocalHits.take(MAX_LOCAL_RESULTS)
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (errorMessage != null) {
+        // «No hay libros» sobra cuando el libro sí está en las estanterías del usuario;
+        // los errores de red, en cambio, se siguen mostrando.
+        val isEmptyBooksError = errorMessage == context.getString(R.string.search_books_empty)
+        if (errorMessage != null && !(isEmptyBooksError && localHits.isNotEmpty())) {
             Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
-            
-            if (errorMessage == context.getString(R.string.search_books_empty)) {
+
+            if (isEmptyBooksError) {
                 OutlinedButton(
                     onClick = {
                         val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
@@ -301,11 +337,41 @@ fun SearchScreen(
 
         if (isSearching) {
             SearchSkeletonLoader()
-        } else if (searchMode == SearchMode.BOOKS && searchResults.isNotEmpty()) {
+        } else if (searchMode == SearchMode.BOOKS && (localHits.isNotEmpty() || searchResults.isNotEmpty())) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (localHits.isNotEmpty()) {
+                    item(key = "local-header") {
+                        SearchSectionHeader(stringResource(R.string.search_local_section))
+                    }
+                    items(
+                        items = localHits,
+                        key = { "local-${it.book.id ?: it.book.title.orEmpty()}" }
+                    ) { hit ->
+                        LocalShelfResultCard(
+                            hit = hit,
+                            onClick = { hit.book.id?.let { onOpenInShelf(hit.shelfSlug, it) } }
+                        )
+                    }
+                    if (allLocalHits.size > localHits.size) {
+                        item(key = "local-more") {
+                            val rest = allLocalHits.size - localHits.size
+                            Text(
+                                text = pluralStringResource(R.plurals.search_local_more, rest, rest),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                    if (searchResults.isNotEmpty()) {
+                        item(key = "remote-header") {
+                            SearchSectionHeader(stringResource(R.string.search_instance_section))
+                        }
+                    }
+                }
                 items(items = searchResults, key = { it.key ?: it.title ?: it.hashCode().toString() }) { book ->
                     Card(
                         modifier = Modifier
@@ -678,6 +744,115 @@ fun UserProfileDialog(
             }
         }
     )
+}
+
+/**
+ * Encabezado que separa los libros de las estanterías propias de los de la instancia.
+ *
+ * @param title Texto del encabezado.
+ */
+@Composable
+private fun SearchSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+    )
+}
+
+/**
+ * Nombre visible de una estantería a partir de su slug.
+ */
+@Composable
+private fun shelfDisplayName(slug: String): String = when (slug) {
+    "reading" -> stringResource(R.string.shelf_reading_title)
+    "to-read" -> stringResource(R.string.shelf_to_read_title)
+    "read" -> stringResource(R.string.shelf_read_title)
+    else -> slug
+}
+
+/**
+ * Icono de una estantería, el mismo que se usa en «Mis libros».
+ */
+private fun shelfIcon(slug: String): androidx.compose.ui.graphics.vector.ImageVector = when (slug) {
+    "reading" -> Icons.AutoMirrored.Filled.MenuBook
+    "read" -> Icons.Default.CheckCircle
+    else -> Icons.Default.BookmarkBorder
+}
+
+/**
+ * Tarjeta de un libro que ya está en las estanterías del usuario. Se distingue de los
+ * resultados de la instancia por el distintivo con el nombre de su estantería.
+ *
+ * @param hit Libro encontrado en la caché local, con la estantería en la que está.
+ * @param onClick Acción al pulsar, que lleva al libro dentro de esa estantería.
+ */
+@Composable
+private fun LocalShelfResultCard(
+    hit: com.ferlagod.rocinante.data.repository.LocalShelfHit,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val coverUrl = hit.book.cover?.url
+            if (!coverUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = stringResource(R.string.book_cover_desc),
+                    modifier = Modifier
+                        .width(70.dp)
+                        .height(100.dp)
+                        .clip(MaterialTheme.shapes.small),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = hit.book.title ?: stringResource(R.string.book_no_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                hit.authorName?.takeIf { it.isNotBlank() }?.let { author ->
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.search_author, author),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.Icon(
+                        imageVector = shelfIcon(hit.shelfSlug),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = shelfDisplayName(hit.shelfSlug),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**

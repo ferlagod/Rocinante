@@ -392,5 +392,11 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_layout_reset">Nulstil</string>
     <string name="profile_layout_drag_desc">Træk for at flytte %1$s</string>
     <string name="profile_section_stats">Læsestatistik</string>
+    <string name="search_local_section">På dine hylder</string>
+    <string name="search_instance_section">På denne instans</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…og %d mere på dine hylder</item>
+        <item quantity="other">…og %d mere på dine hylder</item>
+    </plurals>
 </resources>
 

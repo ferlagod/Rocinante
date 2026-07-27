@@ -381,5 +381,11 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
         <item quantity="one">%d kirjalta puuttuu muototieto</item>
         <item quantity="other">%d kirjalta puuttuu muototieto</item>
     </plurals>
+    <string name="search_local_section">Omissa hyllyissäsi</string>
+    <string name="search_instance_section">Tässä instanssissa</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…ja %d muu hyllyissäsi</item>
+        <item quantity="other">…ja %d muuta hyllyissäsi</item>
+    </plurals>
 </resources>
 

@@ -391,5 +391,13 @@
         <item quantity="few">%d книги без вказаного формату</item>
         <item quantity="many">%d книг без вказаного формату</item>
     </plurals>
+    <string name="search_local_section">На твоїх полицях</string>
+    <string name="search_instance_section">На цьому сервері</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…і ще %d на твоїх полицях</item>
+        <item quantity="few">…і ще %d на твоїх полицях</item>
+        <item quantity="many">…і ще %d на твоїх полицях</item>
+        <item quantity="other">…і ще %d на твоїх полицях</item>
+    </plurals>
 </resources>
 

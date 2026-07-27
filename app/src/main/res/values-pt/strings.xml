@@ -380,5 +380,11 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
         <item quantity="one">%d livro sem formato indicado</item>
         <item quantity="other">%d livros sem formato indicado</item>
     </plurals>
+    <string name="search_local_section">Nas tuas estantes</string>
+    <string name="search_instance_section">Nesta instância</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…e mais %d nas tuas estantes</item>
+        <item quantity="other">…e mais %d nas tuas estantes</item>
+    </plurals>
 </resources>
 

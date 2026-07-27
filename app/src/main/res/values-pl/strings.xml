@@ -391,5 +391,13 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
         <item quantity="few">%d książki nie podają formatu</item>
         <item quantity="many">%d książek nie podaje formatu</item>
     </plurals>
+    <string name="search_local_section">Na twoich półkach</string>
+    <string name="search_instance_section">W tej instancji</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…i %d więcej na twoich półkach</item>
+        <item quantity="few">…i %d więcej na twoich półkach</item>
+        <item quantity="many">…i %d więcej na twoich półkach</item>
+        <item quantity="other">…i %d więcej na twoich półkach</item>
+    </plurals>
 </resources>
 

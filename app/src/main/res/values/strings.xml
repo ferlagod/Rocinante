@@ -385,4 +385,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_layout_reset">Reset</string>
     <string name="profile_layout_drag_desc">Drag to move %1$s</string>
     <string name="profile_section_stats">Reading statistics</string>
+    <string name="search_local_section">In your shelves</string>
+    <string name="search_instance_section">On this instance</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…and %d more in your shelves</item>
+        <item quantity="other">…and %d more in your shelves</item>
+    </plurals>
 </resources>

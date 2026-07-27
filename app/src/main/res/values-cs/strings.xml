@@ -391,5 +391,13 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="few">%d knihy neuvádějí formát</item>
         <item quantity="other">%d knih neuvádí formát</item>
     </plurals>
+    <string name="search_local_section">Ve tvých policích</string>
+    <string name="search_instance_section">Na této instanci</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…a %d další v tvých policích</item>
+        <item quantity="few">…a %d další v tvých policích</item>
+        <item quantity="many">…a %d dalšího v tvých policích</item>
+        <item quantity="other">…a %d dalších v tvých policích</item>
+    </plurals>
 </resources>
 

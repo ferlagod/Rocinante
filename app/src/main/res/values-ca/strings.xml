@@ -380,5 +380,11 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
         <item quantity="one">%d llibre no indica format</item>
         <item quantity="other">%d llibres no indiquen format</item>
     </plurals>
+    <string name="search_local_section">A les teves prestatgeries</string>
+    <string name="search_instance_section">En aquesta instància</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…i %d més a les teves prestatgeries</item>
+        <item quantity="other">…i %d més a les teves prestatgeries</item>
+    </plurals>
 </resources>
 

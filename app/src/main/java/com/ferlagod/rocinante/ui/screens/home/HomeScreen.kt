@@ -311,7 +311,10 @@ fun HomeScreen(
                         username = username,
                         cookie = cookie,
                         api = api,
-                        onNavigateToSettings = onSettingsClick
+                        onNavigateToSettings = onSettingsClick,
+                        targetShelfSlug = uiState.shelfTarget?.shelfSlug,
+                        targetBookId = uiState.shelfTarget?.bookId,
+                        onTargetConsumed = { viewModel.consumeShelfTarget() }
                     )
                 }
 
@@ -319,7 +322,8 @@ fun HomeScreen(
                     instanceUrl = instanceUrl,
                     cookie = cookie,
                     api = api,
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues),
+                    onOpenInShelf = { slug, bookId -> viewModel.openBookInShelf(slug, bookId) }
                 )
 
                 3 -> Box(modifier = Modifier.padding(paddingValues)) {

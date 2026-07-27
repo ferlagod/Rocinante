@@ -380,5 +380,11 @@
         <item quantity="one">%d βιβλίο χωρίς δηλωμένη μορφή</item>
         <item quantity="other">%d βιβλία χωρίς δηλωμένη μορφή</item>
     </plurals>
+    <string name="search_local_section">Στα ράφια σου</string>
+    <string name="search_instance_section">Σε αυτήν την υπηρεσία</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…και %d ακόμη στα ράφια σου</item>
+        <item quantity="other">…και %d ακόμη στα ράφια σου</item>
+    </plurals>
 </resources>
 

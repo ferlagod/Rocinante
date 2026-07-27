@@ -380,5 +380,11 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
         <item quantity="one">%d libro senza formato indicato</item>
         <item quantity="other">%d libri senza formato indicato</item>
     </plurals>
+    <string name="search_local_section">Nei tuoi scaffali</string>
+    <string name="search_instance_section">In questa istanza</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…e altri %d nei tuoi scaffali</item>
+        <item quantity="other">…e altri %d nei tuoi scaffali</item>
+    </plurals>
 </resources>
 
