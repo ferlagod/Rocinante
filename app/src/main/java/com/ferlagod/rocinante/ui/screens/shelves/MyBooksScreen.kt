@@ -479,8 +479,14 @@ fun ShelfNativeDetailScreen(
         // Delante de los libros hay elementos propios de la lista que desplazan los índices.
         val leadingItems = (if (isLoadingDetails) 1 else 0) + (if (shelf.slug == "reading") 1 else 0)
         listState.animateScrollToItem((index + leadingItems).coerceAtLeast(0))
-        highlightedBookId = targetId
-        onHighlightConsumed()
+
+        // La estantería sigue trayendo páginas detrás, y cada una reordena la lista: si
+        // diéramos el salto por hecho ahora, el libro se iría desplazando de su sitio. Se
+        // vuelve a colocar en cada tanda y solo se resalta y se cierra cuando ya no llegan más.
+        if (!isLoading && !hasMorePages) {
+            highlightedBookId = targetId
+            onHighlightConsumed()
+        }
     }
 
     // El resaltado se apaga en su propio efecto: descartar el objetivo cambia la clave del
