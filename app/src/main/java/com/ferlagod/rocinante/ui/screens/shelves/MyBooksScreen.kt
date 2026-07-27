@@ -363,6 +363,8 @@ fun ShelfNativeDetailScreen(
     // Estado de la lista, necesario para poder desplazarse hasta un libro concreto.
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var highlightedBookId by remember { mutableStateOf<String?>(null) }
+    // Libro al que ya se ha viajado, para animar solo la primera vez.
+    var scrolledToTarget by remember { mutableStateOf<String?>(null) }
 
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
@@ -478,21 +480,30 @@ fun ShelfNativeDetailScreen(
         }
         // Delante de los libros hay elementos propios de la lista que desplazan los índices.
         val leadingItems = (if (isLoadingDetails) 1 else 0) + (if (shelf.slug == "reading") 1 else 0)
-        listState.animateScrollToItem((index + leadingItems).coerceAtLeast(0))
+        val position = (index + leadingItems).coerceAtLeast(0)
 
-        // La estantería sigue trayendo páginas detrás, y cada una reordena la lista: si
-        // diéramos el salto por hecho ahora, el libro se iría desplazando de su sitio. Se
-        // vuelve a colocar en cada tanda y solo se resalta y se cierra cuando ya no llegan más.
-        if (!isLoading && !hasMorePages) {
+        // La estantería sigue trayendo páginas detrás y cada una recompone la lista, así que
+        // el libro cambia de posición varias veces. Solo el primer viaje se anima, para que se
+        // vea adónde lleva el salto; los reajustes posteriores son instantáneos y el libro se
+        // queda quieto mientras la lista crece bajo él. Animarlos también hacía que la pantalla
+        // subiese y bajase buscando el libro hasta que terminaba la paginación.
+        if (scrolledToTarget != targetId) {
+            listState.animateScrollToItem(position)
+            scrolledToTarget = targetId
             highlightedBookId = targetId
-            onHighlightConsumed()
+        } else {
+            listState.scrollToItem(position)
         }
+
+        if (!isLoading && !hasMorePages) onHighlightConsumed()
     }
 
     // El resaltado se apaga en su propio efecto: descartar el objetivo cambia la clave del
     // efecto anterior y lo cancela, así que una espera puesta allí no llegaría a terminar.
-    LaunchedEffect(highlightedBookId) {
-        if (highlightedBookId != null) {
+    // Se mantiene mientras siguen llegando páginas y la cuenta atrás empieza al asentarse,
+    // para que no se apague justo cuando la lista todavía se está recolocando.
+    LaunchedEffect(highlightedBookId, isLoading, hasMorePages) {
+        if (highlightedBookId != null && !isLoading && !hasMorePages) {
             kotlinx.coroutines.delay(2500)
             highlightedBookId = null
         }
