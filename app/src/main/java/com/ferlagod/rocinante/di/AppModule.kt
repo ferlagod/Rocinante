@@ -20,6 +20,7 @@
 package com.ferlagod.rocinante.di
 
 import android.content.Context
+import com.ferlagod.rocinante.data.api.AnubisClearance
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.local.SessionStorage
@@ -106,6 +107,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBookWyrmApi(sessionStorage: SessionStorage, @ApplicationContext context: Context): BookWyrmApi {
+        // Deja a AnubisClearance lo que necesita para renovar desde dentro de un interceptor,
+        // que no puede recibir inyección: el contexto para el WebView y la sesión que guardar.
+        AnubisClearance.init(context, sessionStorage)
+
         // We create a singleton Retrofit instance using a base URL placeholder.
         // An interceptor reads the active session from SessionStorage dynamically.
         val interceptor = okhttp3.Interceptor { chain ->
@@ -149,6 +154,22 @@ object AppModule {
             }
 
             var response = chain.proceed(requestBuilder.build())
+
+            // Anubis: si su cookie de paso ha caducado, la instancia responde con un 307 hacia
+            // el reto y seguirlo devolvería la página "no eres un bot" en lugar del JSON pedido.
+            // Se resuelve el reto en un WebView y se repite la petición con las cookies nuevas.
+            if (session != null && AnubisClearance.isChallenge(response)) {
+                val fresh = AnubisClearance.refreshBlocking(session.instanceUrl, session.cookie)
+                if (fresh != null) {
+                    response.close()
+                    val csrf = "csrftoken=([^;]+)".toRegex().find(fresh)?.groupValues?.get(1)
+                    val retry = requestBuilder
+                        .removeHeader("Cookie").addHeader("Cookie", fresh)
+                        .apply { if (csrf != null) removeHeader("X-CSRFToken").addHeader("X-CSRFToken", csrf) }
+                        .build()
+                    response = chain.proceed(retry)
+                }
+            }
 
             // Handle 307 and 308 redirects manually
             var followCount = 0

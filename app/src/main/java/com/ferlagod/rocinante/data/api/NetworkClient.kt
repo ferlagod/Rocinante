@@ -57,6 +57,26 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
     /** Devuelve el valor actual del csrftoken (puede haber rotado). */
     fun currentCsrfToken(): String? = cookieMap["csrftoken"]
 
+    /**
+     * Mezcla una cadena "nombre=valor; ..." recién obtenida del WebView. Se usa al renovar
+     * la autorización de Anubis, para que el tarro deje de reenviar la cookie caducada.
+     * No borra las que no vengan en la cadena, porque el WebView puede no exponerlas todas.
+     */
+    fun merge(cookieString: String) {
+        cookieString.split(";")
+            .map { it.trim() }
+            .filter { it.contains("=") }
+            .forEach { part ->
+                val idx = part.indexOf('=')
+                if (idx > 0) {
+                    cookieMap[part.substring(0, idx).trim()] = part.substring(idx + 1).trim()
+                }
+            }
+    }
+
+    /** Las cookies actuales como cadena "nombre=valor; ...". */
+    fun asCookieString(): String = cookieMap.entries.joinToString("; ") { "${it.key}=${it.value}" }
+
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         // Solo guardar cookies si la respuesta proviene del host principal
         if (!url.host.contains(host)) return
@@ -111,6 +131,14 @@ object NetworkClient {
     fun currentCsrfToken(): String? =
         (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.currentCsrfToken()
 
+    /**
+     * Mete en el tarro de cookies vivo una cadena recién obtenida del WebView, para que las
+     * siguientes peticiones dejen de reenviar la autorización de Anubis caducada.
+     */
+    fun replaceCookies(cookieString: String) {
+        (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.merge(cookieString)
+    }
+
     fun createAuthenticatedApi(baseUrl: String, cookieString: String): BookWyrmApi {
         val cleanUrl = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
         val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
@@ -146,6 +174,18 @@ object NetworkClient {
             }
 
             var response = chain.proceed(requestBuilder.build())
+
+            // Anubis: cuando su cookie de paso caduca, la instancia responde a todo con un
+            // 307 hacia el reto. Seguirlo devolvería la página "no eres un bot" como si fuese
+            // la respuesta pedida. En vez de eso se resuelve el reto y se repite la petición
+            // una sola vez; si no se consigue, se deja pasar el 307 y falla como antes.
+            if (AnubisClearance.isChallenge(response)) {
+                val fresh = AnubisClearance.refreshBlocking(finalUrl, cookieJar.asCookieString())
+                if (fresh != null) {
+                    response.close()
+                    response = chain.proceed(requestBuilder.build())
+                }
+            }
 
             // Handle 307 and 308 redirects manually, since followRedirects(false) is set globally.
             // These status codes MUST preserve the request method and body (unlike 301/302).
