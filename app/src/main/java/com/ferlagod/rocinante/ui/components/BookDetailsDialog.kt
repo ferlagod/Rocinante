@@ -176,6 +176,10 @@ fun BookDetailsDialog(
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
     onShelved: (() -> Unit)? = null,
+    // Aviso de que este libro ya no está en ninguna estantería, con su id/URL. Quien abre la
+    // ficha puede así quitarlo de la lista en pantalla al momento, sin esperar a un refresco.
+    // Si no se pasa, se recurre a [onShelved].
+    onRemovedFromShelf: ((String) -> Unit)? = null,
     // Datos enriquecidos ya conocidos por quien abre la ficha (p. ej. la caché de la
     // estantería), para mostrar las estrellas al instante mientras se refresca en segundo plano.
     initialEnrichment: com.ferlagod.rocinante.data.model.BookEnrichment? = null
@@ -281,8 +285,12 @@ fun BookDetailsDialog(
                 val csrfToken = com.ferlagod.rocinante.data.api.NetworkClient.currentCsrfToken() ?: ""
                 val response = api.unshelveBook(bookId, shelf, csrfToken)
                 if (response.isSuccessful || response.code() == 302) {
+                    // La caché de estanterías alimenta la búsqueda local, así que se limpia
+                    // aquí: pase por donde pase la ficha, el libro deja de aparecer al momento.
+                    com.ferlagod.rocinante.data.local.TimelineCache(context)
+                        .removeBookFromShelfCaches(activeBookKey)
                     Toast.makeText(context, context.getString(R.string.book_remove_toast), Toast.LENGTH_SHORT).show()
-                    onShelved?.invoke()
+                    if (onRemovedFromShelf != null) onRemovedFromShelf(activeBookKey) else onShelved?.invoke()
                     onDismiss()
                 } else {
                     Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()

@@ -207,7 +207,9 @@ fun SearchScreen(
     var shelfIndex by remember {
         mutableStateOf<List<com.ferlagod.rocinante.data.repository.IndexedShelfBook>>(emptyList())
     }
-    LaunchedEffect(Unit) {
+    // Se rehace también al empezar una búsqueda: si entretanto se ha quitado un libro de una
+    // estantería desde otra pantalla, la caché ha cambiado y el índice estaría desfasado.
+    LaunchedEffect(searchQuery.isNotBlank()) {
         val shelves = com.ferlagod.rocinante.data.repository.LocalShelfSearch.SHELF_ORDER
             .mapNotNull { slug -> dataCache.loadShelfBooks(slug)?.let { slug to it } }
             .toMap()
@@ -553,6 +555,11 @@ fun SearchScreen(
             onDismiss = {
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
+            },
+            // Quitado de una estantería: desaparece del índice en memoria al momento, para
+            // que no siga saliendo entre los resultados propios de esta misma búsqueda.
+            onRemovedFromShelf = { removedId ->
+                shelfIndex = shelfIndex.filterNot { it.hit.book.id == removedId }
             }
         )
     }

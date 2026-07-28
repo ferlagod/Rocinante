@@ -144,6 +144,27 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Quita un libro de las estanterías cacheadas al dejar de estar en ninguna.
+     *
+     * Sin esto, la búsqueda local seguiría ofreciéndolo (lee de esta caché) hasta que se
+     * volviese a abrir la estantería. Se recorren las tres de estado de lectura porque un
+     * libro solo puede estar en una de ellas, así que borrarlo de todas es seguro.
+     *
+     * @param bookId id/URL del libro, tal como viene en el .json de la estantería.
+     */
+    suspend fun removeBookFromShelfCaches(bookId: String) = withContext(Dispatchers.IO) {
+        fun normalize(id: String) = id.removeSuffix(".json").trimEnd('/')
+        val target = normalize(bookId)
+        for (slug in listOf("to-read", "reading", "read")) {
+            val cached = loadShelfBooks(slug) ?: continue
+            val remaining = cached.filterNot { it.id != null && normalize(it.id) == target }
+            // Aquí sí se guarda una lista vacía: la estantería se ha quedado sin libros de
+            // verdad, no es la respuesta rara de la red contra la que se protege el refresco.
+            if (remaining.size != cached.size) saveShelfBooks(slug, remaining)
+        }
+    }
+
+    /**
      * Guarda la primera página de libros de una estantería en la caché.
      */
     suspend fun saveShelfBooks(slug: String, books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>) = withContext(Dispatchers.IO) {

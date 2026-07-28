@@ -944,6 +944,12 @@ fun ShelfNativeDetailScreen(
                 selectedBookReviews = emptyList()
             },
             onShelved = { refreshTrigger++ },
+            // Quitado de la estantería: se saca de la lista en el acto, tanto de la que se ve
+            // como de la que se está recomponiendo por detrás, sin releer la estantería entera.
+            onRemovedFromShelf = { removedId ->
+                books = books.filterNot { it.id == removedId }
+                incoming = incoming.filterNot { it.id == removedId }
+            },
             // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
             initialEnrichment = enrichment[activeBookUrl]
         )
