@@ -159,10 +159,10 @@ object BookWyrmScraper {
      */
     private fun extractHiddenFieldValue(html: String, fieldName: String): String? {
         // Patrón 1: name antes de value  →  name="fieldName" ... value="XXX"
-        val nameFirst = """name=["']${Regex.escape(fieldName)}["']\s+value=["']([^"']+)["']""".toRegex()
+        val nameFirst = """name=["']${Regex.escape(fieldName)}["'][^>]*?value=["']([^"']+)["']""".toRegex()
         nameFirst.find(html)?.groupValues?.get(1)?.let { return it }
         // Patrón 2: value antes de name  →  value="XXX" ... name="fieldName"
-        val valueFirst = """value=["']([^"']+)["']\s+name=["']${Regex.escape(fieldName)}["']""".toRegex()
+        val valueFirst = """value=["']([^"']+)["'][^>]*?name=["']${Regex.escape(fieldName)}["']""".toRegex()
         valueFirst.find(html)?.groupValues?.get(1)?.let { return it }
         return null
     }

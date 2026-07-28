@@ -5,6 +5,11 @@ signing.properties
 google-services.json
 fabric.properties
 
+# Archivos de configuración local (rutas del SDK de Android, etc.)
+local.properties
+.env
+cookies.txt
+
 # Gradle
 .gradle/
 build/
@@ -16,9 +21,6 @@ gradle-app.setting
 !gradle-wrapper.jar
 !gradle-wrapper.properties
 
-# Archivos de configuración local (rutas del SDK de Android, etc.)
-local.properties
-
 # Android Studio / IntelliJ IDEA / VS Code
 .idea/
 *.iml
@@ -28,6 +30,7 @@ local.properties
 
 # SO y otros
 .DS_Store
+*.DS_Store
 Thumbs.db
 
 # Binarios y compilados (F-Droid NO permite binarios pre-compilados en el repo)
@@ -41,9 +44,13 @@ Thumbs.db
 *.so
 *.jar
 *.aar
+*.tmp
+*.log
 
-# NDK
+# C/C++ y NDK
 obj/
+.cxx/
+.externalNativeBuild/
 
 # Entornos y cachés de Python (para los scripts locales)
 venv/
@@ -51,31 +58,26 @@ venv/
 __pycache__/
 *.pyc
 
-# Archivos de prueba y temporales locales
-app/release/baselineProfiles/0/app-release.dm
-app/release/baselineProfiles/1/app-release.dm
+# Kotlin daemon
+.kotlin/
+
+# Archivos de prueba y scripts temporales locales
 scratch*.kt
 scratch*.py
 test_*.py
 test_*.kt
+test_*.sh
 *.html
+inbox.json
 
-# Variables de entorno y secretos locales
-.env
-cookies.txt
-.idea/caches/deviceStreaming.xml
+# Scripts de utilidades locales (no necesarios para F-Droid)
 update_strings.py
-app/release/baselineProfiles/0/app-release.dm
-app/release/output-metadata.json
-.idea/caches/deviceStreaming.xml
+add_strings.py
 translate.py
-.idea/caches/deviceStreaming.xml
 get_quotes.py
 translate_clear_notifs.py
-
-# Kotlin daemon
-.kotlin/
 login.py
-test_boost.sh
-add_strings.py
-inbox.json
+
+# Archivos temporales de releases locales
+app/release/baselineProfiles/*/app-release.dm
+app/release/output-metadata.json
