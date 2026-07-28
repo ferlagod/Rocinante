@@ -327,7 +327,10 @@ fun RatingsCard(
     if (!stats.hasRatingData) return
 
     val numberFormat = remember { NumberFormat.getInstance() }
-    val averageText = stats.averageRating?.let { numberFormat.format(it) } ?: ""
+    // La media se redondea a media estrella, que es lo mínimo que se puede puntuar en
+    // BookWyrm: un 4,28 no corresponde a ninguna valoración que se pueda dar.
+    val averageText = stats.averageRating
+        ?.let { numberFormat.format(Math.round(it * 2) / 2.0) } ?: ""
     val maxCount = stats.ratingDistribution.maxOf { it.count }.coerceAtLeast(1)
     val barColor = MaterialTheme.colorScheme.primary
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
