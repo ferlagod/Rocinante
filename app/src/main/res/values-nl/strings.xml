@@ -55,6 +55,7 @@
     <string name="book_pages">Pagina\'s: %1$s</string>
     <string name="book_no_description">Geen beschrijving beschikbaar.</string>
     <string name="book_change_shelf">Verander van plank:</string>
+    <string name="book_change_shelf_title">Boekenplank wijzigen</string>
     <string name="book_add_to_shelf">Toevoegen aan plank:</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Community-recensies</string>

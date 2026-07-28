@@ -57,6 +57,7 @@
     <string name="book_pages">Stran: %1$s</string>
     <string name="book_no_description">Popis není k dispozici.</string>
     <string name="book_change_shelf">Změnit poličku:</string>
+    <string name="book_change_shelf_title">Změnit polici</string>
     <string name="book_add_to_shelf">Přidat na poličku:</string>
     <string name="book_synopsis">Synopse</string>
     <string name="book_community_reviews">Recenze komunity</string>

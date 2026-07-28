@@ -69,6 +69,7 @@
     <string name="book_pages">Sider: %1$s</string>
     <string name="book_no_description">Ingen beskrivelse tilgængelig.</string>
     <string name="book_change_shelf">Skift hylde:</string>
+    <string name="book_change_shelf_title">Skift hylde</string>
     <string name="book_add_to_shelf">Føj til hylde:</string>
     <string name="book_synopsis">Resumé</string>
     <string name="book_community_reviews">Anmeldelser fra fællesskabet</string>

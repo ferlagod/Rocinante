@@ -52,7 +52,10 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.StarHalf
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
@@ -274,8 +277,9 @@ fun BookDetailsDialog(
 
     // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
     var overflowExpanded by remember { mutableStateOf(false) }
-    // Estante pendiente de confirmar: (slug, etiqueta, etiqueta de aviso).
-    var pendingShelf by remember { mutableStateOf<Triple<String, String, String>?>(null) }
+    // Diálogo para elegir estantería. Al ser una elección deliberada en su propia lista,
+    // no se pide además confirmación: se mueve el libro en cuanto se toca una.
+    var showShelfPicker by remember { mutableStateOf(false) }
     // Confirmación antes de quitar el libro de su estantería.
     var showRemoveConfirm by remember { mutableStateOf(false) }
     var isRemoving by remember { mutableStateOf(false) }
@@ -441,27 +445,12 @@ fun BookDetailsDialog(
                                 expanded = overflowExpanded,
                                 onDismissRequest = { overflowExpanded = false }
                             ) {
-                                // Cambiar de estante (etiqueta + opciones, con confirmación)
+                                // Cambiar de estante: una sola entrada que abre el diálogo
+                                // con las estanterías a las que se puede mover el libro.
                                 DropdownMenuItem(
-                                    enabled = false,
-                                    text = { Text(stringResource(R.string.book_change_shelf), style = MaterialTheme.typography.labelSmall) },
-                                    onClick = {}
+                                    text = { Text(stringResource(R.string.book_change_shelf_title)) },
+                                    onClick = { overflowExpanded = false; showShelfPicker = true }
                                 )
-                                listOf(
-                                    Triple("to-read", stringResource(R.string.shelf_chip_to_read), stringResource(R.string.shelf_toast_pending)),
-                                    Triple("reading", stringResource(R.string.shelf_chip_reading), stringResource(R.string.shelf_toast_reading)),
-                                    Triple("read", stringResource(R.string.shelf_chip_read), stringResource(R.string.shelf_toast_read))
-                                ).forEach { target ->
-                                    if (target.first != currentShelf) {
-                                        DropdownMenuItem(
-                                            text = { Text("     " + target.second) },
-                                            onClick = {
-                                                overflowExpanded = false
-                                                pendingShelf = target
-                                            }
-                                        )
-                                    }
-                                }
                                 HorizontalDivider()
                                 if (currentShelf == "reading") {
                                     DropdownMenuItem(
@@ -898,22 +887,58 @@ fun BookDetailsDialog(
         }
     }
 
-    // ── Confirmación antes de cambiar de estante ──
-    pendingShelf?.let { target ->
+    // ── Elegir estantería ──
+    if (showShelfPicker) {
+        // (slug, nombre visible, etiqueta del aviso al terminar). Se ofrecen todas menos
+        // aquella en la que ya está el libro.
+        // Cada estantería lleva el mismo icono con el que aparece en «Mis libros».
+        data class ShelfTarget(
+            val slug: String,
+            val label: String,
+            val toastLabel: String,
+            val icon: androidx.compose.ui.graphics.vector.ImageVector
+        )
+        val targets = listOf(
+            ShelfTarget(
+                "to-read", stringResource(R.string.shelf_chip_to_read),
+                stringResource(R.string.shelf_toast_pending), Icons.Filled.BookmarkBorder
+            ),
+            ShelfTarget(
+                "reading", stringResource(R.string.shelf_chip_reading),
+                stringResource(R.string.shelf_toast_reading), Icons.AutoMirrored.Filled.MenuBook
+            ),
+            ShelfTarget(
+                "read", stringResource(R.string.shelf_chip_read),
+                stringResource(R.string.shelf_toast_read), Icons.Filled.CheckCircle
+            )
+        ).filter { it.slug != currentShelf }
         AlertDialog(
-            onDismissRequest = { pendingShelf = null },
-            title = { Text(stringResource(R.string.book_change_shelf)) },
-            text = { Text(stringResource(R.string.book_move_confirm, target.second)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    pendingShelf = null
-                    moveToShelf(target.first, target.third)
-                }) {
-                    Text(stringResource(R.string.book_move_confirm_yes))
+            onDismissRequest = { showShelfPicker = false },
+            title = { Text(stringResource(R.string.book_change_shelf_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    targets.forEach { target ->
+                        FilledTonalButton(
+                            onClick = {
+                                showShelfPicker = false
+                                moveToShelf(target.slug, target.toastLabel)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = target.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = target.label)
+                        }
+                    }
                 }
             },
+            confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { pendingShelf = null }) {
+                TextButton(onClick = { showShelfPicker = false }) {
                     Text(stringResource(R.string.progress_btn_cancel))
                 }
             }

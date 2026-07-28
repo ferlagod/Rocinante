@@ -56,6 +56,7 @@
     <string name="book_pages">Pagini: %1$s</string>
     <string name="book_no_description">Nicio descriere disponibilă.</string>
     <string name="book_change_shelf">Schimbă raftul:</string>
+    <string name="book_change_shelf_title">Schimbă raftul</string>
     <string name="book_add_to_shelf">Adaugă pe raft:</string>
     <string name="book_synopsis">Sinopsis</string>
     <string name="book_community_reviews">Recenzii ale comunității</string>

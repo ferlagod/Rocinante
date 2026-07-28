@@ -64,6 +64,7 @@
     <string name="book_pages">Sivuja: %1$s</string>
     <string name="book_no_description">Ei kuvausta saatavilla.</string>
     <string name="book_change_shelf">Vaihda hyllyä:</string>
+    <string name="book_change_shelf_title">Vaihda hyllyä</string>
     <string name="book_add_to_shelf">Lisää hyllyyn:</string>
     <string name="book_synopsis">Tiivistelmä</string>
     <string name="book_community_reviews">Yhteisön arvostelut</string>

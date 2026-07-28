@@ -66,6 +66,7 @@
     <string name="book_pages">Páxinas: %1$s</string>
     <string name="book_no_description">Non hai descrición dispoñible.</string>
     <string name="book_change_shelf">Cambiar de estante:</string>
+    <string name="book_change_shelf_title">Cambiar de estante</string>
     <string name="book_add_to_shelf">Engadir a estante:</string>
     <string name="book_synopsis">Sinopse</string>
     <string name="book_community_reviews">Recensións da comunidade</string>

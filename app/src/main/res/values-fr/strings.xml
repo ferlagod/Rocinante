@@ -55,6 +55,7 @@
     <string name="book_pages">Pages : %1$s</string>
     <string name="book_no_description">Aucune description disponible.</string>
     <string name="book_change_shelf">Changer d\'étagère :</string>
+    <string name="book_change_shelf_title">Changer d\'étagère</string>
     <string name="book_add_to_shelf">Ajouter à l\'étagère :</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Avis de la communauté</string>
