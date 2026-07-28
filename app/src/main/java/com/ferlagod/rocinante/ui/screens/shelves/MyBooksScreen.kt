@@ -845,6 +845,17 @@ fun ShelfNativeDetailScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 )
 
+                                // Subtítulo centrado justo bajo el título, algo más pequeño.
+                                book.subtitle?.trim()?.takeIf { it.isNotEmpty() }?.let { subtitle ->
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
                                 // Estrellas centradas, justo bajo el título.
                                 if (rating != null) {
                                     Row(

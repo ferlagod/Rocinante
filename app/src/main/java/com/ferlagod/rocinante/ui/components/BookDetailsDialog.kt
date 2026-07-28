@@ -448,6 +448,20 @@ fun BookDetailsDialog(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Subtítulo sobre la portada: la barra superior solo cabe una línea
+                        // con el título, así que el complemento se muestra aquí. Si el libro
+                        // no lo tiene, no se emite nada y no ocupa espacio.
+                        bookDetails.subtitle?.trim()?.takeIf { it.isNotEmpty() }?.let { subtitle ->
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
                         val detailCoverUrl = bookDetails.cover?.url ?: fallbackCoverUrl
                         if (detailCoverUrl.isNotBlank()) {
                             AsyncImage(

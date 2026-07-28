@@ -143,6 +143,8 @@ data class BookSearchResult(
  */
 data class BookWyrmBookDetails(
     val title: String?,
+    // Subtítulo del ejemplar; viene en el Edition del .json, no siempre está relleno.
+    val subtitle: String? = null,
     val description: String?,
     val publishedDate: String?,
     val pages: Int?,
@@ -161,6 +163,8 @@ data class ShelfPage(
 data class ShelfBookItem(
     val id: String?,
     val title: String?,
+    // Subtítulo del ejemplar; viene en el Edition del .json, no siempre está relleno.
+    val subtitle: String? = null,
     // Título normalizado por el servidor (artículos eliminados) para ordenar alfabéticamente.
     val sortTitle: String? = null,
     val cover: ShelfBookCover?,
