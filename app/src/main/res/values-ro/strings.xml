@@ -68,6 +68,10 @@
     <string name="book_tab_misc">Mai multe</string>
     <string name="book_move_confirm">Muți în «%1$s»?</string>
     <string name="book_move_confirm_yes">Mută</string>
+    <string name="book_remove_from_shelf">Elimină din raft</string>
+    <string name="book_remove_confirm">Sigur vrei să elimini această carte din raftul tău?</string>
+    <string name="book_remove_confirm_yes">Elimină</string>
+    <string name="book_remove_toast">Eliminată din raftul tău</string>
     <string name="book_more_actions">Mai multe acțiuni</string>
     <string name="shelf_chip_to_read">De citit</string>
     <string name="shelf_chip_reading">Citesc</string>

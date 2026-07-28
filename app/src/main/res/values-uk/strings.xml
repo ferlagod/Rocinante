@@ -69,6 +69,10 @@
     <string name="book_tab_misc">Більше</string>
     <string name="book_move_confirm">Перемістити до «%1$s»?</string>
     <string name="book_move_confirm_yes">Перемістити</string>
+    <string name="book_remove_from_shelf">Прибрати з полиці</string>
+    <string name="book_remove_confirm">Ви впевнені, що хочете прибрати цю книжку зі своєї полиці?</string>
+    <string name="book_remove_confirm_yes">Прибрати</string>
+    <string name="book_remove_toast">Прибрано з вашої полиці</string>
     <string name="book_more_actions">Більше дій</string>
     <string name="shelf_chip_to_read">До прочитання</string>
     <string name="shelf_chip_reading">Читаю</string>

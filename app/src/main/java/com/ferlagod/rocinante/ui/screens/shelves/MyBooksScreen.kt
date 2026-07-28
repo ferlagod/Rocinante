@@ -543,7 +543,12 @@ fun ShelfNativeDetailScreen(
         if (books.isEmpty() || hasMorePages || isEnriching) return@LaunchedEffect
         val ids = books.mapNotNull { it.id }
         val snapshot = enrichment
-        val missing = ids.filter { it !in snapshot }
+        // Faltan las que nunca se leyeron y las que se guardaron con un formato anterior
+        // (les faltarían campos nuevos, p. ej. los identificadores de la estantería).
+        val missing = ids.filter {
+            val cached = snapshot[it]
+            cached == null || cached.schemaVersion != BookWyrmScraper.ENRICHMENT_SCHEMA_VERSION
+        }
         if (missing.isEmpty()) return@LaunchedEffect
 
         isEnriching = true

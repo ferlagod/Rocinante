@@ -78,6 +78,10 @@
     <string name="book_tab_misc">Máis</string>
     <string name="book_move_confirm">Mover a «%1$s»?</string>
     <string name="book_move_confirm_yes">Mover</string>
+    <string name="book_remove_from_shelf">Quitar do estante</string>
+    <string name="book_remove_confirm">Seguro que queres quitar este libro do teu estante?</string>
+    <string name="book_remove_confirm_yes">Quitar</string>
+    <string name="book_remove_toast">Quitado do teu estante</string>
     <string name="book_more_actions">Máis accións</string>
     <string name="shelf_chip_to_read">Pendente</string>
     <string name="shelf_chip_reading">Lendo</string>

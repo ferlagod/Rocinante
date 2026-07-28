@@ -76,6 +76,10 @@
     <string name="book_tab_misc">Lisää</string>
     <string name="book_move_confirm">Siirretäänkö kohteeseen «%1$s»?</string>
     <string name="book_move_confirm_yes">Siirrä</string>
+    <string name="book_remove_from_shelf">Poista hyllystä</string>
+    <string name="book_remove_confirm">Haluatko varmasti poistaa tämän kirjan hyllystäsi?</string>
+    <string name="book_remove_confirm_yes">Poista</string>
+    <string name="book_remove_toast">Poistettu hyllystäsi</string>
     <string name="book_more_actions">Lisää toimintoja</string>
     <string name="shelf_chip_to_read">Lukujono</string>
     <string name="shelf_chip_reading">Luettavana</string>

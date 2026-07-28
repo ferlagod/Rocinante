@@ -268,6 +268,22 @@ interface BookWyrmApi {
         @Field("shelf") shelfType: String
     ): retrofit2.Response<ResponseBody>
 
+    /**
+     * Quita un libro de la estantería en la que está.
+     *
+     * A diferencia de [shelveBook], la vista `unshelve` de BookWyrm identifica la
+     * estantería por su ID numérico (no por su identificador de texto), así que
+     * ambos valores hay que leerlos del formulario oculto de la página del libro
+     * (los recoge `BookWyrmScraper.scrapeBookEnrichment` en `BookEnrichment.shelfId`).
+     */
+    @FormUrlEncoded
+    @POST("unshelve/")
+    suspend fun unshelveBook(
+        @Field("book") bookId: String,
+        @Field("shelf") shelfId: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String
+    ): retrofit2.Response<ResponseBody>
+
 
     // POST /favorite/<status_id>
     /**

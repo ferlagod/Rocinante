@@ -67,6 +67,10 @@
     <string name="book_tab_misc">Meer</string>
     <string name="book_move_confirm">Verplaatsen naar «%1$s»?</string>
     <string name="book_move_confirm_yes">Verplaatsen</string>
+    <string name="book_remove_from_shelf">Uit de boekenplank verwijderen</string>
+    <string name="book_remove_confirm">Weet je zeker dat je dit boek van je boekenplank wilt verwijderen?</string>
+    <string name="book_remove_confirm_yes">Verwijderen</string>
+    <string name="book_remove_toast">Verwijderd van je boekenplank</string>
     <string name="book_more_actions">Meer acties</string>
     <string name="shelf_chip_to_read">Nog lezen</string>
     <string name="shelf_chip_reading">Lezend</string>

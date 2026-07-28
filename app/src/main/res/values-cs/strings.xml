@@ -69,6 +69,10 @@
     <string name="book_tab_misc">Více</string>
     <string name="book_move_confirm">Přesunout do «%1$s»?</string>
     <string name="book_move_confirm_yes">Přesunout</string>
+    <string name="book_remove_from_shelf">Odebrat z police</string>
+    <string name="book_remove_confirm">Opravdu chcete odebrat tuto knihu ze své police?</string>
+    <string name="book_remove_confirm_yes">Odebrat</string>
+    <string name="book_remove_toast">Odebráno z vaší police</string>
     <string name="book_more_actions">Další akce</string>
     <string name="shelf_chip_to_read">K přečtení</string>
     <string name="shelf_chip_reading">Čtu</string>

@@ -36,6 +36,14 @@ object BookWyrmScraper {
     private const val TAG_CLEAR = "RocinanteNotif"
 
     /**
+     * Versión del formato de [com.ferlagod.rocinante.data.model.BookEnrichment].
+     * Súbela al empezar a extraer campos nuevos de la página del libro: las entradas
+     * cacheadas con una versión anterior se vuelven a leer una sola vez.
+     * 2 → añade los identificadores para quitar el libro de su estantería.
+     */
+    const val ENRICHMENT_SCHEMA_VERSION = 2
+
+    /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
      */
     data class ProgressContext(
@@ -343,6 +351,14 @@ object BookWyrmScraper {
             val language = doc.selectFirst("meta[itemprop=inLanguage]")
                 ?.attr("content")?.trim()?.ifEmpty { null }
 
+            // Formulario oculto para quitar el libro de su estantería. Solo se renderiza
+            // cuando el libro está en una, así que su ausencia deja ambos campos a null.
+            val unshelveForm = doc.selectFirst("form[name^=unshelve-]")
+            val shelfBookId = unshelveForm?.selectFirst("input[name=book]")
+                ?.attr("value")?.trim()?.ifEmpty { null }
+            val shelfId = unshelveForm?.selectFirst("input[name=shelf]")
+                ?.attr("value")?.trim()?.ifEmpty { null }
+
             com.ferlagod.rocinante.data.model.BookEnrichment(
                 bookId = bookUrl,
                 authorName = authorName,
@@ -350,6 +366,9 @@ object BookWyrmScraper {
                 finished = finished,
                 started = started,
                 language = language,
+                shelfBookId = shelfBookId,
+                shelfId = shelfId,
+                schemaVersion = ENRICHMENT_SCHEMA_VERSION,
                 fetchedAt = System.currentTimeMillis()
             )
         } catch (e: Exception) {

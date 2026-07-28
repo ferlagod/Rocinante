@@ -211,10 +211,20 @@ fun BookDetailsDialog(
         if (fresh != null) enrichment = fresh
     }
 
+    // Identificadores para quitar el libro de su estantería: vienen con el enriquecimiento
+    // (misma página HTML, sin descarga extra) y solo existen si el libro está en una, así que
+    // sirven además para decidir si se ofrece la acción. Si la caché ya los traía, la opción
+    // aparece al instante.
+    val shelfBookId = enrichment?.shelfBookId
+    val shelfId = enrichment?.shelfId
+
     // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
     var overflowExpanded by remember { mutableStateOf(false) }
     // Estante pendiente de confirmar: (slug, etiqueta, etiqueta de aviso).
     var pendingShelf by remember { mutableStateOf<Triple<String, String, String>?>(null) }
+    // Confirmación antes de quitar el libro de su estantería.
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+    var isRemoving by remember { mutableStateOf(false) }
 
     // Ejecuta el cambio de estante (llamado tras confirmar en el diálogo).
     fun moveToShelf(slug: String, toastLabel: String) {
@@ -256,6 +266,32 @@ fun BookDetailsDialog(
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Quita el libro de la estantería en la que está (llamado tras confirmar en el diálogo).
+    fun removeFromShelf() {
+        val bookId = shelfBookId ?: return
+        val shelf = shelfId ?: return
+        coroutineScope.launch {
+            isRemoving = true
+            try {
+                // Token sin enmascarar de la cookie: coincide siempre con lo que espera Django.
+                val csrfToken = com.ferlagod.rocinante.data.api.NetworkClient.currentCsrfToken() ?: ""
+                val response = api.unshelveBook(bookId, shelf, csrfToken)
+                if (response.isSuccessful || response.code() == 302) {
+                    Toast.makeText(context, context.getString(R.string.book_remove_toast), Toast.LENGTH_SHORT).show()
+                    onShelved?.invoke()
+                    onDismiss()
+                } else {
+                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+            } finally {
+                isRemoving = false
             }
         }
     }
@@ -387,6 +423,20 @@ fun BookDetailsDialog(
                                     text = { Text(stringResource(R.string.book_my_quotes_reviews)) },
                                     onClick = { overflowExpanded = false; showMyActivityDialog = true }
                                 )
+                                // Quitar de la estantería: solo si el libro está en una.
+                                if (shelfBookId != null && shelfId != null) {
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        enabled = !isRemoving,
+                                        text = {
+                                            Text(
+                                                text = stringResource(R.string.book_remove_from_shelf),
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        },
+                                        onClick = { overflowExpanded = false; showRemoveConfirm = true }
+                                    )
+                                }
                             }
                         }
                     )
@@ -695,6 +745,34 @@ fun BookDetailsDialog(
             },
             dismissButton = {
                 TextButton(onClick = { pendingShelf = null }) {
+                    Text(stringResource(R.string.progress_btn_cancel))
+                }
+            }
+        )
+    }
+
+    // ── Confirmación antes de quitar el libro de la estantería ──
+    if (showRemoveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRemoveConfirm = false },
+            title = { Text(stringResource(R.string.book_remove_from_shelf)) },
+            text = { Text(stringResource(R.string.book_remove_confirm)) },
+            confirmButton = {
+                TextButton(
+                    enabled = !isRemoving,
+                    onClick = {
+                        showRemoveConfirm = false
+                        removeFromShelf()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.book_remove_confirm_yes),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveConfirm = false }) {
                     Text(stringResource(R.string.progress_btn_cancel))
                 }
             }

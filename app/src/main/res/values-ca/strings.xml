@@ -67,6 +67,10 @@
     <string name="book_tab_misc">Més</string>
     <string name="book_move_confirm">Mou a «%1$s»?</string>
     <string name="book_move_confirm_yes">Mou</string>
+    <string name="book_remove_from_shelf">Treure de la prestatgeria</string>
+    <string name="book_remove_confirm">Segur que vols treure aquest llibre de la teva prestatgeria?</string>
+    <string name="book_remove_confirm_yes">Treure</string>
+    <string name="book_remove_toast">Tret de la teva prestatgeria</string>
     <string name="book_more_actions">Més accions</string>
     <string name="shelf_chip_to_read">Per llegir</string>
     <string name="shelf_chip_reading">Llegint</string>

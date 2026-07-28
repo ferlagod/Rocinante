@@ -85,6 +85,10 @@
     <string name="book_tab_misc">Diverse</string>
     <string name="book_move_confirm">Flyt til \"%1$s\"?</string>
     <string name="book_move_confirm_yes">Flyt</string>
+    <string name="book_remove_from_shelf">Fjern fra hylden</string>
+    <string name="book_remove_confirm">Er du sikker på, at du vil fjerne denne bog fra din hylde?</string>
+    <string name="book_remove_confirm_yes">Fjern</string>
+    <string name="book_remove_toast">Fjernet fra din hylde</string>
     <string name="book_more_actions">Flere handlinger</string>
     <string name="shelf_chip_to_read">Vil læse</string>
     <string name="shelf_chip_reading">Læser</string>

@@ -67,6 +67,10 @@
     <string name="book_tab_misc">Mer</string>
     <string name="book_move_confirm">Flytta till «%1$s»?</string>
     <string name="book_move_confirm_yes">Flytta</string>
+    <string name="book_remove_from_shelf">Ta bort från hyllan</string>
+    <string name="book_remove_confirm">Är du säker på att du vill ta bort den här boken från din hylla?</string>
+    <string name="book_remove_confirm_yes">Ta bort</string>
+    <string name="book_remove_toast">Borttagen från din hylla</string>
     <string name="book_more_actions">Fler åtgärder</string>
     <string name="shelf_chip_to_read">Att läsa</string>
     <string name="shelf_chip_reading">Läser</string>

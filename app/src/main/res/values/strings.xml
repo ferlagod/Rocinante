@@ -87,6 +87,10 @@
     <string name="book_tab_misc">More</string>
     <string name="book_move_confirm">Move to \"%1$s\"?</string>
     <string name="book_move_confirm_yes">Move</string>
+    <string name="book_remove_from_shelf">Remove from shelf</string>
+    <string name="book_remove_confirm">Are you sure you want to remove this book from your shelf?</string>
+    <string name="book_remove_confirm_yes">Remove</string>
+    <string name="book_remove_toast">Removed from your shelf</string>
     <string name="book_more_actions">More actions</string>
     <string name="shelf_chip_to_read">To read</string>
     <string name="shelf_chip_reading">Reading</string>

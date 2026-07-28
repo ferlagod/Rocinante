@@ -194,6 +194,17 @@ data class BookEnrichment(
     val started: String? = null,
     // Idioma legible del libro (p. ej. "Danish"), leído de la página HTML del libro.
     val language: String? = null,
+    // Datos del formulario oculto «unshelve» de la página del libro, necesarios para quitarlo
+    // de su estantería. BookWyrm solo lo renderiza si el libro está en alguna estantería del
+    // usuario, así que valen además para saber si se puede ofrecer esa acción.
+    // Ojo: [shelfId] es el ID numérico de la estantería, no su identificador de texto.
+    val shelfBookId: String? = null,
+    val shelfId: String? = null,
+    // Versión del formato con que se raspó esta entrada. Sirve para volver a leer una vez
+    // las cachés antiguas cuando se empiezan a extraer campos nuevos; así distinguimos
+    // «nunca se buscó» de «se buscó y el libro no está en ninguna estantería».
+    // Ver BookWyrmScraper.ENRICHMENT_SCHEMA_VERSION.
+    val schemaVersion: Int? = null,
     val fetchedAt: Long? = null
 )
 
