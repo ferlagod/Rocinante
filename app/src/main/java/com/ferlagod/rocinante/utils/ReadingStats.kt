@@ -145,6 +145,47 @@ object ReadingStatsCalculator {
         return days.toInt() + 1
     }
 
+    /**
+     * Un libro de los mejor valorados, con lo justo para pintarlo y saltar a su estantería.
+     */
+    data class TopRatedBook(
+        val book: ShelfBookItem,
+        val rating: Double,
+        val finished: String?
+    )
+
+    /**
+     * Los libros mejor valorados de la estantería «Leídos».
+     *
+     * Cuando hay más empatados en lo alto que sitios —diez con cinco estrellas para cinco
+     * huecos— ganan los leídos más recientemente, así que el bloque va cambiando conforme
+     * se lee en vez de quedarse congelado en los primeros que se puntuaron. Las fechas van
+     * en ISO, que ordena bien como texto; los libros sin fecha quedan detrás de los que la
+     * tienen con la misma nota.
+     *
+     * @param books estantería "Leídos" tal y como la cachea `TimelineCache.loadShelfBooks`.
+     * @param enrichment caché de enriquecimiento indexada por id de libro: de ahí salen la
+     *   valoración y la fecha de fin. Un libro sin valoración no entra.
+     * @param limit cuántos devolver como mucho.
+     */
+    fun topRated(
+        books: List<ShelfBookItem>,
+        enrichment: Map<String, BookEnrichment>,
+        limit: Int = 5
+    ): List<TopRatedBook> {
+        val rated = books.mapNotNull { book ->
+            val data = book.id?.let { enrichment[it] } ?: return@mapNotNull null
+            val rating = data.rating ?: return@mapNotNull null
+            TopRatedBook(book, rating, data.finished?.takeIf { it.isNotBlank() })
+        }
+        return rated
+            .sortedWith(
+                compareByDescending<TopRatedBook> { it.rating }
+                    .thenByDescending { it.finished ?: "" }
+            )
+            .take(limit)
+    }
+
     fun splitAuthors(authorName: String): List<String> {
         val parts = authorName.split(", ").map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return listOf(authorName.trim()).filter { it.isNotEmpty() }

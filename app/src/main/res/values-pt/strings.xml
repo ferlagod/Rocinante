@@ -342,6 +342,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="profile_stats_pages">Páginas</string>
     <string name="profile_stats_per_year">Livros por ano</string>
     <string name="profile_stats_chart_desc">Livros por ano: %1$s</string>
+    <string name="profile_top_rated">Melhor avaliados</string>
     <string name="profile_stats_top_authors">Autores mais lidos</string>
     <string name="profile_stats_authors_desc">Autores mais lidos: %1$s</string>
     <string name="profile_stats_ratings">As tuas avaliações</string>

@@ -77,7 +77,7 @@ class ProfileLayoutTest {
         assertEquals(
             listOf(
                 "reading_stats", "currently_reading", "to_read", "bio", "reading_goal",
-                "top_authors", "ratings", "languages", "formats", "suggested_users"
+                "top_rated", "top_authors", "ratings", "languages", "formats", "suggested_users"
             ),
             ProfileSection.entries.map { it.id }
         )

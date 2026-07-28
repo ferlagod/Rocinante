@@ -342,6 +342,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="profile_stats_pages">Pàgines</string>
     <string name="profile_stats_per_year">Llibres per any</string>
     <string name="profile_stats_chart_desc">Llibres per any: %1$s</string>
+    <string name="profile_top_rated">Millor valorats</string>
     <string name="profile_stats_top_authors">Autors més llegits</string>
     <string name="profile_stats_authors_desc">Autors més llegits: %1$s</string>
     <string name="profile_stats_ratings">Les teves valoracions</string>

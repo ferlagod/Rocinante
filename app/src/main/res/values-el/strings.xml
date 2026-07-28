@@ -342,6 +342,7 @@
     <string name="profile_stats_pages">Σελίδες</string>
     <string name="profile_stats_per_year">Βιβλία ανά έτος</string>
     <string name="profile_stats_chart_desc">Βιβλία ανά έτος: %1$s</string>
+    <string name="profile_top_rated">Με την καλύτερη βαθμολογία</string>
     <string name="profile_stats_top_authors">Οι πιο διαβασμένοι συγγραφείς</string>
     <string name="profile_stats_authors_desc">Οι πιο διαβασμένοι συγγραφείς: %1$s</string>
     <string name="profile_stats_ratings">Οι βαθμολογίες σου</string>

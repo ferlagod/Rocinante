@@ -342,6 +342,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="profile_stats_pages">Sidor</string>
     <string name="profile_stats_per_year">Böcker per år</string>
     <string name="profile_stats_chart_desc">Böcker per år: %1$s</string>
+    <string name="profile_top_rated">Högst betyg</string>
     <string name="profile_stats_top_authors">Mest lästa författare</string>
     <string name="profile_stats_authors_desc">Mest lästa författare: %1$s</string>
     <string name="profile_stats_ratings">Dina betyg</string>

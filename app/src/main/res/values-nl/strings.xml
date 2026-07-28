@@ -342,6 +342,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="profile_stats_pages">Pagina\'s</string>
     <string name="profile_stats_per_year">Boeken per jaar</string>
     <string name="profile_stats_chart_desc">Boeken per jaar: %1$s</string>
+    <string name="profile_top_rated">Best beoordeeld</string>
     <string name="profile_stats_top_authors">Meest gelezen auteurs</string>
     <string name="profile_stats_authors_desc">Meest gelezen auteurs: %1$s</string>
     <string name="profile_stats_ratings">Jouw beoordelingen</string>

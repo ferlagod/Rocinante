@@ -344,6 +344,7 @@
     <string name="profile_stats_pages">Сторінки</string>
     <string name="profile_stats_per_year">Книги за рік</string>
     <string name="profile_stats_chart_desc">Книги за рік: %1$s</string>
+    <string name="profile_top_rated">Найкраще оцінені</string>
     <string name="profile_stats_top_authors">Найчитаніші автори</string>
     <string name="profile_stats_authors_desc">Найчитаніші автори: %1$s</string>
     <string name="profile_stats_ratings">Ваші оцінки</string>

@@ -342,6 +342,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_stats_pages">Seiten</string>
     <string name="profile_stats_per_year">Bücher pro Jahr</string>
     <string name="profile_stats_chart_desc">Bücher pro Jahr: %1$s</string>
+    <string name="profile_top_rated">Am besten bewertet</string>
     <string name="profile_stats_top_authors">Meistgelesene Autoren</string>
     <string name="profile_stats_authors_desc">Meistgelesene Autoren: %1$s</string>
     <string name="profile_stats_ratings">Deine Bewertungen</string>

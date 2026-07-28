@@ -344,6 +344,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_stats_pages">Páxinas</string>
     <string name="profile_stats_per_year">Libros por ano</string>
     <string name="profile_stats_chart_desc">Libros por ano: %1$s</string>
+    <string name="profile_top_rated">Mellor valorados</string>
     <string name="profile_stats_top_authors">Autores máis lidos</string>
     <string name="profile_stats_authors_desc">Autores máis lidos: %1$s</string>
     <string name="profile_stats_ratings">As túas valoracións</string>

@@ -355,6 +355,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book has no page count and is not in the page total</item>
         <item quantity="other">%d books have no page count and are not in the page total</item>
     </plurals>
+    <string name="profile_top_rated">Best rated</string>
     <string name="profile_stats_top_authors">Most read authors</string>
     <string name="profile_stats_authors_desc">Most read authors: %1$s</string>
     <plurals name="profile_stats_missing_authors">

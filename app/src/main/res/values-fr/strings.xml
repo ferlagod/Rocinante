@@ -342,6 +342,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="profile_stats_pages">Pages</string>
     <string name="profile_stats_per_year">Livres par an</string>
     <string name="profile_stats_chart_desc">Livres par an : %1$s</string>
+    <string name="profile_top_rated">Les mieux notés</string>
     <string name="profile_stats_top_authors">Auteurs les plus lus</string>
     <string name="profile_stats_authors_desc">Auteurs les plus lus : %1$s</string>
     <string name="profile_stats_ratings">Vos notes</string>

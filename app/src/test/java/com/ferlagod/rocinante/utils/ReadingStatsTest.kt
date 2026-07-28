@@ -258,6 +258,51 @@ class ReadingStatsTest {
     }
 
     @Test
+    fun `los mejor valorados desempatan por lectura más reciente`() {
+        // Seis libros con cinco estrellas para cinco huecos: se queda fuera el más antiguo.
+        val books = (1..6).map { book("b$it") }
+        val enrichment = (1..6).associate { i ->
+            "b$i" to BookEnrichment(
+                bookId = "b$i",
+                rating = 5.0,
+                finished = "2026-01-%02d".format(i)
+            )
+        }
+
+        val top = ReadingStatsCalculator.topRated(books, enrichment)
+
+        assertEquals(listOf("b6", "b5", "b4", "b3", "b2"), top.map { it.book.id })
+    }
+
+    @Test
+    fun `manda la nota, y sin nota no se entra`() {
+        val books = listOf(book("alta"), book("baja"), book("sin_nota"))
+        val enrichment = mapOf(
+            // La peor valorada es la más reciente: aun así va detrás.
+            "alta" to BookEnrichment(bookId = "alta", rating = 4.0, finished = "2026-01-01"),
+            "baja" to BookEnrichment(bookId = "baja", rating = 2.0, finished = "2026-06-01"),
+            "sin_nota" to BookEnrichment(bookId = "sin_nota", finished = "2026-07-01")
+        )
+
+        val top = ReadingStatsCalculator.topRated(books, enrichment)
+
+        assertEquals(listOf("alta", "baja"), top.map { it.book.id })
+    }
+
+    @Test
+    fun `con la misma nota, el que no tiene fecha va detrás`() {
+        val books = listOf(book("sin_fecha"), book("con_fecha"))
+        val enrichment = mapOf(
+            "sin_fecha" to BookEnrichment(bookId = "sin_fecha", rating = 5.0),
+            "con_fecha" to BookEnrichment(bookId = "con_fecha", rating = 5.0, finished = "2020-01-01")
+        )
+
+        val top = ReadingStatsCalculator.topRated(books, enrichment)
+
+        assertEquals(listOf("con_fecha", "sin_fecha"), top.map { it.book.id })
+    }
+
+    @Test
     fun `un solo año no da serie temporal`() {
         val books = listOf(book("a"), book("b"))
         val enrichment = mapOf(finished("a", "2026-01-01"), finished("b", "2026-02-01"))

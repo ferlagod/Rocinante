@@ -344,6 +344,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_stats_pages">Stránky</string>
     <string name="profile_stats_per_year">Knihy za rok</string>
     <string name="profile_stats_chart_desc">Knihy za rok: %1$s</string>
+    <string name="profile_top_rated">Nejlépe hodnocené</string>
     <string name="profile_stats_top_authors">Nejčtenější autoři</string>
     <string name="profile_stats_authors_desc">Nejčtenější autoři: %1$s</string>
     <string name="profile_stats_ratings">Tvá hodnocení</string>

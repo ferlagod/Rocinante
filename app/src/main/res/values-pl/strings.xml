@@ -344,6 +344,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="profile_stats_pages">Strony</string>
     <string name="profile_stats_per_year">Książki na rok</string>
     <string name="profile_stats_chart_desc">Książki na rok: %1$s</string>
+    <string name="profile_top_rated">Najlepiej oceniane</string>
     <string name="profile_stats_top_authors">Najczęściej czytani autorzy</string>
     <string name="profile_stats_authors_desc">Najczęściej czytani autorzy: %1$s</string>
     <string name="profile_stats_ratings">Twoje oceny</string>

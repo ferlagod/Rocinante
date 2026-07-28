@@ -342,6 +342,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="profile_stats_pages">Pagine</string>
     <string name="profile_stats_per_year">Libri per anno</string>
     <string name="profile_stats_chart_desc">Libri per anno: %1$s</string>
+    <string name="profile_top_rated">I meglio valutati</string>
     <string name="profile_stats_top_authors">Autori più letti</string>
     <string name="profile_stats_authors_desc">Autori più letti: %1$s</string>
     <string name="profile_stats_ratings">Le tue valutazioni</string>

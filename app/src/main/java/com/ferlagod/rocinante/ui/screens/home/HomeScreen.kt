@@ -1186,6 +1186,9 @@ fun ProfileTab(
     val today = remember { java.time.LocalDate.now() }
     val currentYear = today.year
     var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
+    var topRated by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>>(emptyList())
+    }
 
     // Orden y visibilidad de los bloques, elegidos por el usuario y guardados en ajustes.
     val settingsPreferences = remember(context) {
@@ -1209,15 +1212,20 @@ fun ProfileTab(
     LaunchedEffect(refreshTrigger) {
         val dataCache = com.ferlagod.rocinante.data.local.TimelineCache(context)
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
+        val enrichmentData = dataCache.loadEnrichment()
         readingStats = if (readShelf.isEmpty()) {
             null
         } else {
             com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
                 books = readShelf,
-                enrichment = dataCache.loadEnrichment(),
+                enrichment = enrichmentData,
                 currentYear = currentYear
             )
         }
+        topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
+            books = readShelf,
+            enrichment = enrichmentData
+        )
     }
 
     var summary by remember { mutableStateOf("") }
@@ -1614,6 +1622,16 @@ fun ProfileTab(
                         }
                     }
                 }
+                com.ferlagod.rocinante.utils.ProfileSection.TOP_RATED -> {
+                    if (topRated.isNotEmpty()) {
+                        item {
+                            ProfileTopRatedCard(
+                                books = topRated,
+                                onBookClick = openBook
+                            )
+                        }
+                    }
+                }
                 com.ferlagod.rocinante.utils.ProfileSection.TOP_AUTHORS -> {
                     readingStats?.let { stats ->
                         item { com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats) }
@@ -2000,6 +2018,75 @@ fun ActivityDetailsDialog(
             }
         }
     )
+}
+
+/**
+ * Bloque del perfil con los libros mejor valorados. Al tocar uno se abre su ficha, igual
+ * que en las filas de portadas del perfil.
+ */
+@Composable
+private fun ProfileTopRatedCard(
+    books: List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>,
+    onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(
+                text = stringResource(R.string.profile_top_rated),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            books.forEachIndexed { index, entry ->
+                if (index > 0) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBookClick(entry.book) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val coverModifier = Modifier
+                        .width(40.dp)
+                        .height(60.dp)
+                        .clip(MaterialTheme.shapes.small)
+                    val coverUrl = entry.book.cover?.url
+                    if (!coverUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = coverUrl,
+                            contentDescription = entry.book.title ?: stringResource(R.string.book_cover_desc),
+                            modifier = coverModifier,
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = coverModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = entry.book.title ?: stringResource(R.string.book_cover_desc),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = entry.book.title ?: stringResource(R.string.book_no_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        com.ferlagod.rocinante.ui.components.RatingStars(rating = entry.rating)
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

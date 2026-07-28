@@ -32,6 +32,7 @@ enum class ProfileSection(val id: String) {
     TO_READ("to_read"),
     BIO("bio"),
     READING_GOAL("reading_goal"),
+    TOP_RATED("top_rated"),
     TOP_AUTHORS("top_authors"),
     RATINGS("ratings"),
     LANGUAGES("languages"),

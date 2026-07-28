@@ -343,6 +343,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_stats_pages">Pagini</string>
     <string name="profile_stats_per_year">Cărți pe an</string>
     <string name="profile_stats_chart_desc">Cărți pe an: %1$s</string>
+    <string name="profile_top_rated">Cele mai bine evaluate</string>
     <string name="profile_stats_top_authors">Cei mai citiți autori</string>
     <string name="profile_stats_authors_desc">Cei mai citiți autori: %1$s</string>
     <string name="profile_stats_ratings">Evaluările tale</string>
