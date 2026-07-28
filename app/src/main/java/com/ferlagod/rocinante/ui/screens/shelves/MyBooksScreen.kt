@@ -161,23 +161,11 @@ private fun formatDisplayDate(iso: String?): String? {
 }
 
 /**
- * Nº de días de lectura (inclusivo: mismo día = 1) a partir de las fechas ISO de inicio
- * y fin. Devuelve null si falta alguna fecha, no se pueden parsear o el fin es anterior
- * al inicio, de modo que solo se muestra cuando hay información válida.
+ * Nº de días de lectura (inclusivo: mismo día = 1). El cálculo vive en [ReadingStatsCalculator] para
+ * que la ficha del libro cuente exactamente igual que la tarjeta de la estantería.
  */
-private fun readingDays(startIso: String?, finishIso: String?): Int? {
-    if (startIso.isNullOrBlank() || finishIso.isNullOrBlank()) return null
-    return try {
-        val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-        val start = fmt.parse(startIso) ?: return null
-        val finish = fmt.parse(finishIso) ?: return null
-        val diffMs = finish.time - start.time
-        if (diffMs < 0) return null
-        (diffMs / (1000L * 60 * 60 * 24)).toInt() + 1
-    } catch (e: Exception) {
-        null
-    }
-}
+private fun readingDays(startIso: String?, finishIso: String?): Int? =
+    com.ferlagod.rocinante.utils.ReadingStatsCalculator.readingDays(startIso, finishIso)
 
 /**
  * Pantalla que muestra y permite interactuar con los estantes personales del usuario 

@@ -149,7 +149,20 @@ data class BookWyrmBookDetails(
     val publishedDate: String?,
     val pages: Int?,
     // Nuevo campo para capturar la URL de la portada en la ficha
-    val cover: ShelfBookCover?
+    val cover: ShelfBookCover?,
+    // Resto del Edition que ya venía en el .json y se descartaba. Nada de esto cuesta
+    // una petición extra: son campos de la misma respuesta que ya se pide para la ficha.
+    val firstPublishedDate: String? = null,
+    val series: String? = null,
+    val seriesNumber: String? = null,
+    val subjects: List<String>? = null,
+    val publishers: List<String>? = null,
+    val physicalFormat: String? = null,
+    val physicalFormatDetail: String? = null,
+    val isbn13: String? = null,
+    val isbn10: String? = null,
+    val oclcNumber: String? = null,
+    val openlibraryKey: String? = null
 )
 
 // NUEVOS MODELOS PARA LA ESTANTERÍA

@@ -23,6 +23,8 @@ package com.ferlagod.rocinante.ui.components
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -97,6 +99,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -151,6 +154,53 @@ private fun BookRatingStars(rating: Double) {
     }
 }
 
+/**
+ * Bloque con título para la pestaña «Diverse»: agrupa datos afines en una tarjeta.
+ * Si el contenido no emite nada (el libro no trae ninguno de esos campos), la tarjeta
+ * se queda con el título solo, así que quien la usa comprueba antes que haya algo.
+ */
+@Composable
+private fun BookInfoSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            content()
+        }
+    }
+}
+
+/**
+ * Fila «etiqueta → valor» de la pestaña «Diverse». La etiqueta ocupa un ancho fijo para
+ * que los valores queden alineados entre sí aunque las etiquetas midan distinto.
+ */
+@Composable
+private fun BookInfoRow(label: String, content: @Composable () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(110.dp)
+        )
+        content()
+    }
+}
+
+@Composable
+private fun BookInfoRow(label: String, value: String) {
+    BookInfoRow(label) {
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
 /** Formatea una fecha ISO (yyyy-MM-dd) al formato medio del idioma del dispositivo. */
 private fun formatDetailDate(iso: String?): String? {
     if (iso.isNullOrBlank()) return null
@@ -163,7 +213,7 @@ private fun formatDetailDate(iso: String?): String? {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun BookDetailsDialog(
     bookDetails: BookWyrmBookDetails,
@@ -631,33 +681,130 @@ fun BookDetailsDialog(
                                 .padding(24.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            enrichment?.authorName?.takeIf { it.isNotBlank() }?.let {
-                                Text(text = "👤 $it", style = MaterialTheme.typography.bodyMedium)
+                            // ── Tu lectura: solo aparece si hay algo tuyo que contar ──
+                            val readingDays = com.ferlagod.rocinante.utils.ReadingStatsCalculator
+                                .readingDays(enrichment?.started, enrichment?.finished)
+                            val hasReadingData = enrichment?.rating != null ||
+                                enrichment?.started != null || enrichment?.finished != null
+                            if (hasReadingData) {
+                                BookInfoSection(stringResource(R.string.book_section_reading)) {
+                                    enrichment?.rating?.let { r ->
+                                        BookInfoRow(stringResource(R.string.book_label_rating)) {
+                                            BookRatingStars(r)
+                                        }
+                                    }
+                                    enrichment?.started?.let { iso ->
+                                        BookInfoRow(
+                                            stringResource(R.string.book_label_started),
+                                            formatDetailDate(iso) ?: iso
+                                        )
+                                    }
+                                    enrichment?.finished?.let { iso ->
+                                        val date = formatDetailDate(iso) ?: iso
+                                        BookInfoRow(
+                                            stringResource(R.string.shelf_read_title),
+                                            if (readingDays != null) {
+                                                "$date (${pluralStringResource(R.plurals.reading_days, readingDays, readingDays)})"
+                                            } else date
+                                        )
+                                    }
+                                }
                             }
-                            bookDetails.pages?.let {
-                                Text(
-                                    text = "📖 " + stringResource(R.string.book_pages, it.toString()),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                            enrichment?.language?.let { lang ->
+
+                            // ── Sobre el libro ──
+                            val languageLabel = enrichment?.language?.takeIf { it.isNotBlank() }?.let { lang ->
                                 val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
-                                Text(
-                                    text = (flag?.plus("  ") ?: "") + lang,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                if (flag != null) "$flag  $lang" else lang
                             }
-                            enrichment?.finished?.let { iso ->
-                                Text(
-                                    text = "✅ " + stringResource(R.string.shelf_read_title) + ": " + (formatDetailDate(iso) ?: iso),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                            val seriesLabel = bookDetails.series?.trim()?.takeIf { it.isNotEmpty() }?.let { s ->
+                                val number = bookDetails.seriesNumber?.trim()?.takeIf { it.isNotEmpty() }
+                                if (number != null) "$s  #$number" else s
                             }
-                            if (bookDetails.publishedDate != null) {
-                                Text(
-                                    text = "📅 " + stringResource(R.string.book_published_date, bookDetails.publishedDate),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                            val formatLabel = listOfNotNull(
+                                bookDetails.physicalFormatDetail?.trim()?.takeIf { it.isNotEmpty() }
+                                    ?: bookDetails.physicalFormat?.trim()?.takeIf { it.isNotEmpty() }
+                            ).firstOrNull()
+                            val publisherLabel = bookDetails.publishers
+                                ?.mapNotNull { it.trim().takeIf { p -> p.isNotEmpty() } }
+                                ?.takeIf { it.isNotEmpty() }?.joinToString(", ")
+                            val subjects = bookDetails.subjects
+                                ?.mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() } }
+                                ?.distinct()
+                                .orEmpty()
+
+                            BookInfoSection(stringResource(R.string.book_section_about)) {
+                                enrichment?.authorName?.takeIf { it.isNotBlank() }?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_author), it)
+                                }
+                                seriesLabel?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_series), it)
+                                }
+                                bookDetails.pages?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_pages), it.toString())
+                                }
+                                languageLabel?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_language), it)
+                                }
+                                formatLabel?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_format), it)
+                                }
+                                publisherLabel?.let {
+                                    BookInfoRow(stringResource(R.string.book_label_publisher), it)
+                                }
+                                bookDetails.publishedDate?.takeIf { it.isNotBlank() }?.let { iso ->
+                                    BookInfoRow(
+                                        stringResource(R.string.book_label_published),
+                                        formatDetailDate(iso) ?: iso
+                                    )
+                                }
+                                // La primera edición solo aporta algo si no coincide con esta.
+                                bookDetails.firstPublishedDate?.takeIf {
+                                    it.isNotBlank() && it != bookDetails.publishedDate
+                                }?.let { iso ->
+                                    BookInfoRow(
+                                        stringResource(R.string.book_label_first_published),
+                                        formatDetailDate(iso) ?: iso
+                                    )
+                                }
+                                if (subjects.isNotEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.book_label_subjects),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        subjects.forEach { subject ->
+                                            SuggestionChip(
+                                                onClick = {},
+                                                label = {
+                                                    Text(
+                                                        text = subject,
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── Números: ISBN y demás identificadores del ejemplar ──
+                            val isbn = bookDetails.isbn13?.trim()?.takeIf { it.isNotEmpty() }
+                                ?: bookDetails.isbn10?.trim()?.takeIf { it.isNotEmpty() }
+                            val oclc = bookDetails.oclcNumber?.trim()?.takeIf { it.isNotEmpty() }
+                            val openLibrary = bookDetails.openlibraryKey?.trim()?.takeIf { it.isNotEmpty() }
+                            if (isbn != null || oclc != null || openLibrary != null) {
+                                BookInfoSection(stringResource(R.string.book_section_ids)) {
+                                    isbn?.let {
+                                        BookInfoRow(stringResource(R.string.book_label_isbn), it)
+                                    }
+                                    oclc?.let {
+                                        BookInfoRow(stringResource(R.string.book_label_oclc), it)
+                                    }
+                                    openLibrary?.let {
+                                        BookInfoRow(stringResource(R.string.book_label_openlibrary), it)
+                                    }
+                                }
                             }
 
                             // Acción contextual según el estante:

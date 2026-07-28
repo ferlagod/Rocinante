@@ -132,6 +132,19 @@ object ReadingStatsCalculator {
         return runCatching { java.time.LocalDate.parse(value.take(10)) }.getOrNull()
     }
 
+    /**
+     * Días que duró una lectura, contando ambos extremos: leer y terminar el mismo día es
+     * 1 día, no 0. Devuelve null si falta alguna fecha, no se entienden o el fin es anterior
+     * al inicio. Vive aquí para que la estantería y la ficha del libro cuenten igual.
+     */
+    fun readingDays(startIso: String?, finishIso: String?): Int? {
+        val start = parseIsoDate(startIso) ?: return null
+        val finish = parseIsoDate(finishIso) ?: return null
+        val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
+        if (days < 0) return null
+        return days.toInt() + 1
+    }
+
     fun splitAuthors(authorName: String): List<String> {
         val parts = authorName.split(", ").map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return listOf(authorName.trim()).filter { it.isNotEmpty() }
