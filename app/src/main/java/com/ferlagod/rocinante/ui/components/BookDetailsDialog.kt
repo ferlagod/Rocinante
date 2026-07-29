@@ -238,6 +238,8 @@ fun BookDetailsDialog(
     initialEnrichment: com.ferlagod.rocinante.data.model.BookEnrichment? = null
 ) {
     var showProgressDialog by remember { mutableStateOf(false) }
+    // Progreso pendiente de publicar: mientras no sea null se muestra la hoja de publicación.
+    var progressPost by remember { mutableStateOf<ProgressSubmission?>(null) }
     var showReadingActionsDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
     var showQuotationDialog by remember { mutableStateOf(false) }
@@ -258,6 +260,14 @@ fun BookDetailsDialog(
         } else {
             readingProgress = null
         }
+    }
+
+    // Páginas del ebook anotadas en este dispositivo (si se lee en ebook): sirven para traducir
+    // el porcentaje que guarda BookWyrm a la página del ebook que el usuario reconoce.
+    val setupStore = remember(context) { com.ferlagod.rocinante.data.local.ProgressSetupStore(context) }
+    var ebookTotalPages by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(activeBookKey, progressRefreshKey, readingProgress) {
+        ebookTotalPages = setupStore.get(activeBookKey).ebookPages
     }
 
     // Datos enriquecidos del libro (autor, valoración, fechas, idioma) leídos de su página
@@ -312,6 +322,8 @@ fun BookDetailsDialog(
 
                 if (response.isSuccessful || response.code() == 302) {
                     Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
+                    // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
+                    if (slug == "read") setupStore.clear(activeBookKey)
                     onShelved?.invoke()
                     if (slug == "read") {
                         showReviewDialog = true
@@ -377,6 +389,8 @@ fun BookDetailsDialog(
                     )
                     if (response.isSuccessful || response.code() == 302) {
                         Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
+                        // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
+                        setupStore.clear(activeBookKey)
                         onShelved?.invoke()
                         showReviewDialog = true
                     } else {
@@ -838,6 +852,17 @@ fun BookDetailsDialog(
                                     )
                                     else -> stringResource(R.string.book_progress_pages_no_total, rp.progress)
                                 }
+                                // En ebook el progreso viaja como porcentaje, así que se traduce
+                                // de vuelta a la página del ebook con el total de este dispositivo.
+                                val ebookLabel = ebookTotalPages?.takeIf { it > 0 }?.let { total ->
+                                    fraction?.let { f ->
+                                        stringResource(
+                                            R.string.book_progress_ebook_page,
+                                            (total * f).toInt().coerceIn(0, total),
+                                            total
+                                        )
+                                    }
+                                }
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
                                         text = stringResource(R.string.book_current_progress),
@@ -857,6 +882,13 @@ fun BookDetailsDialog(
                                             verticalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             Text(text = progressLabel, style = MaterialTheme.typography.bodyMedium)
+                                            if (ebookLabel != null) {
+                                                Text(
+                                                    text = ebookLabel,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                             if (fraction != null) {
                                                 LinearProgressIndicator(
                                                     progress = { fraction },
@@ -1011,25 +1043,52 @@ fun BookDetailsDialog(
         )
     }
 
-    // ── Diálogo de progreso de lectura (rediseñado según la UI de BookWyrm) ──
+    // Refleja el progreso recién enviado y avisa a quien abrió la ficha.
+    fun applyNewProgress(newProgress: BookWyrmScraper.ReadingProgressInfo?) {
+        // Reflejar el nuevo progreso al instante con el valor enviado.
+        // Si por algún motivo no llegó el valor, recargar desde la red como respaldo.
+        if (newProgress != null) {
+            readingProgress = newProgress
+        } else {
+            progressRefreshKey++
+        }
+        onShelved?.invoke()
+    }
+
+    // ── Progreso de lectura: solo el progreso ──
     if (showProgressDialog) {
         ReadingProgressDialog(
             bookDetails = bookDetails,
             activeBookKey = activeBookKey,
+            currentProgress = readingProgress,
             api = api,
             context = context,
             coroutineScope = coroutineScope,
             onDismiss = { showProgressDialog = false },
+            onCompose = { submission ->
+                // Pasar el testigo a la hoja de publicación: allí se envía todo junto.
+                showProgressDialog = false
+                progressPost = submission
+            },
             onSuccess = { newProgress ->
                 showProgressDialog = false
-                // Reflejar el nuevo progreso al instante con el valor enviado.
-                // Si por algún motivo no llegó el valor, recargar desde la red como respaldo.
-                if (newProgress != null) {
-                    readingProgress = newProgress
-                } else {
-                    progressRefreshKey++
-                }
-                onShelved?.invoke()
+                applyNewProgress(newProgress)
+            }
+        )
+    }
+
+    // ── Publicación del progreso, en su propia hoja ──
+    progressPost?.let { submission ->
+        ProgressPostDialog(
+            submission = submission,
+            activeBookKey = activeBookKey,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { progressPost = null },
+            onSuccess = { newProgress ->
+                progressPost = null
+                applyNewProgress(newProgress)
             }
         )
     }
@@ -1093,50 +1152,247 @@ fun BookDetailsDialog(
     }
 }
 
+/** Unidad en la que el usuario indica su progreso. */
+private enum class ProgressMode {
+    /** Página de la edición impresa: BookWyrm lo entiende tal cual. */
+    PAGES,
+    /** Porcentaje leído. */
+    PERCENT,
+    /** Página del ebook: se convierte a porcentaje con el total guardado en el dispositivo. */
+    EBOOK
+}
+
 /**
- * Diálogo completo de actualización de progreso de lectura.
- * Replica la interfaz del modal de BookWyrm web:
- *  - Campo de progreso + selector páginas/porcentaje
- *  - Checkbox "Publicar en el feed"
- *  - Campo de comentario
- *  - Toggle de alerta de spoiler
- *  - Selector de privacidad
- *  - Botón "Compartir"
+ * Progreso ya listo para enviar a BookWyrm.
+ *
+ * @property value Valor que espera el servidor (página o porcentaje).
+ * @property mode Modo de BookWyrm: "PG" (páginas) o "PCT" (porcentaje).
+ * @property summary Resumen legible del progreso, para recordarlo al redactar la publicación.
+ */
+private data class ProgressSubmission(
+    val value: String,
+    val mode: String,
+    val summary: String
+)
+
+/**
+ * Envía una actualización de progreso a BookWyrm, con o sin publicación en el feed.
+ * Avisa por toast tanto del acierto como del fallo.
+ *
+ * @param api Cliente autenticado.
+ * @param context Contexto para los textos y los toasts.
+ * @param activeBookKey URL o id del libro cuyo progreso se actualiza.
+ * @param submission Progreso a enviar.
+ * @param postToFeed Si además se publica un estado en el feed.
+ * @param privacy Visibilidad de la publicación ("public", "followers" o "direct").
+ * @param content Texto del comentario (vacío si no se publica).
+ * @param contentWarning Aviso de spoiler, o vacío.
+ * @return true si el servidor aceptó la actualización.
+ */
+private suspend fun submitProgress(
+    api: BookWyrmApi,
+    context: Context,
+    activeBookKey: String,
+    submission: ProgressSubmission,
+    postToFeed: Boolean,
+    privacy: String,
+    content: String,
+    contentWarning: String
+): Boolean {
+    return try {
+        // 1. Obtener el context (readthrough ID + user ID + localBookId)
+        // getProgressContext automáticamente resuelve la URL local si es federada
+        val progressContext = BookWyrmScraper.getProgressContext(api, activeBookKey)
+        if (progressContext == null) {
+            Toast.makeText(context, context.getString(R.string.progress_readthrough_not_found), Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        val bookId = progressContext.localBookId
+        if (bookId.isBlank()) {
+            Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // 2. Enviar actualización detallada.
+        // Se usa el valor de la cookie csrftoken (no el token enmascarado
+        // del HTML) para garantizar que coincida con la cookie enviada.
+        val csrfForForm = com.ferlagod.rocinante.data.api.NetworkClient
+            .currentCsrfToken() ?: progressContext.csrfToken
+        val response = api.updateProgressDetailed(
+            bookIdPath = bookId,
+            readthroughId = progressContext.readthroughId,
+            userId = progressContext.userId,
+            book = bookId,
+            progress = submission.value,
+            progressMode = submission.mode,
+            postStatus = if (postToFeed) "on" else "",
+            privacy = privacy,
+            content = content,
+            contentWarning = contentWarning,
+            csrfToken = csrfForForm
+        )
+
+        val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
+        when {
+            isRedirectToLogin -> {
+                Toast.makeText(context, context.getString(R.string.auth_login_required), Toast.LENGTH_SHORT).show()
+                false
+            }
+            response.isSuccessful || response.code() == 302 -> {
+                Toast.makeText(context, context.getString(R.string.progress_success), Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> {
+                Toast.makeText(context, context.getString(R.string.progress_error, response.code().toString()), Toast.LENGTH_SHORT).show()
+                false
+            }
+        }
+    } catch (e: Exception) {
+        if (e is kotlinx.coroutines.CancellationException) throw e
+        Toast.makeText(context, context.getString(R.string.progress_network_error, e.message), Toast.LENGTH_LONG).show()
+        false
+    }
+}
+
+/**
+ * Progreso de lectura, y nada más: campo del valor, selector de unidad (páginas, porcentaje o
+ * páginas del ebook) y el botón de guardar. La publicación en el feed vive en su propia hoja
+ * ([ProgressPostDialog]), a la que se llega con el botón «Publicar».
+ *
+ * En modo ebook se pide además cuántas páginas tiene *tu* ebook (depende del tamaño de letra):
+ * se guarda solo en este dispositivo y sirve para convertir la página en el porcentaje que
+ * BookWyrm sí entiende, mostrando de paso a qué página de la edición impresa equivale.
+ *
+ * La unidad (y el total del ebook) se fijan una vez por libro: si ya están decididas, se muestran
+ * bloqueadas y solo se cambian tocando «Editar», para que actualizar el progreso sea escribir un
+ * número y poco más.
+ *
+ * @param bookDetails Datos del libro (de aquí sale el número de páginas impresas).
+ * @param activeBookKey URL o id del libro.
+ * @param currentProgress Progreso ya registrado en BookWyrm, si lo hay: su modo indica en qué
+ *   unidad se viene anotando este libro cuando no consta nada en este dispositivo.
+ * @param api Cliente autenticado.
+ * @param context Contexto para los textos y los toasts.
+ * @param coroutineScope Ámbito en el que se envía la actualización.
+ * @param onDismiss Cierra la hoja.
+ * @param onCompose Pasa el progreso a la hoja de publicación.
+ * @param onSuccess Avisa del progreso ya guardado (null si no se pudo deducir el valor).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReadingProgressDialog(
     bookDetails: BookWyrmBookDetails,
     activeBookKey: String,
+    currentProgress: BookWyrmScraper.ReadingProgressInfo?,
     api: BookWyrmApi,
     context: Context,
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
+    onCompose: (ProgressSubmission) -> Unit,
     onSuccess: (BookWyrmScraper.ReadingProgressInfo?) -> Unit
 ) {
     // Estado del formulario
     var progressInput by remember { mutableStateOf("") }
-    var isPages by remember { mutableStateOf(true) }  // true=páginas, false=porcentaje
-    var postToFeed by remember { mutableStateOf(true) }
-    var commentText by remember { mutableStateOf("") }
-    var includeSpoiler by remember { mutableStateOf(false) }
-    var spoilerText by remember { mutableStateOf("") }
-    var selectedPrivacy by remember { mutableStateOf("public") }
+    var mode by remember { mutableStateOf(ProgressMode.PAGES) }
+    var ebookTotalInput by remember { mutableStateOf("") }
     var isSending by remember { mutableStateOf(false) }
-    var privacyExpanded by remember { mutableStateOf(false) }
     var modeExpanded by remember { mutableStateOf(false) }
+    // Con la unidad ya decidida para este libro, los campos de configuración se enseñan
+    // bloqueados; «Editar» los desbloquea.
+    var isEditingSetup by remember { mutableStateOf(false) }
 
-    // Textos de privacidad
-    val privacyOptions = listOf(
-        "public" to stringResource(R.string.progress_privacy_public),
-        "followers" to stringResource(R.string.progress_privacy_followers),
-        "direct" to stringResource(R.string.progress_privacy_private)
-    )
-    val currentPrivacyLabel = privacyOptions.firstOrNull { it.first == selectedPrivacy }?.second
-        ?: stringResource(R.string.progress_privacy_public)
+    // Configuración guardada en este dispositivo (unidad y páginas del ebook). Si no consta nada
+    // de este libro se recurre a la unidad del progreso ya registrado y, en último término, a la
+    // última que se usó en cualquier libro: quien lee siempre en ebook no la elige cada vez.
+    val setupStore = remember(context) { com.ferlagod.rocinante.data.local.ProgressSetupStore(context) }
+    LaunchedEffect(activeBookKey) {
+        val setup = setupStore.get(activeBookKey)
+        setup.ebookPages?.let { ebookTotalInput = it.toString() }
+        val savedMode = setup.mode?.let { runCatching { ProgressMode.valueOf(it) }.getOrNull() }
+        // Un total de ebook anotado solo puede venir de haber leído este libro en ebook, así que
+        // manda sobre lo que diga el servidor: allí un ebook viaja como porcentaje.
+        val impliedByEbook = if (setup.ebookPages != null) ProgressMode.EBOOK else null
+        val registeredMode = when (currentProgress?.mode) {
+            "PG" -> ProgressMode.PAGES
+            "PCT" -> ProgressMode.PERCENT
+            else -> null
+        }
+        // Decidido para este libro: se bloquea. Si solo hay una costumbre general, se propone
+        // pero se deja abierto, porque para este libro aún no se ha elegido nada.
+        val decided = savedMode ?: impliedByEbook ?: registeredMode
+        val proposed = decided
+            ?: setupStore.getLastMode()?.let { runCatching { ProgressMode.valueOf(it) }.getOrNull() }
+        if (proposed != null) mode = proposed
+        // En ebook no basta con la unidad: sin el total no se puede calcular nada.
+        isEditingSetup = decided == null ||
+            (decided == ProgressMode.EBOOK && setup.ebookPages == null)
+    }
+    // Se anota el total en cuanto deja de escribirse, sin esperar a que se envíe el progreso.
+    LaunchedEffect(ebookTotalInput) {
+        val total = ebookTotalInput.toIntOrNull()
+        if (total != null && total > 0 && mode == ProgressMode.EBOOK) {
+            kotlinx.coroutines.delay(600)
+            setupStore.setEbookPages(activeBookKey, total)
+            setupStore.setMode(activeBookKey, ProgressMode.EBOOK.name)
+        }
+    }
+
+    // Deja constancia de la unidad elegida al registrar un progreso: la próxima vez este libro
+    // aparece ya configurado, y otro libro nuevo estrenará esta misma unidad.
+    fun rememberMode() {
+        coroutineScope.launch { setupStore.setMode(activeBookKey, mode.name) }
+    }
 
     val pagesLabel = stringResource(R.string.progress_pages)
     val percentLabel = stringResource(R.string.progress_percent)
+    val ebookLabel = stringResource(R.string.progress_pages_ebook)
+    val modeLabel = when (mode) {
+        ProgressMode.PAGES -> pagesLabel
+        ProgressMode.PERCENT -> percentLabel
+        ProgressMode.EBOOK -> ebookLabel
+    }
+
+    // ── Cuentas del modo ebook ──
+    val ebookTotal = ebookTotalInput.toIntOrNull()?.takeIf { it > 0 }
+    val enteredNumber = progressInput.toIntOrNull()?.takeIf { it >= 0 }
+    val printedPages = bookDetails.pages?.takeIf { it > 0 }
+    val ebookPercent = if (mode == ProgressMode.EBOOK && ebookTotal != null && enteredNumber != null) {
+        (enteredNumber * 100 / ebookTotal).coerceIn(0, 100)
+    } else null
+    // Página aproximada de la edición impresa, para hacerse una idea al comentar con alguien
+    // que lea el libro en papel.
+    val printedEstimate = if (ebookPercent != null && printedPages != null) {
+        (printedPages * ebookPercent / 100).coerceIn(0, printedPages)
+    } else null
+
+    // Resumen legible del progreso: se enseña en la hoja de publicación.
+    val progressSummary = when {
+        mode == ProgressMode.PAGES && enteredNumber != null && printedPages != null ->
+            stringResource(R.string.book_progress_pages, enteredNumber, printedPages, enteredNumber * 100 / printedPages)
+        mode == ProgressMode.PAGES && enteredNumber != null ->
+            stringResource(R.string.book_progress_pages_no_total, enteredNumber)
+        mode == ProgressMode.PERCENT && enteredNumber != null ->
+            stringResource(R.string.book_progress_percent, enteredNumber.coerceIn(0, 100))
+        ebookPercent != null && enteredNumber != null && ebookTotal != null ->
+            stringResource(R.string.book_progress_ebook, ebookPercent, enteredNumber, ebookTotal)
+        else -> ""
+    }
+
+    // Progreso listo para enviar, o null si aún falta algún dato.
+    val submission = when (mode) {
+        ProgressMode.PAGES -> enteredNumber?.let { ProgressSubmission(it.toString(), "PG", progressSummary) }
+        ProgressMode.PERCENT -> enteredNumber?.let {
+            ProgressSubmission(it.coerceIn(0, 100).toString(), "PCT", progressSummary)
+        }
+        ProgressMode.EBOOK -> ebookPercent?.let { ProgressSubmission(it.toString(), "PCT", progressSummary) }
+    }
+    // Mensaje de lo que falta cuando aún no se puede enviar.
+    val missingDataMessage = if (mode == ProgressMode.EBOOK && ebookTotal == null) {
+        stringResource(R.string.progress_ebook_total_missing)
+    } else {
+        stringResource(R.string.progress_dialog_hint)
+    }
 
     // Usar ModalBottomSheet para una experiencia nativa de estilo bottom-sheet
     ModalBottomSheet(
@@ -1197,18 +1453,28 @@ private fun ReadingProgressDialog(
                     )
                 )
 
-                // Selector de modo (páginas / porcentaje)
-                ExposedDropdownMenuBox(
+                // Selector de modo (páginas / porcentaje / páginas del ebook). Ya decidido para
+                // este libro, se enseña como simple texto hasta que se toque «Editar».
+                if (!isEditingSetup) {
+                    Text(
+                        text = modeLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                } else ExposedDropdownMenuBox(
                     expanded = modeExpanded,
                     onExpandedChange = { modeExpanded = it }
                 ) {
                     OutlinedTextField(
-                        value = if (isPages) pagesLabel else percentLabel,
+                        value = modeLabel,
                         onValueChange = {},
                         readOnly = true,
+                        // Ancho suficiente para la etiqueta más larga («páginas (ebook)»).
                         modifier = Modifier
-                            .width(140.dp)
+                            .width(185.dp)
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        textStyle = MaterialTheme.typography.bodyMedium,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modeExpanded) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -1222,37 +1488,258 @@ private fun ReadingProgressDialog(
                     ) {
                         DropdownMenuItem(
                             text = { Text(pagesLabel) },
-                            onClick = { isPages = true; modeExpanded = false }
+                            onClick = { mode = ProgressMode.PAGES; modeExpanded = false }
                         )
                         DropdownMenuItem(
                             text = { Text(percentLabel) },
-                            onClick = { isPages = false; modeExpanded = false }
+                            onClick = { mode = ProgressMode.PERCENT; modeExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(ebookLabel) },
+                            onClick = { mode = ProgressMode.EBOOK; modeExpanded = false }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ── Checkbox: Publicar en el feed ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Checkbox(
-                    checked = postToFeed,
-                    onCheckedChange = { postToFeed = it },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary
+            // ── Páginas del ebook: se piden al configurar, y luego solo se recuerdan ──
+            if (mode == ProgressMode.EBOOK && isEditingSetup) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.progress_ebook_total_label),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = ebookTotalInput,
+                    onValueChange = { nuevo -> ebookTotalInput = nuevo.filter { it.isDigit() } },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(stringResource(R.string.progress_ebook_total_hint)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = stringResource(R.string.progress_post_to_feed),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.progress_ebook_total_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            // Configuración ya fijada: un recordatorio discreto y el enlace para cambiarla.
+            if (!isEditingSetup) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (mode == ProgressMode.EBOOK && ebookTotal != null) {
+                            stringResource(R.string.progress_ebook_total_saved, ebookTotal)
+                        } else {
+                            stringResource(R.string.progress_mode_saved, modeLabel)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { isEditingSetup = true }) {
+                        Text(
+                            text = stringResource(R.string.progress_edit_setup),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+            }
+
+            // Equivalencias del ebook: el porcentaje que se enviará y, si se sabe cuántas
+            // páginas tiene la edición impresa, por qué página se iría en papel.
+            if (ebookPercent != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.progress_ebook_percent, ebookPercent),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (printedEstimate != null && printedPages != null) {
+                    Text(
+                        text = stringResource(
+                            R.string.progress_ebook_printed_estimate,
+                            printedEstimate,
+                            printedPages
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Guardar el progreso, o pasar a redactar la publicación ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        val listo = submission
+                        if (listo == null) {
+                            Toast.makeText(context, missingDataMessage, Toast.LENGTH_SHORT).show()
+                            return@OutlinedButton
+                        }
+                        rememberMode()
+                        onCompose(listo)
+                    },
+                    enabled = !isSending,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.progress_btn_post))
+                }
+
+                Button(
+                    onClick = {
+                        val listo = submission
+                        if (listo == null) {
+                            Toast.makeText(context, missingDataMessage, Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        rememberMode()
+                        isSending = true
+                        coroutineScope.launch {
+                            try {
+                                val ok = submitProgress(
+                                    api = api,
+                                    context = context,
+                                    activeBookKey = activeBookKey,
+                                    submission = listo,
+                                    postToFeed = false,
+                                    privacy = "public",
+                                    content = "",
+                                    contentWarning = ""
+                                )
+                                if (ok) {
+                                    // Actualización optimista: informar al diálogo del nuevo
+                                    // progreso con el valor recién enviado, sin volver a la red.
+                                    onSuccess(
+                                        listo.value.toIntOrNull()?.let {
+                                            BookWyrmScraper.ReadingProgressInfo(it, listo.mode)
+                                        }
+                                    )
+                                }
+                            } finally {
+                                isSending = false
+                            }
+                        }
+                    },
+                    enabled = !isSending,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text(
+                        text = if (isSending) stringResource(R.string.post_btn_sending)
+                               else stringResource(R.string.progress_btn_save),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * Publicación sobre el progreso de lectura: comentario, aviso de spoiler y privacidad.
+ * El progreso ya viene decidido de [ReadingProgressDialog] y solo se recuerda arriba; al
+ * compartir se envía todo junto (progreso + estado) en la misma petición.
+ *
+ * @param submission Progreso que se enviará junto con la publicación.
+ * @param activeBookKey URL o id del libro.
+ * @param api Cliente autenticado.
+ * @param context Contexto para los textos y los toasts.
+ * @param coroutineScope Ámbito en el que se envía la publicación.
+ * @param onDismiss Cierra la hoja.
+ * @param onSuccess Avisa del progreso ya guardado (null si no se pudo deducir el valor).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProgressPostDialog(
+    submission: ProgressSubmission,
+    activeBookKey: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
+    onDismiss: () -> Unit,
+    onSuccess: (BookWyrmScraper.ReadingProgressInfo?) -> Unit
+) {
+    var commentText by remember { mutableStateOf("") }
+    var includeSpoiler by remember { mutableStateOf(false) }
+    var spoilerText by remember { mutableStateOf("") }
+    var selectedPrivacy by remember { mutableStateOf("public") }
+    var isSending by remember { mutableStateOf(false) }
+    var privacyExpanded by remember { mutableStateOf(false) }
+
+    // Textos de privacidad
+    val privacyOptions = listOf(
+        "public" to stringResource(R.string.progress_privacy_public),
+        "followers" to stringResource(R.string.progress_privacy_followers),
+        "direct" to stringResource(R.string.progress_privacy_private)
+    )
+    val currentPrivacyLabel = privacyOptions.firstOrNull { it.first == selectedPrivacy }?.second
+        ?: stringResource(R.string.progress_privacy_public)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            // ── Título + botón cerrar ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.progress_post_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.progress_btn_cancel)
+                    )
+                }
+            }
+
+            // Recordatorio del progreso que acompaña a la publicación.
+            if (submission.summary.isNotBlank()) {
+                Text(
+                    text = submission.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // ── Comentario ──
             Text(
@@ -1367,67 +1854,26 @@ private fun ReadingProgressDialog(
                 // Botón Compartir
                 Button(
                     onClick = {
-                        if (progressInput.isBlank()) {
-                            Toast.makeText(context, context.getString(R.string.progress_dialog_hint), Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
                         isSending = true
                         coroutineScope.launch {
                             try {
-                                // 1. Obtener el context (readthrough ID + user ID + localBookId)
-                                // getProgressContext automáticamente resuelve la URL local si es federada
-                                val progressContext = BookWyrmScraper.getProgressContext(api, activeBookKey)
-                                if (progressContext == null) {
-                                    Toast.makeText(context, context.getString(R.string.progress_readthrough_not_found), Toast.LENGTH_SHORT).show()
-                                    isSending = false
-                                    return@launch
-                                }
-                                
-                                val bookId = progressContext.localBookId
-                                if (bookId.isBlank()) {
-                                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
-                                    isSending = false
-                                    return@launch
-                                }
-
-                                // 2. Enviar actualización detallada.
-                                // Se usa el valor de la cookie csrftoken (no el token enmascarado
-                                // del HTML) para garantizar que coincida con la cookie enviada.
-                                val csrfForForm = com.ferlagod.rocinante.data.api.NetworkClient
-                                    .currentCsrfToken() ?: progressContext.csrfToken
-                                val response = api.updateProgressDetailed(
-                                    bookIdPath = bookId,
-                                    readthroughId = progressContext.readthroughId,
-                                    userId = progressContext.userId,
-                                    book = bookId,
-                                    progress = progressInput,
-                                    progressMode = if (isPages) "PG" else "PCT",
-                                    postStatus = if (postToFeed) "on" else "",
+                                val ok = submitProgress(
+                                    api = api,
+                                    context = context,
+                                    activeBookKey = activeBookKey,
+                                    submission = submission,
+                                    postToFeed = true,
                                     privacy = selectedPrivacy,
                                     content = commentText,
-                                    contentWarning = if (includeSpoiler) spoilerText else "",
-                                    csrfToken = csrfForForm
+                                    contentWarning = if (includeSpoiler) spoilerText else ""
                                 )
-
-                                val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
-                                if ((response.isSuccessful || response.code() == 302) && !isRedirectToLogin) {
-                                    Toast.makeText(context, context.getString(R.string.progress_success), Toast.LENGTH_SHORT).show()
-                                    // Actualización optimista: informar al diálogo del nuevo progreso
-                                    // con el valor recién enviado, sin volver a consultar la red.
-                                    val newProgress = progressInput.toIntOrNull()
+                                if (ok) {
                                     onSuccess(
-                                        newProgress?.let {
-                                            BookWyrmScraper.ReadingProgressInfo(it, if (isPages) "PG" else "PCT")
+                                        submission.value.toIntOrNull()?.let {
+                                            BookWyrmScraper.ReadingProgressInfo(it, submission.mode)
                                         }
                                     )
-                                } else if (isRedirectToLogin) {
-                                    Toast.makeText(context, context.getString(R.string.auth_login_required), Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, context.getString(R.string.progress_error, response.code().toString()), Toast.LENGTH_SHORT).show()
                                 }
-                            } catch (e: Exception) {
-                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                Toast.makeText(context, context.getString(R.string.progress_network_error, e.message), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSending = false
                             }
@@ -1449,7 +1895,9 @@ private fun ReadingProgressDialog(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}@OptIn(ExperimentalMaterial3Api::class)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReviewDialog(
     bookDetails: BookWyrmBookDetails,
