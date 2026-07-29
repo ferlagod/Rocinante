@@ -93,6 +93,15 @@
     <string name="book_section_ids">Numbers</string>
     <string name="book_label_rating">Rating</string>
     <string name="book_label_started">Started</string>
+    <string name="book_label_finished">Finished</string>
+    <string name="book_edit_read_dates">Edit read dates</string>
+    <string name="book_read_dates_which">Which reading do you want to edit?</string>
+    <string name="book_read_dates_new">Another reading</string>
+    <string name="book_read_dates_none">no date</string>
+    <string name="book_read_dates_pick">Choose date</string>
+    <string name="book_read_dates_saved">Read dates saved</string>
+    <string name="book_read_dates_empty">Choose at least one date</string>
+    <string name="book_read_dates_order">The finish date cannot be before the start date</string>
     <string name="book_label_author">Author</string>
     <string name="book_label_series">Series</string>
     <string name="book_label_pages">Pages</string>

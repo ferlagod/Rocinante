@@ -91,6 +91,15 @@
     <string name="book_section_ids">Números</string>
     <string name="book_label_rating">Valoración</string>
     <string name="book_label_started">Empezado</string>
+    <string name="book_label_finished">Terminado</string>
+    <string name="book_edit_read_dates">Editar fechas de lectura</string>
+    <string name="book_read_dates_which">¿Qué lectura quieres editar?</string>
+    <string name="book_read_dates_new">Otra lectura</string>
+    <string name="book_read_dates_none">sin fecha</string>
+    <string name="book_read_dates_pick">Elegir fecha</string>
+    <string name="book_read_dates_saved">Fechas de lectura guardadas</string>
+    <string name="book_read_dates_empty">Elige al menos una fecha</string>
+    <string name="book_read_dates_order">La fecha de fin no puede ser anterior a la de inicio</string>
     <string name="book_label_author">Autor</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Páginas</string>

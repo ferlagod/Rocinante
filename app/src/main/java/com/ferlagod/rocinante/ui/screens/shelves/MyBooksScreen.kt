@@ -939,7 +939,15 @@ fun ShelfNativeDetailScreen(
                 incoming = incoming.filterNot { it.id == removedId }
             },
             // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
-            initialEnrichment = enrichment[activeBookUrl]
+            initialEnrichment = enrichment[activeBookUrl],
+            // La caché de enriquecimiento no se vuelve a leer una vez guardada, así que lo
+            // que la ficha lea de la web (p. ej. unas fechas de lectura recién cambiadas)
+            // se guarda aquí para que la estantería lo enseñe sin esperar a un resincronizado.
+            onEnrichmentUpdated = { fresh ->
+                val updated = enrichment.toMutableMap().apply { put(activeBookUrl, fresh) }
+                enrichment = updated
+                coroutineScope.launch { dataCache.saveEnrichment(updated) }
+            }
         )
     }
 

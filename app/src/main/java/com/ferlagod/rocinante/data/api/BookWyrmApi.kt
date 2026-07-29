@@ -201,6 +201,38 @@ interface BookWyrmApi {
     ): retrofit2.Response<ResponseBody>
 
     /**
+     * Cambia las fechas de una lectura (readthrough) ya registrada.
+     * POST a /edit-readthrough — el formulario del lápiz «Edit read dates» de la web.
+     * Solo se guardan los campos que llegan con valor: BookWyrm ignora los vacíos, así que
+     * este camino sirve para corregir una fecha, pero no para dejarla en blanco.
+     */
+    @FormUrlEncoded
+    @POST("edit-readthrough")
+    suspend fun editReadthrough(
+        @Field("id") readthroughId: String,
+        @Field("start_date") startDate: String,
+        @Field("finish_date") finishDate: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
+    /**
+     * Registra una lectura nueva con sus fechas.
+     * POST a /create-readthrough — el formulario «Add read dates» de la web, que además del
+     * libro pide el usuario. Si las fechas no le valen (fin anterior al inicio, o en el
+     * futuro), BookWyrm responde 200 con el formulario de nuevo; solo la redirección (302)
+     * significa que se ha guardado.
+     */
+    @FormUrlEncoded
+    @POST("create-readthrough")
+    suspend fun createReadthrough(
+        @Field("book") book: String,
+        @Field("user") user: String,
+        @Field("start_date") startDate: String,
+        @Field("finish_date") finishDate: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
+    /**
      * Publica una reseña (review) de un libro.
      */
     @FormUrlEncoded

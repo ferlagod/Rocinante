@@ -377,6 +377,105 @@ object BookWyrmScraper {
         }
     }
 
+    /**
+     * Una lectura (readthrough) ya registrada en la página del libro.
+     * Las fechas vienen en ISO (yyyy-MM-dd) y cualquiera de las dos puede faltar.
+     */
+    data class Readthrough(
+        val id: String,
+        val startDate: String?,
+        val finishDate: String?
+    )
+
+    /**
+     * Todo lo necesario para poner o cambiar las fechas de lectura de un libro: las lecturas
+     * que ya tiene (con su id, para editarlas) y los identificadores ocultos que espera el
+     * formulario «Add read dates» de BookWyrm.
+     */
+    data class ReadDatesContext(
+        val bookId: String,
+        val userId: String,
+        val csrfToken: String,
+        val readthroughs: List<Readthrough>
+    )
+
+    /** Lo que la página del libro cuenta de sus fechas de lectura. */
+    data class ParsedReadDates(
+        val bookId: String?,
+        val userId: String?,
+        val readthroughs: List<Readthrough>
+    )
+
+    /**
+     * Extrae del HTML de la página del libro las lecturas registradas y los identificadores
+     * del formulario. BookWyrm dibuja un modal de edición por lectura, con el id oculto y
+     * las fechas ya puestas, y siempre uno de alta con el libro y el usuario, haya lecturas
+     * o no. Los modales se buscan por la acción de su formulario porque el id del modal lo
+     * comparten también trozos suyos que no llevan las fechas (p. ej. la cabecera).
+     */
+    fun parseReadDates(html: String): ParsedReadDates {
+        val doc = org.jsoup.Jsoup.parse(html)
+
+        val editForms = doc.select("form[action\$=edit-readthrough]")
+            .ifEmpty { doc.select("[id^=edit_readthrough_]:has(input[name=start_date])") }
+        val readthroughs = editForms
+            .mapNotNull { form ->
+                val id = form.selectFirst("input[name=id]")
+                    ?.attr("value")?.trim()?.ifEmpty { null } ?: return@mapNotNull null
+                Readthrough(
+                    id = id,
+                    startDate = form.selectFirst("input[name=start_date]")
+                        ?.attr("value")?.trim()?.ifEmpty { null },
+                    finishDate = form.selectFirst("input[name=finish_date]")
+                        ?.attr("value")?.trim()?.ifEmpty { null }
+                )
+            }
+            .distinctBy { it.id }
+
+        val addForm = doc.selectFirst("form[action\$=create-readthrough]")
+            ?: doc.selectFirst("#add-readthrough")
+        val bookId = addForm?.selectFirst("input[name=book]")?.attr("value")?.trim()?.ifEmpty { null }
+            ?: extractHiddenFieldValue(html, "book")
+        val userId = addForm?.selectFirst("input[name=user]")?.attr("value")?.trim()?.ifEmpty { null }
+            ?: extractHiddenFieldValue(html, "user")
+
+        return ParsedReadDates(bookId, userId, readthroughs)
+    }
+
+    /**
+     * Descarga la página del libro y devuelve lo necesario para poner o cambiar sus fechas.
+     *
+     * @return null si la página no se pudo leer o no trae el formulario (sesión caducada).
+     */
+    suspend fun getReadDatesContext(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): ReadDatesContext? = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+
+            val parsed = parseReadDates(html)
+            // Sin el id del libro en el formulario queda el de la propia URL; sin usuario,
+            // en cambio, no hay forma de dar de alta una lectura nueva.
+            val bookId = parsed.bookId
+                ?: BookWyrmUtils.extractBookId(localUrl).takeIf { it.isNotEmpty() }
+                ?: return@withContext null
+            val userId = parsed.userId ?: return@withContext null
+
+            // Token sin enmascarar de la cookie: es el que Django compara siempre bien.
+            // Si el jar aún no lo tiene, sirve el del propio formulario de la página.
+            val csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
+
+            ReadDatesContext(bookId, userId, csrfToken, parsed.readthroughs)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
     suspend fun scrapeHomeFeed(
         api: BookWyrmApi,
         instanceUrl: String,

@@ -91,6 +91,15 @@
     <string name="book_section_ids">Numre</string>
     <string name="book_label_rating">Vurdering</string>
     <string name="book_label_started">Startet</string>
+    <string name="book_label_finished">Afsluttet</string>
+    <string name="book_edit_read_dates">Ret læsedatoer</string>
+    <string name="book_read_dates_which">Hvilken læsning vil du rette?</string>
+    <string name="book_read_dates_new">En anden læsning</string>
+    <string name="book_read_dates_none">ingen dato</string>
+    <string name="book_read_dates_pick">Vælg dato</string>
+    <string name="book_read_dates_saved">Læsedatoerne er gemt</string>
+    <string name="book_read_dates_empty">Vælg mindst én dato</string>
+    <string name="book_read_dates_order">Slutdatoen kan ikke ligge før startdatoen</string>
     <string name="book_label_author">Forfatter</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Sider</string>

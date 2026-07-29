@@ -22,6 +22,7 @@ package com.ferlagod.rocinante.ui.components
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -66,6 +67,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
@@ -235,7 +241,11 @@ fun BookDetailsDialog(
     onRemovedFromShelf: ((String) -> Unit)? = null,
     // Datos enriquecidos ya conocidos por quien abre la ficha (p. ej. la caché de la
     // estantería), para mostrar las estrellas al instante mientras se refresca en segundo plano.
-    initialEnrichment: com.ferlagod.rocinante.data.model.BookEnrichment? = null
+    initialEnrichment: com.ferlagod.rocinante.data.model.BookEnrichment? = null,
+    // Aviso con los datos enriquecidos recién leídos de la web (al abrir la ficha o tras
+    // cambiar las fechas de lectura). Quien abre la ficha puede así refrescar su caché, que
+    // por sí sola no se vuelve a leer nunca una vez guardada.
+    onEnrichmentUpdated: ((com.ferlagod.rocinante.data.model.BookEnrichment) -> Unit)? = null
 ) {
     var showProgressDialog by remember { mutableStateOf(false) }
     // Progreso pendiente de publicar: mientras no sea null se muestra la hoja de publicación.
@@ -275,8 +285,14 @@ fun BookDetailsDialog(
     var enrichment by remember { mutableStateOf(initialEnrichment) }
     LaunchedEffect(activeBookKey) {
         val fresh = runCatching { BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey) }.getOrNull()
-        if (fresh != null) enrichment = fresh
+        if (fresh != null) {
+            enrichment = fresh
+            onEnrichmentUpdated?.invoke(fresh)
+        }
     }
+
+    // Fechas de lectura (empezado / terminado): se cambian en su propio diálogo.
+    var showReadDatesDialog by remember { mutableStateOf(false) }
 
     // Identificadores para quitar el libro de su estantería: vienen con el enriquecimiento
     // (misma página HTML, sin descarga extra) y solo existen si el libro está en una, así que
@@ -472,6 +488,10 @@ fun BookDetailsDialog(
                                         onClick = { overflowExpanded = false; showProgressDialog = true }
                                     )
                                 }
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.book_edit_read_dates)) },
+                                    onClick = { overflowExpanded = false; showReadDatesDialog = true }
+                                )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.book_add_quote)) },
                                     onClick = { overflowExpanded = false; showQuotationDialog = true }
@@ -705,11 +725,21 @@ fun BookDetailsDialog(
                                     enrichment?.finished?.let { iso ->
                                         val date = formatDetailDate(iso) ?: iso
                                         BookInfoRow(
-                                            stringResource(R.string.shelf_read_title),
+                                            stringResource(R.string.book_label_finished),
                                             if (readingDays != null) {
                                                 "$date (${pluralStringResource(R.plurals.reading_days, readingDays, readingDays)})"
                                             } else date
                                         )
+                                    }
+                                    // Las fechas se pueden corregir aquí mismo; en la web están
+                                    // detrás del lápiz de «Read dates» de la página del libro.
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(onClick = { showReadDatesDialog = true }) {
+                                            Text(stringResource(R.string.book_edit_read_dates))
+                                        }
                                     }
                                 }
                             }
@@ -1000,6 +1030,30 @@ fun BookDetailsDialog(
             dismissButton = {
                 TextButton(onClick = { showRemoveConfirm = false }) {
                     Text(stringResource(R.string.progress_btn_cancel))
+                }
+            }
+        )
+    }
+
+    // ── Fechas de lectura (empezado / terminado) ──
+    if (showReadDatesDialog) {
+        ReadDatesDialog(
+            activeBookKey = activeBookKey,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { showReadDatesDialog = false },
+            onSaved = {
+                // Las fechas se leen de la página del libro, así que se vuelve a raspar para
+                // enseñarlas ya cambiadas aquí y avisar a quien tenga la ficha abierta.
+                coroutineScope.launch {
+                    val fresh = runCatching {
+                        BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey)
+                    }.getOrNull()
+                    if (fresh != null) {
+                        enrichment = fresh
+                        onEnrichmentUpdated?.invoke(fresh)
+                    }
                 }
             }
         )
@@ -2854,3 +2908,284 @@ fun MyBookActivityDialog(
     )
 }
 
+
+/** Convierte una fecha ISO (yyyy-MM-dd) a los milisegundos UTC que usa el calendario. */
+private fun isoToUtcMillis(iso: String?): Long? {
+    if (iso.isNullOrBlank()) return null
+    return runCatching {
+        java.time.LocalDate.parse(iso).toEpochDay() * 86_400_000L
+    }.getOrNull()
+}
+
+/** Convierte la fecha elegida en el calendario (milisegundos UTC) a ISO (yyyy-MM-dd). */
+private fun utcMillisToIso(millis: Long): String =
+    java.time.LocalDate.ofEpochDay(Math.floorDiv(millis, 86_400_000L)).toString()
+
+/**
+ * Calendario para elegir una de las dos fechas de lectura. Se abre ya puesto en la fecha
+ * que hubiera, y no deja elegir el futuro: BookWyrm rechaza una lectura terminada mañana.
+ *
+ * @param initialIso Fecha de partida en ISO, o null para abrirlo en blanco.
+ * @param onPick Devuelve la fecha elegida en ISO.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReadDatePickerDialog(
+    initialIso: String?,
+    onDismiss: () -> Unit,
+    onPick: (String) -> Unit
+) {
+    val todayMillis = remember { java.time.LocalDate.now().toEpochDay() * 86_400_000L }
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = isoToUtcMillis(initialIso),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= todayMillis
+            override fun isSelectableYear(year: Int) = year <= java.time.LocalDate.now().year
+        }
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                enabled = state.selectedDateMillis != null,
+                onClick = { state.selectedDateMillis?.let { onPick(utcMillisToIso(it)) } }
+            ) {
+                Text(stringResource(R.string.progress_btn_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.progress_btn_cancel))
+            }
+        }
+    ) {
+        DatePicker(state = state)
+    }
+}
+
+/**
+ * Diálogo para poner o cambiar las fechas de lectura de un libro (lo que en la web de
+ * BookWyrm son las «read dates»). Trae las lecturas que ya tiene el libro; si hay más de
+ * una se elige cuál se toca, y siempre se puede añadir otra distinta.
+ *
+ * Una fecha ya guardada se puede corregir, pero no dejar en blanco: BookWyrm ignora los
+ * campos vacíos al editar. Para eso hay que borrar la lectura entera desde la web.
+ *
+ * @param activeBookKey URL o id del libro del que se editan las fechas.
+ * @param onSaved Se llama tras guardar, para refrescar lo que se enseñe de ese libro.
+ */
+@Composable
+private fun ReadDatesDialog(
+    activeBookKey: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit
+) {
+    var readContext by remember { mutableStateOf<BookWyrmScraper.ReadDatesContext?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    // Lectura que se está editando; null significa «una lectura nueva».
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    var startIso by remember { mutableStateOf<String?>(null) }
+    var finishIso by remember { mutableStateOf<String?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+    var pickingStart by remember { mutableStateOf(false) }
+    var pickingFinish by remember { mutableStateOf(false) }
+
+    LaunchedEffect(activeBookKey) {
+        isLoading = true
+        val loaded = runCatching { BookWyrmScraper.getReadDatesContext(api, activeBookKey) }.getOrNull()
+        readContext = loaded
+        // Se abre por la lectura más reciente, que es la que casi siempre se quiere corregir.
+        val latest = loaded?.readthroughs?.maxByOrNull { it.finishDate ?: it.startDate ?: "" }
+        selectedId = latest?.id
+        startIso = latest?.startDate
+        finishIso = latest?.finishDate
+        isLoading = false
+    }
+
+    fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+
+    fun save() {
+        val ctx = readContext ?: return
+        val start = startIso
+        val finish = finishIso
+        if (start == null && finish == null) {
+            toast(context.getString(R.string.book_read_dates_empty))
+            return
+        }
+        if (start != null && finish != null && start > finish) {
+            toast(context.getString(R.string.book_read_dates_order))
+            return
+        }
+        coroutineScope.launch {
+            isSaving = true
+            try {
+                val editingId = selectedId
+                val response = if (editingId != null) {
+                    api.editReadthrough(
+                        readthroughId = editingId,
+                        startDate = start ?: "",
+                        finishDate = finish ?: "",
+                        csrfToken = ctx.csrfToken
+                    )
+                } else {
+                    api.createReadthrough(
+                        book = ctx.bookId,
+                        user = ctx.userId,
+                        startDate = start ?: "",
+                        finishDate = finish ?: "",
+                        csrfToken = ctx.csrfToken
+                    )
+                }
+                // Al editar, BookWyrm contesta 200 vacío (pedimos JSON) o redirige a la página
+                // del libro. Al crear, en cambio, un 200 es el formulario devuelto con errores:
+                // ahí solo vale la redirección.
+                val saved = response.code() == 302 || (editingId != null && response.isSuccessful)
+                if (saved) {
+                    toast(context.getString(R.string.book_read_dates_saved))
+                    onSaved()
+                    onDismiss()
+                } else {
+                    toast(context.getString(R.string.error_server, response.code().toString()))
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                toast(context.getString(R.string.error_network, e.message))
+            } finally {
+                isSaving = false
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        title = { Text(stringResource(R.string.book_edit_read_dates)) },
+        text = {
+            val ctx = readContext
+            when {
+                isLoading -> Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                ctx == null -> Text(stringResource(R.string.error_book_not_identified))
+
+                // Un libro releído varias veces trae una fila por lectura, así que el
+                // contenido se desplaza para que no se coma los botones del diálogo.
+                else -> Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Con lecturas registradas se elige a cuál se le tocan las fechas; la
+                    // última opción deja registrar otra lectura distinta del mismo libro.
+                    if (ctx.readthroughs.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.book_read_dates_which),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val noDate = stringResource(R.string.book_read_dates_none)
+                        ctx.readthroughs.forEach { readthrough ->
+                            val label = listOf(readthrough.startDate, readthrough.finishDate)
+                                .joinToString(" → ") { formatDetailDate(it) ?: noDate }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !isSaving) {
+                                        selectedId = readthrough.id
+                                        startIso = readthrough.startDate
+                                        finishIso = readthrough.finishDate
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedId == readthrough.id,
+                                    onClick = {
+                                        selectedId = readthrough.id
+                                        startIso = readthrough.startDate
+                                        finishIso = readthrough.finishDate
+                                    }
+                                )
+                                Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isSaving) {
+                                    selectedId = null
+                                    startIso = null
+                                    finishIso = null
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedId == null,
+                                onClick = {
+                                    selectedId = null
+                                    startIso = null
+                                    finishIso = null
+                                }
+                            )
+                            Text(
+                                text = stringResource(R.string.book_read_dates_new),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        HorizontalDivider()
+                    }
+
+                    val pickLabel = stringResource(R.string.book_read_dates_pick)
+                    BookInfoRow(stringResource(R.string.book_label_started)) {
+                        OutlinedButton(
+                            onClick = { pickingStart = true },
+                            enabled = !isSaving
+                        ) {
+                            Text(formatDetailDate(startIso) ?: pickLabel)
+                        }
+                    }
+                    BookInfoRow(stringResource(R.string.book_label_finished)) {
+                        OutlinedButton(
+                            onClick = { pickingFinish = true },
+                            enabled = !isSaving
+                        ) {
+                            Text(formatDetailDate(finishIso) ?: pickLabel)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isLoading && !isSaving && readContext != null,
+                onClick = { save() }
+            ) {
+                Text(stringResource(R.string.progress_btn_save))
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !isSaving, onClick = onDismiss) {
+                Text(stringResource(R.string.progress_btn_cancel))
+            }
+        }
+    )
+
+    if (pickingStart) {
+        ReadDatePickerDialog(
+            initialIso = startIso,
+            onDismiss = { pickingStart = false },
+            onPick = { startIso = it; pickingStart = false }
+        )
+    }
+    if (pickingFinish) {
+        ReadDatePickerDialog(
+            initialIso = finishIso,
+            onDismiss = { pickingFinish = false },
+            onPick = { finishIso = it; pickingFinish = false }
+        )
+    }
+}
