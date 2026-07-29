@@ -415,7 +415,7 @@ fun SearchScreen(
                                                 }
                                             } catch (e: Exception) {
                                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = context.getString(R.string.error_details_load, e.message)
+                                                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
                                             } finally {
                                                 isLoadingDetails = false
                                             }
@@ -485,7 +485,7 @@ fun SearchScreen(
                                         selectedUserProfile = profile
                                     } catch (e: Exception) {
                                         if (e is kotlinx.coroutines.CancellationException) throw e
-                                        errorMessage = context.getString(R.string.error_details_load, e.message)
+                                        errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
                                     } finally {
                                         isLoadingDetails = false
                                     }
@@ -685,11 +685,11 @@ fun UserProfileDialog(
                                         isFollowing = false
                                         android.widget.Toast.makeText(context, context.getString(R.string.unfollow_success), android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
-                                        android.widget.Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), android.widget.Toast.LENGTH_SHORT).show()
+                                        android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), android.widget.Toast.LENGTH_SHORT).show()
                                     }
                                 } catch (e: Exception) {
                                     if (e is kotlinx.coroutines.CancellationException) throw e
-                                    android.widget.Toast.makeText(context, context.getString(R.string.error_network, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
                                 } finally {
                                     isFollowPending = false
                                 }
@@ -710,11 +710,11 @@ fun UserProfileDialog(
                                         isFollowing = true
                                         android.widget.Toast.makeText(context, context.getString(R.string.follow_success), android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
-                                        android.widget.Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), android.widget.Toast.LENGTH_SHORT).show()
+                                        android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), android.widget.Toast.LENGTH_SHORT).show()
                                     }
                                 } catch (e: Exception) {
                                     if (e is kotlinx.coroutines.CancellationException) throw e
-                                    android.widget.Toast.makeText(context, context.getString(R.string.error_network, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
                                 } finally {
                                     isFollowPending = false
                                 }

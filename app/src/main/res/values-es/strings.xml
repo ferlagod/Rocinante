@@ -188,6 +188,13 @@
     <string name="profile_network_error">Fallo de red: %1$s</string>
     <string name="error_network">Error de red: %1$s</string>
     <string name="error_server">Error del servidor: %1$s</string>
+    <string name="error_conn_offline">Sin conexión. Comprueba tu red.</string>
+    <string name="error_conn_timeout">La instancia no responde ahora mismo. Inténtalo de nuevo en un momento.</string>
+    <string name="error_instance_down">La instancia tiene problemas ahora mismo (error %1$s). Inténtalo de nuevo en un momento.</string>
+    <string name="error_rate_limited">La instancia te pide que esperes un poco. Inténtalo de nuevo en un momento.</string>
+    <string name="error_session_expired">Tu sesión ha caducado. Vuelve a entrar.</string>
+    <string name="error_not_found">La instancia ya no lo tiene.</string>
+    <string name="error_unexpected_response">La instancia ha enviado una respuesta inesperada, normalmente un control de seguridad por medio. Inténtalo de nuevo en un momento.</string>
     <string name="error_book_not_identified">No se pudo identificar el libro</string>
     <string name="error_shelve_sync">Error de sincronización: %1$s</string>
     <string name="error_shelve_success">Estado sincronizado: %1$s</string>

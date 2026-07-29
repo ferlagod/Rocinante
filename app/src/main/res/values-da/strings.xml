@@ -187,6 +187,13 @@
     <string name="profile_network_error">Netværksfejl: %1$s</string>
     <string name="error_network">Netværksfejl: %1$s</string>
     <string name="error_server">Serverfejl: %1$s</string>
+    <string name="error_conn_offline">Ingen forbindelse. Tjek dit netværk.</string>
+    <string name="error_conn_timeout">Instansen svarer ikke lige nu. Prøv igen om lidt.</string>
+    <string name="error_instance_down">Instansen har problemer lige nu (fejl %1$s). Prøv igen om lidt.</string>
+    <string name="error_rate_limited">Instansen beder dig vente lidt. Prøv igen om et øjeblik.</string>
+    <string name="error_session_expired">Din session er udløbet. Log ind igen.</string>
+    <string name="error_not_found">Instansen har det ikke længere.</string>
+    <string name="error_unexpected_response">Instansen sendte et uventet svar, som regel en sikkerhedskontrol i vejen. Prøv igen om lidt.</string>
     <string name="error_book_not_identified">Bogen kunne ikke identificeres</string>
     <string name="error_shelve_sync">Synkroniseringsfejl: %1$s</string>
     <string name="error_shelve_success">Status synkroniseret: %1$s</string>

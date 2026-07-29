@@ -307,8 +307,6 @@ fun ShelfNativeDetailScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
-    val errorNetworkTemplate = stringResource(R.string.error_network)
-    val errorDetailsLoadTemplate = stringResource(R.string.error_details_load)
 
     val api = remember(instanceUrl, cookie) {
         sharedApi ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -423,7 +421,7 @@ fun ShelfNativeDetailScreen(
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             if (books.isEmpty()) {
-                errorMessage = errorNetworkTemplate.format(e.message ?: "")
+                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
             }
             refreshFailed = true
             hasMorePages = false
@@ -646,7 +644,19 @@ fun ShelfNativeDetailScreen(
             }
         }
 
-        if (errorMessage != null) {
+        // Un tropiezo puntual (la instancia va lenta, un libro que no abre) no debe llevarse
+        // por delante la estantería que ya está en pantalla: el aviso se pone encima y los
+        // libros siguen ahí. Solo cuando no hay nada que enseñar ocupa la pantalla entera.
+        if (errorMessage != null && books.isNotEmpty()) {
+            Text(
+                text = errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
+        if (errorMessage != null && books.isEmpty()) {
             Text(
                 text = errorMessage ?: "",
                 color = MaterialTheme.colorScheme.error,
@@ -755,6 +765,9 @@ fun ShelfNativeDetailScreen(
                                     } else {
                                         activeBookUrl = bookUrl
                                         isLoadingDetails = true
+                                        // El aviso del intento anterior se va al volver a
+                                        // probar; si no, se queda ahí aunque ya funcione.
+                                        errorMessage = null
                                         coroutineScope.launch {
                                             try {
                                                 val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
@@ -770,7 +783,7 @@ fun ShelfNativeDetailScreen(
                                                 }
                                             } catch (e: Exception) {
                                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = errorDetailsLoadTemplate.format(e.message ?: "")
+                                                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
                                             } finally {
                                                 isLoadingDetails = false
                                             }

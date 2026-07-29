@@ -527,7 +527,7 @@ fun HomeScreen(
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -852,7 +852,7 @@ fun ActivityTab(
                                             }
                                         } catch (e: Exception) {
                                             if (e is kotlinx.coroutines.CancellationException) throw e
-                                            android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -1271,7 +1271,7 @@ fun ProfileTab(
                     }
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
-                    Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
                 }
             }
         }

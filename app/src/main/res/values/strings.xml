@@ -190,6 +190,13 @@
     <string name="profile_network_error">Network failure: %1$s</string>
     <string name="error_network">Network error: %1$s</string>
     <string name="error_server">Server error: %1$s</string>
+    <string name="error_conn_offline">No connection. Check your network.</string>
+    <string name="error_conn_timeout">The instance is not responding right now. Try again in a moment.</string>
+    <string name="error_instance_down">The instance is having trouble right now (error %1$s). Try again in a moment.</string>
+    <string name="error_rate_limited">The instance is asking you to slow down. Wait a moment and try again.</string>
+    <string name="error_session_expired">Your session has expired. Log in again.</string>
+    <string name="error_not_found">The instance no longer has this.</string>
+    <string name="error_unexpected_response">The instance sent an unexpected response, usually a security check in the way. Try again in a moment.</string>
     <string name="error_book_not_identified">Could not identify the book</string>
     <string name="error_shelve_sync">Sync error: %1$s</string>
     <string name="error_shelve_success">Status synced: %1$s</string>

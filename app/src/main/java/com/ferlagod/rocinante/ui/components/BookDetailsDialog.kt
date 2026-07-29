@@ -347,11 +347,11 @@ fun BookDetailsDialog(
                         onDismiss()
                     }
                 } else {
-                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -375,11 +375,11 @@ fun BookDetailsDialog(
                     if (onRemovedFromShelf != null) onRemovedFromShelf(activeBookKey) else onShelved?.invoke()
                     onDismiss()
                 } else {
-                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
             } finally {
                 isRemoving = false
             }
@@ -410,14 +410,14 @@ fun BookDetailsDialog(
                         onShelved?.invoke()
                         showReviewDialog = true
                     } else {
-                        Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
             } finally {
                 isFinishing = false
             }
@@ -2241,7 +2241,7 @@ private fun ReviewDialog(
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSending = false
                             }
@@ -2539,7 +2539,7 @@ private fun QuotationDialog(
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_LONG).show()
                             } finally {
                                 isSending = false
                             }
@@ -2702,12 +2702,12 @@ fun ReviewDetailDialog(
                                                     isFollowing = false
                                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                                 } else {
-                                                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                                                 }
 
                                             } catch (e: Exception) {
                                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
                                             } finally {
                                                 isFollowPending = false
                                             }
@@ -2728,11 +2728,11 @@ fun ReviewDetailDialog(
                                                     isFollowing = true
                                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                                 } else {
-                                                    Toast.makeText(context, context.getString(R.string.error_server, response.code().toString()), Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                                                 }
                                             } catch (e: Exception) {
                                                 if (e is kotlinx.coroutines.CancellationException) throw e
-                                                Toast.makeText(context, context.getString(R.string.error_network, e.message), Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
                                             } finally {
                                                 isFollowPending = false
                                             }
@@ -3048,11 +3048,11 @@ private fun ReadDatesDialog(
                     onSaved()
                     onDismiss()
                 } else {
-                    toast(context.getString(R.string.error_server, response.code().toString()))
+                    toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()))
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                toast(context.getString(R.string.error_network, e.message))
+                toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, e))
             } finally {
                 isSaving = false
             }

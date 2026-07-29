@@ -178,7 +178,7 @@ class HomeViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    errorMessage = if (_uiState.value.timeline.isEmpty()) context.getString(R.string.error_loading_data, e.message ?: "") else null
+                    errorMessage = if (_uiState.value.timeline.isEmpty()) com.ferlagod.rocinante.utils.NetworkErrors.message(context, e) else null
                 )
             }
         }
