@@ -227,11 +227,21 @@ fun BookDetailsDialog(
                     return@launch
                 }
                 val mappedStatus = mapOf("to-read" to "want", "reading" to "start", "read" to "finish")[slug]
-                val response = if (mappedStatus != null) {
+                var response = if (mappedStatus != null) {
                     api.updateReadingStatus(mappedStatus, bookId)
                 } else {
                     api.shelveBook(bookId, slug)
                 }
+
+                // Fallback for BookWyrm >= 0.8: reading-status may return 404 for Work IDs, 
+                // but shelveBook resolves them to Editions automatically.
+                if (mappedStatus != null && !response.isSuccessful && response.code() != 302) {
+                    val fallback = api.shelveBook(bookId, slug)
+                    if (fallback.isSuccessful || fallback.code() == 302) {
+                        response = fallback
+                    }
+                }
+
                 if (response.isSuccessful || response.code() == 302) {
                     Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
                     onShelved?.invoke()

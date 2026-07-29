@@ -29,3 +29,4 @@
 
 # Keep data models used with Gson
 -keep class com.ferlagod.rocinante.data.api.** { *; }
+-keep class com.ferlagod.rocinante.data.model.** { *; }
