@@ -272,13 +272,8 @@ fun BookDetailsDialog(
         }
     }
 
-    // Páginas del ebook anotadas en este dispositivo (si se lee en ebook): sirven para traducir
-    // el porcentaje que guarda BookWyrm a la página del ebook que el usuario reconoce.
+    // Configuración de progreso de este libro, que se olvida al terminarlo.
     val setupStore = remember(context) { com.ferlagod.rocinante.data.local.ProgressSetupStore(context) }
-    var ebookTotalPages by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(activeBookKey, progressRefreshKey, readingProgress) {
-        ebookTotalPages = setupStore.get(activeBookKey).ebookPages
-    }
 
     // Datos enriquecidos del libro (autor, valoración, fechas, idioma) leídos de su página
     // HTML — no vienen en el .json. Se cargan una vez al abrir la ficha.
@@ -882,17 +877,19 @@ fun BookDetailsDialog(
                                     )
                                     else -> stringResource(R.string.book_progress_pages_no_total, rp.progress)
                                 }
-                                // En ebook el progreso viaja como porcentaje, así que se traduce
-                                // de vuelta a la página del ebook con el total de este dispositivo.
-                                val ebookLabel = ebookTotalPages?.takeIf { it > 0 }?.let { total ->
+                                // Un progreso en porcentaje (así viaja el del ebook) no dice por
+                                // dónde se va: se traduce a la página de la edición impresa, que
+                                // es la que sirve para hablarlo con cualquiera. Anotado en
+                                // páginas ya lo dice la línea de arriba.
+                                val printedLabel = if (rp.mode == "PCT" && totalPages != null && totalPages > 0) {
                                     fraction?.let { f ->
                                         stringResource(
-                                            R.string.book_progress_ebook_page,
-                                            (total * f).toInt().coerceIn(0, total),
-                                            total
+                                            R.string.progress_ebook_printed_estimate,
+                                            (totalPages * f).toInt().coerceIn(0, totalPages),
+                                            totalPages
                                         )
                                     }
-                                }
+                                } else null
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
                                         text = stringResource(R.string.book_current_progress),
@@ -912,9 +909,9 @@ fun BookDetailsDialog(
                                             verticalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             Text(text = progressLabel, style = MaterialTheme.typography.bodyMedium)
-                                            if (ebookLabel != null) {
+                                            if (printedLabel != null) {
                                                 Text(
-                                                    text = ebookLabel,
+                                                    text = printedLabel,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
