@@ -40,8 +40,9 @@ object BookWyrmScraper {
      * Súbela al empezar a extraer campos nuevos de la página del libro: las entradas
      * cacheadas con una versión anterior se vuelven a leer una sola vez.
      * 2 → añade los identificadores para quitar el libro de su estantería.
+     * 3 → añade la serie del libro: nombre, enlace y número dentro de ella.
      */
-    const val ENRICHMENT_SCHEMA_VERSION = 2
+    const val ENRICHMENT_SCHEMA_VERSION = 3
 
     /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
@@ -359,6 +360,25 @@ object BookWyrmScraper {
             val shelfId = unshelveForm?.selectFirst("input[name=shelf]")
                 ?.attr("value")?.trim()?.ifEmpty { null }
 
+            // Serie del libro. Viene marcada con microdatos schema.org, así que el nombre, el
+            // número y el enlace son propiedades y no hay que leerlos del texto, que está
+            // traducido y cambia de idioma en idioma:
+            //   <span itemprop="isPartOf" itemtype=".../BookSeries">
+            //     Book <span itemprop="position">5</span> in <em><a href="/series/…">Nombre</a></em>
+            //   </span>
+            // Se exige que el bloque lleve el enlace a la serie: las plantillas antiguas también
+            // marcaban isPartOf en un <meta> suelto, que no lleva ninguno de los tres datos.
+            val seriesBlock = doc.select("[itemprop=isPartOf]")
+                .firstOrNull { it.selectFirst("a[href*=/series/]") != null }
+            val seriesLink = seriesBlock?.selectFirst("a[href*=/series/]")
+            val seriesName = seriesLink?.text()?.trim()?.ifEmpty { null }
+            // La instancia da el enlace relativo; se guarda absoluto porque es la clave con la
+            // que se agrupan los libros de una misma serie.
+            val seriesUrl = seriesLink?.attr("href")?.trim()?.ifEmpty { null }
+                ?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + it }
+            val seriesPosition = seriesBlock?.selectFirst("[itemprop=position]")
+                ?.text()?.trim()?.toIntOrNull()
+
             com.ferlagod.rocinante.data.model.BookEnrichment(
                 bookId = bookUrl,
                 authorName = authorName,
@@ -368,6 +388,9 @@ object BookWyrmScraper {
                 language = language,
                 shelfBookId = shelfBookId,
                 shelfId = shelfId,
+                seriesName = seriesName,
+                seriesUrl = seriesUrl,
+                seriesPosition = seriesPosition,
                 schemaVersion = ENRICHMENT_SCHEMA_VERSION,
                 fetchedAt = System.currentTimeMillis()
             )

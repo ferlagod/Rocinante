@@ -217,6 +217,13 @@ data class BookEnrichment(
     // Ojo: [shelfId] es el ID numérico de la estantería, no su identificador de texto.
     val shelfBookId: String? = null,
     val shelfId: String? = null,
+    // Serie a la que pertenece el libro, tal y como la enseña su página («Book 5 in ...»).
+    // La URL de la serie es su identificador estable: dos series pueden llamarse igual, y el
+    // nombre cambia si alguien lo corrige. Todo esto falta mientras nadie haya atado el libro
+    // a una serie en la instancia.
+    val seriesName: String? = null,
+    val seriesUrl: String? = null,
+    val seriesPosition: Int? = null,
     // Versión del formato con que se raspó esta entrada. Sirve para volver a leer una vez
     // las cachés antiguas cuando se empiezan a extraer campos nuevos; así distinguimos
     // «nunca se buscó» de «se buscó y el libro no está en ninguna estantería».

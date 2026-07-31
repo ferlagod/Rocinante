@@ -37,12 +37,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
@@ -115,6 +117,20 @@ data class ShelfUiItem(
     val title: String,
     val description: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+/**
+ * Una serie de libros con los ejemplares de ella que hay en la estantería.
+ *
+ * @property url URL de la serie en la instancia. Es la clave con la que se agrupan los libros:
+ *   dos series pueden llamarse igual, y el nombre cambia si alguien lo corrige.
+ * @property name Nombre visible de la serie.
+ * @property books Los libros leídos de esa serie, ya ordenados por su número.
+ */
+private data class SeriesGroup(
+    val url: String,
+    val name: String,
+    val books: List<ShelfBookItem>
 )
 
 /**
@@ -466,6 +482,43 @@ fun ShelfNativeDetailScreen(
         }
     }
 
+    // ── Vista por series ──
+    // «Leídos» puede verse agrupado en series: primero la lista de series y, al elegir una,
+    // sus libros en el orden en que se leen. Son las mismas tarjetas de siempre; lo único que
+    // cambia es qué libros entran y en qué orden.
+    var showSeriesList by remember { mutableStateOf(false) }
+    var openSeriesUrl by remember { mutableStateOf<String?>(null) }
+
+    // Series de las que hay algún libro en la estantería. Solo salen los libros que alguien
+    // haya atado a una serie en la instancia; del resto no se sabe y no aparecen.
+    val seriesGroups = remember(books, enrichment) {
+        books
+            .mapNotNull { book ->
+                val data = book.id?.let { enrichment[it] } ?: return@mapNotNull null
+                val url = data.seriesUrl?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                url to book
+            }
+            .groupBy({ it.first }, { it.second })
+            .map { (url, grouped) ->
+                SeriesGroup(
+                    url = url,
+                    name = grouped.firstNotNullOfOrNull { b ->
+                        b.id?.let { enrichment[it]?.seriesName }?.takeIf { it.isNotBlank() }
+                    } ?: url,
+                    // Sin número el libro va al final: se sabe que es de la serie, pero no dónde.
+                    books = grouped.sortedWith(
+                        nullsLastComparator(false) { b -> b.id?.let { enrichment[it]?.seriesPosition } }
+                    )
+                )
+            }
+            .sortedWith(compareBy(collator) { it.name })
+    }
+
+    // Con una serie abierta manda su orden; si no, la estantería con la ordenación elegida.
+    val visibleBooks = openSeriesUrl
+        ?.let { url -> seriesGroups.firstOrNull { it.url == url }?.books }
+        ?: displayedBooks
+
     // Cargamos todas las páginas de la estantería (son pocas y personales). Es necesario
     // para ordenar y enriquecer la estantería completa, ya que el .json ignora ?sort=.
     LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
@@ -582,20 +635,45 @@ fun ShelfNativeDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(onClick = onBack) {
+            // «Volver» deshace un paso cada vez: de una serie a la lista de series, de ahí a
+            // la estantería, y solo entonces se sale.
+            OutlinedButton(onClick = {
+                when {
+                    openSeriesUrl != null -> openSeriesUrl = null
+                    showSeriesList -> showSeriesList = false
+                    else -> onBack()
+                }
+            }) {
                 Text(stringResource(R.string.shelf_back))
             }
             Text(
-                text = shelf.title,
+                text = when {
+                    openSeriesUrl != null ->
+                        seriesGroups.firstOrNull { it.url == openSeriesUrl }?.name ?: shelf.title
+                    showSeriesList -> stringResource(R.string.series_title)
+                    else -> shelf.title
+                },
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
-            Box {
-                IconButton(onClick = { sortMenuExpanded = true }) {
+            // Agrupar por series: solo en «Leídos», y solo mientras se esté viendo la
+            // estantería entera. Dentro de una serie el orden lo da su numeración.
+            if (shelf.slug == "read" && !showSeriesList) {
+                IconButton(onClick = { showSeriesList = true }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Sort,
-                        contentDescription = stringResource(R.string.shelf_sort)
+                        imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
+                        contentDescription = stringResource(R.string.series_title)
                     )
+                }
+            }
+            Box {
+                if (!showSeriesList) {
+                    IconButton(onClick = { sortMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                            contentDescription = stringResource(R.string.shelf_sort)
+                        )
+                    }
                 }
                 DropdownMenu(
                     expanded = sortMenuExpanded,
@@ -755,11 +833,78 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
+                if (showSeriesList && openSeriesUrl == null) {
+                    if (seriesGroups.isEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.series_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    items(
+                        count = seriesGroups.size,
+                        key = { index -> seriesGroups[index].url }
+                    ) { index ->
+                        val group = seriesGroups[index]
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { openSeriesUrl = group.url }
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = group.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                // Portadas en abanico: la primera arriba y las siguientes
+                                // asomando por detrás, para que se vea de un vistazo cuántas
+                                // hay sin ocupar una fila por libro. Se pintan de la última a
+                                // la primera para que ese sea el orden de apilado.
+                                val shown = group.books.take(5)
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(105.dp)
+                                ) {
+                                    for (i in shown.indices.reversed()) {
+                                        val coverUrl = shown[i].cover?.url
+                                        if (!coverUrl.isNullOrEmpty()) {
+                                            AsyncImage(
+                                                model = coverUrl,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .offset(x = (i * 34).dp)
+                                                    .width(70.dp)
+                                                    .height(105.dp)
+                                                    .clip(MaterialTheme.shapes.small),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = pluralStringResource(
+                                        R.plurals.series_books_count,
+                                        group.books.size,
+                                        group.books.size
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
                 items(
-                    count = displayedBooks.size,
-                    key = { index -> displayedBooks[index].id ?: index }
+                    count = visibleBooks.size,
+                    key = { index -> visibleBooks[index].id ?: index }
                 ) { index ->
-                    val book = displayedBooks[index]
+                    val book = visibleBooks[index]
                     val isHighlighted = book.id != null && book.id == highlightedBookId
 
                     Card(
@@ -957,9 +1102,27 @@ fun ShelfNativeDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+
+                                // Serie del libro y qué número hace en ella. Solo consta si
+                                // alguien la ha atado en la instancia; mientras no, no hay línea.
+                                enrich?.seriesName?.takeIf { it.isNotBlank() }?.let { seriesName ->
+                                    val position = enrich.seriesPosition
+                                    Text(
+                                        text = if (position != null) {
+                                            "📚 " + stringResource(
+                                                R.string.series_book_of, seriesName, position
+                                            )
+                                        } else {
+                                            "📚 $seriesName"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
+                }
                 }
             }
         }
