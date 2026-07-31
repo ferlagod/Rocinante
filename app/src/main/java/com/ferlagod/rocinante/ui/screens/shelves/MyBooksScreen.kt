@@ -190,7 +190,8 @@ fun MyBooksScreen(
     onNavigateToSettings: () -> Unit,
     targetShelfSlug: String? = null,
     targetBookId: String? = null,
-    onTargetConsumed: () -> Unit = {}
+    onTargetConsumed: () -> Unit = {},
+    backToShelvesKey: Int = 0
 ) {
     val shelves = listOf(
         ShelfUiItem("to-read", stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder),
@@ -204,6 +205,18 @@ fun MyBooksScreen(
     LaunchedEffect(targetShelfSlug) {
         val slug = targetShelfSlug ?: return@LaunchedEffect
         shelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
+    }
+
+    // Volver a tocar «Mis libros» estando ya aquí devuelve a la lista de estanterías, como
+    // hace cualquier aplicación con su barra de abajo. Llega como un número que sube en cada
+    // toque, y solo cuenta que suba: al componer la pantalla ya viene con el valor que lleve,
+    // y cerrar entonces la estantería se llevaría por delante la que abre la búsqueda.
+    var lastBackToShelvesKey by remember { mutableStateOf(backToShelvesKey) }
+    LaunchedEffect(backToShelvesKey) {
+        if (backToShelvesKey != lastBackToShelvesKey) {
+            lastBackToShelvesKey = backToShelvesKey
+            selectedShelf = null
+        }
     }
 
     if (selectedShelf == null) {

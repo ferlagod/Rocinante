@@ -133,6 +133,10 @@ fun HomeScreen(
     // Donde se guarda la ficha de cada libro que se abre, para volver a enseñarla al instante.
     val bookPageCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
+    // Sube cada vez que se toca «Mis libros» estando ya en esa pestaña, que es como se le
+    // pide volver a la lista de estanterías.
+    var backToShelvesKey by remember { mutableStateOf(0) }
+
     val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -212,7 +216,12 @@ fun HomeScreen(
                 )
                 NavigationBarItem(
                     selected = uiState.selectedTab == 1,
-                    onClick = { viewModel.selectTab(1) },
+                    onClick = {
+                        // Estando ya en «Mis libros», el toque no cambia de pestaña: sirve
+                        // para volver a la lista de estanterías desde la que se esté abierta.
+                        if (uiState.selectedTab == 1) backToShelvesKey++
+                        viewModel.selectTab(1)
+                    },
                     icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = stringResource(R.string.nav_my_books)) }, // ICONO CORREGIDO
                     label = { Text(stringResource(R.string.nav_my_books), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
@@ -317,7 +326,8 @@ fun HomeScreen(
                         onNavigateToSettings = onSettingsClick,
                         targetShelfSlug = uiState.shelfTarget?.shelfSlug,
                         targetBookId = uiState.shelfTarget?.bookId,
-                        onTargetConsumed = { viewModel.consumeShelfTarget() }
+                        onTargetConsumed = { viewModel.consumeShelfTarget() },
+                        backToShelvesKey = backToShelvesKey
                     )
                 }
 
