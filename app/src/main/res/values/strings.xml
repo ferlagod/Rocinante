@@ -72,7 +72,7 @@
     <string name="book_no_description">No description available.</string>
     <string name="book_change_shelf">Change shelf:</string>
     <string name="book_change_shelf_title">Change shelf</string>
-    <string name="book_add_to_shelf">Add to shelf:</string>
+    <string name="book_add_to_shelf">Add to shelf</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Community reviews</string>
     <string name="book_no_reviews">No written reviews found for this edition.</string>

@@ -56,7 +56,7 @@
     <string name="book_no_description">Nessuna descrizione disponibile.</string>
     <string name="book_change_shelf">Cambia scaffale:</string>
     <string name="book_change_shelf_title">Cambia scaffale</string>
-    <string name="book_add_to_shelf">Aggiungi allo scaffale:</string>
+    <string name="book_add_to_shelf">Aggiungi allo scaffale</string>
     <string name="book_synopsis">Sinossi</string>
     <string name="book_community_reviews">Recensioni della community</string>
     <string name="book_no_reviews">Nessuna recensione scritta trovata per questa edizione.</string>

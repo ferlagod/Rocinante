@@ -58,7 +58,7 @@
     <string name="book_no_description">Опис недоступний.</string>
     <string name="book_change_shelf">Змінити полицю:</string>
     <string name="book_change_shelf_title">Змінити полицю</string>
-    <string name="book_add_to_shelf">Додати на полицю:</string>
+    <string name="book_add_to_shelf">Додати на полицю</string>
     <string name="book_synopsis">Анотація</string>
     <string name="book_community_reviews">Відгуки спільноти</string>
     <string name="book_no_reviews">Для цього видання не знайдено письмових відгуків.</string>

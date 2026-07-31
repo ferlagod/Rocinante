@@ -56,7 +56,7 @@
     <string name="book_no_description">Ingen beskrivning tillgänglig.</string>
     <string name="book_change_shelf">Byt hylla:</string>
     <string name="book_change_shelf_title">Byt hylla</string>
-    <string name="book_add_to_shelf">Lägg till i hylla:</string>
+    <string name="book_add_to_shelf">Lägg till i hylla</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Communityrecensioner</string>
     <string name="book_no_reviews">Inga skrivna recensioner hittades för den här utgåvan.</string>

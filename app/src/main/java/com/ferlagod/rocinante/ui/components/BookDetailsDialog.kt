@@ -296,6 +296,11 @@ fun BookDetailsDialog(
     val shelfBookId = enrichment?.shelfBookId
     val shelfId = enrichment?.shelfId
 
+    // A un libro que no está en ninguna estantería se llega buscándolo, y lo primero que se
+    // quiere hacer con él es ponerlo en una: se ofrece abajo del todo, sin tener que dar con
+    // el menú de ⋮. Abierto desde una estantería no hace falta, porque ya está en ella.
+    val canShelve = currentShelf == null && shelfBookId == null
+
     // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
     var overflowExpanded by remember { mutableStateOf(false) }
     // Diálogo para elegir estantería. Al ser una elección deliberada en su propia lista,
@@ -516,6 +521,26 @@ fun BookDetailsDialog(
                             }
                         }
                     )
+                },
+                bottomBar = {
+                    if (canShelve) {
+                        Surface(tonalElevation = 3.dp) {
+                            Button(
+                                onClick = { showShelfPicker = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.BookmarkBorder,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = stringResource(R.string.book_add_to_shelf))
+                            }
+                        }
+                    }
                 }
             ) { innerPadding ->
                 Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -973,7 +998,15 @@ fun BookDetailsDialog(
         ).filter { it.slug != currentShelf }
         AlertDialog(
             onDismissRequest = { showShelfPicker = false },
-            title = { Text(stringResource(R.string.book_change_shelf_title)) },
+            // Poner en una estantería y cambiar de estantería son la misma lista, pero no la
+            // misma frase: al libro que aún no está en ninguna se le añade.
+            title = {
+                Text(
+                    stringResource(
+                        if (canShelve) R.string.book_add_to_shelf else R.string.book_change_shelf_title
+                    )
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     targets.forEach { target ->

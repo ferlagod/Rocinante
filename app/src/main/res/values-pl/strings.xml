@@ -58,7 +58,7 @@
     <string name="book_no_description">Brak dostępnego opisu.</string>
     <string name="book_change_shelf">Zmień półkę:</string>
     <string name="book_change_shelf_title">Zmień półkę</string>
-    <string name="book_add_to_shelf">Dodaj na półkę:</string>
+    <string name="book_add_to_shelf">Dodaj na półkę</string>
     <string name="book_synopsis">Streszczenie</string>
     <string name="book_community_reviews">Recenzje społeczności</string>
     <string name="book_no_reviews">Nie znaleziono napisanych recenzji dla tego wydania.</string>

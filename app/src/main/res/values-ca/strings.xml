@@ -56,7 +56,7 @@
     <string name="book_no_description">Sense descripció disponible.</string>
     <string name="book_change_shelf">Canvia de prestatgeria:</string>
     <string name="book_change_shelf_title">Canviar de prestatgeria</string>
-    <string name="book_add_to_shelf">Afegeix a prestatgeria:</string>
+    <string name="book_add_to_shelf">Afegeix a prestatgeria</string>
     <string name="book_synopsis">Sinopsi</string>
     <string name="book_community_reviews">Ressenyes de la comunitat</string>
     <string name="book_no_reviews">No s\'han trobat ressenyes escrites per a aquesta edició.</string>

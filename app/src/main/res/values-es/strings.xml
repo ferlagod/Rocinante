@@ -70,7 +70,7 @@
     <string name="book_no_description">Sin descripción disponible.</string>
     <string name="book_change_shelf">Cambiar de estantería:</string>
     <string name="book_change_shelf_title">Cambiar de estantería</string>
-    <string name="book_add_to_shelf">Añadir a estantería:</string>
+    <string name="book_add_to_shelf">Añadir a estantería</string>
     <string name="book_synopsis">Sinopsis</string>
     <string name="book_community_reviews">Reseñas de la comunidad</string>
     <string name="book_no_reviews">No se hallaron reseñas escritas para esta edición.</string>

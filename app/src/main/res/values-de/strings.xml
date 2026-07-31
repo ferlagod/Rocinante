@@ -56,7 +56,7 @@
     <string name="book_no_description">Keine Beschreibung verfügbar.</string>
     <string name="book_change_shelf">Regal wechseln:</string>
     <string name="book_change_shelf_title">Regal wechseln</string>
-    <string name="book_add_to_shelf">Zum Regal hinzufügen:</string>
+    <string name="book_add_to_shelf">Zum Regal hinzufügen</string>
     <string name="book_synopsis">Zusammenfassung</string>
     <string name="book_community_reviews">Community-Rezensionen</string>
     <string name="book_no_reviews">Für diese Ausgabe wurden keine schriftlichen Rezensionen gefunden.</string>
