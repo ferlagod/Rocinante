@@ -343,6 +343,9 @@ fun ShelfNativeDetailScreen(
     var fallbackCoverUrl by remember { mutableStateOf("") }
     var activeBookUrl by remember { mutableStateOf("") }
     var isLoadingDetails by remember { mutableStateOf(false) }
+    // Número de la apertura de ficha en curso. Sube al abrir un libro y al cerrar la ficha,
+    // así que una respuesta que llega tarde sabe que ya no le toca pintar nada.
+    var detailsRequestId by remember { mutableStateOf(0) }
 
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -764,26 +767,45 @@ fun ShelfNativeDetailScreen(
                                         context.startActivity(intent)
                                     } else {
                                         activeBookUrl = bookUrl
+                                        fallbackCoverUrl = book.cover?.url ?: ""
                                         isLoadingDetails = true
                                         // El aviso del intento anterior se va al volver a
                                         // probar; si no, se queda ahí aunque ya funcione.
                                         errorMessage = null
+                                        // Cada apertura lleva su número: lo que llegue tarde de
+                                        // la red solo se pinta si sigue siendo este libro y la
+                                        // ficha no se ha cerrado mientras tanto.
+                                        detailsRequestId++
+                                        val requestId = detailsRequestId
                                         coroutineScope.launch {
                                             try {
-                                                val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
-                                                selectedBookDetails = api.getBookDetails(detailsUrl)
-
-                                                fallbackCoverUrl = book.cover?.url ?: ""
-
-                                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                try {
-                                                    selectedBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                } catch (_: Exception) {
-                                                    selectedBookReviews = emptyList()
-                                                }
-                                            } catch (e: Exception) {
-                                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                                                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                                    api = api,
+                                                    cache = dataCache,
+                                                    cacheKey = bookUrl,
+                                                    resolveDetailsUrl = { BookWyrmUtils.ensureJsonUrl(bookUrl) },
+                                                    onDetails = { details, fromCache ->
+                                                        if (detailsRequestId != requestId) return@load
+                                                        selectedBookDetails = details
+                                                        // Con la ficha ya en pantalla (venga de
+                                                        // donde venga) se apaga la espera, para
+                                                        // poder abrir otro libro sin esperar al
+                                                        // refresco que sigue por detrás.
+                                                        isLoadingDetails = false
+                                                        if (fromCache) selectedBookReviews = emptyList()
+                                                    },
+                                                    onReviews = { reviews ->
+                                                        if (detailsRequestId == requestId) selectedBookReviews = reviews
+                                                    },
+                                                    onFailure = { e, hadCache ->
+                                                        // Con la ficha ya abierta desde la caché no
+                                                        // se avisa de nada: hay algo que leer y el
+                                                        // refresco llegará la próxima vez.
+                                                        if (!hadCache && detailsRequestId == requestId) {
+                                                            errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                                                        }
+                                                    }
+                                                )
                                             } finally {
                                                 isLoadingDetails = false
                                             }
@@ -941,6 +963,9 @@ fun ShelfNativeDetailScreen(
             context = context,
             coroutineScope = coroutineScope,
             onDismiss = {
+                // Cerrar cuenta como apertura nueva: si la petición sigue viva, lo que traiga
+                // ya no vuelve a abrir la ficha en la cara de quien la acaba de cerrar.
+                detailsRequestId++
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },

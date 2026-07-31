@@ -177,6 +177,53 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Nombre del fichero donde se guarda la ficha de un libro. La clave es su id/URL, que
+     * lleva barras y dos puntos, así que se resume en un hash: nombre corto, siempre válido
+     * y sin colisiones entre libros de instancias distintas.
+     */
+    private fun bookDetailsFile(bookId: String): File {
+        val key = bookId.removeSuffix(".json").trimEnd('/')
+        val digest = java.security.MessageDigest.getInstance("SHA-1")
+            .digest(key.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        return File(File(context.cacheDir, "book_details").apply { mkdirs() }, "$digest.json")
+    }
+
+    /**
+     * Ficha de un libro guardada la última vez que se abrió, para poder enseñarla al
+     * instante mientras se pide la de verdad.
+     *
+     * @return null si ese libro no se ha abierto nunca o la caché se ha borrado.
+     */
+    suspend fun loadBookDetails(
+        bookId: String
+    ): com.ferlagod.rocinante.data.model.BookWyrmBookDetails? = withContext(Dispatchers.IO) {
+        try {
+            val file = bookDetailsFile(bookId)
+            if (!file.exists()) return@withContext null
+            gson.fromJson(
+                file.readText(),
+                com.ferlagod.rocinante.data.model.BookWyrmBookDetails::class.java
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /** Guarda la ficha recién descargada de un libro. */
+    suspend fun saveBookDetails(
+        bookId: String,
+        details: com.ferlagod.rocinante.data.model.BookWyrmBookDetails
+    ) = withContext(Dispatchers.IO) {
+        try {
+            bookDetailsFile(bookId).writeText(gson.toJson(details))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /**
      * Carga el mapa de datos enriquecidos por libro (autor, valoración, fechas de lectura)
      * obtenidos de la página HTML de cada libro. Clave = id/URL del libro.
      *

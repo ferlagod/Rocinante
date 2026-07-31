@@ -130,6 +130,9 @@ fun HomeScreen(
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
     }
 
+    // Donde se guarda la ficha de cada libro que se abre, para volver a enseñarla al instante.
+    val bookPageCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
     val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -513,22 +516,26 @@ fun HomeScreen(
                         dialogBookKey = bookUrl
                         dialogCoverUrl = coverUrl ?: ""
                         coroutineScope.launch {
-                            try {
-                                val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                val baseUrl = localUrl.substringBefore("/book/")
-                                val detailsUrl = "$baseUrl/book/$bookId.json"
-                                dialogBookDetails = api.getBookDetails(detailsUrl)
-                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                try {
-                                    dialogBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                } catch (_: Exception) {
-                                    dialogBookReviews = emptyList()
+                            com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                api = api,
+                                cache = bookPageCache,
+                                cacheKey = bookUrl,
+                                resolveDetailsUrl = {
+                                    val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                    val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                    "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                },
+                                onDetails = { details, fromCache ->
+                                    dialogBookDetails = details
+                                    if (fromCache) dialogBookReviews = emptyList()
+                                },
+                                onReviews = { dialogBookReviews = it },
+                                onFailure = { e, hadCache ->
+                                    if (!hadCache) {
+                                        android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
                                 }
-                            } catch (e: Exception) {
-                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                            )
                         }
                     }
                 }
@@ -741,6 +748,8 @@ fun ActivityTab(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    // Donde se guarda la ficha de cada libro que se abre, para volver a enseñarla al instante.
+    val bookPageCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
@@ -838,22 +847,26 @@ fun ActivityTab(
                                     activeBookKey = bookUrl
                                     fallbackCoverUrl = coverUrl ?: ""
                                     coroutineScope.launch {
-                                        try {
-                                            val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                            val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                            val baseUrl = localUrl.substringBefore("/book/")
-                                            val detailsUrl = "$baseUrl/book/$bookId.json"
-                                            selectedBookDetails = api.getBookDetails(detailsUrl)
-                                            val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                            try {
-                                                selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                            } catch (_: Exception) {
-                                                selectedBookReviews = emptyList()
+                                        com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                            api = api,
+                                            cache = bookPageCache,
+                                            cacheKey = bookUrl,
+                                            resolveDetailsUrl = {
+                                                val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                                "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                            },
+                                            onDetails = { details, fromCache ->
+                                                selectedBookDetails = details
+                                                if (fromCache) selectedBookReviews = emptyList()
+                                            },
+                                            onReviews = { selectedBookReviews = it },
+                                            onFailure = { e, hadCache ->
+                                                if (!hadCache) {
+                                                    android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
+                                                }
                                             }
-                                        } catch (e: Exception) {
-                                            if (e is kotlinx.coroutines.CancellationException) throw e
-                                            android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
-                                        }
+                                        )
                                     }
                                 }
                             }
@@ -1209,8 +1222,11 @@ fun ProfileTab(
 
     var refreshTrigger by remember { mutableStateOf(0) }
 
+    // De aquí salen las estadísticas de lectura y también la ficha guardada de cada libro
+    // que se abre desde las filas de portadas.
+    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
     LaunchedEffect(refreshTrigger) {
-        val dataCache = com.ferlagod.rocinante.data.local.TimelineCache(context)
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
         val enrichmentData = dataCache.loadEnrichment()
         readingStats = if (readShelf.isEmpty()) {
@@ -1260,19 +1276,22 @@ fun ProfileTab(
             activeBookKey = bookId
             fallbackCoverUrl = book.cover?.url ?: ""
             coroutineScope.launch {
-                try {
-                    val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId)
-                    selectedBookDetails = api.getBookDetails(detailsUrl)
-                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                    selectedBookReviews = try {
-                        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                    } catch (_: Exception) {
-                        emptyList()
+                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                    api = api,
+                    cache = dataCache,
+                    cacheKey = bookId,
+                    resolveDetailsUrl = { com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId) },
+                    onDetails = { details, fromCache ->
+                        selectedBookDetails = details
+                        if (fromCache) selectedBookReviews = emptyList()
+                    },
+                    onReviews = { selectedBookReviews = it },
+                    onFailure = { e, hadCache ->
+                        if (!hadCache) {
+                            Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
+                        }
                     }
-                } catch (e: Exception) {
-                    if (e is kotlinx.coroutines.CancellationException) throw e
-                    Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
-                }
+                )
             }
         }
     }
@@ -1342,8 +1361,6 @@ fun ProfileTab(
             }
         )
     }
-
-    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
     LaunchedEffect(Unit) {
         val cachedReading = dataCache.loadShelfBooks("reading")
