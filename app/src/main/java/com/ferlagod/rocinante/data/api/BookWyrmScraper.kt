@@ -27,6 +27,8 @@ import com.ferlagod.rocinante.data.model.NotificationUiItem
 import com.ferlagod.rocinante.data.model.SuggestedUser
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody.Companion.toResponseBody
 
@@ -131,8 +133,14 @@ object BookWyrmScraper {
 
     /**
      * Resuelve un libro federado a su URL local siguiendo la redirección de resolve-book.
+     *
+     * Un libro que ya es de la instancia se devuelve tal cual, sin preguntar: resolve-book no
+     * es una consulta sino un POST que *importa* el libro remoto a la base de datos local, así
+     * que llamarlo para algo que ya está en casa es una petición de más por libro. Y son
+     * muchas: los libros de las propias estanterías son todos locales.
      */
     suspend fun resolveLocalBookUrl(api: BookWyrmApi, bookUrl: String): String? {
+        if (isLocalBookUrl(bookUrl)) return bookUrl
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val response = api.resolveBook(bookUrl)
@@ -150,6 +158,58 @@ object BookWyrmScraper {
                 bookUrl
             }
         }
+    }
+
+    // ── La página del libro, pedida una sola vez ──
+    // Al abrir una ficha, las reseñas y el enriquecimiento quieren la misma página en el mismo
+    // instante, y cada uno la pedía por su cuenta. Se guarda la última leída unos segundos; el
+    // candado hace además que quien llegue segundo espere al primero en vez de pedirla otra vez.
+    private val bookPageLock = Mutex()
+    private var bookPageKey: String? = null
+    private var bookPageHtml: String = ""
+    private var bookPageAt: Long = 0L
+    private const val BOOK_PAGE_REUSE_MS = 15_000L
+
+    /**
+     * Clave con la que se reconoce que dos peticiones van a la misma página. Cada lado llega
+     * con la URL que tiene a mano —una con el sufijo del título, otra sin él, otra con .json—
+     * y todas son el mismo libro.
+     */
+    private fun bookPageKeyOf(url: String): String =
+        url.substringBefore("/s/").removeSuffix(".json").trimEnd('/').lowercase()
+
+    /**
+     * Descarga la página HTML de un libro, reutilizando la última si es la misma y acaba de
+     * leerse.
+     *
+     * @return El HTML, o "" si no se pudo leer (en cuyo caso no se guarda nada).
+     */
+    suspend fun fetchBookPage(api: BookWyrmApi, url: String, baseUrl: String): String =
+        bookPageLock.withLock {
+            val key = bookPageKeyOf(url)
+            val now = System.currentTimeMillis()
+            if (bookPageKey == key && bookPageHtml.isNotEmpty() && now - bookPageAt < BOOK_PAGE_REUSE_MS) {
+                return@withLock bookPageHtml
+            }
+            val html = fetchHtmlWithRedirects(api, url, baseUrl)
+            if (html.isNotEmpty()) {
+                bookPageKey = key
+                bookPageHtml = html
+                bookPageAt = now
+            }
+            html
+        }
+
+    /**
+     * ¿Es este libro de la instancia con la que se ha iniciado sesión?
+     *
+     * @return false si no se sabe (aún no hay sesión) o la URL no se puede leer, de modo que
+     *   ante la duda se resuelve como hasta ahora.
+     */
+    private fun isLocalBookUrl(bookUrl: String): Boolean {
+        val instanceHost = NetworkClient.lastInstanceHost?.takeIf { it.isNotBlank() } ?: return false
+        val host = runCatching { java.net.URL(bookUrl).host }.getOrNull()?.lowercase()
+        return host != null && host == instanceHost
     }
 
     /**
@@ -314,7 +374,7 @@ object BookWyrmScraper {
         try {
             val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
             val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
-            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            val html = fetchBookPage(api, localUrl, baseUrl)
             if (html.isEmpty()) return@withContext null
             val doc = org.jsoup.Jsoup.parse(html)
 
@@ -804,27 +864,10 @@ object BookWyrmScraper {
 
     suspend fun scrapeBookReviews(api: BookWyrmApi, bookUrl: String): List<ActivityPubActivity> = withContext(Dispatchers.IO) {
         try {
-            var currentUrl = bookUrl
-            var html = ""
-            for (i in 0..3) {
-                val response = api.getRawHtmlResponse(currentUrl)
-                if (response.isSuccessful) {
-                    html = response.body()?.string() ?: ""
-                    break
-                } else if (response.code() in 300..399) {
-                    val location = response.headers()["Location"]
-                    if (location != null) {
-                        currentUrl = if (location.startsWith("http")) location else {
-                            val hostUrl = java.net.URL(bookUrl).let { "${it.protocol}://${it.host}" }
-                            "$hostUrl$location"
-                        }
-                    } else {
-                        break
-                    }
-                } else {
-                    break
-                }
-            }
+            val baseUrl = runCatching {
+                java.net.URL(bookUrl).let { "${it.protocol}://${it.host}/" }
+            }.getOrNull() ?: return@withContext emptyList()
+            val html = fetchBookPage(api, bookUrl, baseUrl)
             if (html.isEmpty()) return@withContext emptyList()
             val document = org.jsoup.Jsoup.parse(html)
 
