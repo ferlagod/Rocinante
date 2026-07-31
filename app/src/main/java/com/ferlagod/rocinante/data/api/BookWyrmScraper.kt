@@ -85,9 +85,10 @@ object BookWyrmScraper {
             }
 
             val userId = extractHiddenFieldValue(html, "user")
+            val formBookId = extractHiddenFieldValue(html, "book") ?: bookId
 
             if (userId != null) {
-                ReviewContext(userId, bookId)
+                ReviewContext(userId, formBookId)
             } else null
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
@@ -217,9 +218,10 @@ object BookWyrmScraper {
                     val readthroughId = extractReadthroughId(html)
                     val userId = extractHiddenFieldValue(html, "user")
                     val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
+                    val formBookId = extractHiddenFieldValue(html, "book") ?: localBookId
 
                     if (readthroughId != null && userId != null) {
-                        return@withContext ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
+                        return@withContext ProgressContext(readthroughId, userId, formBookId, extractCsrfToken(html), startDate)
                     } else {
                         return@withContext null
                     }
@@ -230,9 +232,10 @@ object BookWyrmScraper {
                 val readthroughId = extractReadthroughId(html)
                 val userId = extractHiddenFieldValue(html, "user")
                 val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
+                val formBookId = extractHiddenFieldValue(html, "book") ?: localBookId
 
                 if (readthroughId != null && userId != null) {
-                    ProgressContext(readthroughId, userId, localBookId, extractCsrfToken(html), startDate)
+                    ProgressContext(readthroughId, userId, formBookId, extractCsrfToken(html), startDate)
                 } else null
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
