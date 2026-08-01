@@ -46,6 +46,32 @@ class ReadingStatsTest {
     }
 
     @Test
+    fun `cuenta multiples lecturas de un mismo libro por separado`() {
+        val books = listOf(book("a", 100))
+        val enrichment = mapOf(
+            "a" to BookEnrichment(
+                bookId = "a",
+                readthroughs = listOf(
+                    com.ferlagod.rocinante.data.model.ReadthroughDates("1", "2024-01-01", "2024-01-10"),
+                    com.ferlagod.rocinante.data.model.ReadthroughDates("2", "2026-05-01", "2026-05-05")
+                )
+            )
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(2, stats.totalBooks)
+        assertEquals(1, stats.booksThisYear)
+        assertEquals(200, stats.totalPages)
+        assertEquals(listOf(
+            ReadingStats.YearCount(2024, 1),
+            ReadingStats.YearCount(2025, 0),
+            ReadingStats.YearCount(2026, 1)
+        ), stats.booksPerYear)
+        assertEquals(2, stats.booksWithReadingDays)
+    }
+
+    @Test
     fun `rellena los años sin lecturas para que el eje no mienta`() {
         val books = listOf(book("a"), book("b"))
         val enrichment = mapOf(finished("a", "2020-01-01"), finished("b", "2023-01-01"))

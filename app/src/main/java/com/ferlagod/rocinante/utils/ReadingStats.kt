@@ -204,9 +204,30 @@ object ReadingStatsCalculator {
         enrichment: Map<String, BookEnrichment>,
         currentYear: Int
     ): ReadingStats {
-        val years = books.mapNotNull { book ->
-            val finished = book.id?.let { enrichment[it]?.finished }
-            finished?.take(4)?.toIntOrNull()?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
+        var totalReads = 0
+        var totalPages = 0
+        var booksWithoutPages = 0
+
+        val years = books.flatMap { book ->
+            val enriched = book.id?.let { enrichment[it] }
+            val readthroughs = enriched?.readthroughs
+            
+            val count = if (!readthroughs.isNullOrEmpty()) readthroughs.size else 1
+            totalReads += count
+            
+            val pages = book.pages ?: 0
+            totalPages += pages * count
+            if (pages <= 0) booksWithoutPages += count
+            
+            if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.mapNotNull { rt ->
+                    rt.finished?.take(4)?.toIntOrNull()?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
+                }
+            } else {
+                val finished = enriched?.finished
+                val y = finished?.take(4)?.toIntOrNull()?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
+                if (y != null) listOf(y) else emptyList()
+            }
         }
 
         val counts = years.groupingBy { it }.eachCount()
@@ -244,14 +265,24 @@ object ReadingStatsCalculator {
             ReadingStats.RatingBucket(it, ratingCounts[it] ?: 0)
         }
 
-        // Días de lectura: solo los libros que traen las dos fechas. Se descartan los tramos
-        // negativos (fechas invertidas al teclearlas), que falsearían la media.
-        val spans = books.mapNotNull { book ->
-            val enriched = book.id?.let { enrichment[it] } ?: return@mapNotNull null
-            val start = parseIsoDate(enriched.started) ?: return@mapNotNull null
-            val finish = parseIsoDate(enriched.finished) ?: return@mapNotNull null
-            val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
-            if (days < 0) null else days to finish.year
+        // Días de lectura: solo los tramos (readthroughs) que traen las dos fechas. 
+        // Se descartan los tramos negativos (fechas invertidas al teclearlas), que falsearían la media.
+        val spans = books.flatMap { book ->
+            val enriched = book.id?.let { enrichment[it] } ?: return@flatMap emptyList()
+            val readthroughs = enriched.readthroughs
+            if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.mapNotNull { rt ->
+                    val start = parseIsoDate(rt.started) ?: return@mapNotNull null
+                    val finish = parseIsoDate(rt.finished) ?: return@mapNotNull null
+                    val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
+                    if (days < 0) null else days to finish.year
+                }
+            } else {
+                val start = parseIsoDate(enriched.started) ?: return@flatMap emptyList()
+                val finish = parseIsoDate(enriched.finished) ?: return@flatMap emptyList()
+                val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
+                if (days < 0) emptyList() else listOf(days to finish.year)
+            }
         }
         val spansThisYear = spans.filter { it.second == currentYear }
 
@@ -287,12 +318,12 @@ object ReadingStatsCalculator {
             .map { ReadingStats.FormatCount(it.key, it.value) }
 
         return ReadingStats(
-            totalBooks = books.size,
+            totalBooks = totalReads,
             booksThisYear = counts[currentYear] ?: 0,
-            totalPages = books.sumOf { it.pages ?: 0 },
+            totalPages = totalPages,
             booksPerYear = perYear,
-            booksWithoutFinishDate = books.size - years.size,
-            booksWithoutPages = books.count { (it.pages ?: 0) <= 0 },
+            booksWithoutFinishDate = totalReads - years.size,
+            booksWithoutPages = booksWithoutPages,
             topAuthors = topAuthors,
             booksWithoutAuthor = books.size - authorNames.size,
             averageRating = ratings.average().takeIf { ratings.isNotEmpty() },

@@ -439,7 +439,6 @@ fun ShelfNativeDetailScreen(
                 keepingCache = hadCompleteCache && books.isNotEmpty()
                 if (!keepingCache) {
                     books = incoming
-                    dataCache.saveShelfBooks(shelf.slug, fetchedItems)
                 }
                 isNetworkRefreshed = true
             } else {
