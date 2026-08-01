@@ -184,7 +184,9 @@ fun HomeScreen(
             reviews = dialogBookReviews,
             activeBookKey = dialogBookKey,
             fallbackCoverUrl = dialogCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -780,7 +782,9 @@ fun ActivityTab(
             reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -1358,7 +1362,9 @@ fun ProfileTab(
             reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,

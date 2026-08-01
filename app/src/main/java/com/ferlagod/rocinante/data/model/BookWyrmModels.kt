@@ -224,12 +224,42 @@ data class BookEnrichment(
     val seriesName: String? = null,
     val seriesUrl: String? = null,
     val seriesPosition: Int? = null,
+    // Estantería en la que está el libro, con el identificador que usa BookWyrm: "to-read",
+    // "reading", "read" o "stopped-reading". Falta cuando el libro no está en ninguna y también
+    // cuando está en una estantería propia del usuario: entonces [shelfId] sí viene, así que
+    // «hay estantería pero no es de lectura» se distingue mirando los dos.
+    val shelfSlug: String? = null,
+    // Otra edición de este mismo libro que el usuario ya tiene en una estantería. La instancia
+    // lo avisa en la página («A different edition of this book is on your ... shelf») porque
+    // las estanterías guardan ediciones concretas: sin esto se acaba con el mismo libro dos
+    // veces, en dos idiomas.
+    val otherEditionUrl: String? = null,
+    val otherEditionShelfName: String? = null,
+    // Cada lectura por separado, de la más antigua a la más reciente. [started] y [finished]
+    // siguen siendo el resumen (primera fecha de inicio y última de fin), que es lo que
+    // enseñan las listas; esto es el detalle, y con una relectura son cosas distintas.
+    val readthroughs: List<ReadthroughDates>? = null,
     // Versión del formato con que se raspó esta entrada. Sirve para volver a leer una vez
     // las cachés antiguas cuando se empiezan a extraer campos nuevos; así distinguimos
     // «nunca se buscó» de «se buscó y el libro no está en ninguna estantería».
     // Ver BookWyrmScraper.ENRICHMENT_SCHEMA_VERSION.
     val schemaVersion: Int? = null,
     val fetchedAt: Long? = null
+)
+
+/**
+ * Una lectura del libro con sus fechas, tal y como la guarda BookWyrm (readthrough).
+ *
+ * Las fechas van en ISO (yyyy-MM-dd) y cualquiera de las dos puede faltar: una lectura
+ * empezada y sin terminar no tiene fin, y una fecha de fin apuntada a posteriori puede no
+ * tener inicio.
+ *
+ * @property id Identificador de la lectura en la instancia, con el que se edita o se borra.
+ */
+data class ReadthroughDates(
+    val id: String,
+    val started: String? = null,
+    val finished: String? = null
 )
 
 /**

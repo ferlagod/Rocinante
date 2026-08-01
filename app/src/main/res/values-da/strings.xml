@@ -78,6 +78,7 @@
     <string name="book_change_shelf">Skift hylde:</string>
     <string name="book_change_shelf_title">Skift hylde</string>
     <string name="book_add_to_shelf">Føj til hylde</string>
+    <string name="book_other_edition_shelved">En anden udgave af denne bog står på din hylde %1$s.</string>
     <string name="book_synopsis">Resumé</string>
     <string name="book_community_reviews">Anmeldelser fra fællesskabet</string>
     <string name="book_no_reviews">Der blev ikke fundet skrevne anmeldelser af denne udgave.</string>
@@ -100,6 +101,7 @@
     <string name="book_label_started">Startet</string>
     <string name="book_label_finished">Afsluttet</string>
     <string name="book_edit_read_dates">Ret læsedatoer</string>
+    <string name="book_label_readings">Læsninger</string>
     <string name="book_read_dates_which">Hvilken læsning vil du rette?</string>
     <string name="book_read_dates_new">En anden læsning</string>
     <string name="book_read_dates_none">ingen dato</string>

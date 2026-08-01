@@ -80,6 +80,7 @@
     <string name="book_change_shelf">Change shelf:</string>
     <string name="book_change_shelf_title">Change shelf</string>
     <string name="book_add_to_shelf">Add to shelf</string>
+    <string name="book_other_edition_shelved">A different edition of this book is on your %1$s shelf.</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Community reviews</string>
     <string name="book_no_reviews">No written reviews found for this edition.</string>
@@ -102,6 +103,7 @@
     <string name="book_label_started">Started</string>
     <string name="book_label_finished">Finished</string>
     <string name="book_edit_read_dates">Edit read dates</string>
+    <string name="book_label_readings">Readings</string>
     <string name="book_read_dates_which">Which reading do you want to edit?</string>
     <string name="book_read_dates_new">Another reading</string>
     <string name="book_read_dates_none">no date</string>

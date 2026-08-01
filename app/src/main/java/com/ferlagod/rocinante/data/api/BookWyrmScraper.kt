@@ -43,8 +43,10 @@ object BookWyrmScraper {
      * cacheadas con una versión anterior se vuelven a leer una sola vez.
      * 2 → añade los identificadores para quitar el libro de su estantería.
      * 3 → añade la serie del libro: nombre, enlace y número dentro de ella.
+     * 4 → añade la estantería en la que está, el aviso de otra edición ya guardada y las
+     *     lecturas una a una.
      */
-    const val ENRICHMENT_SCHEMA_VERSION = 3
+    const val ENRICHMENT_SCHEMA_VERSION = 4
 
     /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
@@ -423,14 +425,24 @@ object BookWyrmScraper {
                 .mapNotNull { it.attr("value").toDoubleOrNull() }
                 .maxOrNull()
 
-            // Fechas de lectura en ISO (yyyy-MM-dd) desde los inputs date de los modales
-            // edit_readthrough_*; con varias lecturas se toma la fin más reciente y el inicio más antiguo.
-            val finished = doc.select("[id^=edit_readthrough_] input[name=finish_date]")
-                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
-                .maxOrNull()
-            val started = doc.select("[id^=edit_readthrough_] input[name=start_date]")
-                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
-                .minOrNull()
+            // Cada lectura por separado, desde los modales edit_readthrough_<id>: son los únicos
+            // sitios de la página con las fechas en ISO. Lo que se ve escrito en la lista está
+            // traducido y redondeado («ayer», «14 de julio»), así que no sirve para leerlo.
+            val readthroughs = doc.select("[id^=edit_readthrough_]").mapNotNull { modal ->
+                val id = modal.id().removePrefix("edit_readthrough_").trim().ifEmpty { null }
+                    ?: return@mapNotNull null
+                val start = modal.selectFirst("input[name=start_date]")
+                    ?.attr("value")?.trim()?.ifEmpty { null }
+                val finish = modal.selectFirst("input[name=finish_date]")
+                    ?.attr("value")?.trim()?.ifEmpty { null }
+                if (start == null && finish == null) null
+                else com.ferlagod.rocinante.data.model.ReadthroughDates(id, start, finish)
+            }.sortedWith(compareBy(nullsLast()) { it.started ?: it.finished })
+
+            // Resumen de todas las lecturas: el inicio más antiguo y el fin más reciente. Es lo
+            // que enseñan las listas, y lo que ya había antes de guardarlas una a una.
+            val finished = readthroughs.mapNotNull { it.finished }.maxOrNull()
+            val started = readthroughs.mapNotNull { it.started }.minOrNull()
 
             // Idioma legible (microdatos schema.org), p. ej. "Danish".
             val language = doc.selectFirst("meta[itemprop=inLanguage]")
@@ -443,6 +455,37 @@ object BookWyrmScraper {
                 ?.attr("value")?.trim()?.ifEmpty { null }
             val shelfId = unshelveForm?.selectFirst("input[name=shelf]")
                 ?.attr("value")?.trim()?.ifEmpty { null }
+
+            // En qué estantería está. El botón grande de la página no dice dónde está el libro
+            // sino adónde va el siguiente paso («Empezar a leer», «Terminar»...): de todas las
+            // opciones deja visible una sola, la del paso siguiente, y esconde el resto. Se lee
+            // esa y se deshace la cuenta. Es lo único de la página que lo dice sin depender del
+            // idioma, y sin ello un libro abierto desde la búsqueda o la actividad no sabe que
+            // ya se está leyendo.
+            val nextStep = doc.selectFirst("[data-shelve-button-book]")
+                ?.select("[data-shelf-identifier]")
+                ?.firstOrNull { !it.hasClass("is-hidden") }
+                ?.attr("data-shelf-identifier")?.trim()
+            val shelfSlug = when (nextStep) {
+                "reading" -> "to-read"
+                "read" -> "reading"
+                "complete" -> "read"
+                "stopped-reading-complete" -> "stopped-reading"
+                // "to-read" (o nada) es el paso siguiente tanto del libro que no está en ninguna
+                // estantería como del que está en una propia del usuario; los distingue [shelfId].
+                else -> null
+            }
+
+            // Otra edición del mismo libro ya en una estantería. El aviso está traducido, pero
+            // sus dos enlaces no: uno lleva a la edición que el usuario tiene y el otro a la
+            // estantería en la que está. Se localiza por el formulario de cambiar de edición,
+            // que la instancia mete en el mismo párrafo.
+            val otherEditionBlock = doc.selectFirst("form[name=switch-edition]")?.parent()
+            val otherEditionUrl = otherEditionBlock?.select("a[href*=/book/]")
+                ?.firstOrNull()?.attr("href")?.trim()?.ifEmpty { null }
+                ?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + it }
+            val otherEditionShelfName = otherEditionBlock?.select("a[href*=/books/]")
+                ?.firstOrNull()?.text()?.trim()?.ifEmpty { null }
 
             // Serie del libro. Viene marcada con microdatos schema.org, así que el nombre, el
             // número y el enlace son propiedades y no hay que leerlos del texto, que está
@@ -478,6 +521,10 @@ object BookWyrmScraper {
                 seriesName = seriesName,
                 seriesUrl = seriesUrl,
                 seriesPosition = seriesPosition,
+                shelfSlug = shelfSlug,
+                otherEditionUrl = otherEditionUrl,
+                otherEditionShelfName = otherEditionShelfName,
+                readthroughs = readthroughs.ifEmpty { null },
                 schemaVersion = ENRICHMENT_SCHEMA_VERSION,
                 fetchedAt = System.currentTimeMillis()
             )

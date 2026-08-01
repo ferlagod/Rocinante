@@ -78,6 +78,7 @@
     <string name="book_change_shelf">Cambiar de estantería:</string>
     <string name="book_change_shelf_title">Cambiar de estantería</string>
     <string name="book_add_to_shelf">Añadir a estantería</string>
+    <string name="book_other_edition_shelved">Otra edición de este libro está en tu estantería %1$s.</string>
     <string name="book_synopsis">Sinopsis</string>
     <string name="book_community_reviews">Reseñas de la comunidad</string>
     <string name="book_no_reviews">No se hallaron reseñas escritas para esta edición.</string>
@@ -100,6 +101,7 @@
     <string name="book_label_started">Empezado</string>
     <string name="book_label_finished">Terminado</string>
     <string name="book_edit_read_dates">Editar fechas de lectura</string>
+    <string name="book_label_readings">Lecturas</string>
     <string name="book_read_dates_which">¿Qué lectura quieres editar?</string>
     <string name="book_read_dates_new">Otra lectura</string>
     <string name="book_read_dates_none">sin fecha</string>

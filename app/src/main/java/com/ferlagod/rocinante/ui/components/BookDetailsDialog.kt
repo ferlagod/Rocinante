@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
@@ -135,7 +136,8 @@ import kotlinx.coroutines.launch
  * @param reviews Listado de reseñas y progreso de lectura asociados a la obra.
  * @param activeBookKey URL remota o ID local clave de este libro para llamadas a red.
  * @param fallbackCoverUrl Imagen auxiliar a emplear en caso de que [bookDetails] no provea portada.
- * @param currentShelf El estante (ej. 'to-read', 'reading') en el que se ubica el libro.
+ * @param currentShelf El estante (ej. 'to-read', 'reading') en el que se ubica el libro, cuando
+ *   quien abre la ficha lo sabe. Sin él se recurre al que diga la página del libro.
  * @param api Instancia autenticada del cliente de la red para operar.
  * @param context Contexto de la interfaz de usuario para emitir mensajes y toasts.
  * @param coroutineScope Entorno asíncrono asignado a esta vista.
@@ -262,15 +264,6 @@ fun BookDetailsDialog(
     var readingProgress by remember { mutableStateOf<BookWyrmScraper.ReadingProgressInfo?>(null) }
     var isLoadingProgress by remember { mutableStateOf(false) }
     var progressRefreshKey by remember { mutableStateOf(0) }
-    LaunchedEffect(activeBookKey, progressRefreshKey) {
-        if (currentShelf == "reading") {
-            isLoadingProgress = true
-            readingProgress = runCatching { BookWyrmScraper.getReadingProgress(api, activeBookKey) }.getOrNull()
-            isLoadingProgress = false
-        } else {
-            readingProgress = null
-        }
-    }
 
     // Configuración de progreso de este libro, que se olvida al terminarlo.
     val setupStore = remember(context) { com.ferlagod.rocinante.data.local.ProgressSetupStore(context) }
@@ -303,10 +296,28 @@ fun BookDetailsDialog(
     val shelfBookId = enrichment?.shelfBookId
     val shelfId = enrichment?.shelfId
 
+    // En qué estantería está el libro. Abierto desde una estantería lo dice ella; abierto desde
+    // la búsqueda, la actividad o un perfil no lo sabe nadie, y lo dice su propia página. Sin
+    // esto, un libro que se está leyendo abierto desde la búsqueda no ofrecía ni el progreso ni
+    // «Empezar a leer», como si no estuviera en ninguna parte.
+    val activeShelf = currentShelf ?: enrichment?.shelfSlug
+
     // A un libro que no está en ninguna estantería se llega buscándolo, y lo primero que se
     // quiere hacer con él es ponerlo en una: se ofrece abajo del todo, sin tener que dar con
     // el menú de ⋮. Abierto desde una estantería no hace falta, porque ya está en ella.
-    val canShelve = currentShelf == null && shelfBookId == null
+    val canShelve = activeShelf == null && shelfBookId == null
+
+    // El progreso se pide en cuanto se sabe que el libro se está leyendo, que puede ser al
+    // abrir la ficha (desde la estantería) o al llegar su página (desde cualquier otro sitio).
+    LaunchedEffect(activeBookKey, activeShelf, progressRefreshKey) {
+        if (activeShelf == "reading") {
+            isLoadingProgress = true
+            readingProgress = runCatching { BookWyrmScraper.getReadingProgress(api, activeBookKey) }.getOrNull()
+            isLoadingProgress = false
+        } else {
+            readingProgress = null
+        }
+    }
 
     // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
     var overflowExpanded by remember { mutableStateOf(false) }
@@ -489,7 +500,7 @@ fun BookDetailsDialog(
                                     onClick = { overflowExpanded = false; showShelfPicker = true }
                                 )
                                 HorizontalDivider()
-                                if (currentShelf == "reading") {
+                                if (activeShelf == "reading") {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.book_update_progress)) },
                                         onClick = { overflowExpanded = false; showProgressDialog = true }
@@ -536,43 +547,78 @@ fun BookDetailsDialog(
                 // donde había que ir a buscarla desplazándose. Los tres casos se excluyen
                 // entre sí: sin estantería no hay ni lectura ni progreso.
                 bottomBar = {
-                    val startReading = currentShelf == "to-read"
-                    val needsProgress = currentShelf == "reading" &&
+                    val startReading = activeShelf == "to-read"
+                    val needsProgress = activeShelf == "reading" &&
                         readingProgress == null && !isLoadingProgress
-                    if (canShelve || startReading || needsProgress) {
+                    // Otra edición del mismo libro ya guardada: se avisa junto al botón, que es
+                    // donde se decide, y no en una pestaña que a lo mejor no se abre. Las
+                    // estanterías guardan ediciones concretas, así que sin el aviso se acaba con
+                    // el mismo libro dos veces, cada una en un idioma.
+                    val otherEditionShelf = enrichment?.otherEditionShelfName
+                    if (canShelve || startReading || needsProgress || otherEditionShelf != null) {
                         Surface(tonalElevation = 3.dp) {
-                            Button(
-                                onClick = {
-                                    when {
-                                        canShelve -> showShelfPicker = true
-                                        startReading -> moveToShelf(
-                                            "reading",
-                                            context.getString(R.string.shelf_chip_reading)
+                            Column {
+                                otherEditionShelf?.let { shelfName ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 24.dp, end = 24.dp, top = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Info,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
                                         )
-                                        else -> showProgressDialog = true
+                                        Text(
+                                            text = stringResource(
+                                                R.string.book_other_edition_shelved,
+                                                shelfName
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 12.dp)
-                            ) {
-                                if (canShelve) {
-                                    Icon(
-                                        imageVector = Icons.Filled.BookmarkBorder,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Text(
-                                    text = stringResource(
-                                        when {
-                                            canShelve -> R.string.book_add_to_shelf
-                                            startReading -> R.string.book_start_reading
-                                            else -> R.string.book_update_progress
+                                if (canShelve || startReading || needsProgress) {
+                                    Button(
+                                        onClick = {
+                                            when {
+                                                canShelve -> showShelfPicker = true
+                                                startReading -> moveToShelf(
+                                                    "reading",
+                                                    context.getString(R.string.shelf_chip_reading)
+                                                )
+                                                else -> showProgressDialog = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                                    ) {
+                                        if (canShelve) {
+                                            Icon(
+                                                imageVector = Icons.Filled.BookmarkBorder,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
                                         }
-                                    )
-                                )
+                                        Text(
+                                            text = stringResource(
+                                                when {
+                                                    canShelve -> R.string.book_add_to_shelf
+                                                    startReading -> R.string.book_start_reading
+                                                    else -> R.string.book_update_progress
+                                                }
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
                             }
                         }
                     }
@@ -760,8 +806,18 @@ fun BookDetailsDialog(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             // ── Tu lectura: solo aparece si hay algo tuyo que contar ──
+                            // Los días de lectura se cuentan sobre una lectura entera, no del
+                            // primer inicio al último fin: con una relectura eso mediría también
+                            // los años que el libro estuvo en la estantería sin abrirse.
+                            val readings = enrichment?.readthroughs.orEmpty()
+                            val lastComplete = readings.lastOrNull {
+                                it.started != null && it.finished != null
+                            }
                             val readingDays = com.ferlagod.rocinante.utils.ReadingStatsCalculator
-                                .readingDays(enrichment?.started, enrichment?.finished)
+                                .readingDays(
+                                    lastComplete?.started ?: enrichment?.started,
+                                    lastComplete?.finished ?: enrichment?.finished
+                                )
                             val hasReadingData = enrichment?.rating != null ||
                                 enrichment?.started != null || enrichment?.finished != null
                             if (hasReadingData) {
@@ -785,6 +841,27 @@ fun BookDetailsDialog(
                                                 "$date (${pluralStringResource(R.plurals.reading_days, readingDays, readingDays)})"
                                             } else date
                                         )
+                                    }
+                                    // Releído: las fechas de arriba resumen todas las lecturas
+                                    // (primer inicio, último fin), así que se enseña además cada
+                                    // una por separado. Con una sola lectura no aportarían nada.
+                                    if (readings.size > 1) {
+                                        BookInfoRow(stringResource(R.string.book_label_readings)) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                readings.forEach { reading ->
+                                                    val range = listOfNotNull(
+                                                        reading.started?.let { formatDetailDate(it) ?: it },
+                                                        reading.finished?.let { formatDetailDate(it) ?: it }
+                                                    ).joinToString(" – ")
+                                                    if (range.isNotEmpty()) {
+                                                        Text(
+                                                            text = range,
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     // Las fechas se pueden corregir aquí mismo; en la web están
                                     // detrás del lápiz de «Read dates» de la página del libro.
@@ -1021,7 +1098,7 @@ fun BookDetailsDialog(
                 "read", stringResource(R.string.shelf_chip_read),
                 stringResource(R.string.shelf_toast_read), Icons.Filled.CheckCircle
             )
-        ).filter { it.slug != currentShelf }
+        ).filter { it.slug != activeShelf }
         AlertDialog(
             onDismissRequest = { showShelfPicker = false },
             // Poner en una estantería y cambiar de estantería son la misma lista, pero no la
