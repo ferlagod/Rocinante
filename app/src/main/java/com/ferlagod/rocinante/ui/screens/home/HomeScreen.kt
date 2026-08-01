@@ -123,6 +123,9 @@ fun HomeScreen(
     var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var dialogBookKey by remember { mutableStateOf("") }
     var dialogCoverUrl by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro (autor, estrellas, serie...) de la última vez que se abrió
+    // su página: la ficha lo enseña mientras relee, en vez de salir a medias.
+    var dialogBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
     var selectedNotificationUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
     var selectedNotificationDetail by remember { mutableStateOf<com.ferlagod.rocinante.data.model.NotificationUiItem?>(null) }
 
@@ -189,7 +192,8 @@ fun HomeScreen(
                 dialogBookDetails = null
                 dialogBookReviews = emptyList()
             },
-            onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) }
+            onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
+            initialEnrichment = dialogBookEnrichment
         )
     }
 
@@ -526,6 +530,9 @@ fun HomeScreen(
                         dialogBookKey = bookUrl
                         dialogCoverUrl = coverUrl ?: ""
                         coroutineScope.launch {
+                            dialogBookEnrichment = bookPageCache.loadEnrichment()[
+                                com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)
+                            ]
                             com.ferlagod.rocinante.data.repository.BookPageLoader.load(
                                 api = api,
                                 cache = bookPageCache,
@@ -764,6 +771,8 @@ fun ActivityTab(
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
     var fallbackCoverUrl by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro de la última vez que se abrió su página.
+    var selectedBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
 
     selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
@@ -779,7 +788,8 @@ fun ActivityTab(
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
-            onShelved = { onRefresh() }
+            onShelved = { onRefresh() },
+            initialEnrichment = selectedBookEnrichment
         )
     }
 
@@ -857,6 +867,9 @@ fun ActivityTab(
                                     activeBookKey = bookUrl
                                     fallbackCoverUrl = coverUrl ?: ""
                                     coroutineScope.launch {
+                                        selectedBookEnrichment = bookPageCache.loadEnrichment()[
+                                            com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)
+                                        ]
                                         com.ferlagod.rocinante.data.repository.BookPageLoader.load(
                                             api = api,
                                             cache = bookPageCache,
@@ -1278,6 +1291,8 @@ fun ProfileTab(
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro de la última vez que se abrió su página.
+    var selectedBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
 
     // Abre la ficha del libro desde cualquiera de las filas de portadas del perfil.
     val openBook: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit = { book ->
@@ -1286,6 +1301,9 @@ fun ProfileTab(
             activeBookKey = bookId
             fallbackCoverUrl = book.cover?.url ?: ""
             coroutineScope.launch {
+                selectedBookEnrichment = dataCache.loadEnrichment()[
+                    com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookId)
+                ]
                 com.ferlagod.rocinante.data.repository.BookPageLoader.load(
                     api = api,
                     cache = dataCache,
@@ -1348,7 +1366,8 @@ fun ProfileTab(
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
-            onShelved = { refreshTrigger++ }
+            onShelved = { refreshTrigger++ },
+            initialEnrichment = selectedBookEnrichment
         )
     }
 

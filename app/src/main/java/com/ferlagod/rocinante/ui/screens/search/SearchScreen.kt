@@ -124,6 +124,9 @@ fun SearchScreen(
     var selectedBookDetails by remember { mutableStateOf<BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
+    var selectedBookEnrichment by remember {
+        mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null)
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -400,6 +403,12 @@ fun SearchScreen(
                                                 }
                                                 
                                                 activeBookKey = finalBookKey
+                                                // Lo que ya se sabía del libro (autor, estrellas,
+                                                // serie...) de la última vez que se abrió su
+                                                // página: se enseña mientras se relee.
+                                                selectedBookEnrichment = dataCache.loadEnrichment()[
+                                                    BookWyrmScraper.canonicalBookUrl(finalBookKey)
+                                                ]
                                                 val detailsUrl = if (finalBookKey.startsWith("http")) {
                                                     BookWyrmUtils.ensureJsonUrl(finalBookKey)
                                                 } else {
@@ -560,7 +569,8 @@ fun SearchScreen(
             // que no siga saliendo entre los resultados propios de esta misma búsqueda.
             onRemovedFromShelf = { removedId ->
                 shelfIndex = shelfIndex.filterNot { it.hit.book.id == removedId }
-            }
+            },
+            initialEnrichment = selectedBookEnrichment
         )
     }
 
