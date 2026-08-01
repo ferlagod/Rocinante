@@ -45,8 +45,9 @@ object BookWyrmScraper {
      * 3 → añade la serie del libro: nombre, enlace y número dentro de ella.
      * 4 → añade la estantería en la que está, el aviso de otra edición ya guardada y las
      *     lecturas una a una.
+     * 5 → añade el identificador (sin traducir) de la estantería donde está la otra edición.
      */
-    const val ENRICHMENT_SCHEMA_VERSION = 4
+    const val ENRICHMENT_SCHEMA_VERSION = 5
 
     /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
@@ -484,8 +485,13 @@ object BookWyrmScraper {
             val otherEditionUrl = otherEditionBlock?.select("a[href*=/book/]")
                 ?.firstOrNull()?.attr("href")?.trim()?.ifEmpty { null }
                 ?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + it }
-            val otherEditionShelfName = otherEditionBlock?.select("a[href*=/books/]")
-                ?.firstOrNull()?.text()?.trim()?.ifEmpty { null }
+            val otherEditionShelfLink = otherEditionBlock?.select("a[href*=/books/]")?.firstOrNull()
+            val otherEditionShelfName = otherEditionShelfLink?.text()?.trim()?.ifEmpty { null }
+            // El nombre del aviso lo escribe la instancia en su idioma («Read»), así que se
+            // guarda además el identificador de la estantería, que sale del enlace y no está
+            // traducido: con él la app puede decirlo con sus propias palabras.
+            val otherEditionShelfSlug = otherEditionShelfLink?.attr("href")?.trim()
+                ?.trimEnd('/')?.substringAfterLast('/')?.ifEmpty { null }
 
             // Serie del libro. Viene marcada con microdatos schema.org, así que el nombre, el
             // número y el enlace son propiedades y no hay que leerlos del texto, que está
@@ -524,6 +530,7 @@ object BookWyrmScraper {
                 shelfSlug = shelfSlug,
                 otherEditionUrl = otherEditionUrl,
                 otherEditionShelfName = otherEditionShelfName,
+                otherEditionShelfSlug = otherEditionShelfSlug,
                 readthroughs = readthroughs.ifEmpty { null },
                 schemaVersion = ENRICHMENT_SCHEMA_VERSION,
                 fetchedAt = System.currentTimeMillis()

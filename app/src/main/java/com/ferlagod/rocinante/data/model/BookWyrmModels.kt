@@ -234,7 +234,10 @@ data class BookEnrichment(
     // las estanterías guardan ediciones concretas: sin esto se acaba con el mismo libro dos
     // veces, en dos idiomas.
     val otherEditionUrl: String? = null,
+    // El nombre lo escribe la instancia en su idioma; el identificador ("read", "to-read"...)
+    // no, así que es con el que la app lo dice en el suyo.
     val otherEditionShelfName: String? = null,
+    val otherEditionShelfSlug: String? = null,
     // Cada lectura por separado, de la más antigua a la más reciente. [started] y [finished]
     // siguen siendo el resumen (primera fecha de inicio y última de fin), que es lo que
     // enseñan las listas; esto es el detalle, y con una relectura son cosas distintas.

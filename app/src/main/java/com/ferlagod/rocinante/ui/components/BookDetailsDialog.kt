@@ -565,7 +565,15 @@ fun BookDetailsDialog(
                     // donde se decide, y no en una pestaña que a lo mejor no se abre. Las
                     // estanterías guardan ediciones concretas, así que sin el aviso se acaba con
                     // el mismo libro dos veces, cada una en un idioma.
-                    val otherEditionShelf = enrichment?.otherEditionShelfName
+                    // El nombre viene escrito en el idioma de la instancia («Read»); con el
+                    // identificador se dice en el de la app, y solo si es una de las tres de
+                    // siempre se cae al nombre tal cual para las estanterías propias.
+                    val otherEditionShelf = when (enrichment?.otherEditionShelfSlug) {
+                        "to-read" -> stringResource(R.string.shelf_chip_to_read)
+                        "reading" -> stringResource(R.string.shelf_chip_reading)
+                        "read" -> stringResource(R.string.shelf_chip_read)
+                        else -> enrichment?.otherEditionShelfName
+                    }
                     if (canShelve || startReading || needsProgress || otherEditionShelf != null) {
                         Surface(tonalElevation = 3.dp) {
                             Column {
