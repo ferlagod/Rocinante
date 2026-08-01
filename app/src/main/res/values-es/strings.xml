@@ -53,6 +53,13 @@
         <item quantity="one">%d día</item>
         <item quantity="other">%d días</item>
     </plurals>
+    <string name="series_title">Series</string>
+    <string name="series_empty">Todavía no hay ninguna serie entre los libros que has leído</string>
+    <string name="series_book_of">%1$s · libro %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d libro</item>
+        <item quantity="other">%d libros</item>
+    </plurals>
     <string name="shelf_to_read_title">Por leer</string>
     <string name="shelf_to_read_desc">Libros que quieres leer próximamente</string>
     <string name="shelf_reading_title">Leyendo</string>
@@ -69,7 +76,9 @@
     <string name="book_pages">Páginas: %1$s</string>
     <string name="book_no_description">Sin descripción disponible.</string>
     <string name="book_change_shelf">Cambiar de estantería:</string>
-    <string name="book_add_to_shelf">Añadir a estantería:</string>
+    <string name="book_change_shelf_title">Cambiar de estantería</string>
+    <string name="book_add_to_shelf">Añadir a estantería</string>
+    <string name="book_other_edition_shelved">Otra edición de este libro está en tu estantería %1$s.</string>
     <string name="book_synopsis">Sinopsis</string>
     <string name="book_community_reviews">Reseñas de la comunidad</string>
     <string name="book_no_reviews">No se hallaron reseñas escritas para esta edición.</string>
@@ -85,6 +94,43 @@
     <string name="book_tab_misc">Más</string>
     <string name="book_move_confirm">¿Mover a «%1$s»?</string>
     <string name="book_move_confirm_yes">Mover</string>
+    <string name="book_section_reading">Tu lectura</string>
+    <string name="book_section_about">Sobre el libro</string>
+    <string name="book_section_ids">Números</string>
+    <string name="book_label_rating">Valoración</string>
+    <string name="book_label_started">Empezado</string>
+    <string name="book_label_finished">Terminado</string>
+    <string name="book_edit_read_dates">Editar fechas de lectura</string>
+    <string name="book_choose_edition">Elegir edición</string>
+    <string name="book_edition_current">Esta edición</string>
+    <string name="book_edition_switched">Cambiado a esta edición</string>
+    <string name="book_editions_none">El libro no tiene más ediciones en la instancia.</string>
+    <string name="book_editions_all_languages">Todas</string>
+    <string name="book_editions_none_language">No hay ediciones en este idioma.</string>
+    <string name="book_label_readings">Lecturas</string>
+    <string name="book_read_dates_which">¿Qué lectura quieres editar?</string>
+    <string name="book_read_dates_new">Otra lectura</string>
+    <string name="book_read_dates_none">sin fecha</string>
+    <string name="book_read_dates_pick">Elegir fecha</string>
+    <string name="book_read_dates_saved">Fechas de lectura guardadas</string>
+    <string name="book_read_dates_empty">Elige al menos una fecha</string>
+    <string name="book_read_dates_order">La fecha de fin no puede ser anterior a la de inicio</string>
+    <string name="book_label_author">Autor</string>
+    <string name="book_label_series">Serie</string>
+    <string name="book_label_pages">Páginas</string>
+    <string name="book_label_language">Idioma</string>
+    <string name="book_label_format">Formato</string>
+    <string name="book_label_publisher">Editorial</string>
+    <string name="book_label_published">Publicado</string>
+    <string name="book_label_first_published">Primera edición</string>
+    <string name="book_label_subjects">Materias</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Quitar de la estantería</string>
+    <string name="book_remove_confirm">¿Seguro que quieres quitar este libro de tu estantería?</string>
+    <string name="book_remove_confirm_yes">Quitar</string>
+    <string name="book_remove_toast">Quitado de tu estantería</string>
     <string name="book_more_actions">Más acciones</string>
     <string name="shelf_chip_to_read">Por leer</string>
     <string name="shelf_chip_reading">Leyendo</string>
@@ -109,6 +155,20 @@
     <string name="progress_privacy_private">Privado</string>
     <string name="progress_btn_share">Compartir</string>
     <string name="progress_btn_save">Guardar</string>
+    <string name="progress_pages_ebook">páginas (ebook)</string>
+    <string name="progress_ebook_total_label">Páginas de tu ebook:</string>
+    <string name="progress_ebook_total_hint">p. ej. 480</string>
+    <string name="progress_ebook_total_help">Las páginas de un ebook dependen del tamaño de letra, así que solo se guardan en este dispositivo. A BookWyrm se le envía el porcentaje.</string>
+    <string name="progress_edit_setup">Editar</string>
+    <string name="progress_ebook_total_saved">Tu ebook: %1$d páginas</string>
+    <string name="progress_mode_saved">Progreso en %1$s</string>
+    <string name="progress_ebook_total_missing">Indica primero cuántas páginas tiene tu ebook</string>
+    <string name="progress_ebook_percent">≈ %1$d%% leído</string>
+    <string name="progress_ebook_printed_estimate">≈ página %1$d de %2$d en papel</string>
+    <string name="progress_btn_post">Publicar…</string>
+    <string name="progress_post_title">Publicar el progreso</string>
+    <string name="book_progress_ebook">%1$d%% (página %2$d de %3$d del ebook)</string>
+    <string name="book_progress_ebook_page">≈ página %1$d de %2$d del ebook</string>
     <string name="progress_btn_cancel">Cancelar</string>
     <string name="progress_success">Estado actualizado</string>
     <string name="progress_error">Error: %1$s</string>
@@ -143,6 +203,13 @@
     <string name="profile_network_error">Fallo de red: %1$s</string>
     <string name="error_network">Error de red: %1$s</string>
     <string name="error_server">Error del servidor: %1$s</string>
+    <string name="error_conn_offline">Sin conexión. Comprueba tu red.</string>
+    <string name="error_conn_timeout">La instancia no responde ahora mismo. Inténtalo de nuevo en un momento.</string>
+    <string name="error_instance_down">La instancia tiene problemas ahora mismo (error %1$s). Inténtalo de nuevo en un momento.</string>
+    <string name="error_rate_limited">La instancia te pide que esperes un poco. Inténtalo de nuevo en un momento.</string>
+    <string name="error_session_expired">Tu sesión ha caducado. Vuelve a entrar.</string>
+    <string name="error_not_found">La instancia ya no lo tiene.</string>
+    <string name="error_unexpected_response">La instancia ha enviado una respuesta inesperada, normalmente un control de seguridad por medio. Inténtalo de nuevo en un momento.</string>
     <string name="error_book_not_identified">No se pudo identificar el libro</string>
     <string name="error_shelve_sync">Error de sincronización: %1$s</string>
     <string name="error_shelve_success">Estado sincronizado: %1$s</string>
@@ -339,6 +406,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro no indica páginas y no suma en el total</item>
         <item quantity="other">%d libros no indican páginas y no suman en el total</item>
     </plurals>
+    <string name="profile_top_rated">Mejor valorados</string>
     <string name="profile_stats_top_authors">Autores más leídos</string>
     <string name="profile_stats_authors_desc">Autores más leídos: %1$s</string>
     <plurals name="profile_stats_missing_authors">
@@ -391,4 +459,10 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="profile_layout_reset">Restablecer</string>
     <string name="profile_layout_drag_desc">Arrastra para mover %1$s</string>
     <string name="profile_section_stats">Estadísticas de lectura</string>
+    <string name="search_local_section">En tus estanterías</string>
+    <string name="search_instance_section">En esta instancia</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…y %d más en tus estanterías</item>
+        <item quantity="other">…y %d más en tus estanterías</item>
+    </plurals>
 </resources>

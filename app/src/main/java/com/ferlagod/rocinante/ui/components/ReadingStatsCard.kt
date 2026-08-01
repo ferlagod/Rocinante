@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.utils.ReadingStats
 import java.text.NumberFormat
+import kotlin.math.roundToInt
 
 /**
  * Tarjeta de estadísticas de lectura del perfil: tres cifras destacadas (total de libros,
@@ -168,7 +169,9 @@ fun ReadingGoalPaceSection(
 ) {
     if (booksAheadOfSchedule == null && !stats.hasReadingDays) return
 
-    val numberFormat = remember { NumberFormat.getInstance() }
+    // Días por libro se enseñan como número entero: la media sale con decimales, pero
+    // "12,4 días" finge una precisión que no hay cuando se calcula sobre unos pocos libros.
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (booksAheadOfSchedule != null) {
@@ -217,13 +220,13 @@ fun ReadingGoalPaceSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatCell(
-                    value = stats.avgReadingDaysThisYear?.let { numberFormat.format(it) } ?: "–",
+                    value = stats.avgReadingDaysThisYear?.let { numberFormat.format(it.roundToInt()) } ?: "–",
                     label = stringResource(R.string.profile_stats_days_this_year),
                     modifier = Modifier.weight(1f)
                 )
                 VerticalDivider(modifier = Modifier.height(36.dp))
                 StatCell(
-                    value = stats.avgReadingDaysAllTime?.let { numberFormat.format(it) } ?: "–",
+                    value = stats.avgReadingDaysAllTime?.let { numberFormat.format(it.roundToInt()) } ?: "–",
                     label = stringResource(R.string.profile_stats_days_total),
                     modifier = Modifier.weight(1f)
                 )
@@ -324,7 +327,10 @@ fun RatingsCard(
     if (!stats.hasRatingData) return
 
     val numberFormat = remember { NumberFormat.getInstance() }
-    val averageText = stats.averageRating?.let { numberFormat.format(it) } ?: ""
+    // La media se redondea a media estrella, que es lo mínimo que se puede puntuar en
+    // BookWyrm: un 4,28 no corresponde a ninguna valoración que se pueda dar.
+    val averageText = stats.averageRating
+        ?.let { numberFormat.format(Math.round(it * 2) / 2.0) } ?: ""
     val maxCount = stats.ratingDistribution.maxOf { it.count }.coerceAtLeast(1)
     val barColor = MaterialTheme.colorScheme.primary
     val trackColor = MaterialTheme.colorScheme.surfaceVariant

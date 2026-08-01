@@ -132,6 +132,60 @@ object ReadingStatsCalculator {
         return runCatching { java.time.LocalDate.parse(value.take(10)) }.getOrNull()
     }
 
+    /**
+     * Días que duró una lectura, contando ambos extremos: leer y terminar el mismo día es
+     * 1 día, no 0. Devuelve null si falta alguna fecha, no se entienden o el fin es anterior
+     * al inicio. Vive aquí para que la estantería y la ficha del libro cuenten igual.
+     */
+    fun readingDays(startIso: String?, finishIso: String?): Int? {
+        val start = parseIsoDate(startIso) ?: return null
+        val finish = parseIsoDate(finishIso) ?: return null
+        val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
+        if (days < 0) return null
+        return days.toInt() + 1
+    }
+
+    /**
+     * Un libro de los mejor valorados, con lo justo para pintarlo y saltar a su estantería.
+     */
+    data class TopRatedBook(
+        val book: ShelfBookItem,
+        val rating: Double,
+        val finished: String?
+    )
+
+    /**
+     * Los libros mejor valorados de la estantería «Leídos».
+     *
+     * Cuando hay más empatados en lo alto que sitios —diez con cinco estrellas para cinco
+     * huecos— ganan los leídos más recientemente, así que el bloque va cambiando conforme
+     * se lee en vez de quedarse congelado en los primeros que se puntuaron. Las fechas van
+     * en ISO, que ordena bien como texto; los libros sin fecha quedan detrás de los que la
+     * tienen con la misma nota.
+     *
+     * @param books estantería "Leídos" tal y como la cachea `TimelineCache.loadShelfBooks`.
+     * @param enrichment caché de enriquecimiento indexada por id de libro: de ahí salen la
+     *   valoración y la fecha de fin. Un libro sin valoración no entra.
+     * @param limit cuántos devolver como mucho.
+     */
+    fun topRated(
+        books: List<ShelfBookItem>,
+        enrichment: Map<String, BookEnrichment>,
+        limit: Int = 5
+    ): List<TopRatedBook> {
+        val rated = books.mapNotNull { book ->
+            val data = book.id?.let { enrichment[it] } ?: return@mapNotNull null
+            val rating = data.rating ?: return@mapNotNull null
+            TopRatedBook(book, rating, data.finished?.takeIf { it.isNotBlank() })
+        }
+        return rated
+            .sortedWith(
+                compareByDescending<TopRatedBook> { it.rating }
+                    .thenByDescending { it.finished ?: "" }
+            )
+            .take(limit)
+    }
+
     fun splitAuthors(authorName: String): List<String> {
         val parts = authorName.split(", ").map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return listOf(authorName.trim()).filter { it.isNotEmpty() }

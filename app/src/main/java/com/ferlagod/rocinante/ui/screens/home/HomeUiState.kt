@@ -23,6 +23,18 @@ import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
 
 /**
+ * Libro concreto al que hay que saltar dentro de «Mis libros», normalmente porque se ha
+ * pulsado un resultado de la búsqueda en las estanterías propias.
+ *
+ * @property shelfSlug Estantería que hay que abrir ("to-read", "reading" o "read").
+ * @property bookId Identificador (URL) del libro al que desplazarse y que se resalta.
+ */
+data class ShelfTarget(
+    val shelfSlug: String,
+    val bookId: String
+)
+
+/**
  * Estado inmutable que representa la interfaz de usuario de la pantalla principal (Home).
  * Contiene todos los datos necesarios para renderizar la vista y su comportamiento.
  *
@@ -36,6 +48,7 @@ import com.ferlagod.rocinante.data.model.TimelineUiItem
  * @property userId Identificador interno único del usuario.
  * @property visibleTimeline Subconjunto de actividades visibles actualmente en la vista (usado para paginación local).
  * @property currentPage Página actual cargada en la vista paginada de la línea de tiempo.
+ * @property shelfTarget Libro pendiente de abrir en su estantería, o null si no hay ninguno.
  */
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -48,5 +61,6 @@ data class HomeUiState(
     val boostedStatusIds: Set<String> = emptySet(),
     val userId: String? = null,
     val currentPage: Int = 1,
-    val selectedTab: Int = 0
+    val selectedTab: Int = 0,
+    val shelfTarget: ShelfTarget? = null
 )

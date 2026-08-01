@@ -244,6 +244,7 @@ private fun sectionLabel(section: ProfileSection): String = when (section) {
     ProfileSection.TO_READ -> stringResource(R.string.shelf_to_read_title)
     ProfileSection.BIO -> stringResource(R.string.profile_bio_title)
     ProfileSection.READING_GOAL -> stringResource(R.string.profile_reading_goal_title)
+    ProfileSection.TOP_RATED -> stringResource(R.string.profile_top_rated)
     ProfileSection.TOP_AUTHORS -> stringResource(R.string.profile_stats_top_authors)
     ProfileSection.RATINGS -> stringResource(R.string.profile_stats_ratings)
     ProfileSection.LANGUAGES -> stringResource(R.string.profile_stats_languages)

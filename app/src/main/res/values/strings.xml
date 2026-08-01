@@ -54,6 +54,13 @@
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
     </plurals>
+    <string name="series_title">Series</string>
+    <string name="series_empty">No series yet among the books you have read</string>
+    <string name="series_book_of">%1$s · book %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
     <string name="search_books_empty">No books found</string>
     <string name="shelf_to_read_title">To read</string>
     <string name="shelf_to_read_desc">Books you want to read soon</string>
@@ -71,7 +78,9 @@
     <string name="book_pages">Pages: %1$s</string>
     <string name="book_no_description">No description available.</string>
     <string name="book_change_shelf">Change shelf:</string>
-    <string name="book_add_to_shelf">Add to shelf:</string>
+    <string name="book_change_shelf_title">Change shelf</string>
+    <string name="book_add_to_shelf">Add to shelf</string>
+    <string name="book_other_edition_shelved">A different edition of this book is on your %1$s shelf.</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Community reviews</string>
     <string name="book_no_reviews">No written reviews found for this edition.</string>
@@ -87,6 +96,43 @@
     <string name="book_tab_misc">More</string>
     <string name="book_move_confirm">Move to \"%1$s\"?</string>
     <string name="book_move_confirm_yes">Move</string>
+    <string name="book_section_reading">Your reading</string>
+    <string name="book_section_about">About the book</string>
+    <string name="book_section_ids">Numbers</string>
+    <string name="book_label_rating">Rating</string>
+    <string name="book_label_started">Started</string>
+    <string name="book_label_finished">Finished</string>
+    <string name="book_edit_read_dates">Edit read dates</string>
+    <string name="book_choose_edition">Choose edition</string>
+    <string name="book_edition_current">This edition</string>
+    <string name="book_edition_switched">Switched to this edition</string>
+    <string name="book_editions_none">This book has no other editions on the instance.</string>
+    <string name="book_editions_all_languages">All</string>
+    <string name="book_editions_none_language">No editions in this language.</string>
+    <string name="book_label_readings">Readings</string>
+    <string name="book_read_dates_which">Which reading do you want to edit?</string>
+    <string name="book_read_dates_new">Another reading</string>
+    <string name="book_read_dates_none">no date</string>
+    <string name="book_read_dates_pick">Choose date</string>
+    <string name="book_read_dates_saved">Read dates saved</string>
+    <string name="book_read_dates_empty">Choose at least one date</string>
+    <string name="book_read_dates_order">The finish date cannot be before the start date</string>
+    <string name="book_label_author">Author</string>
+    <string name="book_label_series">Series</string>
+    <string name="book_label_pages">Pages</string>
+    <string name="book_label_language">Language</string>
+    <string name="book_label_format">Format</string>
+    <string name="book_label_publisher">Publisher</string>
+    <string name="book_label_published">Published</string>
+    <string name="book_label_first_published">First published</string>
+    <string name="book_label_subjects">Subjects</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Remove from shelf</string>
+    <string name="book_remove_confirm">Are you sure you want to remove this book from your shelf?</string>
+    <string name="book_remove_confirm_yes">Remove</string>
+    <string name="book_remove_toast">Removed from your shelf</string>
     <string name="book_more_actions">More actions</string>
     <string name="shelf_chip_to_read">To read</string>
     <string name="shelf_chip_reading">Reading</string>
@@ -111,6 +157,20 @@
     <string name="progress_privacy_private">Private</string>
     <string name="progress_btn_share">Share</string>
     <string name="progress_btn_save">Save</string>
+    <string name="progress_pages_ebook">ebook pages</string>
+    <string name="progress_ebook_total_label">Pages in your ebook:</string>
+    <string name="progress_ebook_total_hint">e.g. 480</string>
+    <string name="progress_ebook_total_help">The page count of an ebook depends on your font size, so it is saved only on this device. BookWyrm is sent the percentage.</string>
+    <string name="progress_edit_setup">Edit</string>
+    <string name="progress_ebook_total_saved">Your ebook: %1$d pages</string>
+    <string name="progress_mode_saved">Progress in %1$s</string>
+    <string name="progress_ebook_total_missing">First enter how many pages your ebook has</string>
+    <string name="progress_ebook_percent">≈ %1$d%% read</string>
+    <string name="progress_ebook_printed_estimate">≈ page %1$d of %2$d in print</string>
+    <string name="progress_btn_post">Post…</string>
+    <string name="progress_post_title">Post an update</string>
+    <string name="book_progress_ebook">%1$d%% (ebook page %2$d of %3$d)</string>
+    <string name="book_progress_ebook_page">≈ ebook page %1$d of %2$d</string>
     <string name="progress_btn_cancel">Cancel</string>
     <string name="progress_success">Status updated</string>
     <string name="progress_error">Error: %1$s</string>
@@ -145,6 +205,13 @@
     <string name="profile_network_error">Network failure: %1$s</string>
     <string name="error_network">Network error: %1$s</string>
     <string name="error_server">Server error: %1$s</string>
+    <string name="error_conn_offline">No connection. Check your network.</string>
+    <string name="error_conn_timeout">The instance is not responding right now. Try again in a moment.</string>
+    <string name="error_instance_down">The instance is having trouble right now (error %1$s). Try again in a moment.</string>
+    <string name="error_rate_limited">The instance is asking you to slow down. Wait a moment and try again.</string>
+    <string name="error_session_expired">Your session has expired. Log in again.</string>
+    <string name="error_not_found">The instance no longer has this.</string>
+    <string name="error_unexpected_response">The instance sent an unexpected response, usually a security check in the way. Try again in a moment.</string>
     <string name="error_book_not_identified">Could not identify the book</string>
     <string name="error_shelve_sync">Sync error: %1$s</string>
     <string name="error_shelve_success">Status synced: %1$s</string>
@@ -333,6 +400,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book has no page count and is not in the page total</item>
         <item quantity="other">%d books have no page count and are not in the page total</item>
     </plurals>
+    <string name="profile_top_rated">Best rated</string>
     <string name="profile_stats_top_authors">Most read authors</string>
     <string name="profile_stats_authors_desc">Most read authors: %1$s</string>
     <plurals name="profile_stats_missing_authors">
@@ -385,4 +453,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_layout_reset">Reset</string>
     <string name="profile_layout_drag_desc">Drag to move %1$s</string>
     <string name="profile_section_stats">Reading statistics</string>
+    <string name="search_local_section">In your shelves</string>
+    <string name="search_instance_section">On this instance</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…and %d more in your shelves</item>
+        <item quantity="other">…and %d more in your shelves</item>
+    </plurals>
 </resources>

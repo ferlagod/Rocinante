@@ -40,6 +40,14 @@
         <item quantity="few">%d zile</item>
         <item quantity="other">%d de zile</item>
     </plurals>
+    <string name="series_title">Serii</string>
+    <string name="series_empty">Încă nicio serie printre cărțile citite</string>
+    <string name="series_book_of">%1$s · cartea %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d carte</item>
+        <item quantity="few">%d cărți</item>
+        <item quantity="other">%d de cărți</item>
+    </plurals>
     <string name="shelf_to_read_title">De citit</string>
     <string name="shelf_to_read_desc">Cărți pe care dorești să le citești în curând</string>
     <string name="shelf_reading_title">În curs de citire</string>
@@ -56,7 +64,8 @@
     <string name="book_pages">Pagini: %1$s</string>
     <string name="book_no_description">Nicio descriere disponibilă.</string>
     <string name="book_change_shelf">Schimbă raftul:</string>
-    <string name="book_add_to_shelf">Adaugă pe raft:</string>
+    <string name="book_change_shelf_title">Schimbă raftul</string>
+    <string name="book_add_to_shelf">Adaugă pe raft</string>
     <string name="book_synopsis">Sinopsis</string>
     <string name="book_community_reviews">Recenzii ale comunității</string>
     <string name="book_no_reviews">Nu s-au găsit recenzii scrise pentru această ediție.</string>
@@ -68,6 +77,27 @@
     <string name="book_tab_misc">Mai multe</string>
     <string name="book_move_confirm">Muți în «%1$s»?</string>
     <string name="book_move_confirm_yes">Mută</string>
+    <string name="book_section_reading">Lectura ta</string>
+    <string name="book_section_about">Despre carte</string>
+    <string name="book_section_ids">Numere</string>
+    <string name="book_label_rating">Evaluare</string>
+    <string name="book_label_started">Început</string>
+    <string name="book_label_author">Autor</string>
+    <string name="book_label_series">Serie</string>
+    <string name="book_label_pages">Pagini</string>
+    <string name="book_label_language">Limbă</string>
+    <string name="book_label_format">Format</string>
+    <string name="book_label_publisher">Editură</string>
+    <string name="book_label_published">Publicat</string>
+    <string name="book_label_first_published">Prima ediție</string>
+    <string name="book_label_subjects">Subiecte</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Elimină din raft</string>
+    <string name="book_remove_confirm">Sigur vrei să elimini această carte din raftul tău?</string>
+    <string name="book_remove_confirm_yes">Elimină</string>
+    <string name="book_remove_toast">Eliminată din raftul tău</string>
     <string name="book_more_actions">Mai multe acțiuni</string>
     <string name="shelf_chip_to_read">De citit</string>
     <string name="shelf_chip_reading">Citesc</string>
@@ -321,6 +351,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_stats_pages">Pagini</string>
     <string name="profile_stats_per_year">Cărți pe an</string>
     <string name="profile_stats_chart_desc">Cărți pe an: %1$s</string>
+    <string name="profile_top_rated">Cele mai bine evaluate</string>
     <string name="profile_stats_top_authors">Cei mai citiți autori</string>
     <string name="profile_stats_authors_desc">Cei mai citiți autori: %1$s</string>
     <string name="profile_stats_ratings">Evaluările tale</string>
@@ -389,6 +420,13 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="one">%d carte nu indică formatul</item>
         <item quantity="few">%d cărți nu indică formatul</item>
         <item quantity="other">%d de cărți nu indică formatul</item>
+    </plurals>
+    <string name="search_local_section">În rafturile tale</string>
+    <string name="search_instance_section">Pe această instanță</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…și încă %d în rafturile tale</item>
+        <item quantity="few">…și încă %d în rafturile tale</item>
+        <item quantity="other">…și încă %d de cărți în rafturile tale</item>
     </plurals>
 </resources>
 

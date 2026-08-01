@@ -112,6 +112,13 @@ object NetworkClient {
         private set
 
     /**
+     * Host de la instancia con la que se ha iniciado sesión, en minúsculas. Sirve para saber
+     * si un libro es de casa o viene de otra instancia, y ahorrarse así el resolverlo.
+     */
+    var lastInstanceHost: String? = null
+        private set
+
+    /**
      * User-Agent que se envía en TODAS las peticiones HTTP. Debe coincidir con el del
      * WebView de login, porque es a ese UA al que la instancia (y protecciones tipo
      * Anubis) emitió la cookie de sesión/clearance; un UA distinto al reproducir esa
@@ -215,6 +222,7 @@ object NetworkClient {
             .build()
 
         lastOkHttpClient = okHttpClient
+        lastInstanceHost = host.lowercase()
 
         val gson = com.google.gson.GsonBuilder()
             .setLenient()

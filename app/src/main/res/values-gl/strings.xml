@@ -50,6 +50,13 @@
         <item quantity="one">%d día</item>
         <item quantity="other">%d días</item>
     </plurals>
+    <string name="series_title">Series</string>
+    <string name="series_empty">Aínda non hai ningunha serie entre os libros que liches</string>
+    <string name="series_book_of">%1$s · libro %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d libro</item>
+        <item quantity="other">%d libros</item>
+    </plurals>
     <string name="shelf_to_read_title">Pendentes</string>
     <string name="shelf_to_read_desc">Libros que queres ler próximamente</string>
     <string name="shelf_reading_title">Lendo</string>
@@ -66,7 +73,8 @@
     <string name="book_pages">Páxinas: %1$s</string>
     <string name="book_no_description">Non hai descrición dispoñible.</string>
     <string name="book_change_shelf">Cambiar de estante:</string>
-    <string name="book_add_to_shelf">Engadir a estante:</string>
+    <string name="book_change_shelf_title">Cambiar de estante</string>
+    <string name="book_add_to_shelf">Engadir a estante</string>
     <string name="book_synopsis">Sinopse</string>
     <string name="book_community_reviews">Recensións da comunidade</string>
     <string name="book_no_reviews">Non hai recensións escritas para esta edición.</string>
@@ -78,6 +86,27 @@
     <string name="book_tab_misc">Máis</string>
     <string name="book_move_confirm">Mover a «%1$s»?</string>
     <string name="book_move_confirm_yes">Mover</string>
+    <string name="book_section_reading">A túa lectura</string>
+    <string name="book_section_about">Sobre o libro</string>
+    <string name="book_section_ids">Números</string>
+    <string name="book_label_rating">Valoración</string>
+    <string name="book_label_started">Comezado</string>
+    <string name="book_label_author">Autor</string>
+    <string name="book_label_series">Serie</string>
+    <string name="book_label_pages">Páxinas</string>
+    <string name="book_label_language">Idioma</string>
+    <string name="book_label_format">Formato</string>
+    <string name="book_label_publisher">Editorial</string>
+    <string name="book_label_published">Publicado</string>
+    <string name="book_label_first_published">Primeira edición</string>
+    <string name="book_label_subjects">Materias</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Quitar do estante</string>
+    <string name="book_remove_confirm">Seguro que queres quitar este libro do teu estante?</string>
+    <string name="book_remove_confirm_yes">Quitar</string>
+    <string name="book_remove_toast">Quitado do teu estante</string>
     <string name="book_more_actions">Máis accións</string>
     <string name="shelf_chip_to_read">Pendente</string>
     <string name="shelf_chip_reading">Lendo</string>
@@ -322,6 +351,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_stats_pages">Páxinas</string>
     <string name="profile_stats_per_year">Libros por ano</string>
     <string name="profile_stats_chart_desc">Libros por ano: %1$s</string>
+    <string name="profile_top_rated">Mellor valorados</string>
     <string name="profile_stats_top_authors">Autores máis lidos</string>
     <string name="profile_stats_authors_desc">Autores máis lidos: %1$s</string>
     <string name="profile_stats_ratings">As túas valoracións</string>
@@ -381,6 +411,12 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d libro non indica formato</item>
         <item quantity="other">%d libros non indican formato</item>
+    </plurals>
+    <string name="search_local_section">Nos teus estantes</string>
+    <string name="search_instance_section">Nesta instancia</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…e %d máis nos teus estantes</item>
+        <item quantity="other">…e %d máis nos teus estantes</item>
     </plurals>
 </resources>
 

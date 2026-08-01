@@ -123,12 +123,22 @@ fun HomeScreen(
     var dialogBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var dialogBookKey by remember { mutableStateOf("") }
     var dialogCoverUrl by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro (autor, estrellas, serie...) de la última vez que se abrió
+    // su página: la ficha lo enseña mientras relee, en vez de salir a medias.
+    var dialogBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
     var selectedNotificationUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
     var selectedNotificationDetail by remember { mutableStateOf<com.ferlagod.rocinante.data.model.NotificationUiItem?>(null) }
 
     val api = remember(instanceUrl, cookie) {
         NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
     }
+
+    // Donde se guarda la ficha de cada libro que se abre, para volver a enseñarla al instante.
+    val bookPageCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
+    // Sube cada vez que se toca «Mis libros» estando ya en esa pestaña, que es como se le
+    // pide volver a la lista de estanterías.
+    var backToShelvesKey by remember { mutableStateOf(0) }
 
     val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -174,7 +184,9 @@ fun HomeScreen(
             reviews = dialogBookReviews,
             activeBookKey = dialogBookKey,
             fallbackCoverUrl = dialogCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -182,7 +194,8 @@ fun HomeScreen(
                 dialogBookDetails = null
                 dialogBookReviews = emptyList()
             },
-            onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) }
+            onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
+            initialEnrichment = dialogBookEnrichment
         )
     }
 
@@ -209,7 +222,12 @@ fun HomeScreen(
                 )
                 NavigationBarItem(
                     selected = uiState.selectedTab == 1,
-                    onClick = { viewModel.selectTab(1) },
+                    onClick = {
+                        // Estando ya en «Mis libros», el toque no cambia de pestaña: sirve
+                        // para volver a la lista de estanterías desde la que se esté abierta.
+                        if (uiState.selectedTab == 1) backToShelvesKey++
+                        viewModel.selectTab(1)
+                    },
                     icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = stringResource(R.string.nav_my_books)) }, // ICONO CORREGIDO
                     label = { Text(stringResource(R.string.nav_my_books), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                 )
@@ -311,7 +329,11 @@ fun HomeScreen(
                         username = username,
                         cookie = cookie,
                         api = api,
-                        onNavigateToSettings = onSettingsClick
+                        onNavigateToSettings = onSettingsClick,
+                        targetShelfSlug = uiState.shelfTarget?.shelfSlug,
+                        targetBookId = uiState.shelfTarget?.bookId,
+                        onTargetConsumed = { viewModel.consumeShelfTarget() },
+                        backToShelvesKey = backToShelvesKey
                     )
                 }
 
@@ -319,7 +341,8 @@ fun HomeScreen(
                     instanceUrl = instanceUrl,
                     cookie = cookie,
                     api = api,
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues),
+                    onOpenInShelf = { slug, bookId -> viewModel.openBookInShelf(slug, bookId) }
                 )
 
                 3 -> Box(modifier = Modifier.padding(paddingValues)) {
@@ -509,22 +532,29 @@ fun HomeScreen(
                         dialogBookKey = bookUrl
                         dialogCoverUrl = coverUrl ?: ""
                         coroutineScope.launch {
-                            try {
-                                val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                val baseUrl = localUrl.substringBefore("/book/")
-                                val detailsUrl = "$baseUrl/book/$bookId.json"
-                                dialogBookDetails = api.getBookDetails(detailsUrl)
-                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                try {
-                                    dialogBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                } catch (_: Exception) {
-                                    dialogBookReviews = emptyList()
+                            dialogBookEnrichment = bookPageCache.loadEnrichment()[
+                                com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)
+                            ]
+                            com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                api = api,
+                                cache = bookPageCache,
+                                cacheKey = bookUrl,
+                                resolveDetailsUrl = {
+                                    val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                    val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                    "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                },
+                                onDetails = { details, fromCache ->
+                                    dialogBookDetails = details
+                                    if (fromCache) dialogBookReviews = emptyList()
+                                },
+                                onReviews = { dialogBookReviews = it },
+                                onFailure = { e, hadCache ->
+                                    if (!hadCache) {
+                                        android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
                                 }
-                            } catch (e: Exception) {
-                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                            )
                         }
                     }
                 }
@@ -737,10 +767,14 @@ fun ActivityTab(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    // Donde se guarda la ficha de cada libro que se abre, para volver a enseñarla al instante.
+    val bookPageCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
     var fallbackCoverUrl by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro de la última vez que se abrió su página.
+    var selectedBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
 
     selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
@@ -748,7 +782,9 @@ fun ActivityTab(
             reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -756,7 +792,8 @@ fun ActivityTab(
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
-            onShelved = { onRefresh() }
+            onShelved = { onRefresh() },
+            initialEnrichment = selectedBookEnrichment
         )
     }
 
@@ -834,22 +871,29 @@ fun ActivityTab(
                                     activeBookKey = bookUrl
                                     fallbackCoverUrl = coverUrl ?: ""
                                     coroutineScope.launch {
-                                        try {
-                                            val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                            val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                            val baseUrl = localUrl.substringBefore("/book/")
-                                            val detailsUrl = "$baseUrl/book/$bookId.json"
-                                            selectedBookDetails = api.getBookDetails(detailsUrl)
-                                            val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                            try {
-                                                selectedBookReviews = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                            } catch (_: Exception) {
-                                                selectedBookReviews = emptyList()
+                                        selectedBookEnrichment = bookPageCache.loadEnrichment()[
+                                            com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)
+                                        ]
+                                        com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                            api = api,
+                                            cache = bookPageCache,
+                                            cacheKey = bookUrl,
+                                            resolveDetailsUrl = {
+                                                val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                                "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                            },
+                                            onDetails = { details, fromCache ->
+                                                selectedBookDetails = details
+                                                if (fromCache) selectedBookReviews = emptyList()
+                                            },
+                                            onReviews = { selectedBookReviews = it },
+                                            onFailure = { e, hadCache ->
+                                                if (!hadCache) {
+                                                    android.widget.Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), android.widget.Toast.LENGTH_SHORT).show()
+                                                }
                                             }
-                                        } catch (e: Exception) {
-                                            if (e is kotlinx.coroutines.CancellationException) throw e
-                                            android.widget.Toast.makeText(context, context.getString(R.string.error_details_load, e.message), android.widget.Toast.LENGTH_SHORT).show()
-                                        }
+                                        )
                                     }
                                 }
                             }
@@ -1182,6 +1226,9 @@ fun ProfileTab(
     val today = remember { java.time.LocalDate.now() }
     val currentYear = today.year
     var readingStats by remember { mutableStateOf<com.ferlagod.rocinante.utils.ReadingStats?>(null) }
+    var topRated by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>>(emptyList())
+    }
 
     // Orden y visibilidad de los bloques, elegidos por el usuario y guardados en ajustes.
     val settingsPreferences = remember(context) {
@@ -1202,18 +1249,26 @@ fun ProfileTab(
 
     var refreshTrigger by remember { mutableStateOf(0) }
 
+    // De aquí salen las estadísticas de lectura y también la ficha guardada de cada libro
+    // que se abre desde las filas de portadas.
+    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
     LaunchedEffect(refreshTrigger) {
-        val dataCache = com.ferlagod.rocinante.data.local.TimelineCache(context)
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
+        val enrichmentData = dataCache.loadEnrichment()
         readingStats = if (readShelf.isEmpty()) {
             null
         } else {
             com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
                 books = readShelf,
-                enrichment = dataCache.loadEnrichment(),
+                enrichment = enrichmentData,
                 currentYear = currentYear
             )
         }
+        topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
+            books = readShelf,
+            enrichment = enrichmentData
+        )
     }
 
     var summary by remember { mutableStateOf("") }
@@ -1240,6 +1295,8 @@ fun ProfileTab(
     var selectedBookDetails by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmBookDetails?>(null) }
     var selectedBookReviews by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ActivityPubActivity>>(emptyList()) }
     var activeBookKey by remember { mutableStateOf("") }
+    // Lo que ya se sabía del libro de la última vez que se abrió su página.
+    var selectedBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
 
     // Abre la ficha del libro desde cualquiera de las filas de portadas del perfil.
     val openBook: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit = { book ->
@@ -1248,19 +1305,25 @@ fun ProfileTab(
             activeBookKey = bookId
             fallbackCoverUrl = book.cover?.url ?: ""
             coroutineScope.launch {
-                try {
-                    val detailsUrl = com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId)
-                    selectedBookDetails = api.getBookDetails(detailsUrl)
-                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                    selectedBookReviews = try {
-                        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                    } catch (_: Exception) {
-                        emptyList()
+                selectedBookEnrichment = dataCache.loadEnrichment()[
+                    com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookId)
+                ]
+                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                    api = api,
+                    cache = dataCache,
+                    cacheKey = bookId,
+                    resolveDetailsUrl = { com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(bookId) },
+                    onDetails = { details, fromCache ->
+                        selectedBookDetails = details
+                        if (fromCache) selectedBookReviews = emptyList()
+                    },
+                    onReviews = { selectedBookReviews = it },
+                    onFailure = { e, hadCache ->
+                        if (!hadCache) {
+                            Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, e), Toast.LENGTH_SHORT).show()
+                        }
                     }
-                } catch (e: Exception) {
-                    if (e is kotlinx.coroutines.CancellationException) throw e
-                    Toast.makeText(context, context.getString(R.string.error_details_load, e.message), Toast.LENGTH_SHORT).show()
-                }
+                )
             }
         }
     }
@@ -1299,7 +1362,9 @@ fun ProfileTab(
             reviews = selectedBookReviews,
             activeBookKey = activeBookKey,
             fallbackCoverUrl = fallbackCoverUrl,
-            currentShelf = "reading",
+            // Sin estantería fija: aquí llegan libros de cualquier sitio (la actividad de
+            // otros, las filas del perfil), y darlos todos por «leyendo» hacía que un libro
+            // ya terminado ofreciera anotar progreso. La página del libro dice dónde está.
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -1307,7 +1372,8 @@ fun ProfileTab(
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
-            onShelved = { refreshTrigger++ }
+            onShelved = { refreshTrigger++ },
+            initialEnrichment = selectedBookEnrichment
         )
     }
 
@@ -1330,8 +1396,6 @@ fun ProfileTab(
             }
         )
     }
-
-    val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
     LaunchedEffect(Unit) {
         val cachedReading = dataCache.loadShelfBooks("reading")
@@ -1607,6 +1671,16 @@ fun ProfileTab(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+                com.ferlagod.rocinante.utils.ProfileSection.TOP_RATED -> {
+                    if (topRated.isNotEmpty()) {
+                        item {
+                            ProfileTopRatedCard(
+                                books = topRated,
+                                onBookClick = openBook
+                            )
                         }
                     }
                 }
@@ -1996,6 +2070,75 @@ fun ActivityDetailsDialog(
             }
         }
     )
+}
+
+/**
+ * Bloque del perfil con los libros mejor valorados. Al tocar uno se abre su ficha, igual
+ * que en las filas de portadas del perfil.
+ */
+@Composable
+private fun ProfileTopRatedCard(
+    books: List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>,
+    onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(
+                text = stringResource(R.string.profile_top_rated),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            books.forEachIndexed { index, entry ->
+                if (index > 0) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBookClick(entry.book) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val coverModifier = Modifier
+                        .width(40.dp)
+                        .height(60.dp)
+                        .clip(MaterialTheme.shapes.small)
+                    val coverUrl = entry.book.cover?.url
+                    if (!coverUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = coverUrl,
+                            contentDescription = entry.book.title ?: stringResource(R.string.book_cover_desc),
+                            modifier = coverModifier,
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = coverModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = entry.book.title ?: stringResource(R.string.book_cover_desc),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = entry.book.title ?: stringResource(R.string.book_no_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        com.ferlagod.rocinante.ui.components.RatingStars(rating = entry.rating)
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

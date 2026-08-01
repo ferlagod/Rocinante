@@ -39,6 +39,13 @@
         <item quantity="one">%d Tag</item>
         <item quantity="other">%d Tage</item>
     </plurals>
+    <string name="series_title">Reihen</string>
+    <string name="series_empty">Noch keine Reihen unter deinen gelesenen Büchern</string>
+    <string name="series_book_of">%1$s · Band %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d Buch</item>
+        <item quantity="other">%d Bücher</item>
+    </plurals>
     <string name="shelf_to_read_title">Zu lesen</string>
     <string name="shelf_to_read_desc">Bücher, die du bald lesen möchtest</string>
     <string name="shelf_reading_title">Lese ich gerade</string>
@@ -55,7 +62,8 @@
     <string name="book_pages">Seiten: %1$s</string>
     <string name="book_no_description">Keine Beschreibung verfügbar.</string>
     <string name="book_change_shelf">Regal wechseln:</string>
-    <string name="book_add_to_shelf">Zum Regal hinzufügen:</string>
+    <string name="book_change_shelf_title">Regal wechseln</string>
+    <string name="book_add_to_shelf">Zum Regal hinzufügen</string>
     <string name="book_synopsis">Zusammenfassung</string>
     <string name="book_community_reviews">Community-Rezensionen</string>
     <string name="book_no_reviews">Für diese Ausgabe wurden keine schriftlichen Rezensionen gefunden.</string>
@@ -67,6 +75,27 @@
     <string name="book_tab_misc">Mehr</string>
     <string name="book_move_confirm">Nach «%1$s» verschieben?</string>
     <string name="book_move_confirm_yes">Verschieben</string>
+    <string name="book_section_reading">Deine Lektüre</string>
+    <string name="book_section_about">Über das Buch</string>
+    <string name="book_section_ids">Nummern</string>
+    <string name="book_label_rating">Bewertung</string>
+    <string name="book_label_started">Begonnen</string>
+    <string name="book_label_author">Autor</string>
+    <string name="book_label_series">Reihe</string>
+    <string name="book_label_pages">Seiten</string>
+    <string name="book_label_language">Sprache</string>
+    <string name="book_label_format">Format</string>
+    <string name="book_label_publisher">Verlag</string>
+    <string name="book_label_published">Erschienen</string>
+    <string name="book_label_first_published">Erstausgabe</string>
+    <string name="book_label_subjects">Themen</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Aus dem Regal entfernen</string>
+    <string name="book_remove_confirm">Möchtest du dieses Buch wirklich aus deinem Regal entfernen?</string>
+    <string name="book_remove_confirm_yes">Entfernen</string>
+    <string name="book_remove_toast">Aus deinem Regal entfernt</string>
     <string name="book_more_actions">Weitere Aktionen</string>
     <string name="shelf_chip_to_read">Zu lesen</string>
     <string name="shelf_chip_reading">Lese ich</string>
@@ -320,6 +349,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_stats_pages">Seiten</string>
     <string name="profile_stats_per_year">Bücher pro Jahr</string>
     <string name="profile_stats_chart_desc">Bücher pro Jahr: %1$s</string>
+    <string name="profile_top_rated">Am besten bewertet</string>
     <string name="profile_stats_top_authors">Meistgelesene Autoren</string>
     <string name="profile_stats_authors_desc">Meistgelesene Autoren: %1$s</string>
     <string name="profile_stats_ratings">Deine Bewertungen</string>
@@ -379,6 +409,12 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d Buch ohne Formatangabe</item>
         <item quantity="other">%d Bücher ohne Formatangabe</item>
+    </plurals>
+    <string name="search_local_section">In deinen Regalen</string>
+    <string name="search_instance_section">Auf dieser Instanz</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…und %d weiteres in deinen Regalen</item>
+        <item quantity="other">…und %d weitere in deinen Regalen</item>
     </plurals>
 </resources>
 

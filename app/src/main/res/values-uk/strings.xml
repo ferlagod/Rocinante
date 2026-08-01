@@ -41,6 +41,15 @@
         <item quantity="many">%d днів</item>
         <item quantity="other">%d дня</item>
     </plurals>
+    <string name="series_title">Серії</string>
+    <string name="series_empty">Поки немає серій серед прочитаних книжок</string>
+    <string name="series_book_of">%1$s · книга %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d книга</item>
+        <item quantity="few">%d книги</item>
+        <item quantity="many">%d книг</item>
+        <item quantity="other">%d книги</item>
+    </plurals>
     <string name="shelf_to_read_title">До прочитання</string>
     <string name="shelf_to_read_desc">Книги, які ви хочете прочитати незабаром</string>
     <string name="shelf_reading_title">Читаю</string>
@@ -57,7 +66,8 @@
     <string name="book_pages">Сторінок: %1$s</string>
     <string name="book_no_description">Опис недоступний.</string>
     <string name="book_change_shelf">Змінити полицю:</string>
-    <string name="book_add_to_shelf">Додати на полицю:</string>
+    <string name="book_change_shelf_title">Змінити полицю</string>
+    <string name="book_add_to_shelf">Додати на полицю</string>
     <string name="book_synopsis">Анотація</string>
     <string name="book_community_reviews">Відгуки спільноти</string>
     <string name="book_no_reviews">Для цього видання не знайдено письмових відгуків.</string>
@@ -69,6 +79,27 @@
     <string name="book_tab_misc">Більше</string>
     <string name="book_move_confirm">Перемістити до «%1$s»?</string>
     <string name="book_move_confirm_yes">Перемістити</string>
+    <string name="book_section_reading">Ваше читання</string>
+    <string name="book_section_about">Про книжку</string>
+    <string name="book_section_ids">Номери</string>
+    <string name="book_label_rating">Оцінка</string>
+    <string name="book_label_started">Розпочато</string>
+    <string name="book_label_author">Автор</string>
+    <string name="book_label_series">Серія</string>
+    <string name="book_label_pages">Сторінок</string>
+    <string name="book_label_language">Мова</string>
+    <string name="book_label_format">Формат</string>
+    <string name="book_label_publisher">Видавець</string>
+    <string name="book_label_published">Видано</string>
+    <string name="book_label_first_published">Перше видання</string>
+    <string name="book_label_subjects">Теми</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Прибрати з полиці</string>
+    <string name="book_remove_confirm">Ви впевнені, що хочете прибрати цю книжку зі своєї полиці?</string>
+    <string name="book_remove_confirm_yes">Прибрати</string>
+    <string name="book_remove_toast">Прибрано з вашої полиці</string>
     <string name="book_more_actions">Більше дій</string>
     <string name="shelf_chip_to_read">До прочитання</string>
     <string name="shelf_chip_reading">Читаю</string>
@@ -322,6 +353,7 @@
     <string name="profile_stats_pages">Сторінки</string>
     <string name="profile_stats_per_year">Книги за рік</string>
     <string name="profile_stats_chart_desc">Книги за рік: %1$s</string>
+    <string name="profile_top_rated">Найкраще оцінені</string>
     <string name="profile_stats_top_authors">Найчитаніші автори</string>
     <string name="profile_stats_authors_desc">Найчитаніші автори: %1$s</string>
     <string name="profile_stats_ratings">Ваші оцінки</string>
@@ -390,6 +422,14 @@
         <item quantity="one">%d книга без вказаного формату</item>
         <item quantity="few">%d книги без вказаного формату</item>
         <item quantity="many">%d книг без вказаного формату</item>
+    </plurals>
+    <string name="search_local_section">На твоїх полицях</string>
+    <string name="search_instance_section">На цьому сервері</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…і ще %d на твоїх полицях</item>
+        <item quantity="few">…і ще %d на твоїх полицях</item>
+        <item quantity="many">…і ще %d на твоїх полицях</item>
+        <item quantity="other">…і ще %d на твоїх полицях</item>
     </plurals>
 </resources>
 

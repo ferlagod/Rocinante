@@ -39,6 +39,13 @@
         <item quantity="one">%d μέρα</item>
         <item quantity="other">%d μέρες</item>
     </plurals>
+    <string name="series_title">Σειρές</string>
+    <string name="series_empty">Δεν υπάρχουν ακόμη σειρές στα βιβλία που έχετε διαβάσει</string>
+    <string name="series_book_of">%1$s · βιβλίο %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d βιβλίο</item>
+        <item quantity="other">%d βιβλία</item>
+    </plurals>
     <string name="shelf_to_read_title">Προς ανάγνωση</string>
     <string name="shelf_to_read_desc">Βιβλία που θέλετε να διαβάσετε σύντομα</string>
     <string name="shelf_reading_title">Διαβάζω τώρα</string>
@@ -55,7 +62,8 @@
     <string name="book_pages">Σελίδες: %1$s</string>
     <string name="book_no_description">Δεν υπάρχει διαθέσιμη περιγραφή.</string>
     <string name="book_change_shelf">Αλλαγή ραφιού:</string>
-    <string name="book_add_to_shelf">Προσθήκη στο ράφι:</string>
+    <string name="book_change_shelf_title">Αλλαγή ραφιού</string>
+    <string name="book_add_to_shelf">Προσθήκη στο ράφι</string>
     <string name="book_synopsis">Σύνοψη</string>
     <string name="book_community_reviews">Κριτικές κοινότητας</string>
     <string name="book_no_reviews">Δεν βρέθηκαν γραπτές κριτικές για αυτήν την έκδοση.</string>
@@ -67,6 +75,27 @@
     <string name="book_tab_misc">Περισσότερα</string>
     <string name="book_move_confirm">Μετακίνηση σε «%1$s»;</string>
     <string name="book_move_confirm_yes">Μετακίνηση</string>
+    <string name="book_section_reading">Η ανάγνωσή σας</string>
+    <string name="book_section_about">Σχετικά με το βιβλίο</string>
+    <string name="book_section_ids">Αριθμοί</string>
+    <string name="book_label_rating">Βαθμολογία</string>
+    <string name="book_label_started">Ξεκίνησε</string>
+    <string name="book_label_author">Συγγραφέας</string>
+    <string name="book_label_series">Σειρά</string>
+    <string name="book_label_pages">Σελίδες</string>
+    <string name="book_label_language">Γλώσσα</string>
+    <string name="book_label_format">Μορφή</string>
+    <string name="book_label_publisher">Εκδότης</string>
+    <string name="book_label_published">Εκδόθηκε</string>
+    <string name="book_label_first_published">Πρώτη έκδοση</string>
+    <string name="book_label_subjects">Θέματα</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Αφαίρεση από το ράφι</string>
+    <string name="book_remove_confirm">Σίγουρα θέλετε να αφαιρέσετε αυτό το βιβλίο από το ράφι σας;</string>
+    <string name="book_remove_confirm_yes">Αφαίρεση</string>
+    <string name="book_remove_toast">Αφαιρέθηκε από το ράφι σας</string>
     <string name="book_more_actions">Περισσότερες ενέργειες</string>
     <string name="shelf_chip_to_read">Προς ανάγνωση</string>
     <string name="shelf_chip_reading">Διαβάζω</string>
@@ -320,6 +349,7 @@
     <string name="profile_stats_pages">Σελίδες</string>
     <string name="profile_stats_per_year">Βιβλία ανά έτος</string>
     <string name="profile_stats_chart_desc">Βιβλία ανά έτος: %1$s</string>
+    <string name="profile_top_rated">Με την καλύτερη βαθμολογία</string>
     <string name="profile_stats_top_authors">Οι πιο διαβασμένοι συγγραφείς</string>
     <string name="profile_stats_authors_desc">Οι πιο διαβασμένοι συγγραφείς: %1$s</string>
     <string name="profile_stats_ratings">Οι βαθμολογίες σου</string>
@@ -379,6 +409,12 @@
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d βιβλίο χωρίς δηλωμένη μορφή</item>
         <item quantity="other">%d βιβλία χωρίς δηλωμένη μορφή</item>
+    </plurals>
+    <string name="search_local_section">Στα ράφια σου</string>
+    <string name="search_instance_section">Σε αυτήν την υπηρεσία</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…και %d ακόμη στα ράφια σου</item>
+        <item quantity="other">…και %d ακόμη στα ράφια σου</item>
     </plurals>
 </resources>
 

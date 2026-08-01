@@ -37,12 +37,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
@@ -118,6 +120,20 @@ data class ShelfUiItem(
 )
 
 /**
+ * Una serie de libros con los ejemplares de ella que hay en la estantería.
+ *
+ * @property url URL de la serie en la instancia. Es la clave con la que se agrupan los libros:
+ *   dos series pueden llamarse igual, y el nombre cambia si alguien lo corrige.
+ * @property name Nombre visible de la serie.
+ * @property books Los libros leídos de esa serie, ya ordenados por su número.
+ */
+private data class SeriesGroup(
+    val url: String,
+    val name: String,
+    val books: List<ShelfBookItem>
+)
+
+/**
  * Modos de ordenación disponibles para el listado de una estantería.
  * DEFAULT conserva el orden que devuelve el servidor. Los modos FINISHED_* y RATING_*
  * dependen de los datos enriquecidos (fecha de fin y valoración) obtenidos por libro.
@@ -161,23 +177,11 @@ private fun formatDisplayDate(iso: String?): String? {
 }
 
 /**
- * Nº de días de lectura (inclusivo: mismo día = 1) a partir de las fechas ISO de inicio
- * y fin. Devuelve null si falta alguna fecha, no se pueden parsear o el fin es anterior
- * al inicio, de modo que solo se muestra cuando hay información válida.
+ * Nº de días de lectura (inclusivo: mismo día = 1). El cálculo vive en [ReadingStatsCalculator] para
+ * que la ficha del libro cuente exactamente igual que la tarjeta de la estantería.
  */
-private fun readingDays(startIso: String?, finishIso: String?): Int? {
-    if (startIso.isNullOrBlank() || finishIso.isNullOrBlank()) return null
-    return try {
-        val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-        val start = fmt.parse(startIso) ?: return null
-        val finish = fmt.parse(finishIso) ?: return null
-        val diffMs = finish.time - start.time
-        if (diffMs < 0) return null
-        (diffMs / (1000L * 60 * 60 * 24)).toInt() + 1
-    } catch (e: Exception) {
-        null
-    }
-}
+private fun readingDays(startIso: String?, finishIso: String?): Int? =
+    com.ferlagod.rocinante.utils.ReadingStatsCalculator.readingDays(startIso, finishIso)
 
 /**
  * Pantalla que muestra y permite interactuar con los estantes personales del usuario 
@@ -188,6 +192,9 @@ private fun readingDays(startIso: String?, finishIso: String?): Int? {
  * @param cookie Token de sesión para autenticar llamadas a la API.
  * @param api Instancia opcional de [BookWyrmApi]. Si se provee, se reutiliza para eficiencia.
  * @param onNavigateToSettings Acción a ejecutar cuando se solicita navegar a los ajustes desde la pantalla de estantes.
+ * @param targetShelfSlug Estantería que hay que abrir automáticamente (viene de la búsqueda), o null.
+ * @param targetBookId Libro al que desplazarse y que se resalta dentro de esa estantería, o null.
+ * @param onTargetConsumed Se invoca cuando ya se ha saltado al libro, para no repetir el salto.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +203,11 @@ fun MyBooksScreen(
     username: String,
     cookie: String,
     api: BookWyrmApi? = null,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    targetShelfSlug: String? = null,
+    targetBookId: String? = null,
+    onTargetConsumed: () -> Unit = {},
+    backToShelvesKey: Int = 0
 ) {
     val shelves = listOf(
         ShelfUiItem("to-read", stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder),
@@ -205,6 +216,24 @@ fun MyBooksScreen(
     )
 
     var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
+
+    // Al pulsar un libro de las estanterías en la búsqueda se abre aquí su estantería.
+    LaunchedEffect(targetShelfSlug) {
+        val slug = targetShelfSlug ?: return@LaunchedEffect
+        shelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
+    }
+
+    // Volver a tocar «Mis libros» estando ya aquí devuelve a la lista de estanterías, como
+    // hace cualquier aplicación con su barra de abajo. Llega como un número que sube en cada
+    // toque, y solo cuenta que suba: al componer la pantalla ya viene con el valor que lleve,
+    // y cerrar entonces la estantería se llevaría por delante la que abre la búsqueda.
+    var lastBackToShelvesKey by remember { mutableStateOf(backToShelvesKey) }
+    LaunchedEffect(backToShelvesKey) {
+        if (backToShelvesKey != lastBackToShelvesKey) {
+            lastBackToShelvesKey = backToShelvesKey
+            selectedShelf = null
+        }
+    }
 
     if (selectedShelf == null) {
         LazyColumn(
@@ -270,7 +299,9 @@ fun MyBooksScreen(
                 sharedApi = api,
                 shelf = shelf,
                 onBack = { selectedShelf = null },
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
+                onHighlightConsumed = onTargetConsumed
             )
         }
     }
@@ -287,6 +318,8 @@ fun MyBooksScreen(
  * @param shelf Estantería a visualizar.
  * @param onBack Callback para volver atrás.
  * @param onNavigateToSettings Callback para navegar a la configuración.
+ * @param highlightBookId Libro al que desplazarse y resaltar al abrir la pantalla, o null.
+ * @param onHighlightConsumed Se invoca cuando ya se ha localizado el libro (o se sabe que no está).
  */
 @Composable
 fun ShelfNativeDetailScreen(
@@ -296,13 +329,13 @@ fun ShelfNativeDetailScreen(
     sharedApi: BookWyrmApi? = null,
     shelf: ShelfUiItem,
     onBack: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    highlightBookId: String? = null,
+    onHighlightConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
-    val errorNetworkTemplate = stringResource(R.string.error_network)
-    val errorDetailsLoadTemplate = stringResource(R.string.error_details_load)
 
     val api = remember(instanceUrl, cookie) {
         sharedApi ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -339,18 +372,38 @@ fun ShelfNativeDetailScreen(
     var fallbackCoverUrl by remember { mutableStateOf("") }
     var activeBookUrl by remember { mutableStateOf("") }
     var isLoadingDetails by remember { mutableStateOf(false) }
+    // Número de la apertura de ficha en curso. Sube al abrir un libro y al cerrar la ficha,
+    // así que una respuesta que llega tarde sabe que ya no le toca pintar nada.
+    var detailsRequestId by remember { mutableStateOf(0) }
 
     var showTimePicker by remember { mutableStateOf(false) }
+
+    // Estado de la lista, necesario para poder desplazarse hasta un libro concreto.
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    var highlightedBookId by remember { mutableStateOf<String?>(null) }
+    // Libro al que ya se ha viajado, para animar solo la primera vez.
+    var scrolledToTarget by remember { mutableStateOf<String?>(null) }
 
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
+    // Estantería que se está trayendo de la red, aparte de la que se ve. Sustituir lo que
+    // hay en pantalla por la primera página encogía la lista a diez libros y la hacía crecer
+    // otra vez página a página: la vista daba tumbos, y un libro al que se acabara de saltar
+    // desaparecía a mitad de camino hasta que llegaba su página.
+    var incoming by remember { mutableStateOf<List<ShelfBookItem>>(emptyList()) }
+    // ¿Hay una lista cacheada en pantalla que merece la pena conservar mientras se refresca?
+    var keepingCache by remember { mutableStateOf(false) }
+    // Un refresco a medias no debe pisar ni la pantalla ni la caché con una lista truncada.
+    var refreshFailed by remember { mutableStateOf(false) }
+
     LaunchedEffect(shelf.slug, refreshTrigger, currentPage) {
         var hadCompleteCache = false
         if (currentPage == 1) {
             isNetworkRefreshed = false
+            refreshFailed = false
             val cachedBooks = dataCache.loadShelfBooks(shelf.slug)
             hadCompleteCache = !cachedBooks.isNullOrEmpty()
             if (cachedBooks != null && books.isEmpty()) {
@@ -377,25 +430,32 @@ fun ShelfNativeDetailScreen(
             }
             
             if (currentPage == 1) {
-                books = fetchedItems
-                // Guardar aquí la primera página truncaría una lista completa ya cacheada
-                // (y con ella las estadísticas del perfil) hasta que terminase la paginación.
-                // Solo se guarda si aún no había nada; la lista entera se persiste al final.
-                if (!hadCompleteCache) dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                incoming = fetchedItems
+                // Con una lista cacheada delante no se toca la pantalla: se sigue viendo
+                // entera mientras por detrás se recompone la nueva, y se cambia de golpe al
+                // terminar. Guardar aquí la primera página truncaría además esa caché (y con
+                // ella las estadísticas del perfil) hasta que acabase la paginación.
+                keepingCache = hadCompleteCache && books.isNotEmpty()
+                if (!keepingCache) {
+                    books = incoming
+                    dataCache.saveShelfBooks(shelf.slug, fetchedItems)
+                }
                 isNetworkRefreshed = true
             } else {
                 // Deduplicar: solo añadir libros cuyo id no esté ya en la lista,
                 // para evitar repeticiones al re-ejecutarse el efecto.
-                val existingIds = books.mapNotNull { it.id }.toSet()
+                val existingIds = incoming.mapNotNull { it.id }.toSet()
                 val newItems = fetchedItems.filter { it.id == null || it.id !in existingIds }
-                books = books + newItems
+                incoming = incoming + newItems
+                if (!keepingCache) books = incoming
             }
             errorMessage = null
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             if (books.isEmpty()) {
-                errorMessage = errorNetworkTemplate.format(e.message ?: "")
+                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
             }
+            refreshFailed = true
             hasMorePages = false
         } finally {
             isLoading = false
@@ -422,6 +482,43 @@ fun ShelfNativeDetailScreen(
         }
     }
 
+    // ── Vista por series ──
+    // «Leídos» puede verse agrupado en series: primero la lista de series y, al elegir una,
+    // sus libros en el orden en que se leen. Son las mismas tarjetas de siempre; lo único que
+    // cambia es qué libros entran y en qué orden.
+    var showSeriesList by remember { mutableStateOf(false) }
+    var openSeriesUrl by remember { mutableStateOf<String?>(null) }
+
+    // Series de las que hay algún libro en la estantería. Solo salen los libros que alguien
+    // haya atado a una serie en la instancia; del resto no se sabe y no aparecen.
+    val seriesGroups = remember(books, enrichment) {
+        books
+            .mapNotNull { book ->
+                val data = book.id?.let { enrichment[it] } ?: return@mapNotNull null
+                val url = data.seriesUrl?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                url to book
+            }
+            .groupBy({ it.first }, { it.second })
+            .map { (url, grouped) ->
+                SeriesGroup(
+                    url = url,
+                    name = grouped.firstNotNullOfOrNull { b ->
+                        b.id?.let { enrichment[it]?.seriesName }?.takeIf { it.isNotBlank() }
+                    } ?: url,
+                    // Sin número el libro va al final: se sabe que es de la serie, pero no dónde.
+                    books = grouped.sortedWith(
+                        nullsLastComparator(false) { b -> b.id?.let { enrichment[it]?.seriesPosition } }
+                    )
+                )
+            }
+            .sortedWith(compareBy(collator) { it.name })
+    }
+
+    // Con una serie abierta manda su orden; si no, la estantería con la ordenación elegida.
+    val visibleBooks = openSeriesUrl
+        ?.let { url -> seriesGroups.firstOrNull { it.url == url }?.books }
+        ?: displayedBooks
+
     // Cargamos todas las páginas de la estantería (son pocas y personales). Es necesario
     // para ordenar y enriquecer la estantería completa, ya que el .json ignora ?sort=.
     LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
@@ -432,16 +529,66 @@ fun ShelfNativeDetailScreen(
 
     // Al guardar solo la primera página, la caché dejaba la estantería truncada: sin conexión
     // se veían diez libros y las estadísticas del perfil contaban de menos. Una vez recorridas
-    // todas las páginas se persiste la lista completa.
-    LaunchedEffect(books, hasMorePages, isNetworkRefreshed) {
-        if (!hasMorePages && isNetworkRefreshed && books.isNotEmpty()) {
-            dataCache.saveShelfBooks(shelf.slug, books)
+    // todas las páginas se persiste la lista completa y, si se venía mostrando la cacheada,
+    // se cambia por la nueva de una sola vez, sin encogimientos intermedios.
+    // Un refresco interrumpido a medias no toca nada: mejor la lista de antes, entera, que
+    // una nueva a trozos, tanto en pantalla como en disco.
+    LaunchedEffect(incoming, hasMorePages, isNetworkRefreshed, refreshFailed) {
+        if (!hasMorePages && isNetworkRefreshed && !refreshFailed) {
+            // La pantalla se cambia siempre, también si la estantería ha quedado vacía;
+            // si no, vaciarla desde la web dejaría los libros de antes ahí para siempre.
+            books = incoming
+            keepingCache = false
+            // La caché, en cambio, no se pisa con una lista vacía: una respuesta rara
+            // borraría la estantería entera y con ella las estadísticas del perfil.
+            if (incoming.isNotEmpty()) dataCache.saveShelfBooks(shelf.slug, incoming)
         }
     }
 
     // Carga inicial de la caché de enriquecimiento (autor, valoración, fechas por libro).
     LaunchedEffect(Unit) {
         enrichment = dataCache.loadEnrichment()
+    }
+
+    // Salto al libro que se ha pulsado en la búsqueda: se desplaza hasta él y se resalta
+    // un momento para que se vea dónde ha caído dentro de la estantería.
+    LaunchedEffect(highlightBookId, displayedBooks, isLoading, hasMorePages) {
+        val targetId = highlightBookId ?: return@LaunchedEffect
+        val index = displayedBooks.indexOfFirst { it.id == targetId }
+        if (index < 0) {
+            // Puede que la estantería aún esté cargando; solo nos rendimos al terminar.
+            if (!isLoading && !hasMorePages) onHighlightConsumed()
+            return@LaunchedEffect
+        }
+        // Delante de los libros hay elementos propios de la lista que desplazan los índices.
+        val leadingItems = (if (isLoadingDetails) 1 else 0) + (if (shelf.slug == "reading") 1 else 0)
+        val position = (index + leadingItems).coerceAtLeast(0)
+
+        // La estantería sigue trayendo páginas detrás y cada una recompone la lista, así que
+        // el libro cambia de posición varias veces. Solo el primer viaje se anima, para que se
+        // vea adónde lleva el salto; los reajustes posteriores son instantáneos y el libro se
+        // queda quieto mientras la lista crece bajo él. Animarlos también hacía que la pantalla
+        // subiese y bajase buscando el libro hasta que terminaba la paginación.
+        if (scrolledToTarget != targetId) {
+            listState.animateScrollToItem(position)
+            scrolledToTarget = targetId
+            highlightedBookId = targetId
+        } else {
+            listState.scrollToItem(position)
+        }
+
+        if (!isLoading && !hasMorePages) onHighlightConsumed()
+    }
+
+    // El resaltado se apaga en su propio efecto: descartar el objetivo cambia la clave del
+    // efecto anterior y lo cancela, así que una espera puesta allí no llegaría a terminar.
+    // Se mantiene mientras siguen llegando páginas y la cuenta atrás empieza al asentarse,
+    // para que no se apague justo cuando la lista todavía se está recolocando.
+    LaunchedEffect(highlightedBookId, isLoading, hasMorePages) {
+        if (highlightedBookId != null && !isLoading && !hasMorePages) {
+            kotlinx.coroutines.delay(2500)
+            highlightedBookId = null
+        }
     }
 
     // Primera vez (o resincronizado): una vez cargada TODA la estantería, se obtienen los
@@ -451,7 +598,12 @@ fun ShelfNativeDetailScreen(
         if (books.isEmpty() || hasMorePages || isEnriching) return@LaunchedEffect
         val ids = books.mapNotNull { it.id }
         val snapshot = enrichment
-        val missing = ids.filter { it !in snapshot }
+        // Faltan las que nunca se leyeron y las que se guardaron con un formato anterior
+        // (les faltarían campos nuevos, p. ej. los identificadores de la estantería).
+        val missing = ids.filter {
+            val cached = snapshot[it]
+            cached == null || cached.schemaVersion != BookWyrmScraper.ENRICHMENT_SCHEMA_VERSION
+        }
         if (missing.isEmpty()) return@LaunchedEffect
 
         isEnriching = true
@@ -464,13 +616,16 @@ fun ShelfNativeDetailScreen(
                 if (enriched != null) {
                     working[id] = enriched
                     enrichment = working.toMap()
+                    // Se guarda libro a libro y no el mapa entero: la ficha también escribe en
+                    // esta caché mientras el resincronizado avanza, y volcar aquí una copia
+                    // hecha antes borraría lo que acabase de apuntar. De paso, lo ya leído
+                    // queda guardado aunque se salga a mitad.
+                    dataCache.mergeEnrichment(enriched)
                 }
                 enrichDone++
-                dataCache.saveEnrichment(working)
                 kotlinx.coroutines.delay(250)
             }
         } finally {
-            dataCache.saveEnrichment(working)
             isEnriching = false
         }
     }
@@ -483,20 +638,45 @@ fun ShelfNativeDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(onClick = onBack) {
+            // «Volver» deshace un paso cada vez: de una serie a la lista de series, de ahí a
+            // la estantería, y solo entonces se sale.
+            OutlinedButton(onClick = {
+                when {
+                    openSeriesUrl != null -> openSeriesUrl = null
+                    showSeriesList -> showSeriesList = false
+                    else -> onBack()
+                }
+            }) {
                 Text(stringResource(R.string.shelf_back))
             }
             Text(
-                text = shelf.title,
+                text = when {
+                    openSeriesUrl != null ->
+                        seriesGroups.firstOrNull { it.url == openSeriesUrl }?.name ?: shelf.title
+                    showSeriesList -> stringResource(R.string.series_title)
+                    else -> shelf.title
+                },
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
-            Box {
-                IconButton(onClick = { sortMenuExpanded = true }) {
+            // Agrupar por series: solo en «Leídos», y solo mientras se esté viendo la
+            // estantería entera. Dentro de una serie el orden lo da su numeración.
+            if (shelf.slug == "read" && !showSeriesList) {
+                IconButton(onClick = { showSeriesList = true }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Sort,
-                        contentDescription = stringResource(R.string.shelf_sort)
+                        imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
+                        contentDescription = stringResource(R.string.series_title)
                     )
+                }
+            }
+            Box {
+                if (!showSeriesList) {
+                    IconButton(onClick = { sortMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                            contentDescription = stringResource(R.string.shelf_sort)
+                        )
+                    }
                 }
                 DropdownMenu(
                     expanded = sortMenuExpanded,
@@ -561,7 +741,19 @@ fun ShelfNativeDetailScreen(
             }
         }
 
-        if (errorMessage != null) {
+        // Un tropiezo puntual (la instancia va lenta, un libro que no abre) no debe llevarse
+        // por delante la estantería que ya está en pantalla: el aviso se pone encima y los
+        // libros siguen ahí. Solo cuando no hay nada que enseñar ocupa la pantalla entera.
+        if (errorMessage != null && books.isNotEmpty()) {
+            Text(
+                text = errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
+        if (errorMessage != null && books.isEmpty()) {
             Text(
                 text = errorMessage ?: "",
                 color = MaterialTheme.colorScheme.error,
@@ -578,6 +770,7 @@ fun ShelfNativeDetailScreen(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -643,13 +836,87 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
+                if (showSeriesList && openSeriesUrl == null) {
+                    if (seriesGroups.isEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.series_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    items(
+                        count = seriesGroups.size,
+                        key = { index -> seriesGroups[index].url }
+                    ) { index ->
+                        val group = seriesGroups[index]
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { openSeriesUrl = group.url }
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = group.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                // Portadas en abanico: la primera arriba y las siguientes
+                                // asomando por detrás, para que se vea de un vistazo cuántas
+                                // hay sin ocupar una fila por libro. Se pintan de la última a
+                                // la primera para que ese sea el orden de apilado.
+                                val shown = group.books.take(5)
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(105.dp)
+                                ) {
+                                    for (i in shown.indices.reversed()) {
+                                        val coverUrl = shown[i].cover?.url
+                                        if (!coverUrl.isNullOrEmpty()) {
+                                            AsyncImage(
+                                                model = coverUrl,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .offset(x = (i * 34).dp)
+                                                    .width(70.dp)
+                                                    .height(105.dp)
+                                                    .clip(MaterialTheme.shapes.small),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = pluralStringResource(
+                                        R.plurals.series_books_count,
+                                        group.books.size,
+                                        group.books.size
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
                 items(
-                    count = displayedBooks.size,
-                    key = { index -> displayedBooks[index].id ?: index }
+                    count = visibleBooks.size,
+                    key = { index -> visibleBooks[index].id ?: index }
                 ) { index ->
-                    val book = displayedBooks[index]
+                    val book = visibleBooks[index]
+                    val isHighlighted = book.id != null && book.id == highlightedBookId
 
                     Card(
+                        border = if (isHighlighted) {
+                            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else null,
+                        colors = if (isHighlighted) {
+                            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        } else CardDefaults.cardColors(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -661,23 +928,45 @@ fun ShelfNativeDetailScreen(
                                         context.startActivity(intent)
                                     } else {
                                         activeBookUrl = bookUrl
+                                        fallbackCoverUrl = book.cover?.url ?: ""
                                         isLoadingDetails = true
+                                        // El aviso del intento anterior se va al volver a
+                                        // probar; si no, se queda ahí aunque ya funcione.
+                                        errorMessage = null
+                                        // Cada apertura lleva su número: lo que llegue tarde de
+                                        // la red solo se pinta si sigue siendo este libro y la
+                                        // ficha no se ha cerrado mientras tanto.
+                                        detailsRequestId++
+                                        val requestId = detailsRequestId
                                         coroutineScope.launch {
                                             try {
-                                                val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
-                                                selectedBookDetails = api.getBookDetails(detailsUrl)
-
-                                                fallbackCoverUrl = book.cover?.url ?: ""
-
-                                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                try {
-                                                    selectedBookReviews = BookWyrmScraper.scrapeBookReviews(api, baseBookUrl)
-                                                } catch (_: Exception) {
-                                                    selectedBookReviews = emptyList()
-                                                }
-                                            } catch (e: Exception) {
-                                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = errorDetailsLoadTemplate.format(e.message ?: "")
+                                                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                                    api = api,
+                                                    cache = dataCache,
+                                                    cacheKey = bookUrl,
+                                                    resolveDetailsUrl = { BookWyrmUtils.ensureJsonUrl(bookUrl) },
+                                                    onDetails = { details, fromCache ->
+                                                        if (detailsRequestId != requestId) return@load
+                                                        selectedBookDetails = details
+                                                        // Con la ficha ya en pantalla (venga de
+                                                        // donde venga) se apaga la espera, para
+                                                        // poder abrir otro libro sin esperar al
+                                                        // refresco que sigue por detrás.
+                                                        isLoadingDetails = false
+                                                        if (fromCache) selectedBookReviews = emptyList()
+                                                    },
+                                                    onReviews = { reviews ->
+                                                        if (detailsRequestId == requestId) selectedBookReviews = reviews
+                                                    },
+                                                    onFailure = { e, hadCache ->
+                                                        // Con la ficha ya abierta desde la caché no
+                                                        // se avisa de nada: hay algo que leer y el
+                                                        // refresco llegará la próxima vez.
+                                                        if (!hadCache && detailsRequestId == requestId) {
+                                                            errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                                                        }
+                                                    }
+                                                )
                                             } finally {
                                                 isLoadingDetails = false
                                             }
@@ -739,6 +1028,17 @@ fun ShelfNativeDetailScreen(
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
+
+                                // Subtítulo centrado justo bajo el título, algo más pequeño.
+                                book.subtitle?.trim()?.takeIf { it.isNotEmpty() }?.let { subtitle ->
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
 
                                 // Estrellas centradas, justo bajo el título.
                                 if (rating != null) {
@@ -805,9 +1105,27 @@ fun ShelfNativeDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+
+                                // Serie del libro y qué número hace en ella. Solo consta si
+                                // alguien la ha atado en la instancia; mientras no, no hay línea.
+                                enrich?.seriesName?.takeIf { it.isNotBlank() }?.let { seriesName ->
+                                    val position = enrich.seriesPosition
+                                    Text(
+                                        text = if (position != null) {
+                                            "📚 " + stringResource(
+                                                R.string.series_book_of, seriesName, position
+                                            )
+                                        } else {
+                                            "📚 $seriesName"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
+                }
                 }
             }
         }
@@ -824,12 +1142,29 @@ fun ShelfNativeDetailScreen(
             context = context,
             coroutineScope = coroutineScope,
             onDismiss = {
+                // Cerrar cuenta como apertura nueva: si la petición sigue viva, lo que traiga
+                // ya no vuelve a abrir la ficha en la cara de quien la acaba de cerrar.
+                detailsRequestId++
                 selectedBookDetails = null
                 selectedBookReviews = emptyList()
             },
             onShelved = { refreshTrigger++ },
+            // Quitado de la estantería: se saca de la lista en el acto, tanto de la que se ve
+            // como de la que se está recomponiendo por detrás, sin releer la estantería entera.
+            onRemovedFromShelf = { removedId ->
+                books = books.filterNot { it.id == removedId }
+                incoming = incoming.filterNot { it.id == removedId }
+            },
             // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
-            initialEnrichment = enrichment[activeBookUrl]
+            initialEnrichment = enrichment[activeBookUrl],
+            // La caché de enriquecimiento no se vuelve a leer una vez guardada, así que lo
+            // que la ficha lea de la web (p. ej. unas fechas de lectura recién cambiadas)
+            // se guarda aquí para que la estantería lo enseñe sin esperar a un resincronizado.
+            onEnrichmentUpdated = { fresh ->
+                val updated = enrichment.toMutableMap().apply { put(activeBookUrl, fresh) }
+                enrichment = updated
+                coroutineScope.launch { dataCache.saveEnrichment(updated) }
+            }
         )
     }
 

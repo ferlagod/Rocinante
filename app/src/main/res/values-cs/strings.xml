@@ -41,6 +41,15 @@
         <item quantity="many">%d dne</item>
         <item quantity="other">%d dní</item>
     </plurals>
+    <string name="series_title">Série</string>
+    <string name="series_empty">Zatím žádná série mezi přečtenými knihami</string>
+    <string name="series_book_of">%1$s · kniha %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d kniha</item>
+        <item quantity="few">%d knihy</item>
+        <item quantity="many">%d knihy</item>
+        <item quantity="other">%d knih</item>
+    </plurals>
     <string name="shelf_to_read_title">K přečtení</string>
     <string name="shelf_to_read_desc">Knihy, které si chcete brzy přečíst</string>
     <string name="shelf_reading_title">Právě čtu</string>
@@ -57,7 +66,8 @@
     <string name="book_pages">Stran: %1$s</string>
     <string name="book_no_description">Popis není k dispozici.</string>
     <string name="book_change_shelf">Změnit poličku:</string>
-    <string name="book_add_to_shelf">Přidat na poličku:</string>
+    <string name="book_change_shelf_title">Změnit polici</string>
+    <string name="book_add_to_shelf">Přidat na poličku</string>
     <string name="book_synopsis">Synopse</string>
     <string name="book_community_reviews">Recenze komunity</string>
     <string name="book_no_reviews">Pro toto vydání nebyly nalezeny žádné psané recenze.</string>
@@ -69,6 +79,27 @@
     <string name="book_tab_misc">Více</string>
     <string name="book_move_confirm">Přesunout do «%1$s»?</string>
     <string name="book_move_confirm_yes">Přesunout</string>
+    <string name="book_section_reading">Vaše čtení</string>
+    <string name="book_section_about">O knize</string>
+    <string name="book_section_ids">Čísla</string>
+    <string name="book_label_rating">Hodnocení</string>
+    <string name="book_label_started">Začato</string>
+    <string name="book_label_author">Autor</string>
+    <string name="book_label_series">Série</string>
+    <string name="book_label_pages">Stran</string>
+    <string name="book_label_language">Jazyk</string>
+    <string name="book_label_format">Formát</string>
+    <string name="book_label_publisher">Nakladatel</string>
+    <string name="book_label_published">Vydáno</string>
+    <string name="book_label_first_published">První vydání</string>
+    <string name="book_label_subjects">Témata</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Odebrat z police</string>
+    <string name="book_remove_confirm">Opravdu chcete odebrat tuto knihu ze své police?</string>
+    <string name="book_remove_confirm_yes">Odebrat</string>
+    <string name="book_remove_toast">Odebráno z vaší police</string>
     <string name="book_more_actions">Další akce</string>
     <string name="shelf_chip_to_read">K přečtení</string>
     <string name="shelf_chip_reading">Čtu</string>
@@ -322,6 +353,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_stats_pages">Stránky</string>
     <string name="profile_stats_per_year">Knihy za rok</string>
     <string name="profile_stats_chart_desc">Knihy za rok: %1$s</string>
+    <string name="profile_top_rated">Nejlépe hodnocené</string>
     <string name="profile_stats_top_authors">Nejčtenější autoři</string>
     <string name="profile_stats_authors_desc">Nejčtenější autoři: %1$s</string>
     <string name="profile_stats_ratings">Tvá hodnocení</string>
@@ -390,6 +422,14 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="one">%d kniha neuvádí formát</item>
         <item quantity="few">%d knihy neuvádějí formát</item>
         <item quantity="other">%d knih neuvádí formát</item>
+    </plurals>
+    <string name="search_local_section">Ve tvých policích</string>
+    <string name="search_instance_section">Na této instanci</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…a %d další v tvých policích</item>
+        <item quantity="few">…a %d další v tvých policích</item>
+        <item quantity="many">…a %d dalšího v tvých policích</item>
+        <item quantity="other">…a %d dalších v tvých policích</item>
     </plurals>
 </resources>
 

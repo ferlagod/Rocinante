@@ -144,12 +144,80 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Quita un libro de las estanterías cacheadas al dejar de estar en ninguna.
+     *
+     * Sin esto, la búsqueda local seguiría ofreciéndolo (lee de esta caché) hasta que se
+     * volviese a abrir la estantería. Se recorren las tres de estado de lectura porque un
+     * libro solo puede estar en una de ellas, así que borrarlo de todas es seguro.
+     *
+     * @param bookId id/URL del libro, tal como viene en el .json de la estantería.
+     */
+    suspend fun removeBookFromShelfCaches(bookId: String) = withContext(Dispatchers.IO) {
+        fun normalize(id: String) = id.removeSuffix(".json").trimEnd('/')
+        val target = normalize(bookId)
+        for (slug in listOf("to-read", "reading", "read")) {
+            val cached = loadShelfBooks(slug) ?: continue
+            val remaining = cached.filterNot { it.id != null && normalize(it.id) == target }
+            // Aquí sí se guarda una lista vacía: la estantería se ha quedado sin libros de
+            // verdad, no es la respuesta rara de la red contra la que se protege el refresco.
+            if (remaining.size != cached.size) saveShelfBooks(slug, remaining)
+        }
+    }
+
+    /**
      * Guarda la primera página de libros de una estantería en la caché.
      */
     suspend fun saveShelfBooks(slug: String, books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>) = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "shelf_${slug}_cache.json")
             file.writeText(gson.toJson(books))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /**
+     * Nombre del fichero donde se guarda la ficha de un libro. La clave es su id/URL, que
+     * lleva barras y dos puntos, así que se resume en un hash: nombre corto, siempre válido
+     * y sin colisiones entre libros de instancias distintas.
+     */
+    private fun bookDetailsFile(bookId: String): File {
+        val key = bookId.removeSuffix(".json").trimEnd('/')
+        val digest = java.security.MessageDigest.getInstance("SHA-1")
+            .digest(key.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        return File(File(context.cacheDir, "book_details").apply { mkdirs() }, "$digest.json")
+    }
+
+    /**
+     * Ficha de un libro guardada la última vez que se abrió, para poder enseñarla al
+     * instante mientras se pide la de verdad.
+     *
+     * @return null si ese libro no se ha abierto nunca o la caché se ha borrado.
+     */
+    suspend fun loadBookDetails(
+        bookId: String
+    ): com.ferlagod.rocinante.data.model.BookWyrmBookDetails? = withContext(Dispatchers.IO) {
+        try {
+            val file = bookDetailsFile(bookId)
+            if (!file.exists()) return@withContext null
+            gson.fromJson(
+                file.readText(),
+                com.ferlagod.rocinante.data.model.BookWyrmBookDetails::class.java
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /** Guarda la ficha recién descargada de un libro. */
+    suspend fun saveBookDetails(
+        bookId: String,
+        details: com.ferlagod.rocinante.data.model.BookWyrmBookDetails
+    ) = withContext(Dispatchers.IO) {
+        try {
+            bookDetailsFile(bookId).writeText(gson.toJson(details))
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
         }
@@ -184,6 +252,21 @@ class TimelineCache(private val context: Context) {
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
         }
+    }
+
+    /**
+     * Guarda los datos de un solo libro sin tocar los de los demás.
+     *
+     * La ficha de un libro se abre desde la búsqueda, la actividad y las estanterías, pero solo
+     * la estantería lleva el mapa entero en memoria. Con esto, lo que se lee al abrir un libro
+     * cualquiera queda cacheado para todas: un libro recién puesto en una estantería desde la
+     * búsqueda ya trae autor, idioma y serie cuando se entra en «Mis libros», en vez de
+     * aparecer pelado hasta el siguiente resincronizado.
+     */
+    suspend fun mergeEnrichment(entry: com.ferlagod.rocinante.data.model.BookEnrichment) {
+        val current = loadEnrichment()
+        current[entry.bookId] = entry
+        saveEnrichment(current)
     }
 
     /**

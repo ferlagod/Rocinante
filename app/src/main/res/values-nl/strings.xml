@@ -39,6 +39,13 @@
         <item quantity="one">%d dag</item>
         <item quantity="other">%d dagen</item>
     </plurals>
+    <string name="series_title">Reeksen</string>
+    <string name="series_empty">Nog geen reeksen bij de boeken die je hebt gelezen</string>
+    <string name="series_book_of">%1$s · boek %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d boek</item>
+        <item quantity="other">%d boeken</item>
+    </plurals>
     <string name="shelf_to_read_title">Nog lezen</string>
     <string name="shelf_to_read_desc">Boeken die je binnenkort wilt lezen</string>
     <string name="shelf_reading_title">Aan het lezen</string>
@@ -55,7 +62,8 @@
     <string name="book_pages">Pagina\'s: %1$s</string>
     <string name="book_no_description">Geen beschrijving beschikbaar.</string>
     <string name="book_change_shelf">Verander van plank:</string>
-    <string name="book_add_to_shelf">Toevoegen aan plank:</string>
+    <string name="book_change_shelf_title">Boekenplank wijzigen</string>
+    <string name="book_add_to_shelf">Toevoegen aan plank</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_community_reviews">Community-recensies</string>
     <string name="book_no_reviews">Geen geschreven recensies gevonden voor deze editie.</string>
@@ -67,6 +75,27 @@
     <string name="book_tab_misc">Meer</string>
     <string name="book_move_confirm">Verplaatsen naar «%1$s»?</string>
     <string name="book_move_confirm_yes">Verplaatsen</string>
+    <string name="book_section_reading">Jouw leeservaring</string>
+    <string name="book_section_about">Over het boek</string>
+    <string name="book_section_ids">Nummers</string>
+    <string name="book_label_rating">Beoordeling</string>
+    <string name="book_label_started">Begonnen</string>
+    <string name="book_label_author">Auteur</string>
+    <string name="book_label_series">Reeks</string>
+    <string name="book_label_pages">Pagina\'s</string>
+    <string name="book_label_language">Taal</string>
+    <string name="book_label_format">Formaat</string>
+    <string name="book_label_publisher">Uitgever</string>
+    <string name="book_label_published">Uitgegeven</string>
+    <string name="book_label_first_published">Eerste uitgave</string>
+    <string name="book_label_subjects">Onderwerpen</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Uit de boekenplank verwijderen</string>
+    <string name="book_remove_confirm">Weet je zeker dat je dit boek van je boekenplank wilt verwijderen?</string>
+    <string name="book_remove_confirm_yes">Verwijderen</string>
+    <string name="book_remove_toast">Verwijderd van je boekenplank</string>
     <string name="book_more_actions">Meer acties</string>
     <string name="shelf_chip_to_read">Nog lezen</string>
     <string name="shelf_chip_reading">Lezend</string>
@@ -320,6 +349,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="profile_stats_pages">Pagina\'s</string>
     <string name="profile_stats_per_year">Boeken per jaar</string>
     <string name="profile_stats_chart_desc">Boeken per jaar: %1$s</string>
+    <string name="profile_top_rated">Best beoordeeld</string>
     <string name="profile_stats_top_authors">Meest gelezen auteurs</string>
     <string name="profile_stats_authors_desc">Meest gelezen auteurs: %1$s</string>
     <string name="profile_stats_ratings">Jouw beoordelingen</string>
@@ -379,6 +409,12 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d boek zonder formaatvermelding</item>
         <item quantity="other">%d boeken zonder formaatvermelding</item>
+    </plurals>
+    <string name="search_local_section">In je boekenplanken</string>
+    <string name="search_instance_section">Op deze instantie</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…en nog %d in je boekenplanken</item>
+        <item quantity="other">…en nog %d in je boekenplanken</item>
     </plurals>
 </resources>
 

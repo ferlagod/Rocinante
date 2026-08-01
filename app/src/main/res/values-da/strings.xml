@@ -52,6 +52,13 @@
         <item quantity="one">%d dag</item>
         <item quantity="other">%d dage</item>
     </plurals>
+    <string name="series_title">Serier</string>
+    <string name="series_empty">Ingen serier endnu blandt de bøger du har læst</string>
+    <string name="series_book_of">%1$s · bog %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d bog</item>
+        <item quantity="other">%d bøger</item>
+    </plurals>
     <string name="search_books_empty">Ingen bøger fundet</string>
     <string name="shelf_to_read_title">Vil læse</string>
     <string name="shelf_to_read_desc">Bøger du gerne vil læse snart</string>
@@ -69,7 +76,9 @@
     <string name="book_pages">Sider: %1$s</string>
     <string name="book_no_description">Ingen beskrivelse tilgængelig.</string>
     <string name="book_change_shelf">Skift hylde:</string>
-    <string name="book_add_to_shelf">Føj til hylde:</string>
+    <string name="book_change_shelf_title">Skift hylde</string>
+    <string name="book_add_to_shelf">Føj til hylde</string>
+    <string name="book_other_edition_shelved">En anden udgave af denne bog står på din hylde %1$s.</string>
     <string name="book_synopsis">Resumé</string>
     <string name="book_community_reviews">Anmeldelser fra fællesskabet</string>
     <string name="book_no_reviews">Der blev ikke fundet skrevne anmeldelser af denne udgave.</string>
@@ -85,6 +94,43 @@
     <string name="book_tab_misc">Diverse</string>
     <string name="book_move_confirm">Flyt til \"%1$s\"?</string>
     <string name="book_move_confirm_yes">Flyt</string>
+    <string name="book_section_reading">Din læsning</string>
+    <string name="book_section_about">Om bogen</string>
+    <string name="book_section_ids">Numre</string>
+    <string name="book_label_rating">Vurdering</string>
+    <string name="book_label_started">Startet</string>
+    <string name="book_label_finished">Afsluttet</string>
+    <string name="book_edit_read_dates">Ret læsedatoer</string>
+    <string name="book_choose_edition">Vælg udgave</string>
+    <string name="book_edition_current">Denne udgave</string>
+    <string name="book_edition_switched">Skiftet til denne udgave</string>
+    <string name="book_editions_none">Bogen har ikke andre udgaver på instansen.</string>
+    <string name="book_editions_all_languages">Alle</string>
+    <string name="book_editions_none_language">Ingen udgaver på dette sprog.</string>
+    <string name="book_label_readings">Læsninger</string>
+    <string name="book_read_dates_which">Hvilken læsning vil du rette?</string>
+    <string name="book_read_dates_new">En anden læsning</string>
+    <string name="book_read_dates_none">ingen dato</string>
+    <string name="book_read_dates_pick">Vælg dato</string>
+    <string name="book_read_dates_saved">Læsedatoerne er gemt</string>
+    <string name="book_read_dates_empty">Vælg mindst én dato</string>
+    <string name="book_read_dates_order">Slutdatoen kan ikke ligge før startdatoen</string>
+    <string name="book_label_author">Forfatter</string>
+    <string name="book_label_series">Serie</string>
+    <string name="book_label_pages">Sider</string>
+    <string name="book_label_language">Sprog</string>
+    <string name="book_label_format">Format</string>
+    <string name="book_label_publisher">Forlag</string>
+    <string name="book_label_published">Udgivet</string>
+    <string name="book_label_first_published">Først udgivet</string>
+    <string name="book_label_subjects">Emner</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Fjern fra hylden</string>
+    <string name="book_remove_confirm">Er du sikker på, at du vil fjerne denne bog fra din hylde?</string>
+    <string name="book_remove_confirm_yes">Fjern</string>
+    <string name="book_remove_toast">Fjernet fra din hylde</string>
     <string name="book_more_actions">Flere handlinger</string>
     <string name="shelf_chip_to_read">Vil læse</string>
     <string name="shelf_chip_reading">Læser</string>
@@ -109,6 +155,20 @@
     <string name="progress_privacy_private">Privat</string>
     <string name="progress_btn_share">Del</string>
     <string name="progress_btn_save">Gem</string>
+    <string name="progress_pages_ebook">sider (e-bog)</string>
+    <string name="progress_ebook_total_label">Sider i din e-bog:</string>
+    <string name="progress_ebook_total_hint">f.eks. 480</string>
+    <string name="progress_ebook_total_help">Sidetallet i en e-bog afhænger af skriftstørrelsen, så det gemmes kun på denne enhed. BookWyrm får procenten.</string>
+    <string name="progress_edit_setup">Redigér</string>
+    <string name="progress_ebook_total_saved">Din e-bog: %1$d sider</string>
+    <string name="progress_mode_saved">Progression i %1$s</string>
+    <string name="progress_ebook_total_missing">Angiv først hvor mange sider din e-bog har</string>
+    <string name="progress_ebook_percent">≈ %1$d%% læst</string>
+    <string name="progress_ebook_printed_estimate">≈ side %1$d af %2$d i den trykte udgave</string>
+    <string name="progress_btn_post">Opslag…</string>
+    <string name="progress_post_title">Slå progressionen op</string>
+    <string name="book_progress_ebook">%1$d%% (side %2$d af %3$d i e-bogen)</string>
+    <string name="book_progress_ebook_page">≈ side %1$d af %2$d i e-bogen</string>
     <string name="progress_btn_cancel">Annullér</string>
     <string name="progress_success">Status opdateret</string>
     <string name="progress_error">Fejl: %1$s</string>
@@ -142,6 +202,13 @@
     <string name="profile_network_error">Netværksfejl: %1$s</string>
     <string name="error_network">Netværksfejl: %1$s</string>
     <string name="error_server">Serverfejl: %1$s</string>
+    <string name="error_conn_offline">Ingen forbindelse. Tjek dit netværk.</string>
+    <string name="error_conn_timeout">Instansen svarer ikke lige nu. Prøv igen om lidt.</string>
+    <string name="error_instance_down">Instansen har problemer lige nu (fejl %1$s). Prøv igen om lidt.</string>
+    <string name="error_rate_limited">Instansen beder dig vente lidt. Prøv igen om et øjeblik.</string>
+    <string name="error_session_expired">Din session er udløbet. Log ind igen.</string>
+    <string name="error_not_found">Instansen har det ikke længere.</string>
+    <string name="error_unexpected_response">Instansen sendte et uventet svar, som regel en sikkerhedskontrol i vejen. Prøv igen om lidt.</string>
     <string name="error_book_not_identified">Bogen kunne ikke identificeres</string>
     <string name="error_shelve_sync">Synkroniseringsfejl: %1$s</string>
     <string name="error_shelve_success">Status synkroniseret: %1$s</string>
@@ -340,6 +407,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog mangler sidetal og er ikke med i totalen</item>
         <item quantity="other">%d bøger mangler sidetal og er ikke med i totalen</item>
     </plurals>
+    <string name="profile_top_rated">Bedst bedømte</string>
     <string name="profile_stats_top_authors">Mest læste forfattere</string>
     <string name="profile_stats_authors_desc">Mest læste forfattere: %1$s</string>
     <plurals name="profile_stats_missing_authors">
@@ -392,5 +460,11 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_layout_reset">Nulstil</string>
     <string name="profile_layout_drag_desc">Træk for at flytte %1$s</string>
     <string name="profile_section_stats">Læsestatistik</string>
+    <string name="search_local_section">På dine hylder</string>
+    <string name="search_instance_section">På denne instans</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…og %d mere på dine hylder</item>
+        <item quantity="other">…og %d mere på dine hylder</item>
+    </plurals>
 </resources>
 

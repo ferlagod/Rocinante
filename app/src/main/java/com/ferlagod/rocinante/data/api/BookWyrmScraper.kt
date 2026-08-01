@@ -27,6 +27,8 @@ import com.ferlagod.rocinante.data.model.NotificationUiItem
 import com.ferlagod.rocinante.data.model.SuggestedUser
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody.Companion.toResponseBody
 
@@ -34,6 +36,18 @@ object BookWyrmScraper {
 
     /** Etiqueta de logcat para diagnosticar el borrado de notificaciones. */
     private const val TAG_CLEAR = "RocinanteNotif"
+
+    /**
+     * Versión del formato de [com.ferlagod.rocinante.data.model.BookEnrichment].
+     * Súbela al empezar a extraer campos nuevos de la página del libro: las entradas
+     * cacheadas con una versión anterior se vuelven a leer una sola vez.
+     * 2 → añade los identificadores para quitar el libro de su estantería.
+     * 3 → añade la serie del libro: nombre, enlace y número dentro de ella.
+     * 4 → añade la estantería en la que está, el aviso de otra edición ya guardada y las
+     *     lecturas una a una.
+     * 5 → añade el identificador (sin traducir) de la estantería donde está la otra edición.
+     */
+    const val ENRICHMENT_SCHEMA_VERSION = 5
 
     /**
      * Contexto temporal utilizado al actualizar el progreso de lectura.
@@ -121,9 +135,39 @@ object BookWyrmScraper {
     }
 
     /**
+     * URL limpia y completa de un libro, sea cual sea lo que traiga cada pantalla: la
+     * estantería da la URL entera, la búsqueda solo el número, y cualquiera de las dos puede
+     * venir con el sufijo del título («/s/…») o con «.json».
+     *
+     * Es además la clave con la que se guarda el enriquecimiento, así que lo que se lee
+     * abriendo un libro desde la búsqueda lo encuentra después la estantería.
+     *
+     * @return La URL normalizada; lo recibido tal cual si aún no se sabe de qué instancia se
+     *   trata (sin sesión no hay forma de completar un identificador suelto).
+     */
+    fun canonicalBookUrl(bookUrl: String): String {
+        val full = if (bookUrl.startsWith("http")) {
+            bookUrl
+        } else {
+            val host = NetworkClient.lastInstanceHost?.takeIf { it.isNotBlank() } ?: return bookUrl
+            "https://$host/book/${com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(bookUrl)}"
+        }
+        return full.substringBefore("/s/").removeSuffix(".json").trimEnd('/')
+    }
+
+    /**
      * Resuelve un libro federado a su URL local siguiendo la redirección de resolve-book.
+     *
+     * Un libro que ya es de la instancia se devuelve tal cual, sin preguntar: resolve-book no
+     * es una consulta sino un POST que *importa* el libro remoto a la base de datos local, así
+     * que llamarlo para algo que ya está en casa es una petición de más por libro. Y son
+     * muchas: los libros de las propias estanterías son todos locales.
      */
     suspend fun resolveLocalBookUrl(api: BookWyrmApi, bookUrl: String): String? {
+        // Se normaliza a la entrada: la búsqueda llega con el identificador suelto («2350350»),
+        // que sin completar no es una URL y hace fallar todo lo que viene detrás.
+        @Suppress("NAME_SHADOWING") val bookUrl = canonicalBookUrl(bookUrl)
+        if (isLocalBookUrl(bookUrl)) return bookUrl
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val response = api.resolveBook(bookUrl)
@@ -141,6 +185,58 @@ object BookWyrmScraper {
                 bookUrl
             }
         }
+    }
+
+    // ── La página del libro, pedida una sola vez ──
+    // Al abrir una ficha, las reseñas y el enriquecimiento quieren la misma página en el mismo
+    // instante, y cada uno la pedía por su cuenta. Se guarda la última leída unos segundos; el
+    // candado hace además que quien llegue segundo espere al primero en vez de pedirla otra vez.
+    private val bookPageLock = Mutex()
+    private var bookPageKey: String? = null
+    private var bookPageHtml: String = ""
+    private var bookPageAt: Long = 0L
+    private const val BOOK_PAGE_REUSE_MS = 15_000L
+
+    /**
+     * Clave con la que se reconoce que dos peticiones van a la misma página. Cada lado llega
+     * con la URL que tiene a mano —una con el sufijo del título, otra sin él, otra con .json—
+     * y todas son el mismo libro.
+     */
+    private fun bookPageKeyOf(url: String): String =
+        url.substringBefore("/s/").removeSuffix(".json").trimEnd('/').lowercase()
+
+    /**
+     * Descarga la página HTML de un libro, reutilizando la última si es la misma y acaba de
+     * leerse.
+     *
+     * @return El HTML, o "" si no se pudo leer (en cuyo caso no se guarda nada).
+     */
+    suspend fun fetchBookPage(api: BookWyrmApi, url: String, baseUrl: String): String =
+        bookPageLock.withLock {
+            val key = bookPageKeyOf(url)
+            val now = System.currentTimeMillis()
+            if (bookPageKey == key && bookPageHtml.isNotEmpty() && now - bookPageAt < BOOK_PAGE_REUSE_MS) {
+                return@withLock bookPageHtml
+            }
+            val html = fetchHtmlWithRedirects(api, url, baseUrl)
+            if (html.isNotEmpty()) {
+                bookPageKey = key
+                bookPageHtml = html
+                bookPageAt = now
+            }
+            html
+        }
+
+    /**
+     * ¿Es este libro de la instancia con la que se ha iniciado sesión?
+     *
+     * @return false si no se sabe (aún no hay sesión) o la URL no se puede leer, de modo que
+     *   ante la duda se resuelve como hasta ahora.
+     */
+    private fun isLocalBookUrl(bookUrl: String): Boolean {
+        val instanceHost = NetworkClient.lastInstanceHost?.takeIf { it.isNotBlank() } ?: return false
+        val host = runCatching { java.net.URL(bookUrl).host }.getOrNull()?.lowercase()
+        return host != null && host == instanceHost
     }
 
     /**
@@ -305,7 +401,7 @@ object BookWyrmScraper {
         try {
             val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
             val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
-            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            val html = fetchBookPage(api, localUrl, baseUrl)
             if (html.isEmpty()) return@withContext null
             val doc = org.jsoup.Jsoup.parse(html)
 
@@ -330,28 +426,347 @@ object BookWyrmScraper {
                 .mapNotNull { it.attr("value").toDoubleOrNull() }
                 .maxOrNull()
 
-            // Fechas de lectura en ISO (yyyy-MM-dd) desde los inputs date de los modales
-            // edit_readthrough_*; con varias lecturas se toma la fin más reciente y el inicio más antiguo.
-            val finished = doc.select("[id^=edit_readthrough_] input[name=finish_date]")
-                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
-                .maxOrNull()
-            val started = doc.select("[id^=edit_readthrough_] input[name=start_date]")
-                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
-                .minOrNull()
+            // Cada lectura por separado, desde los modales edit_readthrough_<id>: son los únicos
+            // sitios de la página con las fechas en ISO. Lo que se ve escrito en la lista está
+            // traducido y redondeado («ayer», «14 de julio»), así que no sirve para leerlo.
+            val readthroughs = doc.select("[id^=edit_readthrough_]").mapNotNull { modal ->
+                val id = modal.id().removePrefix("edit_readthrough_").trim().ifEmpty { null }
+                    ?: return@mapNotNull null
+                val start = modal.selectFirst("input[name=start_date]")
+                    ?.attr("value")?.trim()?.ifEmpty { null }
+                val finish = modal.selectFirst("input[name=finish_date]")
+                    ?.attr("value")?.trim()?.ifEmpty { null }
+                if (start == null && finish == null) null
+                else com.ferlagod.rocinante.data.model.ReadthroughDates(id, start, finish)
+            }.sortedWith(compareBy(nullsLast()) { it.started ?: it.finished })
+
+            // Resumen de todas las lecturas: el inicio más antiguo y el fin más reciente. Es lo
+            // que enseñan las listas, y lo que ya había antes de guardarlas una a una.
+            val finished = readthroughs.mapNotNull { it.finished }.maxOrNull()
+            val started = readthroughs.mapNotNull { it.started }.minOrNull()
 
             // Idioma legible (microdatos schema.org), p. ej. "Danish".
             val language = doc.selectFirst("meta[itemprop=inLanguage]")
                 ?.attr("content")?.trim()?.ifEmpty { null }
 
+            // Formulario oculto para quitar el libro de su estantería. Solo se renderiza
+            // cuando el libro está en una, así que su ausencia deja ambos campos a null.
+            val unshelveForm = doc.selectFirst("form[name^=unshelve-]")
+            val shelfBookId = unshelveForm?.selectFirst("input[name=book]")
+                ?.attr("value")?.trim()?.ifEmpty { null }
+            val shelfId = unshelveForm?.selectFirst("input[name=shelf]")
+                ?.attr("value")?.trim()?.ifEmpty { null }
+
+            // En qué estantería está. El botón grande de la página no dice dónde está el libro
+            // sino adónde va el siguiente paso («Empezar a leer», «Terminar»...): de todas las
+            // opciones deja visible una sola, la del paso siguiente, y esconde el resto. Se lee
+            // esa y se deshace la cuenta. Es lo único de la página que lo dice sin depender del
+            // idioma, y sin ello un libro abierto desde la búsqueda o la actividad no sabe que
+            // ya se está leyendo.
+            val nextStep = doc.selectFirst("[data-shelve-button-book]")
+                ?.select("[data-shelf-identifier]")
+                ?.firstOrNull { !it.hasClass("is-hidden") }
+                ?.attr("data-shelf-identifier")?.trim()
+            val shelfSlug = when (nextStep) {
+                "reading" -> "to-read"
+                "read" -> "reading"
+                "complete" -> "read"
+                "stopped-reading-complete" -> "stopped-reading"
+                // "to-read" (o nada) es el paso siguiente tanto del libro que no está en ninguna
+                // estantería como del que está en una propia del usuario; los distingue [shelfId].
+                else -> null
+            }
+
+            // Otra edición del mismo libro ya en una estantería. El aviso está traducido, pero
+            // sus dos enlaces no: uno lleva a la edición que el usuario tiene y el otro a la
+            // estantería en la que está. Se localiza por el formulario de cambiar de edición,
+            // que la instancia mete en el mismo párrafo.
+            val otherEditionBlock = doc.selectFirst("form[name=switch-edition]")?.parent()
+            val otherEditionUrl = otherEditionBlock?.select("a[href*=/book/]")
+                ?.firstOrNull()?.attr("href")?.trim()?.ifEmpty { null }
+                ?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + it }
+            val otherEditionShelfLink = otherEditionBlock?.select("a[href*=/books/]")?.firstOrNull()
+            val otherEditionShelfName = otherEditionShelfLink?.text()?.trim()?.ifEmpty { null }
+            // El nombre del aviso lo escribe la instancia en su idioma («Read»), así que se
+            // guarda además el identificador de la estantería, que sale del enlace y no está
+            // traducido: con él la app puede decirlo con sus propias palabras.
+            val otherEditionShelfSlug = otherEditionShelfLink?.attr("href")?.trim()
+                ?.trimEnd('/')?.substringAfterLast('/')?.ifEmpty { null }
+
+            // Serie del libro. Viene marcada con microdatos schema.org, así que el nombre, el
+            // número y el enlace son propiedades y no hay que leerlos del texto, que está
+            // traducido y cambia de idioma en idioma:
+            //   <span itemprop="isPartOf" itemtype=".../BookSeries">
+            //     Book <span itemprop="position">5</span> in <em><a href="/series/…">Nombre</a></em>
+            //   </span>
+            // Se exige que el bloque lleve el enlace a la serie: las plantillas antiguas también
+            // marcaban isPartOf en un <meta> suelto, que no lleva ninguno de los tres datos.
+            val seriesBlock = doc.select("[itemprop=isPartOf]")
+                .firstOrNull { it.selectFirst("a[href*=/series/]") != null }
+            val seriesLink = seriesBlock?.selectFirst("a[href*=/series/]")
+            val seriesName = seriesLink?.text()?.trim()?.ifEmpty { null }
+            // La instancia da el enlace relativo; se guarda absoluto porque es la clave con la
+            // que se agrupan los libros de una misma serie.
+            val seriesUrl = seriesLink?.attr("href")?.trim()?.ifEmpty { null }
+                ?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + it }
+            val seriesPosition = seriesBlock?.selectFirst("[itemprop=position]")
+                ?.text()?.trim()?.toIntOrNull()
+
             com.ferlagod.rocinante.data.model.BookEnrichment(
-                bookId = bookUrl,
+                // Clave normalizada, no lo que trajera quien llamó: así lo que se lee abriendo
+                // un libro desde la búsqueda lo encuentra luego la estantería, que lo tiene
+                // apuntado con su URL completa.
+                bookId = canonicalBookUrl(localUrl),
                 authorName = authorName,
                 rating = rating,
                 finished = finished,
                 started = started,
                 language = language,
+                shelfBookId = shelfBookId,
+                shelfId = shelfId,
+                seriesName = seriesName,
+                seriesUrl = seriesUrl,
+                seriesPosition = seriesPosition,
+                shelfSlug = shelfSlug,
+                otherEditionUrl = otherEditionUrl,
+                otherEditionShelfName = otherEditionShelfName,
+                otherEditionShelfSlug = otherEditionShelfSlug,
+                readthroughs = readthroughs.ifEmpty { null },
+                schemaVersion = ENRICHMENT_SCHEMA_VERSION,
                 fetchedAt = System.currentTimeMillis()
             )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    // Tope de páginas de ediciones que se recorren. Con las 15 por página de BookWyrm da para
+    // 150 ediciones del mismo libro, muy por encima de lo que tiene ninguno.
+    private const val MAX_EDITION_PAGES = 10
+
+    /**
+     * Una de las ediciones del mismo libro: la danesa, la inglesa, el audiolibro...
+     *
+     * @property id ID numérico, que es lo que espera `switch-edition`.
+     * @property isCurrent Si es la edición desde la que se ha abierto la lista.
+     */
+    data class EditionOption(
+        val id: String,
+        val url: String,
+        val title: String,
+        val coverUrl: String? = null,
+        val language: String? = null,
+        val format: String? = null,
+        val pages: Int? = null,
+        val published: String? = null,
+        val isCurrent: Boolean = false
+    )
+
+    /**
+     * Las ediciones de un libro y los idiomas en los que existe.
+     *
+     * @property languages Todos los idiomas de la obra, los tenga la lista o no: la instancia
+     *   los saca de todas las ediciones a la vez, así que valen para filtrar aunque el
+     *   recuento por páginas se haya dejado alguna por el camino.
+     */
+    data class Editions(
+        val editions: List<EditionOption> = emptyList(),
+        val languages: List<String> = emptyList()
+    )
+
+    /**
+     * Las ediciones del libro, leídas de la página `/book/<obra>/editions`.
+     *
+     * Cuesta una petición aparte, así que no va con el enriquecimiento: se pide solo cuando
+     * alguien abre la lista. Un libro con una sola edición devuelve esa sola, y quien llame
+     * decide si vale la pena enseñar la lista.
+     *
+     * Ojo con las ediciones de más: la instancia las ordena por un ranking con muchos empates
+     * y las sirve de quince en quince, y en dos peticiones seguidas los empates no salen en el
+     * mismo orden, así que al pasar de página se pierde alguna. Por eso está [language]: un
+     * filtro deja el resultado en una sola página y ahí no hay nada que perder.
+     *
+     * @param language Idioma por el que filtrar (tal y como lo escribe la instancia, p. ej.
+     *   "Danish"), o null para pedirlas todas.
+     * @return Las ediciones en el orden en que las da la instancia; vacío si la página no se
+     *   pudo leer o el libro no tiene enlace a sus ediciones.
+     */
+    suspend fun getEditions(
+        api: BookWyrmApi,
+        bookUrl: String,
+        language: String? = null
+    ): Editions = withContext(Dispatchers.IO) {
+        try {
+            val current = canonicalBookUrl(bookUrl)
+            val localUrl = resolveLocalBookUrl(api, current) ?: current
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            fun absolute(href: String): String =
+                if (href.startsWith("http")) href else baseUrl.trimEnd('/') + href
+
+            // El enlace a las ediciones está en la propia página del libro y lleva el id de la
+            // obra, que no es el del ejemplar: se saca de ahí en vez de componerlo a mano.
+            val bookHtml = fetchBookPage(api, localUrl, baseUrl)
+            if (bookHtml.isEmpty()) return@withContext Editions()
+            val editionsHref = org.jsoup.Jsoup.parse(bookHtml)
+                .selectFirst("a[href~=/editions/?$]")
+                ?.attr("href")?.trim()?.ifEmpty { null }
+                ?: return@withContext Editions()
+            val firstHref = if (language.isNullOrBlank()) editionsHref else {
+                editionsHref + "?language=" + java.net.URLEncoder.encode(language, "UTF-8")
+            }
+
+            // La instancia pagina las ediciones, y de un libro muy publicado hay varias páginas:
+            // quedarse con la primera escondería justo la edición que se busca. Se siguen los
+            // «siguiente» hasta que se acaben, con un tope por si alguna vez se enredan.
+            val pages = mutableListOf<org.jsoup.nodes.Document>()
+            var nextHref: String? = firstHref
+            while (nextHref != null && pages.size < MAX_EDITION_PAGES) {
+                val html = fetchHtmlWithRedirects(api, absolute(nextHref), baseUrl)
+                if (html.isEmpty()) break
+                val page = org.jsoup.Jsoup.parse(html)
+                pages += page
+                nextHref = page.selectFirst("a.pagination-next:not(.is-disabled)[href]")
+                    ?.attr("href")?.trim()?.ifEmpty { null }
+            }
+            if (pages.isEmpty()) return@withContext Editions()
+
+            // Los idiomas del desplegable de filtros: la instancia los saca de todas las
+            // ediciones de la obra a la vez, así que están todos aunque la lista no lo esté.
+            val languages = pages.first().select("select#id_language option[value]")
+                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
+                .distinct()
+
+            // Cada edición es una fila con su enlace, su portada y los mismos microdatos que
+            // la ficha (formato, páginas, idioma, fecha), que son los que la distinguen.
+            val editions = pages.flatMap { it.select("div.columns.is-gapless") }.mapNotNull { row ->
+                val link = row.selectFirst("h2 a[href*=/book/]")
+                    ?: row.selectFirst("a[href*=/book/]")
+                    ?: return@mapNotNull null
+                val url = canonicalBookUrl(absolute(link.attr("href").trim()))
+                val id = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(url)
+                if (id.isBlank()) return@mapNotNull null
+                val title = link.text().trim().ifEmpty {
+                    row.selectFirst("h2")?.text()?.trim().orEmpty()
+                }
+                if (title.isEmpty()) return@mapNotNull null
+                EditionOption(
+                    id = id,
+                    url = url,
+                    title = title,
+                    coverUrl = row.selectFirst("img.book-cover")?.attr("src")
+                        ?.trim()?.ifEmpty { null }?.let { absolute(it) },
+                    language = row.selectFirst("meta[itemprop=inLanguage]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    format = row.selectFirst("meta[itemprop=bookFormat]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    pages = row.selectFirst("meta[itemprop=numberOfPages]")
+                        ?.attr("content")?.trim()?.toIntOrNull(),
+                    published = row.selectFirst("meta[itemprop=datePublished]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    isCurrent = url == canonicalBookUrl(localUrl)
+                )
+            }.distinctBy { it.id }
+            Editions(editions = editions, languages = languages)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            Editions()
+        }
+    }
+
+    /**
+     * Una lectura (readthrough) ya registrada en la página del libro.
+     * Las fechas vienen en ISO (yyyy-MM-dd) y cualquiera de las dos puede faltar.
+     */
+    data class Readthrough(
+        val id: String,
+        val startDate: String?,
+        val finishDate: String?
+    )
+
+    /**
+     * Todo lo necesario para poner o cambiar las fechas de lectura de un libro: las lecturas
+     * que ya tiene (con su id, para editarlas) y los identificadores ocultos que espera el
+     * formulario «Add read dates» de BookWyrm.
+     */
+    data class ReadDatesContext(
+        val bookId: String,
+        val userId: String,
+        val csrfToken: String,
+        val readthroughs: List<Readthrough>
+    )
+
+    /** Lo que la página del libro cuenta de sus fechas de lectura. */
+    data class ParsedReadDates(
+        val bookId: String?,
+        val userId: String?,
+        val readthroughs: List<Readthrough>
+    )
+
+    /**
+     * Extrae del HTML de la página del libro las lecturas registradas y los identificadores
+     * del formulario. BookWyrm dibuja un modal de edición por lectura, con el id oculto y
+     * las fechas ya puestas, y siempre uno de alta con el libro y el usuario, haya lecturas
+     * o no. Los modales se buscan por la acción de su formulario porque el id del modal lo
+     * comparten también trozos suyos que no llevan las fechas (p. ej. la cabecera).
+     */
+    fun parseReadDates(html: String): ParsedReadDates {
+        val doc = org.jsoup.Jsoup.parse(html)
+
+        val editForms = doc.select("form[action\$=edit-readthrough]")
+            .ifEmpty { doc.select("[id^=edit_readthrough_]:has(input[name=start_date])") }
+        val readthroughs = editForms
+            .mapNotNull { form ->
+                val id = form.selectFirst("input[name=id]")
+                    ?.attr("value")?.trim()?.ifEmpty { null } ?: return@mapNotNull null
+                Readthrough(
+                    id = id,
+                    startDate = form.selectFirst("input[name=start_date]")
+                        ?.attr("value")?.trim()?.ifEmpty { null },
+                    finishDate = form.selectFirst("input[name=finish_date]")
+                        ?.attr("value")?.trim()?.ifEmpty { null }
+                )
+            }
+            .distinctBy { it.id }
+
+        val addForm = doc.selectFirst("form[action\$=create-readthrough]")
+            ?: doc.selectFirst("#add-readthrough")
+        val bookId = addForm?.selectFirst("input[name=book]")?.attr("value")?.trim()?.ifEmpty { null }
+            ?: extractHiddenFieldValue(html, "book")
+        val userId = addForm?.selectFirst("input[name=user]")?.attr("value")?.trim()?.ifEmpty { null }
+            ?: extractHiddenFieldValue(html, "user")
+
+        return ParsedReadDates(bookId, userId, readthroughs)
+    }
+
+    /**
+     * Descarga la página del libro y devuelve lo necesario para poner o cambiar sus fechas.
+     *
+     * @return null si la página no se pudo leer o no trae el formulario (sesión caducada).
+     */
+    suspend fun getReadDatesContext(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): ReadDatesContext? = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+
+            val parsed = parseReadDates(html)
+            // Sin el id del libro en el formulario queda el de la propia URL; sin usuario,
+            // en cambio, no hay forma de dar de alta una lectura nueva.
+            val bookId = parsed.bookId
+                ?: BookWyrmUtils.extractBookId(localUrl).takeIf { it.isNotEmpty() }
+                ?: return@withContext null
+            val userId = parsed.userId ?: return@withContext null
+
+            // Token sin enmascarar de la cookie: es el que Django compara siempre bien.
+            // Si el jar aún no lo tiene, sirve el del propio formulario de la página.
+            val csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
+
+            ReadDatesContext(bookId, userId, csrfToken, parsed.readthroughs)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             null
@@ -663,27 +1078,10 @@ object BookWyrmScraper {
 
     suspend fun scrapeBookReviews(api: BookWyrmApi, bookUrl: String): List<ActivityPubActivity> = withContext(Dispatchers.IO) {
         try {
-            var currentUrl = bookUrl
-            var html = ""
-            for (i in 0..3) {
-                val response = api.getRawHtmlResponse(currentUrl)
-                if (response.isSuccessful) {
-                    html = response.body()?.string() ?: ""
-                    break
-                } else if (response.code() in 300..399) {
-                    val location = response.headers()["Location"]
-                    if (location != null) {
-                        currentUrl = if (location.startsWith("http")) location else {
-                            val hostUrl = java.net.URL(bookUrl).let { "${it.protocol}://${it.host}" }
-                            "$hostUrl$location"
-                        }
-                    } else {
-                        break
-                    }
-                } else {
-                    break
-                }
-            }
+            val baseUrl = runCatching {
+                java.net.URL(bookUrl).let { "${it.protocol}://${it.host}/" }
+            }.getOrNull() ?: return@withContext emptyList()
+            val html = fetchBookPage(api, bookUrl, baseUrl)
             if (html.isEmpty()) return@withContext emptyList()
             val document = org.jsoup.Jsoup.parse(html)
 

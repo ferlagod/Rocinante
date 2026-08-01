@@ -178,7 +178,7 @@ class HomeViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    errorMessage = if (_uiState.value.timeline.isEmpty()) context.getString(R.string.error_loading_data, e.message ?: "") else null
+                    errorMessage = if (_uiState.value.timeline.isEmpty()) com.ferlagod.rocinante.utils.NetworkErrors.message(context, e) else null
                 )
             }
         }
@@ -191,6 +191,31 @@ class HomeViewModel @Inject constructor(
      */
     fun selectTab(index: Int) {
         _uiState.value = _uiState.value.copy(selectedTab = index)
+    }
+
+    /**
+     * Salta a «Mis libros» para mostrar un libro concreto dentro de su estantería.
+     * El objetivo vive aquí y no en la pantalla porque el paginador descarta el estado
+     * de las pestañas que quedan fuera de la vista al cambiar de una a otra.
+     *
+     * @param shelfSlug Estantería que hay que abrir.
+     * @param bookId Identificador (URL) del libro al que desplazarse.
+     */
+    fun openBookInShelf(shelfSlug: String, bookId: String) {
+        _uiState.value = _uiState.value.copy(
+            selectedTab = 1,
+            shelfTarget = ShelfTarget(shelfSlug, bookId)
+        )
+    }
+
+    /**
+     * Descarta el objetivo pendiente una vez que la estantería ya se ha desplazado hasta él,
+     * para que volver a la pestaña no repita el salto.
+     */
+    fun consumeShelfTarget() {
+        if (_uiState.value.shelfTarget != null) {
+            _uiState.value = _uiState.value.copy(shelfTarget = null)
+        }
     }
 
     /**

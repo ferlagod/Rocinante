@@ -201,6 +201,38 @@ interface BookWyrmApi {
     ): retrofit2.Response<ResponseBody>
 
     /**
+     * Cambia las fechas de una lectura (readthrough) ya registrada.
+     * POST a /edit-readthrough — el formulario del lápiz «Edit read dates» de la web.
+     * Solo se guardan los campos que llegan con valor: BookWyrm ignora los vacíos, así que
+     * este camino sirve para corregir una fecha, pero no para dejarla en blanco.
+     */
+    @FormUrlEncoded
+    @POST("edit-readthrough")
+    suspend fun editReadthrough(
+        @Field("id") readthroughId: String,
+        @Field("start_date") startDate: String,
+        @Field("finish_date") finishDate: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
+    /**
+     * Registra una lectura nueva con sus fechas.
+     * POST a /create-readthrough — el formulario «Add read dates» de la web, que además del
+     * libro pide el usuario. Si las fechas no le valen (fin anterior al inicio, o en el
+     * futuro), BookWyrm responde 200 con el formulario de nuevo; solo la redirección (302)
+     * significa que se ha guardado.
+     */
+    @FormUrlEncoded
+    @POST("create-readthrough")
+    suspend fun createReadthrough(
+        @Field("book") book: String,
+        @Field("user") user: String,
+        @Field("start_date") startDate: String,
+        @Field("finish_date") finishDate: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
+    /**
      * Publica una reseña (review) de un libro.
      */
     @FormUrlEncoded
@@ -266,6 +298,36 @@ interface BookWyrmApi {
         // El campo "book_id" no existe en la vista Django y se ignora.
         @Field("book") bookId: String,
         @Field("shelf") shelfType: String
+    ): retrofit2.Response<ResponseBody>
+
+    /**
+     * Quita un libro de la estantería en la que está.
+     *
+     * A diferencia de [shelveBook], la vista `unshelve` de BookWyrm identifica la
+     * estantería por su ID numérico (no por su identificador de texto), así que
+     * ambos valores hay que leerlos del formulario oculto de la página del libro
+     * (los recoge `BookWyrmScraper.scrapeBookEnrichment` en `BookEnrichment.shelfId`).
+     */
+    @FormUrlEncoded
+    @POST("unshelve/")
+    suspend fun unshelveBook(
+        @Field("book") bookId: String,
+        @Field("shelf") shelfId: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String
+    ): retrofit2.Response<ResponseBody>
+
+    /**
+     * Cambia la edición del libro por otra del mismo título: la estantería, las fechas de
+     * lectura y la valoración se van con ella, porque en BookWyrm todo eso cuelga de una
+     * edición concreta y no del título.
+     *
+     * @param editionId ID numérico de la edición a la que se cambia.
+     */
+    @FormUrlEncoded
+    @POST("switch-edition/")
+    suspend fun switchEdition(
+        @Field("edition") editionId: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String
     ): retrofit2.Response<ResponseBody>
 
 

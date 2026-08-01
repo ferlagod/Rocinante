@@ -48,6 +48,13 @@
         <item quantity="one">%d päivä</item>
         <item quantity="other">%d päivää</item>
     </plurals>
+    <string name="series_title">Sarjat</string>
+    <string name="series_empty">Ei vielä sarjoja lukemiesi kirjojen joukossa</string>
+    <string name="series_book_of">%1$s · kirja %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d kirja</item>
+        <item quantity="other">%d kirjaa</item>
+    </plurals>
     <string name="shelf_to_read_title">Lukujono</string>
     <string name="shelf_to_read_desc">Kirjat, jotka haluat lukea pian</string>
     <string name="shelf_reading_title">Luettavana</string>
@@ -64,7 +71,8 @@
     <string name="book_pages">Sivuja: %1$s</string>
     <string name="book_no_description">Ei kuvausta saatavilla.</string>
     <string name="book_change_shelf">Vaihda hyllyä:</string>
-    <string name="book_add_to_shelf">Lisää hyllyyn:</string>
+    <string name="book_change_shelf_title">Vaihda hyllyä</string>
+    <string name="book_add_to_shelf">Lisää hyllyyn</string>
     <string name="book_synopsis">Tiivistelmä</string>
     <string name="book_community_reviews">Yhteisön arvostelut</string>
     <string name="book_no_reviews">Tälle painokselle ei löytynyt kirjoitettuja arvosteluja.</string>
@@ -76,6 +84,27 @@
     <string name="book_tab_misc">Lisää</string>
     <string name="book_move_confirm">Siirretäänkö kohteeseen «%1$s»?</string>
     <string name="book_move_confirm_yes">Siirrä</string>
+    <string name="book_section_reading">Oma lukemisesi</string>
+    <string name="book_section_about">Tietoja kirjasta</string>
+    <string name="book_section_ids">Numerot</string>
+    <string name="book_label_rating">Arvio</string>
+    <string name="book_label_started">Aloitettu</string>
+    <string name="book_label_author">Kirjailija</string>
+    <string name="book_label_series">Sarja</string>
+    <string name="book_label_pages">Sivuja</string>
+    <string name="book_label_language">Kieli</string>
+    <string name="book_label_format">Muoto</string>
+    <string name="book_label_publisher">Kustantaja</string>
+    <string name="book_label_published">Julkaistu</string>
+    <string name="book_label_first_published">Ensipainos</string>
+    <string name="book_label_subjects">Aiheet</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Poista hyllystä</string>
+    <string name="book_remove_confirm">Haluatko varmasti poistaa tämän kirjan hyllystäsi?</string>
+    <string name="book_remove_confirm_yes">Poista</string>
+    <string name="book_remove_toast">Poistettu hyllystäsi</string>
     <string name="book_more_actions">Lisää toimintoja</string>
     <string name="shelf_chip_to_read">Lukujono</string>
     <string name="shelf_chip_reading">Luettavana</string>
@@ -321,6 +350,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="profile_stats_pages">Sivut</string>
     <string name="profile_stats_per_year">Kirjoja vuodessa</string>
     <string name="profile_stats_chart_desc">Kirjoja vuodessa: %1$s</string>
+    <string name="profile_top_rated">Parhaiten arvioidut</string>
     <string name="profile_stats_top_authors">Luetuimmat kirjailijat</string>
     <string name="profile_stats_authors_desc">Luetuimmat kirjailijat: %1$s</string>
     <string name="profile_stats_ratings">Arviosi</string>
@@ -380,6 +410,12 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d kirjalta puuttuu muototieto</item>
         <item quantity="other">%d kirjalta puuttuu muototieto</item>
+    </plurals>
+    <string name="search_local_section">Omissa hyllyissäsi</string>
+    <string name="search_instance_section">Tässä instanssissa</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…ja %d muu hyllyissäsi</item>
+        <item quantity="other">…ja %d muuta hyllyissäsi</item>
     </plurals>
 </resources>
 

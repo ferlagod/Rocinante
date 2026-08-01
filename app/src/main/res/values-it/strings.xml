@@ -39,6 +39,13 @@
         <item quantity="one">%d giorno</item>
         <item quantity="other">%d giorni</item>
     </plurals>
+    <string name="series_title">Serie</string>
+    <string name="series_empty">Ancora nessuna serie tra i libri che hai letto</string>
+    <string name="series_book_of">%1$s · libro %2$d</string>
+    <plurals name="series_books_count">
+        <item quantity="one">%d libro</item>
+        <item quantity="other">%d libri</item>
+    </plurals>
     <string name="shelf_to_read_title">Da leggere</string>
     <string name="shelf_to_read_desc">Libri che vuoi leggere presto</string>
     <string name="shelf_reading_title">In lettura</string>
@@ -55,7 +62,8 @@
     <string name="book_pages">Pagine: %1$s</string>
     <string name="book_no_description">Nessuna descrizione disponibile.</string>
     <string name="book_change_shelf">Cambia scaffale:</string>
-    <string name="book_add_to_shelf">Aggiungi allo scaffale:</string>
+    <string name="book_change_shelf_title">Cambia scaffale</string>
+    <string name="book_add_to_shelf">Aggiungi allo scaffale</string>
     <string name="book_synopsis">Sinossi</string>
     <string name="book_community_reviews">Recensioni della community</string>
     <string name="book_no_reviews">Nessuna recensione scritta trovata per questa edizione.</string>
@@ -67,6 +75,27 @@
     <string name="book_tab_misc">Altro</string>
     <string name="book_move_confirm">Spostare in «%1$s»?</string>
     <string name="book_move_confirm_yes">Sposta</string>
+    <string name="book_section_reading">La tua lettura</string>
+    <string name="book_section_about">Sul libro</string>
+    <string name="book_section_ids">Numeri</string>
+    <string name="book_label_rating">Valutazione</string>
+    <string name="book_label_started">Iniziato</string>
+    <string name="book_label_author">Autore</string>
+    <string name="book_label_series">Serie</string>
+    <string name="book_label_pages">Pagine</string>
+    <string name="book_label_language">Lingua</string>
+    <string name="book_label_format">Formato</string>
+    <string name="book_label_publisher">Editore</string>
+    <string name="book_label_published">Pubblicato</string>
+    <string name="book_label_first_published">Prima edizione</string>
+    <string name="book_label_subjects">Soggetti</string>
+    <string name="book_label_isbn">ISBN</string>
+    <string name="book_label_oclc">OCLC</string>
+    <string name="book_label_openlibrary">Open Library</string>
+    <string name="book_remove_from_shelf">Rimuovi dallo scaffale</string>
+    <string name="book_remove_confirm">Vuoi davvero rimuovere questo libro dal tuo scaffale?</string>
+    <string name="book_remove_confirm_yes">Rimuovi</string>
+    <string name="book_remove_toast">Rimosso dal tuo scaffale</string>
     <string name="book_more_actions">Altre azioni</string>
     <string name="shelf_chip_to_read">Da leggere</string>
     <string name="shelf_chip_reading">In lettura</string>
@@ -320,6 +349,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="profile_stats_pages">Pagine</string>
     <string name="profile_stats_per_year">Libri per anno</string>
     <string name="profile_stats_chart_desc">Libri per anno: %1$s</string>
+    <string name="profile_top_rated">I meglio valutati</string>
     <string name="profile_stats_top_authors">Autori più letti</string>
     <string name="profile_stats_authors_desc">Autori più letti: %1$s</string>
     <string name="profile_stats_ratings">Le tue valutazioni</string>
@@ -379,6 +409,12 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <plurals name="profile_stats_missing_formats">
         <item quantity="one">%d libro senza formato indicato</item>
         <item quantity="other">%d libri senza formato indicato</item>
+    </plurals>
+    <string name="search_local_section">Nei tuoi scaffali</string>
+    <string name="search_instance_section">In questa istanza</string>
+    <plurals name="search_local_more">
+        <item quantity="one">…e altri %d nei tuoi scaffali</item>
+        <item quantity="other">…e altri %d nei tuoi scaffali</item>
     </plurals>
 </resources>
 
