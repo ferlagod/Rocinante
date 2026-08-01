@@ -817,7 +817,7 @@ fun ActivityTab(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(items = timeline, key = { it.id }) { item ->
+                    items(items = timeline) { item ->
                         val isLiked = likedStatusIds.contains(item.objectId)
                         ActivityItemCard(
                             item = item, 

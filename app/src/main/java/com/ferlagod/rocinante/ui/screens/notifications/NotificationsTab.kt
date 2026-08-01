@@ -171,7 +171,7 @@ fun NotificationsTab(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            items(s.notifications, key = { it.id }) { notif ->
+                            items(s.notifications) { notif ->
                                 NotificationItemCard(item = notif, onItemClicked = onItemClicked)
                             }
                         }
