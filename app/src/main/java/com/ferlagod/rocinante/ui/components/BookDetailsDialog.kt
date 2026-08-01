@@ -769,9 +769,18 @@ fun BookDetailsDialog(
                                 val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
                                 if (flag != null) "$flag  $lang" else lang
                             }
-                            val seriesLabel = bookDetails.series?.trim()?.takeIf { it.isNotEmpty() }?.let { s ->
-                                val number = bookDetails.seriesNumber?.trim()?.takeIf { it.isNotEmpty() }
-                                if (number != null) "$s  #$number" else s
+                            // La serie sale de la página HTML («Book 5 in ...»): en el .json del
+                            // ejemplar los campos series/seriesNumber casi siempre vienen vacíos,
+                            // aunque la instancia sí tenga el libro atado a una serie. Se usan
+                            // igualmente de reserva por si algún ejemplar los trae rellenos.
+                            // Nombre y número van juntos de la misma fuente: mezclarlos daría el
+                            // número de una serie con el nombre de otra.
+                            val series = enrichment?.seriesName?.trim()?.takeIf { it.isNotEmpty() }
+                                ?.let { it to enrichment?.seriesPosition?.toString() }
+                                ?: bookDetails.series?.trim()?.takeIf { it.isNotEmpty() }
+                                    ?.let { it to bookDetails.seriesNumber?.trim()?.takeIf { n -> n.isNotEmpty() } }
+                            val seriesLabel = series?.let { (name, number) ->
+                                if (number != null) "$name  #$number" else name
                             }
                             val formatLabel = listOfNotNull(
                                 bookDetails.physicalFormatDetail?.trim()?.takeIf { it.isNotEmpty() }
