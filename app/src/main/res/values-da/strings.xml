@@ -324,6 +324,9 @@ Kompatibilitet: Forbedret synkronisering med Mastodon-konti.
 
 Design: Understøttelse af monokrome ikoner tilføjet.</string>
     <string name="book_write_review">Anmeld</string>
+    <string name="book_review_prompt_title">Vil du anmelde bogen?</string>
+    <string name="book_review_prompt_text">Den står nu på Læst. Du kan skrive en anmeldelse og give stjerner — eller lade den være.</string>
+    <string name="book_review_prompt_skip">Ikke nu</string>
     <string name="book_add_quote">Tilføj citat</string>
     <string name="quotation_dialog_title">Tilføj citat</string>
     <string name="quotation_quote_label">Sætning fra bogen (valgfrit)</string>

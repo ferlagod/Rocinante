@@ -317,6 +317,9 @@ Compatibility: Improved synchronization with Mastodon accounts.
 
 Design: Added support for monochrome icons.</string>
     <string name="book_write_review">Review</string>
+    <string name="book_review_prompt_title">Rate this book?</string>
+    <string name="book_review_prompt_text">It is on your Read shelf now. You can write a review and give it stars, or leave it as it is.</string>
+    <string name="book_review_prompt_skip">Not now</string>
     <string name="book_add_quote">Add quote</string>
     <string name="quotation_dialog_title">Add quote</string>
     <string name="quotation_quote_label">Phrase from the book (optional)</string>

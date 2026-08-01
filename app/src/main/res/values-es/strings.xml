@@ -321,6 +321,9 @@ Compatibilidad: Mejora en la sincronización con cuentas de Mastodon.
 
 Diseño: Soporte añadido para iconos monocromáticos.</string>
     <string name="book_write_review">Reseña</string>
+    <string name="book_review_prompt_title">¿Reseñar el libro?</string>
+    <string name="book_review_prompt_text">Ya está en tu estantería de leídos. Puedes escribir una reseña y ponerle estrellas, o dejarlo así.</string>
+    <string name="book_review_prompt_skip">Ahora no</string>
     <string name="book_add_quote">Añadir cita</string>
     <string name="quotation_dialog_title">Añadir cita</string>
     <string name="quotation_quote_label">Frase del libro (opcional)</string>

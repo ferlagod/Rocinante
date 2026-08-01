@@ -256,6 +256,10 @@ fun BookDetailsDialog(
     var progressPost by remember { mutableStateOf<ProgressSubmission?>(null) }
     var showReadingActionsDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
+    // Preguntar por la reseña en vez de abrirla sin más: terminar un libro y valorarlo son
+    // dos cosas distintas, y quien solo quería apuntarlo se encontraba con el formulario
+    // encima sin haberlo pedido.
+    var showReviewPrompt by remember { mutableStateOf(false) }
     var showQuotationDialog by remember { mutableStateOf(false) }
     var showMyActivityDialog by remember { mutableStateOf(false) }
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
@@ -371,7 +375,7 @@ fun BookDetailsDialog(
                     activeShelf = slug
                     onShelved?.invoke()
                     if (slug == "read") {
-                        showReviewDialog = true
+                        showReviewPrompt = true
                     } else {
                         onDismiss()
                     }
@@ -440,7 +444,7 @@ fun BookDetailsDialog(
                         activeShelf = "read"
                         onReadingFinished?.invoke()
                         onShelved?.invoke()
-                        showReviewDialog = true
+                        showReviewPrompt = true
                     } else {
                         Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                     }
@@ -1334,6 +1338,27 @@ fun BookDetailsDialog(
             onSuccess = { newProgress ->
                 progressPost = null
                 applyNewProgress(newProgress)
+            }
+        )
+    }
+
+    // ── ¿Reseñar el libro recién terminado? ──
+    if (showReviewPrompt) {
+        AlertDialog(
+            onDismissRequest = { showReviewPrompt = false; onDismiss() },
+            title = { Text(stringResource(R.string.book_review_prompt_title)) },
+            text = { Text(stringResource(R.string.book_review_prompt_text)) },
+            confirmButton = {
+                TextButton(onClick = { showReviewPrompt = false; showReviewDialog = true }) {
+                    Text(stringResource(R.string.book_write_review))
+                }
+            },
+            // Sin reseña, el libro ya está guardado: se cierra la ficha como con cualquier
+            // otro cambio de estantería.
+            dismissButton = {
+                TextButton(onClick = { showReviewPrompt = false; onDismiss() }) {
+                    Text(stringResource(R.string.book_review_prompt_skip))
+                }
             }
         )
     }
