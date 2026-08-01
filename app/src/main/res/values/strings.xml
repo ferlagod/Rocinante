@@ -103,6 +103,12 @@
     <string name="book_label_started">Started</string>
     <string name="book_label_finished">Finished</string>
     <string name="book_edit_read_dates">Edit read dates</string>
+    <string name="book_choose_edition">Choose edition</string>
+    <string name="book_edition_current">This edition</string>
+    <string name="book_edition_switched">Switched to this edition</string>
+    <string name="book_editions_none">This book has no other editions on the instance.</string>
+    <string name="book_editions_all_languages">All</string>
+    <string name="book_editions_none_language">No editions in this language.</string>
     <string name="book_label_readings">Readings</string>
     <string name="book_read_dates_which">Which reading do you want to edit?</string>
     <string name="book_read_dates_new">Another reading</string>

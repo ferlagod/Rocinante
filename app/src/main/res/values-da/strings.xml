@@ -101,6 +101,12 @@
     <string name="book_label_started">Startet</string>
     <string name="book_label_finished">Afsluttet</string>
     <string name="book_edit_read_dates">Ret læsedatoer</string>
+    <string name="book_choose_edition">Vælg udgave</string>
+    <string name="book_edition_current">Denne udgave</string>
+    <string name="book_edition_switched">Skiftet til denne udgave</string>
+    <string name="book_editions_none">Bogen har ikke andre udgaver på instansen.</string>
+    <string name="book_editions_all_languages">Alle</string>
+    <string name="book_editions_none_language">Ingen udgaver på dette sprog.</string>
     <string name="book_label_readings">Læsninger</string>
     <string name="book_read_dates_which">Hvilken læsning vil du rette?</string>
     <string name="book_read_dates_new">En anden læsning</string>

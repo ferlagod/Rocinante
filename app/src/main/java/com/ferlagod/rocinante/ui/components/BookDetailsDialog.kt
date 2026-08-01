@@ -90,6 +90,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -288,6 +289,10 @@ fun BookDetailsDialog(
 
     // Fechas de lectura (empezado / terminado): se cambian en su propio diálogo.
     var showReadDatesDialog by remember { mutableStateOf(false) }
+
+    // Lista de ediciones del mismo libro. Cuesta una petición aparte, así que se pide solo
+    // cuando se abre: no es algo que se mire en cada libro.
+    var showEditionPicker by remember { mutableStateOf(false) }
 
     // Identificadores para quitar el libro de su estantería: vienen con el enriquecimiento
     // (misma página HTML, sin descarga extra) y solo existen si el libro está en una, así que
@@ -509,6 +514,12 @@ fun BookDetailsDialog(
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.book_edit_read_dates)) },
                                     onClick = { overflowExpanded = false; showReadDatesDialog = true }
+                                )
+                                // Elegir edición: la misma obra en otro idioma, en bolsillo o en
+                                // audio. La lista se pide al abrirla.
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.book_choose_edition)) },
+                                    onClick = { overflowExpanded = false; showEditionPicker = true }
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.book_add_quote)) },
@@ -1188,6 +1199,25 @@ fun BookDetailsDialog(
                         onEnrichmentUpdated?.invoke(fresh)
                     }
                 }
+            }
+        )
+    }
+
+    // ── Elegir edición ──
+    if (showEditionPicker) {
+        EditionPickerDialog(
+            activeBookKey = activeBookKey,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onDismiss = { showEditionPicker = false },
+            // Cambiada la edición, lo que se está viendo ya no es el libro que la instancia
+            // tiene guardado: se cierra la ficha y se refresca lo de detrás, igual que al
+            // cambiar de estantería.
+            onSwitched = {
+                showEditionPicker = false
+                onShelved?.invoke()
+                onDismiss()
             }
         )
     }
@@ -3321,4 +3351,199 @@ private fun ReadDatesDialog(
             onPick = { finishIso = it; pickingFinish = false }
         )
     }
+}
+
+/**
+ * Lista de ediciones del mismo libro (la danesa, la inglesa, el audiolibro...) para cambiarse
+ * a otra. En BookWyrm la estantería, las fechas de lectura y la valoración cuelgan de una
+ * edición concreta, así que cambiarla se las lleva consigo: por eso se puede buscar un libro
+ * en inglés, que es como suele encontrarse, y quedarse con la edición que de verdad se lee.
+ *
+ * La lista cuesta su propia petición, así que se pide al abrir el diálogo y no antes.
+ *
+ * @param activeBookKey URL o id de la edición desde la que se abre la lista.
+ * @param onSwitched Se llama tras cambiar de edición: lo que hay detrás ya está desfasado.
+ */
+@Composable
+private fun EditionPickerDialog(
+    activeBookKey: String,
+    api: BookWyrmApi,
+    context: Context,
+    coroutineScope: CoroutineScope,
+    onDismiss: () -> Unit,
+    onSwitched: () -> Unit
+) {
+    var editions by remember { mutableStateOf<List<BookWyrmScraper.EditionOption>>(emptyList()) }
+    var languages by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Idioma por el que se filtra; null son todas. La instancia ordena las ediciones por un
+    // ranking con muchos empates y las sirve por páginas, y al pasar de página se le escapa
+    // alguna; pedirlas por idioma las deja en una sola página y ahí salen todas.
+    var language by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isSwitching by remember { mutableStateOf(false) }
+
+    LaunchedEffect(activeBookKey, language) {
+        isLoading = true
+        val loaded = runCatching { BookWyrmScraper.getEditions(api, activeBookKey, language) }
+            .getOrDefault(BookWyrmScraper.Editions())
+        editions = loaded.editions
+        // La lista de idiomas es la misma se filtre o no, así que la primera que llegue vale.
+        if (loaded.languages.isNotEmpty()) languages = loaded.languages
+        isLoading = false
+    }
+
+    fun switchTo(edition: BookWyrmScraper.EditionOption) {
+        if (isSwitching) return
+        coroutineScope.launch {
+            isSwitching = true
+            try {
+                // Token sin enmascarar de la cookie, como el resto de envíos.
+                val csrfToken = com.ferlagod.rocinante.data.api.NetworkClient.currentCsrfToken() ?: ""
+                val response = api.switchEdition(edition.id, csrfToken)
+                if (response.isSuccessful || response.code() == 302) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.book_edition_switched),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onSwitched()
+                } else {
+                    Toast.makeText(
+                        context,
+                        com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(
+                    context,
+                    com.ferlagod.rocinante.utils.NetworkErrors.message(context, e),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                isSwitching = false
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!isSwitching) onDismiss() },
+        // Con el número delante se ve de un vistazo si están todas: un libro muy publicado
+        // tiene decenas de ediciones y la instancia las da de página en página.
+        title = {
+            Text(
+                if (editions.size > 1) {
+                    "${stringResource(R.string.book_choose_edition)} (${editions.size})"
+                } else {
+                    stringResource(R.string.book_choose_edition)
+                }
+            )
+        },
+        text = {
+            Column {
+                // Filtro por idioma: es lo que se busca casi siempre («la tengo en italiano,
+                // pero la leí en danés»), y de paso evita que se pierda ninguna al paginar.
+                if (languages.size > 1) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        FilterChip(
+                            selected = language == null,
+                            onClick = { if (!isSwitching) language = null },
+                            label = { Text(stringResource(R.string.book_editions_all_languages)) }
+                        )
+                        languages.forEach { lang ->
+                            val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
+                            FilterChip(
+                                selected = language == lang,
+                                onClick = { if (!isSwitching) language = lang },
+                                label = { Text(if (flag != null) "$flag $lang" else lang) }
+                            )
+                        }
+                    }
+                }
+            when {
+                isLoading -> Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+                // Filtrando puede no quedar ninguna; sin filtrar, una sola es la que ya se
+                // está viendo y no hay nada que elegir.
+                editions.size <= 1 && language == null ->
+                    Text(stringResource(R.string.book_editions_none))
+                editions.isEmpty() -> Text(stringResource(R.string.book_editions_none_language))
+                else -> LazyColumn(
+                    modifier = Modifier.heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(editions, key = { it.id }) { edition ->
+                        val details = listOfNotNull(
+                            edition.language?.let { lang ->
+                                val flag = com.ferlagod.rocinante.utils.LanguageFlags.flagFor(lang)
+                                if (flag != null) "$flag $lang" else lang
+                            },
+                            edition.format,
+                            edition.pages?.let { stringResource(R.string.book_pages, it.toString()) },
+                            edition.published?.takeIf { it.isNotBlank() }?.take(4)
+                        ).joinToString(" · ")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isSwitching && !edition.isCurrent) {
+                                    switchTo(edition)
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (!edition.coverUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = edition.coverUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.width(40.dp).height(60.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = edition.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                if (details.isNotEmpty()) {
+                                    Text(
+                                        text = details,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                // La edición desde la que se ha abierto la lista se marca en vez
+                                // de ofrecerse: cambiarse a la que ya se tiene no hace nada.
+                                if (edition.isCurrent) {
+                                    Text(
+                                        text = stringResource(R.string.book_edition_current),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSwitching) {
+                Text(stringResource(R.string.progress_btn_cancel))
+            }
+        }
+    )
 }

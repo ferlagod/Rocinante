@@ -316,6 +316,20 @@ interface BookWyrmApi {
         @Field("csrfmiddlewaretoken") csrfToken: String
     ): retrofit2.Response<ResponseBody>
 
+    /**
+     * Cambia la edición del libro por otra del mismo título: la estantería, las fechas de
+     * lectura y la valoración se van con ella, porque en BookWyrm todo eso cuelga de una
+     * edición concreta y no del título.
+     *
+     * @param editionId ID numérico de la edición a la que se cambia.
+     */
+    @FormUrlEncoded
+    @POST("switch-edition/")
+    suspend fun switchEdition(
+        @Field("edition") editionId: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String
+    ): retrofit2.Response<ResponseBody>
+
 
     // POST /favorite/<status_id>
     /**

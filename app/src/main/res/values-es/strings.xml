@@ -101,6 +101,12 @@
     <string name="book_label_started">Empezado</string>
     <string name="book_label_finished">Terminado</string>
     <string name="book_edit_read_dates">Editar fechas de lectura</string>
+    <string name="book_choose_edition">Elegir edición</string>
+    <string name="book_edition_current">Esta edición</string>
+    <string name="book_edition_switched">Cambiado a esta edición</string>
+    <string name="book_editions_none">El libro no tiene más ediciones en la instancia.</string>
+    <string name="book_editions_all_languages">Todas</string>
+    <string name="book_editions_none_language">No hay ediciones en este idioma.</string>
     <string name="book_label_readings">Lecturas</string>
     <string name="book_read_dates_which">¿Qué lectura quieres editar?</string>
     <string name="book_read_dates_new">Otra lectura</string>

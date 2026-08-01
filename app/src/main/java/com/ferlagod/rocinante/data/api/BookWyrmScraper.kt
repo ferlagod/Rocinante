@@ -534,6 +534,139 @@ object BookWyrmScraper {
         }
     }
 
+    // Tope de páginas de ediciones que se recorren. Con las 15 por página de BookWyrm da para
+    // 150 ediciones del mismo libro, muy por encima de lo que tiene ninguno.
+    private const val MAX_EDITION_PAGES = 10
+
+    /**
+     * Una de las ediciones del mismo libro: la danesa, la inglesa, el audiolibro...
+     *
+     * @property id ID numérico, que es lo que espera `switch-edition`.
+     * @property isCurrent Si es la edición desde la que se ha abierto la lista.
+     */
+    data class EditionOption(
+        val id: String,
+        val url: String,
+        val title: String,
+        val coverUrl: String? = null,
+        val language: String? = null,
+        val format: String? = null,
+        val pages: Int? = null,
+        val published: String? = null,
+        val isCurrent: Boolean = false
+    )
+
+    /**
+     * Las ediciones de un libro y los idiomas en los que existe.
+     *
+     * @property languages Todos los idiomas de la obra, los tenga la lista o no: la instancia
+     *   los saca de todas las ediciones a la vez, así que valen para filtrar aunque el
+     *   recuento por páginas se haya dejado alguna por el camino.
+     */
+    data class Editions(
+        val editions: List<EditionOption> = emptyList(),
+        val languages: List<String> = emptyList()
+    )
+
+    /**
+     * Las ediciones del libro, leídas de la página `/book/<obra>/editions`.
+     *
+     * Cuesta una petición aparte, así que no va con el enriquecimiento: se pide solo cuando
+     * alguien abre la lista. Un libro con una sola edición devuelve esa sola, y quien llame
+     * decide si vale la pena enseñar la lista.
+     *
+     * Ojo con las ediciones de más: la instancia las ordena por un ranking con muchos empates
+     * y las sirve de quince en quince, y en dos peticiones seguidas los empates no salen en el
+     * mismo orden, así que al pasar de página se pierde alguna. Por eso está [language]: un
+     * filtro deja el resultado en una sola página y ahí no hay nada que perder.
+     *
+     * @param language Idioma por el que filtrar (tal y como lo escribe la instancia, p. ej.
+     *   "Danish"), o null para pedirlas todas.
+     * @return Las ediciones en el orden en que las da la instancia; vacío si la página no se
+     *   pudo leer o el libro no tiene enlace a sus ediciones.
+     */
+    suspend fun getEditions(
+        api: BookWyrmApi,
+        bookUrl: String,
+        language: String? = null
+    ): Editions = withContext(Dispatchers.IO) {
+        try {
+            val current = canonicalBookUrl(bookUrl)
+            val localUrl = resolveLocalBookUrl(api, current) ?: current
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            fun absolute(href: String): String =
+                if (href.startsWith("http")) href else baseUrl.trimEnd('/') + href
+
+            // El enlace a las ediciones está en la propia página del libro y lleva el id de la
+            // obra, que no es el del ejemplar: se saca de ahí en vez de componerlo a mano.
+            val bookHtml = fetchBookPage(api, localUrl, baseUrl)
+            if (bookHtml.isEmpty()) return@withContext Editions()
+            val editionsHref = org.jsoup.Jsoup.parse(bookHtml)
+                .selectFirst("a[href~=/editions/?$]")
+                ?.attr("href")?.trim()?.ifEmpty { null }
+                ?: return@withContext Editions()
+            val firstHref = if (language.isNullOrBlank()) editionsHref else {
+                editionsHref + "?language=" + java.net.URLEncoder.encode(language, "UTF-8")
+            }
+
+            // La instancia pagina las ediciones, y de un libro muy publicado hay varias páginas:
+            // quedarse con la primera escondería justo la edición que se busca. Se siguen los
+            // «siguiente» hasta que se acaben, con un tope por si alguna vez se enredan.
+            val pages = mutableListOf<org.jsoup.nodes.Document>()
+            var nextHref: String? = firstHref
+            while (nextHref != null && pages.size < MAX_EDITION_PAGES) {
+                val html = fetchHtmlWithRedirects(api, absolute(nextHref), baseUrl)
+                if (html.isEmpty()) break
+                val page = org.jsoup.Jsoup.parse(html)
+                pages += page
+                nextHref = page.selectFirst("a.pagination-next:not(.is-disabled)[href]")
+                    ?.attr("href")?.trim()?.ifEmpty { null }
+            }
+            if (pages.isEmpty()) return@withContext Editions()
+
+            // Los idiomas del desplegable de filtros: la instancia los saca de todas las
+            // ediciones de la obra a la vez, así que están todos aunque la lista no lo esté.
+            val languages = pages.first().select("select#id_language option[value]")
+                .mapNotNull { it.attr("value").trim().ifEmpty { null } }
+                .distinct()
+
+            // Cada edición es una fila con su enlace, su portada y los mismos microdatos que
+            // la ficha (formato, páginas, idioma, fecha), que son los que la distinguen.
+            val editions = pages.flatMap { it.select("div.columns.is-gapless") }.mapNotNull { row ->
+                val link = row.selectFirst("h2 a[href*=/book/]")
+                    ?: row.selectFirst("a[href*=/book/]")
+                    ?: return@mapNotNull null
+                val url = canonicalBookUrl(absolute(link.attr("href").trim()))
+                val id = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(url)
+                if (id.isBlank()) return@mapNotNull null
+                val title = link.text().trim().ifEmpty {
+                    row.selectFirst("h2")?.text()?.trim().orEmpty()
+                }
+                if (title.isEmpty()) return@mapNotNull null
+                EditionOption(
+                    id = id,
+                    url = url,
+                    title = title,
+                    coverUrl = row.selectFirst("img.book-cover")?.attr("src")
+                        ?.trim()?.ifEmpty { null }?.let { absolute(it) },
+                    language = row.selectFirst("meta[itemprop=inLanguage]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    format = row.selectFirst("meta[itemprop=bookFormat]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    pages = row.selectFirst("meta[itemprop=numberOfPages]")
+                        ?.attr("content")?.trim()?.toIntOrNull(),
+                    published = row.selectFirst("meta[itemprop=datePublished]")
+                        ?.attr("content")?.trim()?.ifEmpty { null },
+                    isCurrent = url == canonicalBookUrl(localUrl)
+                )
+            }.distinctBy { it.id }
+            Editions(editions = editions, languages = languages)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            Editions()
+        }
+    }
+
     /**
      * Una lectura (readthrough) ya registrada en la página del libro.
      * Las fechas vienen en ISO (yyyy-MM-dd) y cualquiera de las dos puede faltar.
