@@ -616,13 +616,16 @@ fun ShelfNativeDetailScreen(
                 if (enriched != null) {
                     working[id] = enriched
                     enrichment = working.toMap()
+                    // Se guarda libro a libro y no el mapa entero: la ficha también escribe en
+                    // esta caché mientras el resincronizado avanza, y volcar aquí una copia
+                    // hecha antes borraría lo que acabase de apuntar. De paso, lo ya leído
+                    // queda guardado aunque se salga a mitad.
+                    dataCache.mergeEnrichment(enriched)
                 }
                 enrichDone++
-                dataCache.saveEnrichment(working)
                 kotlinx.coroutines.delay(250)
             }
         } finally {
-            dataCache.saveEnrichment(working)
             isEnriching = false
         }
     }

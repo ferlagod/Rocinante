@@ -255,6 +255,21 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Guarda los datos de un solo libro sin tocar los de los demás.
+     *
+     * La ficha de un libro se abre desde la búsqueda, la actividad y las estanterías, pero solo
+     * la estantería lleva el mapa entero en memoria. Con esto, lo que se lee al abrir un libro
+     * cualquiera queda cacheado para todas: un libro recién puesto en una estantería desde la
+     * búsqueda ya trae autor, idioma y serie cuando se entra en «Mis libros», en vez de
+     * aparecer pelado hasta el siguiente resincronizado.
+     */
+    suspend fun mergeEnrichment(entry: com.ferlagod.rocinante.data.model.BookEnrichment) {
+        val current = loadEnrichment()
+        current[entry.bookId] = entry
+        saveEnrichment(current)
+    }
+
+    /**
      * Carga los usuarios sugeridos de la caché.
      */
     suspend fun loadSuggestedUsers(): List<com.ferlagod.rocinante.data.model.SuggestedUser>? = withContext(Dispatchers.IO) {

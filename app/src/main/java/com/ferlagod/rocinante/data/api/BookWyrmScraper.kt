@@ -132,6 +132,27 @@ object BookWyrmScraper {
     }
 
     /**
+     * URL limpia y completa de un libro, sea cual sea lo que traiga cada pantalla: la
+     * estantería da la URL entera, la búsqueda solo el número, y cualquiera de las dos puede
+     * venir con el sufijo del título («/s/…») o con «.json».
+     *
+     * Es además la clave con la que se guarda el enriquecimiento, así que lo que se lee
+     * abriendo un libro desde la búsqueda lo encuentra después la estantería.
+     *
+     * @return La URL normalizada; lo recibido tal cual si aún no se sabe de qué instancia se
+     *   trata (sin sesión no hay forma de completar un identificador suelto).
+     */
+    fun canonicalBookUrl(bookUrl: String): String {
+        val full = if (bookUrl.startsWith("http")) {
+            bookUrl
+        } else {
+            val host = NetworkClient.lastInstanceHost?.takeIf { it.isNotBlank() } ?: return bookUrl
+            "https://$host/book/${com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(bookUrl)}"
+        }
+        return full.substringBefore("/s/").removeSuffix(".json").trimEnd('/')
+    }
+
+    /**
      * Resuelve un libro federado a su URL local siguiendo la redirección de resolve-book.
      *
      * Un libro que ya es de la instancia se devuelve tal cual, sin preguntar: resolve-book no
@@ -140,6 +161,9 @@ object BookWyrmScraper {
      * muchas: los libros de las propias estanterías son todos locales.
      */
     suspend fun resolveLocalBookUrl(api: BookWyrmApi, bookUrl: String): String? {
+        // Se normaliza a la entrada: la búsqueda llega con el identificador suelto («2350350»),
+        // que sin completar no es una URL y hace fallar todo lo que viene detrás.
+        @Suppress("NAME_SHADOWING") val bookUrl = canonicalBookUrl(bookUrl)
         if (isLocalBookUrl(bookUrl)) return bookUrl
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
@@ -440,7 +464,10 @@ object BookWyrmScraper {
                 ?.text()?.trim()?.toIntOrNull()
 
             com.ferlagod.rocinante.data.model.BookEnrichment(
-                bookId = bookUrl,
+                // Clave normalizada, no lo que trajera quien llamó: así lo que se lee abriendo
+                // un libro desde la búsqueda lo encuentra luego la estantería, que lo tiene
+                // apuntado con su URL completa.
+                bookId = canonicalBookUrl(localUrl),
                 authorName = authorName,
                 rating = rating,
                 finished = finished,

@@ -282,6 +282,13 @@ fun BookDetailsDialog(
         val fresh = runCatching { BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey) }.getOrNull()
         if (fresh != null) {
             enrichment = fresh
+            // Se cachea desde aquí, y no solo avisando a quien abrió la ficha: por la búsqueda
+            // y la actividad pasan los libros que aún no están en ninguna estantería, que son
+            // justo los que se acaban de añadir. Guardado ya, «Mis libros» los enseña completos
+            // sin volver a leer su página.
+            runCatching {
+                com.ferlagod.rocinante.data.local.TimelineCache(context).mergeEnrichment(fresh)
+            }
             onEnrichmentUpdated?.invoke(fresh)
         }
     }
