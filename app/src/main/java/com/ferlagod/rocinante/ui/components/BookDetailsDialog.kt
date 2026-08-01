@@ -522,22 +522,50 @@ fun BookDetailsDialog(
                         }
                     )
                 },
+                // Acción principal del libro según dónde esté: ponerlo en una estantería,
+                // empezar a leerlo o anotar por dónde va. Va abajo del todo y fuera de las
+                // pestañas, porque es lo que se quiere hacer con el libro se esté mirando la
+                // sinopsis, las reseñas o los datos; antes solo salía al final de «Diverse»,
+                // donde había que ir a buscarla desplazándose. Los tres casos se excluyen
+                // entre sí: sin estantería no hay ni lectura ni progreso.
                 bottomBar = {
-                    if (canShelve) {
+                    val startReading = currentShelf == "to-read"
+                    val needsProgress = currentShelf == "reading" &&
+                        readingProgress == null && !isLoadingProgress
+                    if (canShelve || startReading || needsProgress) {
                         Surface(tonalElevation = 3.dp) {
                             Button(
-                                onClick = { showShelfPicker = true },
+                                onClick = {
+                                    when {
+                                        canShelve -> showShelfPicker = true
+                                        startReading -> moveToShelf(
+                                            "reading",
+                                            context.getString(R.string.shelf_chip_reading)
+                                        )
+                                        else -> showProgressDialog = true
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 24.dp, vertical = 12.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.BookmarkBorder,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
+                                if (canShelve) {
+                                    Icon(
+                                        imageVector = Icons.Filled.BookmarkBorder,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                                Text(
+                                    text = stringResource(
+                                        when {
+                                            canShelve -> R.string.book_add_to_shelf
+                                            startReading -> R.string.book_start_reading
+                                            else -> R.string.book_update_progress
+                                        }
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = stringResource(R.string.book_add_to_shelf))
                             }
                         }
                     }
@@ -869,26 +897,8 @@ fun BookDetailsDialog(
                                 }
                             }
 
-                            // Acción contextual según el estante:
-                            // - «Pendiente»: empezar a leer.
-                            // - «Leyendo» sin barra de progreso todavía: actualizar progreso.
-                            if (currentShelf == "to-read") {
-                                Button(
-                                    onClick = {
-                                        moveToShelf("reading", context.getString(R.string.shelf_chip_reading))
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.book_start_reading))
-                                }
-                            } else if (currentShelf == "reading" && readingProgress == null && !isLoadingProgress) {
-                                Button(
-                                    onClick = { showProgressDialog = true },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.book_update_progress))
-                                }
-                            }
+                            // La acción contextual del libro (empezar a leer / anotar progreso)
+                            // vive en la barra de abajo del diálogo, visible en las tres pestañas.
 
                             // Progreso de lectura (si está leyendo)
                             if (isLoadingProgress && readingProgress == null) {
