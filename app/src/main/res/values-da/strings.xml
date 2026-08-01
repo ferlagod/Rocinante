@@ -300,6 +300,9 @@
     <string name="activity_type_add">Tilføjede en bog</string>
     <string name="profile_who_to_follow">Hvem du kan følge</string>
     <string name="changelog_title">Nyheder i %1$s</string>
+    <string name="news_card_title">Nyt i %1$s</string>
+    <string name="news_card_body">Se hvad der er kommet til i denne version</string>
+    <string name="news_card_dismiss">Skjul</string>
     <string name="changelog_text_v1_0_3">🔹 Direkte adgang til bogdetaljer ved at trykke på omslaget i Aktivitet.
 🔹 Mulighed for at følge brugere direkte fra anmeldelser.
 🔹 Det er nu muligt at svare på og synes godt om ActivityPub-indlæg.

@@ -61,6 +61,13 @@ data class SettingsData(
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
     val lastChangelogVersion: String = "",
+    /**
+     * Versión cuyas novedades ya se han dado por vistas desde el aviso de las notificaciones.
+     * Va aparte de [lastChangelogVersion] a propósito: ese lo gasta el diálogo que sale al
+     * abrir la app, y si fuera el mismo el aviso desaparecería en cuanto se cerrase, que es
+     * justo lo que se quiere evitar.
+     */
+    val newsSeenVersion: String = "",
     /** Orden y visibilidad de los bloques del perfil, codificados por [ProfileLayout]. */
     val profileLayout: String = "",
     /** Orden y visibilidad de las estanterías de «Mis libros», codificados por [ShelfLayout]. */
@@ -83,6 +90,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_REMINDER_HOUR = androidx.datastore.preferences.core.intPreferencesKey("reminder_hour")
         private val KEY_REMINDER_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("reminder_minute")
         private val KEY_LAST_CHANGELOG_VERSION = stringPreferencesKey("last_changelog_version")
+        private val KEY_NEWS_SEEN_VERSION = stringPreferencesKey("news_seen_version")
         private val KEY_PROFILE_LAYOUT = stringPreferencesKey("profile_layout")
         private val KEY_SHELF_LAYOUT = stringPreferencesKey("shelf_layout")
         private val KEY_SHELF_ALIGNMENT = stringPreferencesKey("shelf_alignment")
@@ -112,6 +120,7 @@ class SettingsPreferences(private val context: Context) {
             val reminderHour = prefs[KEY_REMINDER_HOUR] ?: 20
             val reminderMinute = prefs[KEY_REMINDER_MINUTE] ?: 0
             val lastChangelogVersion = prefs[KEY_LAST_CHANGELOG_VERSION] ?: ""
+            val newsSeenVersion = prefs[KEY_NEWS_SEEN_VERSION] ?: ""
             val profileLayout = prefs[KEY_PROFILE_LAYOUT] ?: ""
             val shelfLayout = prefs[KEY_SHELF_LAYOUT] ?: ""
             val shelfAlignment = prefs[KEY_SHELF_ALIGNMENT] ?: ""
@@ -123,6 +132,7 @@ class SettingsPreferences(private val context: Context) {
                 reminderHour,
                 reminderMinute,
                 lastChangelogVersion,
+                newsSeenVersion,
                 profileLayout,
                 shelfLayout,
                 shelfAlignment
@@ -209,6 +219,15 @@ class SettingsPreferences(private val context: Context) {
     suspend fun setLastChangelogVersion(version: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_LAST_CHANGELOG_VERSION] = version
+        }
+    }
+
+    /**
+     * Da por vistas las novedades de [version] en el aviso de las notificaciones.
+     */
+    suspend fun setNewsSeenVersion(version: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_NEWS_SEEN_VERSION] = version
         }
     }
 }

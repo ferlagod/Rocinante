@@ -40,6 +40,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -138,35 +140,24 @@ fun RocinanteApp() {
     val coroutineScope = rememberCoroutineScope()
     val settingsPreferences = remember { com.ferlagod.rocinante.data.local.SettingsPreferences(context) }
     var showChangelog by remember { mutableStateOf(false) }
-    val currentVersion = "1.2.2"
 
     LaunchedEffect(Unit) {
         val prefs = settingsPreferences.settingsFlow.first()
-        if (prefs.lastChangelogVersion != currentVersion) {
+        if (prefs.lastChangelogVersion != com.ferlagod.rocinante.ui.components.Changelog.CURRENT_VERSION) {
             showChangelog = true
         }
     }
 
+    // Al abrir la app tras actualizar. Las mismas novedades se pueden volver a leer luego
+    // desde el aviso de las notificaciones.
     if (showChangelog) {
-        AlertDialog(
-            onDismissRequest = {
+        com.ferlagod.rocinante.ui.components.ChangelogDialog(
+            onDismiss = {
                 showChangelog = false
                 coroutineScope.launch {
-                    settingsPreferences.setLastChangelogVersion(currentVersion)
-                }
-            },
-            title = { Text(text = stringResource(R.string.changelog_title, currentVersion), fontWeight = FontWeight.Bold) },
-            text = { 
-                Text(stringResource(R.string.changelog_text_v1_2_2))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showChangelog = false
-                    coroutineScope.launch {
-                        settingsPreferences.setLastChangelogVersion(currentVersion)
-                    }
-                }) {
-                    Text(stringResource(android.R.string.ok))
+                    settingsPreferences.setLastChangelogVersion(
+                        com.ferlagod.rocinante.ui.components.Changelog.CURRENT_VERSION
+                    )
                 }
             }
         )

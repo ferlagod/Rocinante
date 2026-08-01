@@ -46,6 +46,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -92,6 +98,36 @@ fun NotificationsTab(
     val context = LocalContext.current
     var isClearing by remember { mutableStateOf(false) }
 
+    // Aviso de novedades de la versión. Va aquí y no dentro de la lista de notificaciones: esa
+    // es la del servidor —el botón de vaciar la borra entera— y una tarjeta con avatar y
+    // remitente haría pasar por persona lo que dice la propia app.
+    val settingsPreferences = remember(context) {
+        com.ferlagod.rocinante.data.local.SettingsPreferences(context)
+    }
+    val settingsState by settingsPreferences.settingsFlow.collectAsState(
+        initial = com.ferlagod.rocinante.data.local.SettingsData()
+    )
+    val coroutineScope = rememberCoroutineScope()
+    var showChangelog by remember { mutableStateOf(false) }
+    val showNews = settingsState.newsSeenVersion !=
+        com.ferlagod.rocinante.ui.components.Changelog.CURRENT_VERSION
+
+    fun markNewsSeen() {
+        coroutineScope.launch {
+            settingsPreferences.setNewsSeenVersion(
+                com.ferlagod.rocinante.ui.components.Changelog.CURRENT_VERSION
+            )
+        }
+    }
+
+    // Leerlas no las quita de en medio: el aviso se va cuando se dice que se vaya, con la ×.
+    // Así se pueden volver a abrir las veces que haga falta.
+    if (showChangelog) {
+        com.ferlagod.rocinante.ui.components.ChangelogDialog(
+            onDismiss = { showChangelog = false }
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
             if (state is NotificationsState.Success && (state as NotificationsState.Success).notifications.isNotEmpty()) {
@@ -130,6 +166,13 @@ fun NotificationsTab(
             onRefresh = { viewModel.refresh() },
             modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+            if (showNews) {
+                AppNewsCard(
+                    onOpen = { showChangelog = true },
+                    onDismiss = { markNewsSeen() }
+                )
+            }
             when (val s = state) {
                 is NotificationsState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -177,6 +220,60 @@ fun NotificationsTab(
                         }
                     }
                 }
+            }
+            }
+        }
+    }
+}
+
+/**
+ * Aviso de que la versión instalada trae novedades, arriba de las notificaciones.
+ *
+ * El diálogo que sale al actualizar se ve una sola vez y quien lo cierra sin leerlo no vuelve a
+ * dar con él; desde aquí se puede leer cuando se quiera, y las veces que haga falta. Solo la ×
+ * lo quita, y entonces no vuelve hasta la versión siguiente.
+ *
+ * @param onOpen Abrir las novedades, que siguen aquí después de leerlas.
+ * @param onDismiss Quitar el aviso.
+ */
+@Composable
+private fun AppNewsCard(onOpen: () -> Unit, onDismiss: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+            .clickable { onOpen() }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(
+                        R.string.news_card_title,
+                        com.ferlagod.rocinante.ui.components.Changelog.CURRENT_VERSION
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.news_card_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.news_card_dismiss)
+                )
             }
         }
     }

@@ -301,6 +301,9 @@
     <string name="activity_type_add">Añadió un libro</string>
     <string name="profile_who_to_follow">A quien seguir</string>
     <string name="changelog_title">Novedades de la %1$s</string>
+    <string name="news_card_title">Novedades de %1$s</string>
+    <string name="news_card_body">Mira lo que trae esta versión</string>
+    <string name="news_card_dismiss">Descartar</string>
     <string name="changelog_text_v1_0_3">🔹 Acceso directo a la ficha del libro tocando su portada en Actividad.
 🔹 Opción de seguir usuarios directamente desde las reseñas.
 🔹 Ya es posible responder y dar \"me gusta\" a publicaciones de ActivityPub.
