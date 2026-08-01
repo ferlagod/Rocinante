@@ -1259,8 +1259,14 @@ fun ProfileTab(
     // que se abre desde las filas de portadas.
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
 
+    // La estantería de leídos se guarda además tal cual: de ella salen los libros a los que
+    // les faltan las páginas, que se pueden poner desde el propio perfil.
+    var readBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
+    var showMissingPages by remember { mutableStateOf(false) }
+
     LaunchedEffect(refreshTrigger) {
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
+        readBooks = readShelf
         val enrichmentData = dataCache.loadEnrichment()
         readingStats = if (readShelf.isEmpty()) {
             null
@@ -1274,6 +1280,27 @@ fun ProfileTab(
         topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
             books = readShelf,
             enrichment = enrichmentData
+        )
+    }
+
+    if (showMissingPages) {
+        com.ferlagod.rocinante.ui.components.MissingPagesDialog(
+            books = readBooks,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            // Guardado en la instancia, se apunta también en la copia local: así las cifras
+            // dejan de decir que faltan libros sin esperar a releer la estantería, y cuando no
+            // queda ninguno la advertencia desaparece sola.
+            onSaved = { bookId, pages ->
+                val updated = readBooks.map { if (it.id == bookId) it.copy(pages = pages) else it }
+                readBooks = updated
+                coroutineScope.launch {
+                    dataCache.saveShelfBooks("read", updated)
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingPages = false }
         )
     }
 
@@ -1567,7 +1594,8 @@ fun ProfileTab(
                             com.ferlagod.rocinante.ui.components.ReadingStatsCard(
                                 stats = stats,
                                 currentYear = currentYear,
-                                modifier = Modifier.padding(top = 12.dp)
+                                modifier = Modifier.padding(top = 12.dp),
+                                onFixMissingPages = { showMissingPages = true }
                             )
                         }
                     }

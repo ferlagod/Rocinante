@@ -403,6 +403,10 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_stats_books">Bøger</string>
     <string name="profile_stats_this_year">I år</string>
     <string name="profile_stats_pages">Sider</string>
+    <string name="missing_pages_title">%1$d bøger uden sideantal</string>
+    <string name="missing_pages_explanation">Sideantallet hører til bogen, ikke til dig: det, du skriver her, gemmes på instansen, og alle ser det. Der gemmes én bog ad gangen.</string>
+    <string name="missing_pages_save">Gem</string>
+    <string name="missing_pages_failed">Kunne ikke gemme “%1$s”</string>
     <string name="profile_stats_per_year">Bøger pr. år</string>
     <string name="profile_stats_chart_desc">Bøger pr. år: %1$s</string>
     <plurals name="profile_stats_missing_dates">

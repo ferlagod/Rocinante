@@ -629,6 +629,114 @@ object BookWyrmScraper {
     }
 
     /**
+     * El formulario de edición de un libro, con todos sus campos tal y como los tiene la
+     * instancia y en el mismo orden.
+     *
+     * @property actionUrl Adónde se envía.
+     * @property fields Pares nombre/valor, con repeticiones incluidas: idiomas, temas y
+     *   editoriales son varios campos con el mismo nombre.
+     */
+    data class BookEditForm(
+        val actionUrl: String,
+        val fields: List<Pair<String, String>>
+    )
+
+    /**
+     * Trae el formulario de edición de un libro.
+     *
+     * @return null si la instancia no lo da: hace falta permiso para editar libros, y sin él
+     *   la página responde 403.
+     */
+    suspend fun getBookEditForm(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): BookEditForm? = withContext(Dispatchers.IO) {
+        try {
+            val current = canonicalBookUrl(bookUrl)
+            val localUrl = resolveLocalBookUrl(api, current) ?: current
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val editUrl = "${localUrl.trimEnd('/')}/edit"
+            val html = fetchHtmlWithRedirects(api, editUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+            val doc = org.jsoup.Jsoup.parse(html)
+            // El formulario bueno es el que trae el número de páginas; la página tiene además
+            // el de buscar y el de la portada.
+            val form = doc.select("form").firstOrNull { it.selectFirst("[name=pages]") != null }
+                ?: return@withContext null
+
+            val fields = mutableListOf<Pair<String, String>>()
+            for (el in form.select("input[name], select[name], textarea[name]")) {
+                val name = el.attr("name").trim()
+                if (name.isEmpty()) continue
+                when (el.tagName()) {
+                    "input" -> {
+                        val type = el.attr("type").lowercase().ifEmpty { "text" }
+                        // El fichero de la portada no se puede reenviar, y sin él la instancia
+                        // deja la que ya había. Los botones no son datos.
+                        if (type in setOf("file", "submit", "button", "image", "reset")) continue
+                        // Una casilla sin marcar no se envía; enviarla marcaría cosas como
+                        // «quitar este autor».
+                        if (type in setOf("checkbox", "radio") && !el.hasAttr("checked")) continue
+                        fields += name to el.attr("value")
+                    }
+                    "textarea" -> fields += name to el.wholeText()
+                    "select" -> {
+                        val chosen = el.select("option[selected]").firstOrNull()
+                            ?: el.select("option").firstOrNull()
+                        if (chosen != null) {
+                            fields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
+                        }
+                    }
+                }
+            }
+            if (fields.none { it.first == "pages" }) return@withContext null
+
+            val action = form.attr("action").trim().ifEmpty { editUrl }
+            BookEditForm(
+                actionUrl = if (action.startsWith("http")) action else baseUrl.trimEnd('/') + action,
+                fields = fields
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /**
+     * Pone el número de páginas de un libro.
+     *
+     * El número de páginas es del libro, no de quien lo lee, así que esto cambia la ficha para
+     * toda la instancia. Y el formulario de BookWyrm es un ModelForm: lo que no se envíe se
+     * guarda vacío, o sea que enviar solo las páginas borraría el resto de la ficha. Por eso se
+     * devuelve entero, con un único campo cambiado, que es justo lo que hace el navegador.
+     *
+     * @return true si la instancia lo guardó. Un formulario con errores se devuelve a sí mismo
+     *   sin guardar nada, y eso se reconoce porque la respuesta sigue estando en /edit.
+     */
+    suspend fun setBookPages(
+        api: BookWyrmApi,
+        bookUrl: String,
+        pages: Int
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val form = getBookEditForm(api, bookUrl) ?: return@withContext false
+            val body = okhttp3.FormBody.Builder().apply {
+                for ((name, value) in form.fields) {
+                    add(name, if (name == "pages") pages.toString() else value)
+                }
+            }.build()
+            val response = api.postForm(form.actionUrl, body)
+            // Guardado, la instancia redirige a la ficha del libro; el cliente de la app no
+            // sigue las redirecciones, así que un 302 es que se guardó. Un formulario con algo
+            // mal se devuelve a sí mismo con un 200 y no ha guardado nada.
+            response.code() == 302
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            false
+        }
+    }
+
+    /**
      * Una lectura (readthrough) ya registrada en la página del libro.
      * Las fechas vienen en ISO (yyyy-MM-dd) y cualquiera de las dos puede faltar.
      */

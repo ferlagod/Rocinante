@@ -21,6 +21,7 @@ package com.ferlagod.rocinante.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -77,7 +79,10 @@ import kotlin.math.roundToInt
 fun ReadingStatsCard(
     stats: ReadingStats,
     currentYear: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer con los libros a los que les faltan las páginas. Sin esto la advertencia se
+    // queda en advertencia, que es como estaba.
+    onFixMissingPages: (() -> Unit)? = null
 ) {
     val numberFormat = remember { NumberFormat.getIntegerInstance() }
 
@@ -120,33 +125,43 @@ fun ReadingStatsCard(
 
         // Los datos que faltan se dicen, no se disimulan: si no, las cifras aparentan ser
         // totales cuando en realidad solo suman los libros que traían el dato.
-        val caveats = buildList {
-            if (stats.booksWithoutFinishDate > 0) {
-                add(
-                    pluralStringResource(
-                        R.plurals.profile_stats_missing_dates,
-                        stats.booksWithoutFinishDate,
-                        stats.booksWithoutFinishDate
+        if (stats.booksWithoutFinishDate > 0 || stats.booksWithoutPages > 0) {
+            Column(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (stats.booksWithoutFinishDate > 0) {
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.profile_stats_missing_dates,
+                            stats.booksWithoutFinishDate,
+                            stats.booksWithoutFinishDate
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
-            }
-            if (stats.booksWithoutPages > 0) {
-                add(
-                    pluralStringResource(
-                        R.plurals.profile_stats_missing_pages,
-                        stats.booksWithoutPages,
-                        stats.booksWithoutPages
+                }
+                if (stats.booksWithoutPages > 0) {
+                    // Se puede hacer algo al respecto, así que el propio aviso lleva a la lista
+                    // de esos libros: no hace falta un botón aparte diciendo lo mismo.
+                    val canFix = onFixMissingPages != null
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.profile_stats_missing_pages,
+                            stats.booksWithoutPages,
+                            stats.booksWithoutPages
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (canFix) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = if (canFix) {
+                            Modifier.clickable { onFixMissingPages!!() }
+                        } else {
+                            Modifier
+                        }
                     )
-                )
+                }
             }
-        }
-        if (caveats.isNotEmpty()) {
-            Text(
-                text = caveats.joinToString("\n"),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-            )
         }
     }
 }

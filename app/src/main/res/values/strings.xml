@@ -396,6 +396,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_stats_books">Books</string>
     <string name="profile_stats_this_year">This year</string>
     <string name="profile_stats_pages">Pages</string>
+    <string name="missing_pages_title">%1$d books without page count</string>
+    <string name="missing_pages_explanation">The page count belongs to the book, not to you: what you write here is saved on the instance and everyone sees it. Saved one by one.</string>
+    <string name="missing_pages_save">Save</string>
+    <string name="missing_pages_failed">Could not save “%1$s”</string>
     <string name="profile_stats_per_year">Books per year</string>
     <string name="profile_stats_chart_desc">Books per year: %1$s</string>
     <plurals name="profile_stats_missing_dates">

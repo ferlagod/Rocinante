@@ -414,7 +414,21 @@ interface BookWyrmApi {
      */
     @GET
     @Headers("Accept: text/html")
-    suspend fun getRawHtmlResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
+    suspend fun getRawHtmlResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
+
+    /**
+     * Envía un formulario entero tal y como lo haría el navegador.
+     *
+     * Los formularios de BookWyrm que hay que devolver completos —el de editar un libro tiene
+     * veintisiete campos— no caben en @Field: uno solo que falte lo guarda vacío, así que el
+     * cuerpo se compone aparte, campo a campo, incluidos los que se repiten.
+     */
+    @POST
+    @Headers("Accept: text/html")
+    suspend fun postForm(
+        @Url fullUrl: String,
+        @Body body: okhttp3.RequestBody
+    ): retrofit2.Response<ResponseBody>
 
     /**
      * Limpia el historial de notificaciones leídas.
