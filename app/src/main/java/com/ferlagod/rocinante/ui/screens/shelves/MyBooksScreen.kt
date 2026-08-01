@@ -374,13 +374,10 @@ fun ShelfNativeDetailScreen(
 
             val response = api.getShelfData(shelfJsonUrl)
             val fetchedItems = response.orderedItems ?: emptyList()
-            if (fetchedItems.isEmpty() || fetchedItems.size < 10) {
-                hasMorePages = false
-            } else {
-                hasMorePages = true
-            }
-            
+
             if (currentPage == 1) {
+                // Con una sola página no se sabe todavía si hay más: lo dirá la siguiente.
+                hasMorePages = fetchedItems.isNotEmpty()
                 books = fetchedItems
                 // Guardar aquí la primera página truncaría una lista completa ya cacheada
                 // (y con ella las estadísticas del perfil) hasta que terminase la paginación.
@@ -392,6 +389,14 @@ fun ShelfNativeDetailScreen(
                 // para evitar repeticiones al re-ejecutarse el efecto.
                 val existingIds = books.mapNotNull { it.id }.toSet()
                 val newItems = fetchedItems.filter { it.id == null || it.id !in existingIds }
+                // Que se acabó la estantería no lo dice el tamaño de la página sino que ya no
+                // llegue nada nuevo. Pedida una página que no existe, la instancia devuelve la
+                // última otra vez; y como la última de esta estantería traía justo diez libros,
+                // «menos de diez es la última» no se cumplía nunca y se pedía la misma página
+                // una y otra vez. La estantería no llegaba a darse por completa, así que la
+                // lista nueva no llegaba a la pantalla y el relleno de datos por libro, que
+                // espera a que termine la paginación, no empezaba nunca.
+                hasMorePages = newItems.isNotEmpty()
                 books = books + newItems
             }
             errorMessage = null
@@ -429,7 +434,10 @@ fun ShelfNativeDetailScreen(
     // Cargamos todas las páginas de la estantería (son pocas y personales). Es necesario
     // para ordenar y enriquecer la estantería completa, ya que el .json ignora ?sort=.
     LaunchedEffect(hasMorePages, isPaginating, isLoading, isNetworkRefreshed, currentPage) {
-        if (hasMorePages && !isPaginating && !isLoading && isNetworkRefreshed) {
+        // El tope es una red de seguridad, no un límite pensado: con diez o quince libros por
+        // página son miles, muy por encima de cualquier estantería, y evita que una respuesta
+        // rara de la instancia vuelva a dejar la app pidiendo páginas sin parar.
+        if (hasMorePages && !isPaginating && !isLoading && isNetworkRefreshed && currentPage < 200) {
             currentPage++
         }
     }
