@@ -99,6 +99,7 @@ import com.ferlagod.rocinante.data.api.NetworkClient
 import com.ferlagod.rocinante.data.model.ShelfBookItem
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Modelo de datos optimizado para la vista de estanterías (Shelves).
@@ -329,6 +330,9 @@ fun ShelfNativeDetailScreen(
     // cacheados localmente. Clave = ShelfBookItem.id.
     var enrichment by remember { mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap()) }
     var isEnriching by remember { mutableStateOf(false) }
+    // Solo un recorrido de enriquecimiento a la vez: el de toda la estantería y el de un
+    // libro suelto escriben en la misma caché.
+    val enrichLock = remember { kotlinx.coroutines.sync.Mutex() }
     var enrichDone by remember { mutableStateOf(0) }
     var enrichTotal by remember { mutableStateOf(0) }
     // Se incrementa al pedir un resincronizado manual para forzar volver a obtener todo.
@@ -448,30 +452,38 @@ fun ShelfNativeDetailScreen(
     // datos que faltan libro a libro, de forma secuencial y suave, mostrando una barra de
     // progreso. Al terminar queda todo cacheado y las siguientes aperturas son inmediatas.
     LaunchedEffect(books, hasMorePages, resyncTrigger) {
-        if (books.isEmpty() || hasMorePages || isEnriching) return@LaunchedEffect
-        val ids = books.mapNotNull { it.id }
-        val snapshot = enrichment
-        val missing = ids.filter { it !in snapshot }
-        if (missing.isEmpty()) return@LaunchedEffect
+        if (books.isEmpty() || hasMorePages) return@LaunchedEffect
+        // El candado, y no la bandera de la barra de progreso, es lo que impide que dos
+        // recorridos se pisen. Mirar la bandera dejaba la estantería a medio rellenar: abrir un
+        // libro nada más entrar la levanta para su propio refresco, y el recorrido que iba a
+        // empezar se daba media vuelta y no volvía; lo mismo al pedir «actualizar datos»
+        // mientras uno estaba en marcha, que además cancelaba el que había. Ahora el segundo
+        // espera al primero, y como se recuenta lo que falta al entrar, no rehace su trabajo.
+        enrichLock.withLock {
+            val ids = books.mapNotNull { it.id }
+            val snapshot = enrichment
+            val missing = ids.filter { it !in snapshot }
+            if (missing.isEmpty()) return@withLock
 
-        isEnriching = true
-        enrichDone = 0
-        enrichTotal = missing.size
-        val working = snapshot.toMutableMap()
-        try {
-            for (id in missing) {
-                val enriched = BookWyrmScraper.scrapeBookEnrichment(api, id)
-                if (enriched != null) {
-                    working[id] = enriched
-                    enrichment = working.toMap()
+            isEnriching = true
+            enrichDone = 0
+            enrichTotal = missing.size
+            val working = snapshot.toMutableMap()
+            try {
+                for (id in missing) {
+                    val enriched = BookWyrmScraper.scrapeBookEnrichment(api, id)
+                    if (enriched != null) {
+                        working[id] = enriched
+                        enrichment = working.toMap()
+                    }
+                    enrichDone++
+                    dataCache.saveEnrichment(working)
+                    kotlinx.coroutines.delay(250)
                 }
-                enrichDone++
+            } finally {
                 dataCache.saveEnrichment(working)
-                kotlinx.coroutines.delay(250)
+                isEnriching = false
             }
-        } finally {
-            dataCache.saveEnrichment(working)
-            isEnriching = false
         }
     }
 
@@ -684,19 +696,32 @@ fun ShelfNativeDetailScreen(
 
                                             // Oportunista: refrescamos los datos enriquecidos de este libro con la
                                             // barra de progreso etiquetada (1/1), para que se vea qué está pasando.
-                                            if (!isEnriching) {
+                                            // La barra 1/1 solo si no hay un recorrido en
+                                            // marcha, para no pisarle la suya; el refresco de
+                                            // este libro se hace igualmente.
+                                            val ownProgress = !isEnriching
+                                            if (ownProgress) {
                                                 isEnriching = true
                                                 enrichDone = 0
                                                 enrichTotal = 1
-                                                try {
-                                                    BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
-                                                        val updated = enrichment.toMutableMap().apply { put(bookUrl, enriched) }
-                                                        enrichment = updated
-                                                        dataCache.saveEnrichment(updated)
+                                            }
+                                            try {
+                                                BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
+                                                    enrichment = enrichment.toMutableMap()
+                                                        .apply { put(bookUrl, enriched) }
+                                                    // Solo este libro: volcar el mapa entero
+                                                    // borraría lo que el recorrido acabara de
+                                                    // guardar mientras tanto.
+                                                    enrichLock.withLock {
+                                                        val stored = dataCache.loadEnrichment()
+                                                        stored[bookUrl] = enriched
+                                                        dataCache.saveEnrichment(stored)
                                                     }
-                                                } catch (e: Exception) {
-                                                    if (e is kotlinx.coroutines.CancellationException) throw e
-                                                } finally {
+                                                }
+                                            } catch (e: Exception) {
+                                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                            } finally {
+                                                if (ownProgress) {
                                                     enrichDone = 1
                                                     isEnriching = false
                                                 }
