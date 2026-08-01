@@ -50,6 +50,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -130,6 +131,22 @@ data class ShelfUiItem(
  */
 private data class SeriesGroup(
     val url: String,
+    val name: String,
+    val books: List<ShelfBookItem>
+)
+
+/**
+ * Un autor con los libros suyos que hay en la estantería.
+ *
+ * @property key Nombre normalizado, que es con lo que se agrupa. La URL del autor sería más
+ *   estable sobre el papel, pero la instancia tiene la misma persona dada de alta varias veces
+ *   —Lucinda Riley es a la vez el autor 29068 y el 58144— y agrupando por ella salía repetida
+ *   en la lista, con sus libros repartidos.
+ * @property name Nombre visible, tal y como lo escribe la instancia.
+ * @property books Sus libros, sin ordenar todavía: el orden lo pone la pantalla.
+ */
+private data class AuthorGroup(
+    val key: String,
     val name: String,
     val books: List<ShelfBookItem>
 )
@@ -473,22 +490,29 @@ fun ShelfNativeDetailScreen(
 
     // Lista mostrada: aplica la ordenación elegida. FINISHED_* y RATING_* usan los datos
     // enriquecidos; los libros sin dato quedan al final. Se recalcula al llegar más datos.
-    val displayedBooks = remember(books, sortMode, enrichment) {
-        val byTitle = Comparator<ShelfBookItem> { a, b ->
-            collator.compare(a.sortTitle ?: a.title ?: "", b.sortTitle ?: b.title ?: "")
+    // La misma ordenación vale para la estantería entera y para los libros de un autor, así
+    // que se aplica desde un solo sitio.
+    val sortBooks: (List<ShelfBookItem>, ShelfSortMode) -> List<ShelfBookItem> =
+        remember(enrichment, collator) {
+            { list, mode ->
+                val byTitle = Comparator<ShelfBookItem> { a, b ->
+                    collator.compare(a.sortTitle ?: a.title ?: "", b.sortTitle ?: b.title ?: "")
+                }
+                fun finishedOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.finished }
+                fun ratingOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.rating }
+                when (mode) {
+                    ShelfSortMode.DEFAULT -> list
+                    ShelfSortMode.TITLE_ASC -> list.sortedWith(byTitle)
+                    ShelfSortMode.TITLE_DESC -> list.sortedWith(byTitle).reversed()
+                    ShelfSortMode.FINISHED_DESC -> list.sortedWith(nullsLastComparator(true) { finishedOf(it) })
+                    ShelfSortMode.FINISHED_ASC -> list.sortedWith(nullsLastComparator(false) { finishedOf(it) })
+                    ShelfSortMode.RATING_DESC -> list.sortedWith(nullsLastComparator(true) { ratingOf(it) })
+                    ShelfSortMode.RATING_ASC -> list.sortedWith(nullsLastComparator(false) { ratingOf(it) })
+                }
+            }
         }
-        fun finishedOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.finished }
-        fun ratingOf(b: ShelfBookItem) = b.id?.let { enrichment[it]?.rating }
-        when (sortMode) {
-            ShelfSortMode.DEFAULT -> books
-            ShelfSortMode.TITLE_ASC -> books.sortedWith(byTitle)
-            ShelfSortMode.TITLE_DESC -> books.sortedWith(byTitle).reversed()
-            ShelfSortMode.FINISHED_DESC -> books.sortedWith(nullsLastComparator(true) { finishedOf(it) })
-            ShelfSortMode.FINISHED_ASC -> books.sortedWith(nullsLastComparator(false) { finishedOf(it) })
-            ShelfSortMode.RATING_DESC -> books.sortedWith(nullsLastComparator(true) { ratingOf(it) })
-            ShelfSortMode.RATING_ASC -> books.sortedWith(nullsLastComparator(false) { ratingOf(it) })
-        }
-    }
+
+    val displayedBooks = remember(books, sortMode, enrichment) { sortBooks(books, sortMode) }
 
     // ── Vista por series ──
     // «Leídos» puede verse agrupado en series: primero la lista de series y, al elegir una,
@@ -522,10 +546,72 @@ fun ShelfNativeDetailScreen(
             .sortedWith(compareBy(collator) { it.name })
     }
 
-    // Con una serie abierta manda su orden; si no, la estantería con la ordenación elegida.
-    val visibleBooks = openSeriesUrl
-        ?.let { url -> seriesGroups.firstOrNull { it.url == url }?.books }
-        ?: displayedBooks
+    // ── Vista por autores ──
+    // Igual que las series, pero por quien escribe: primero los autores en orden alfabético y,
+    // al elegir uno, sus libros. Un libro escrito a cuatro manos sale bajo cada uno de ellos,
+    // que es lo que se espera al buscar «qué he leído de esta persona».
+    var showAuthorList by remember { mutableStateOf(false) }
+    var openAuthorKey by remember { mutableStateOf<String?>(null) }
+
+    // Mismo nombre, misma persona: se ignoran mayúsculas y espacios de más para que una ficha
+    // escrita con dos espacios no abra un autor aparte.
+    fun authorKey(name: String) = name.trim().replace(Regex("\\s+"), " ").lowercase()
+
+    val authorGroups = remember(books, enrichment) {
+        books
+            .flatMap { book ->
+                // El .json trae las URLs de los autores y el enriquecimiento sus nombres, en el
+                // mismo orden. Cuando las cuentas no cuadran (un libro sin enriquecer todavía,
+                // o un nombre con coma), se agrupa por el texto entero antes que repartirlo mal.
+                val urls = book.authors?.filter { it.isNotBlank() }.orEmpty()
+                val names = book.id?.let { enrichment[it]?.authorName }
+                    ?.split(", ")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotEmpty() }
+                    .orEmpty()
+                when {
+                    urls.isNotEmpty() && urls.size == names.size ->
+                        names.map { name -> Triple(authorKey(name), name, book) }
+                    names.isNotEmpty() -> {
+                        val whole = names.joinToString(", ")
+                        listOf(Triple(authorKey(whole), whole, book))
+                    }
+                    // Sin nombre todavía (el libro aún no se ha leído de la web) queda la URL,
+                    // y en cuanto llegue el nombre se junta con los demás libros de esa persona.
+                    urls.isNotEmpty() ->
+                        urls.map { url -> Triple(url, url.trimEnd('/').substringAfterLast('/'), book) }
+                    else -> emptyList()
+                }
+            }
+            .groupBy { it.first }
+            .map { (key, entries) ->
+                AuthorGroup(
+                    key = key,
+                    // Si la instancia escribe el nombre de varias maneras, manda la más repetida.
+                    name = entries.map { it.second }.filter { it.isNotBlank() }
+                        .groupingBy { it }.eachCount()
+                        .maxByOrNull { it.value }?.key ?: key,
+                    books = entries.map { it.third }.distinctBy { it.id ?: it.title }
+                )
+            }
+            .sortedWith(compareBy(collator) { it.name })
+    }
+
+    // Con una serie abierta manda su orden —el de lectura—; con un autor abierto manda la
+    // ordenación elegida, y sin elegir nada sus libros salen alfabéticos, que es como se busca
+    // en la obra de alguien. Sin nada abierto, la estantería.
+    val visibleBooks = when {
+        openSeriesUrl != null ->
+            seriesGroups.firstOrNull { it.url == openSeriesUrl }?.books ?: displayedBooks
+        openAuthorKey != null -> {
+            val ofAuthor = authorGroups.firstOrNull { it.key == openAuthorKey }?.books.orEmpty()
+            sortBooks(
+                ofAuthor,
+                if (sortMode == ShelfSortMode.DEFAULT) ShelfSortMode.TITLE_ASC else sortMode
+            )
+        }
+        else -> displayedBooks
+    }
 
     // Cargamos todas las páginas de la estantería (son pocas y personales). Es necesario
     // para ordenar y enriquecer la estantería completa, ya que el .json ignora ?sort=.
@@ -662,7 +748,9 @@ fun ShelfNativeDetailScreen(
             OutlinedButton(onClick = {
                 when {
                     openSeriesUrl != null -> openSeriesUrl = null
+                    openAuthorKey != null -> openAuthorKey = null
                     showSeriesList -> showSeriesList = false
+                    showAuthorList -> showAuthorList = false
                     else -> onBack()
                 }
             }) {
@@ -672,7 +760,10 @@ fun ShelfNativeDetailScreen(
                 text = when {
                     openSeriesUrl != null ->
                         seriesGroups.firstOrNull { it.url == openSeriesUrl }?.name ?: shelf.title
+                    openAuthorKey != null ->
+                        authorGroups.firstOrNull { it.key == openAuthorKey }?.name ?: shelf.title
                     showSeriesList -> stringResource(R.string.series_title)
+                    showAuthorList -> stringResource(R.string.authors_title)
                     else -> shelf.title
                 },
                 style = MaterialTheme.typography.titleMedium,
@@ -680,16 +771,26 @@ fun ShelfNativeDetailScreen(
             )
             // Agrupar por series: solo en «Leídos», y solo mientras se esté viendo la
             // estantería entera. Dentro de una serie el orden lo da su numeración.
-            if (shelf.slug == "read" && !showSeriesList) {
+            if (shelf.slug == "read" && !showSeriesList && !showAuthorList) {
                 IconButton(onClick = { showSeriesList = true }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
                         contentDescription = stringResource(R.string.series_title)
                     )
                 }
+                // Agrupar por autor, al lado de las series y con las mismas reglas.
+                IconButton(onClick = { showAuthorList = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.People,
+                        contentDescription = stringResource(R.string.authors_title)
+                    )
+                }
             }
             Box {
-                if (!showSeriesList) {
+                // En la lista de autores no hay nada que ordenar; dentro de un autor sí, y es la
+                // misma ordenación de la estantería. Dentro de una serie no, porque allí el
+                // orden es el de lectura.
+                if (!showSeriesList && (!showAuthorList || openAuthorKey != null)) {
                     IconButton(onClick = { sortMenuExpanded = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Sort,
@@ -855,7 +956,71 @@ fun ShelfNativeDetailScreen(
                     }
                 }
 
-                if (showSeriesList && openSeriesUrl == null) {
+                if (showAuthorList && openAuthorKey == null) {
+                    if (authorGroups.isEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.authors_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    items(
+                        count = authorGroups.size,
+                        key = { index -> authorGroups[index].key }
+                    ) { index ->
+                        val group = authorGroups[index]
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { openAuthorKey = group.key }
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = group.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                // Las portadas en abanico, igual que en las series: se ve de un
+                                // vistazo cuánto hay de esa persona sin gastar una fila por libro.
+                                val shown = group.books.take(5)
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(105.dp)
+                                ) {
+                                    for (i in shown.indices.reversed()) {
+                                        val coverUrl = shown[i].cover?.url
+                                        if (!coverUrl.isNullOrEmpty()) {
+                                            AsyncImage(
+                                                model = coverUrl,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .offset(x = (i * 34).dp)
+                                                    .width(70.dp)
+                                                    .height(105.dp)
+                                                    .clip(MaterialTheme.shapes.small),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = pluralStringResource(
+                                        R.plurals.series_books_count,
+                                        group.books.size,
+                                        group.books.size
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else if (showSeriesList && openSeriesUrl == null) {
                     if (seriesGroups.isEmpty()) {
                         item {
                             Text(
