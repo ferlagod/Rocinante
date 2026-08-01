@@ -30,6 +30,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -134,6 +135,39 @@ private data class SeriesGroup(
     val name: String,
     val books: List<ShelfBookItem>
 )
+
+/**
+ * Las portadas de un grupo en abanico: la primera entera y las siguientes asomando por detrás,
+ * para que se vea de un vistazo cuántos libros hay sin gastar una fila por cada uno.
+ *
+ * Caben las que quepan: se mide el ancho de verdad de la tarjeta en vez de dar por hecho un
+ * número, que dejaba media tarjeta vacía en un móvil normal y se saldría por el borde en uno
+ * estrecho. Se pintan de la última a la primera para que ese sea el orden de apilado.
+ */
+@Composable
+private fun CoverFan(books: List<ShelfBookItem>) {
+    val coverWidth = 70.dp
+    val step = 34.dp
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(105.dp)) {
+        val fit = if (maxWidth <= coverWidth) 1 else ((maxWidth - coverWidth) / step).toInt() + 1
+        val shown = books.take(fit.coerceAtLeast(1))
+        for (i in shown.indices.reversed()) {
+            val coverUrl = shown[i].cover?.url
+            if (!coverUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .offset(x = step * i)
+                        .width(coverWidth)
+                        .height(105.dp)
+                        .clip(MaterialTheme.shapes.small),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+}
 
 /**
  * Un autor con los libros suyos que hay en la estantería.
@@ -985,28 +1019,7 @@ fun ShelfNativeDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
-                                // Las portadas en abanico, igual que en las series: se ve de un
-                                // vistazo cuánto hay de esa persona sin gastar una fila por libro.
-                                val shown = group.books.take(5)
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().height(105.dp)
-                                ) {
-                                    for (i in shown.indices.reversed()) {
-                                        val coverUrl = shown[i].cover?.url
-                                        if (!coverUrl.isNullOrEmpty()) {
-                                            AsyncImage(
-                                                model = coverUrl,
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .offset(x = (i * 34).dp)
-                                                    .width(70.dp)
-                                                    .height(105.dp)
-                                                    .clip(MaterialTheme.shapes.small),
-                                                contentScale = ContentScale.Crop
-                                            )
-                                        }
-                                    }
-                                }
+                                CoverFan(group.books)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     text = pluralStringResource(
@@ -1049,30 +1062,7 @@ fun ShelfNativeDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
-                                // Portadas en abanico: la primera arriba y las siguientes
-                                // asomando por detrás, para que se vea de un vistazo cuántas
-                                // hay sin ocupar una fila por libro. Se pintan de la última a
-                                // la primera para que ese sea el orden de apilado.
-                                val shown = group.books.take(5)
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().height(105.dp)
-                                ) {
-                                    for (i in shown.indices.reversed()) {
-                                        val coverUrl = shown[i].cover?.url
-                                        if (!coverUrl.isNullOrEmpty()) {
-                                            AsyncImage(
-                                                model = coverUrl,
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .offset(x = (i * 34).dp)
-                                                    .width(70.dp)
-                                                    .height(105.dp)
-                                                    .clip(MaterialTheme.shapes.small),
-                                                contentScale = ContentScale.Crop
-                                            )
-                                        }
-                                    }
-                                }
+                                CoverFan(group.books)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     text = pluralStringResource(
