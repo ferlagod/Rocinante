@@ -73,33 +73,14 @@ object BookWyrmScraper {
      */
     suspend fun getReviewContext(api: BookWyrmApi, bookUrl: String): ReviewContext? = withContext(Dispatchers.IO) {
         try {
-            val bookId = BookWyrmUtils.extractBookId(bookUrl)
-            if (bookId.isEmpty()) return@withContext null
-            val hostUrl = java.net.URL(bookUrl).let { "${it.protocol}://${it.host}" }
-            var currentUrl = "$hostUrl/book/$bookId"
-            var html = ""
-            for (i in 0..3) {
-                val response = api.getRawHtmlResponse(currentUrl)
-                if (response.isSuccessful) {
-                    html = response.body()?.string() ?: ""
-                    break
-                } else if (response.code() in 300..399) {
-                    val location = response.headers()["Location"]
-                    if (location != null) {
-                        currentUrl = if (location.startsWith("http")) location else {
-                            val hostUrlObj = java.net.URL(bookUrl).let { "${it.protocol}://${it.host}" }
-                            "$hostUrlObj$location"
-                        }
-                    } else {
-                        break
-                    }
-                } else {
-                    break
-                }
-            }
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            
+            val html = fetchBookPage(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
 
             val userId = extractHiddenFieldValue(html, "user")
-            val formBookId = extractHiddenFieldValue(html, "book") ?: bookId
+            val formBookId = extractEditionId(html) ?: BookWyrmUtils.extractBookId(localUrl)
 
             if (userId != null) {
                 ReviewContext(userId, formBookId)
@@ -262,6 +243,15 @@ object BookWyrmScraper {
         val valueFirst = """value=["']([^"']+)["'][^>]*?name=["']${Regex.escape(fieldName)}["']""".toRegex()
         valueFirst.find(html)?.groupValues?.get(1)?.let { return it }
         return null
+    }
+
+    /**
+     * Extrae el ID de la edición del libro del HTML de la página.
+     * En BookWyrm >= 0.8, las URLs a menudo son de "obras" (works) pero los formularios
+     * exigen IDs de edición. BookWyrm resuelve la obra a la edición predeterminada al renderizar la página.
+     */
+    fun extractEditionId(html: String): String? {
+        return extractHiddenFieldValue(html, "book") ?: extractHiddenFieldValue(html, "mention_books")
     }
 
     /**

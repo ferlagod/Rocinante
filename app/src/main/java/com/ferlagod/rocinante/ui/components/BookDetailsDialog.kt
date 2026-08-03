@@ -338,22 +338,26 @@ fun BookDetailsDialog(
         coroutineScope.launch {
             try {
                 val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey) ?: activeBookKey
+                val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                val html = BookWyrmScraper.fetchBookPage(api, localUrl, baseUrl)
                 val bookId = BookWyrmUtils.extractBookId(localUrl)
-                if (bookId.isBlank()) {
+                val editionId = BookWyrmScraper.extractEditionId(html) ?: bookId
+                
+                if (editionId.isBlank()) {
                     Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
                 val mappedStatus = mapOf("to-read" to "want", "reading" to "start", "read" to "finish")[slug]
                 var response = if (mappedStatus != null) {
-                    api.updateReadingStatus(mappedStatus, bookId)
+                    api.updateReadingStatus(mappedStatus, editionId)
                 } else {
-                    api.shelveBook(bookId, slug)
+                    api.shelveBook(editionId, slug)
                 }
 
                 // Fallback for BookWyrm >= 0.8: reading-status may return 404 for Work IDs, 
                 // but shelveBook resolves them to Editions automatically.
                 if (mappedStatus != null && !response.isSuccessful && response.code() != 302) {
-                    val fallback = api.shelveBook(bookId, slug)
+                    val fallback = api.shelveBook(editionId, slug)
                     if (fallback.isSuccessful || fallback.code() == 302) {
                         response = fallback
                     }
