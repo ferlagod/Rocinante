@@ -238,6 +238,24 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Incrementa optimísticamente el objetivo de lectura del perfil actual.
+     * Útil al terminar de leer un libro antes de re-cargar la red.
+     */
+    fun incrementReadingGoal() {
+        val currentProfile = _uiState.value.profile
+        if (currentProfile != null && currentProfile.readingGoal != null) {
+            val updatedGoal = currentProfile.readingGoal!!.copy(value = currentProfile.readingGoal!!.value + 1)
+            val updatedProfile = currentProfile.copy(readingGoal = updatedGoal)
+            _uiState.value = _uiState.value.copy(profile = updatedProfile)
+            
+            updatedProfile.id?.let { userRepository.profileCache[it] = updatedProfile }
+            viewModelScope.launch {
+                timelineCache.saveProfile(updatedProfile)
+            }
+        }
+    }
+
+    /**
      * Incrementa optimísticamente el contador de 'Siguiendo' en el perfil actual.
      * Útil tras realizar un follow exitoso sin necesidad de recargar todo el perfil.
      */

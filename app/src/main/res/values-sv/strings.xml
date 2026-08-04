@@ -68,7 +68,7 @@
     <string name="book_community_reviews">Communityrecensioner</string>
     <string name="book_no_reviews">Inga skrivna recensioner hittades för den här utgåvan.</string>
     <string name="book_review_date_unknown">Okänt datum</string>
-    <string name="book_update_progress">Uppdatera läsframsteg</string>
+    <string name="book_update_progress">Uppdatera framsteg</string>
     <string name="book_close">Stäng</string>
     <string name="book_tab_synopsis">Sammanfattning</string>
     <string name="book_tab_reviews">Recensioner</string>
@@ -417,5 +417,9 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
         <item quantity="one">…och %d till i dina hyllor</item>
         <item quantity="other">…och %d till i dina hyllor</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Rättelser och förbättringar
+• BookWyrm 0.8+ kompatibilitet: Permanent löst 404-fel när man flyttar böcker mellan hyllor, uppdaterar läsframsteg, lägger till datum eller publicerar recensioner.
+• Upplagehantering: Applikationen använder nu den exakta utgåvoidentifieraren för boken istället för det generella verket. Detta åtgärdar fel vid skapande eller loggning av lässessioner.
+• Nätverksoptimering: Upprepade interna nedladdningar har eliminerats. Appen utnyttjar nu cachen bättre när man frågar eller uppdaterar bokdata, vilket minskar dataförbrukningen och förbättrar hastigheten.</string>
 </resources>
 

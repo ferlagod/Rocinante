@@ -72,7 +72,7 @@
     <string name="book_community_reviews">Recenzje społeczności</string>
     <string name="book_no_reviews">Nie znaleziono napisanych recenzji dla tego wydania.</string>
     <string name="book_review_date_unknown">Nieznana data</string>
-    <string name="book_update_progress">Zaktualizuj postępy czytania</string>
+    <string name="book_update_progress">Zaktualizuj postępy</string>
     <string name="book_close">Zamknij</string>
     <string name="book_tab_synopsis">Opis</string>
     <string name="book_tab_reviews">Recenzje</string>
@@ -432,5 +432,9 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
         <item quantity="many">…i %d więcej na twoich półkach</item>
         <item quantity="other">…i %d więcej na twoich półkach</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Poprawki i ulepszenia
+• Zgodność z BookWyrm 0.8+: Trwale naprawiono błędy 404 podczas przenoszenia książek między półkami, aktualizowania postępów czytania, dodawania dat lub publikowania recenzji.
+• Zarządzanie wydaniami: Aplikacja używa teraz dokładnego identyfikatora wydania książki zamiast ogólnego dzieła. Naprawia to awarie podczas tworzenia lub rejestrowania sesji czytania.
+• Optymalizacja sieci: Wyeliminowano powtarzające się pobieranie wewnętrzne. Aplikacja lepiej teraz wykorzystuje pamięć podręczną podczas wyszukiwania lub aktualizowania danych książki, zmniejszając zużycie danych i poprawiając szybkość.</string>
 </resources>
 

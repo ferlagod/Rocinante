@@ -68,7 +68,7 @@
     <string name="book_community_reviews">Recensioni della community</string>
     <string name="book_no_reviews">Nessuna recensione scritta trovata per questa edizione.</string>
     <string name="book_review_date_unknown">Data sconosciuta</string>
-    <string name="book_update_progress">Aggiorna i progressi di lettura</string>
+    <string name="book_update_progress">Aggiorna progressi</string>
     <string name="book_close">Chiudi</string>
     <string name="book_tab_synopsis">Sinossi</string>
     <string name="book_tab_reviews">Recensioni</string>
@@ -417,5 +417,9 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
         <item quantity="one">…e altri %d nei tuoi scaffali</item>
         <item quantity="other">…e altri %d nei tuoi scaffali</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Correzioni e miglioramenti
+• Compatibilità con BookWyrm 0.8+: Risolti in modo definitivo gli errori 404 che si verificavano spostando libri tra gli scaffali, aggiornando i progressi di lettura, aggiungendo date o pubblicando recensioni.
+• Gestione delle edizioni: L\'applicazione ora utilizza l\'identificatore esatto dell\'edizione del libro invece dell\'opera generale. Questo corregge gli errori durante la creazione o la registrazione delle sessioni di lettura.
+• Ottimizzazione di rete: I download interni ripetuti sono stati eliminati. L\'app ora sfrutta meglio la cache quando interroga o aggiorna i dati del libro, riducendo il consumo di dati e migliorando la velocità.</string>
 </resources>
 

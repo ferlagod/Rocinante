@@ -238,6 +238,7 @@ fun BookDetailsDialog(
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
     onShelved: (() -> Unit)? = null,
+    onReadingFinished: (() -> Unit)? = null,
     // Aviso de que este libro ya no está en ninguna estantería, con su id/URL. Quien abre la
     // ficha puede así quitarlo de la lista en pantalla al momento, sin esperar a un refresco.
     // Si no se pasa, se recurre a [onShelved].
@@ -305,7 +306,7 @@ fun BookDetailsDialog(
     // la búsqueda, la actividad o un perfil no lo sabe nadie, y lo dice su propia página. Sin
     // esto, un libro que se está leyendo abierto desde la búsqueda no ofrecía ni el progreso ni
     // «Empezar a leer», como si no estuviera en ninguna parte.
-    val activeShelf = currentShelf ?: enrichment?.shelfSlug
+    var activeShelf by remember(currentShelf, enrichment?.shelfSlug) { mutableStateOf(currentShelf ?: enrichment?.shelfSlug) }
 
     // A un libro que no está en ninguna estantería se llega buscándolo, y lo primero que se
     // quiere hacer con él es ponerlo en una: se ofrece abajo del todo, sin tener que dar con
@@ -367,6 +368,7 @@ fun BookDetailsDialog(
                     Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
                     // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
                     if (slug == "read") setupStore.clear(activeBookKey)
+                    activeShelf = slug
                     onShelved?.invoke()
                     if (slug == "read") {
                         showReviewDialog = true
@@ -399,6 +401,7 @@ fun BookDetailsDialog(
                     com.ferlagod.rocinante.data.local.TimelineCache(context)
                         .removeBookFromShelfCaches(activeBookKey)
                     Toast.makeText(context, context.getString(R.string.book_remove_toast), Toast.LENGTH_SHORT).show()
+                    activeShelf = null
                     if (onRemovedFromShelf != null) onRemovedFromShelf(activeBookKey) else onShelved?.invoke()
                     onDismiss()
                 } else {
@@ -434,6 +437,8 @@ fun BookDetailsDialog(
                         Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
                         // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
                         setupStore.clear(activeBookKey)
+                        activeShelf = "read"
+                        onReadingFinished?.invoke()
                         onShelved?.invoke()
                         showReviewDialog = true
                     } else {
@@ -563,8 +568,7 @@ fun BookDetailsDialog(
                 // entre sí: sin estantería no hay ni lectura ni progreso.
                 bottomBar = {
                     val startReading = activeShelf == "to-read"
-                    val needsProgress = activeShelf == "reading" &&
-                        readingProgress == null && !isLoadingProgress
+                    val isReading = activeShelf == "reading"
                     // Otra edición del mismo libro ya guardada: se avisa junto al botón, que es
                     // donde se decide, y no en una pestaña que a lo mejor no se abre. Las
                     // estanterías guardan ediciones concretas, así que sin el aviso se acaba con
@@ -578,7 +582,7 @@ fun BookDetailsDialog(
                         "read" -> stringResource(R.string.shelf_chip_read)
                         else -> enrichment?.otherEditionShelfName
                     }
-                    if (canShelve || startReading || needsProgress || otherEditionShelf != null) {
+                    if (canShelve || startReading || isReading || otherEditionShelf != null) {
                         Surface(tonalElevation = 3.dp) {
                             Column {
                                 otherEditionShelf?.let { shelfName ->
@@ -605,17 +609,11 @@ fun BookDetailsDialog(
                                         )
                                     }
                                 }
-                                if (canShelve || startReading || needsProgress) {
+                                if (canShelve || startReading) {
                                     Button(
                                         onClick = {
-                                            when {
-                                                canShelve -> showShelfPicker = true
-                                                startReading -> moveToShelf(
-                                                    "reading",
-                                                    context.getString(R.string.shelf_chip_reading)
-                                                )
-                                                else -> showProgressDialog = true
-                                            }
+                                            if (canShelve) showShelfPicker = true
+                                            else moveToShelf("reading", context.getString(R.string.shelf_chip_reading))
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -631,18 +629,36 @@ fun BookDetailsDialog(
                                         }
                                         Text(
                                             text = stringResource(
-                                                when {
-                                                    canShelve -> R.string.book_add_to_shelf
-                                                    startReading -> R.string.book_start_reading
-                                                    else -> R.string.book_update_progress
-                                                }
+                                                if (canShelve) R.string.book_add_to_shelf else R.string.book_start_reading
                                             )
                                         )
+                                    }
+                                } else if (isReading) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { showProgressDialog = true },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(stringResource(R.string.book_update_progress))
+                                        }
+                                        Button(
+                                            onClick = { finishReading() },
+                                            enabled = !isFinishing,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(stringResource(R.string.book_finish_reading))
+                                        }
                                     }
                                 } else {
                                     Spacer(modifier = Modifier.height(12.dp))
                                 }
                             }
+
                         }
                     }
                 }

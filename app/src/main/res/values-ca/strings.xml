@@ -68,7 +68,7 @@
     <string name="book_community_reviews">Ressenyes de la comunitat</string>
     <string name="book_no_reviews">No s\'han trobat ressenyes escrites per a aquesta edició.</string>
     <string name="book_review_date_unknown">Data desconeguda</string>
-    <string name="book_update_progress">Actualitza el progrés de lectura</string>
+    <string name="book_update_progress">Actualitza el progrés</string>
     <string name="book_close">Tanca</string>
     <string name="book_tab_synopsis">Sinopsi</string>
     <string name="book_tab_reviews">Ressenyes</string>
@@ -417,5 +417,9 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
         <item quantity="one">…i %d més a les teves prestatgeries</item>
         <item quantity="other">…i %d més a les teves prestatgeries</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Correccions i millores
+• Compatibilitat amb BookWyrm 0.8+: S\'han solucionat definitivament els errors 404 en moure llibres entre prestatgeries, actualitzar el progrés de lectura, afegir dates o publicar ressenyes.
+• Gestió d\'edicions: L\'aplicació ara utilitza l\'identificador exacte de l\'edició del llibre en lloc de l\'obra general. Això corregeix els errors en crear o registrar sessions de lectura.
+• Optimització de la xarxa: S\'han eliminat les baixades internes repetides. Ara l\'aplicació aprofita millor la memòria cau en consultar o actualitzar les dades d\'un llibre, reduint el consum de dades i millorant la velocitat.</string>
 </resources>
 

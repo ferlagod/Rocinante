@@ -85,7 +85,7 @@
     <string name="book_community_reviews">Community reviews</string>
     <string name="book_no_reviews">No written reviews found for this edition.</string>
     <string name="book_review_date_unknown">Unknown date</string>
-    <string name="book_update_progress">Update reading progress</string>
+    <string name="book_update_progress">Update progress</string>
     <string name="book_current_progress">Your progress</string>
     <string name="book_progress_pages">Page %1$d of %2$d (%3$d%%)</string>
     <string name="book_progress_pages_no_total">Page %1$d</string>
@@ -460,4 +460,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">…and %d more in your shelves</item>
         <item quantity="other">…and %d more in your shelves</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Fixes and Improvements\n• BookWyrm 0.8+ compatibility: Permanently fixed 404 errors when moving books between shelves, updating reading progress, adding dates or posting reviews.\n• Editions management: The application now uses the exact edition identifier of the book instead of the general work. This fixes failures when creating or logging reading sessions.\n• Network optimization: Repeated internal downloads have been eliminated. The app now makes better use of the cache when querying or updating book data, reducing data consumption and improving speed.</string>
 </resources>

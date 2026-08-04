@@ -72,7 +72,7 @@
     <string name="book_community_reviews">Відгуки спільноти</string>
     <string name="book_no_reviews">Для цього видання не знайдено письмових відгуків.</string>
     <string name="book_review_date_unknown">Невідома дата</string>
-    <string name="book_update_progress">Оновити прогрес читання</string>
+    <string name="book_update_progress">Оновити прогрес</string>
     <string name="book_close">Закрити</string>
     <string name="book_tab_synopsis">Опис</string>
     <string name="book_tab_reviews">Відгуки</string>
@@ -432,5 +432,9 @@
         <item quantity="many">…і ще %d на твоїх полицях</item>
         <item quantity="other">…і ще %d на твоїх полицях</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Виправлення та покращення
+• Сумісність із BookWyrm 0.8+: Назавжди виправлено помилки 404 під час переміщення книг між полицями, оновлення прогресу читання, додавання дат або публікації відгуків.
+• Керування виданнями: Програма тепер використовує точний ідентифікатор видання книги замість загального твору. Це виправляє збої під час створення або реєстрації сеансів читання.
+• Оптимізація мережі: Усунено повторювані внутрішні завантаження. Додаток тепер краще використовує кеш під час запитів або оновлення даних книги, зменшуючи споживання даних і підвищуючи швидкість.</string>
 </resources>
 

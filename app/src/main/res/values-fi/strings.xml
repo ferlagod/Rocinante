@@ -77,7 +77,7 @@
     <string name="book_community_reviews">Yhteisön arvostelut</string>
     <string name="book_no_reviews">Tälle painokselle ei löytynyt kirjoitettuja arvosteluja.</string>
     <string name="book_review_date_unknown">Tuntematon päivämäärä</string>
-    <string name="book_update_progress">Päivitä lukemisen edistyminen</string>
+    <string name="book_update_progress">Päivitä edistyminen</string>
     <string name="book_close">Sulje</string>
     <string name="book_tab_synopsis">Kuvaus</string>
     <string name="book_tab_reviews">Arvostelut</string>
@@ -418,5 +418,9 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
         <item quantity="one">…ja %d muu hyllyissäsi</item>
         <item quantity="other">…ja %d muuta hyllyissäsi</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Korjaukset ja parannukset
+• BookWyrm 0.8+ -yhteensopivuus: Pysyvästi korjatut 404-virheet siirrettäessä kirjoja hyllyjen välillä, päivitettäessä lukemisen edistymistä, lisättäessä päivämääriä tai julkaistaessa arvosteluja.
+• Painosten hallinta: Sovellus käyttää nyt kirjan tarkkaa painoksen tunnistetta yleisen teoksen sijaan. Tämä korjaa virheet luotaessa tai tallennettaessa lukuistuntoja.
+• Verkon optimointi: Toistuvat sisäiset lataukset on poistettu. Sovellus hyödyntää nyt välimuistia paremmin kyselyissä tai kirjojen tietojen päivittämisessä, mikä vähentää tiedonsiirtoa ja parantaa nopeutta.</string>
 </resources>
 

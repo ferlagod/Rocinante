@@ -68,7 +68,7 @@
     <string name="book_community_reviews">Resenhas da comunidade</string>
     <string name="book_no_reviews">Nenhuma resenha escrita encontrada para esta edição.</string>
     <string name="book_review_date_unknown">Data desconhecida</string>
-    <string name="book_update_progress">Atualizar progresso de leitura</string>
+    <string name="book_update_progress">Atualizar progresso</string>
     <string name="book_close">Fechar</string>
     <string name="book_tab_synopsis">Sinopse</string>
     <string name="book_tab_reviews">Críticas</string>
@@ -417,5 +417,9 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
         <item quantity="one">…e mais %d nas tuas estantes</item>
         <item quantity="other">…e mais %d nas tuas estantes</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Correções e melhorias
+• Compatibilidade com BookWyrm 0.8+: Erros 404 permanentemente corrigidos ao mover livros entre estantes, atualizar o progresso da leitura, adicionar datas ou postar resenhas.
+• Gerenciamento de edições: O aplicativo agora usa o identificador exato da edição do livro em vez da obra geral. Isso corrige falhas ao criar ou registrar sessões de leitura.
+• Otimização de rede: Downloads internos repetidos foram eliminados. O aplicativo agora faz um melhor uso do cache ao consultar ou atualizar os dados do livro, reduzindo o consumo de dados e melhorando a velocidade.</string>
 </resources>
 

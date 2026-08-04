@@ -68,7 +68,7 @@
     <string name="book_community_reviews">Community-recensies</string>
     <string name="book_no_reviews">Geen geschreven recensies gevonden voor deze editie.</string>
     <string name="book_review_date_unknown">Onbekende datum</string>
-    <string name="book_update_progress">Leesvoortgang bijwerken</string>
+    <string name="book_update_progress">Voortgang bijwerken</string>
     <string name="book_close">Sluiten</string>
     <string name="book_tab_synopsis">Synopsis</string>
     <string name="book_tab_reviews">Recensies</string>
@@ -417,5 +417,9 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
         <item quantity="one">…en nog %d in je boekenplanken</item>
         <item quantity="other">…en nog %d in je boekenplanken</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Oplossingen en verbeteringen
+• Compatibiliteit met BookWyrm 0.8+: 404-fouten permanent opgelost bij het verplaatsen van boeken tussen planken, het bijwerken van de leesvoortgang, het toevoegen van datums of het plaatsen van recensies.
+• Editiebeheer: De applicatie gebruikt nu de exacte editie-identificatie van het boek in plaats van het algemene werk. Dit verhelpt fouten bij het maken of loggen van leessessies.
+• Netwerkoptimalisatie: Herhaalde interne downloads zijn geëlimineerd. De app maakt nu beter gebruik van de cache bij het opvragen of bijwerken van boekgegevens, waardoor het dataverbruik wordt verminderd en de snelheid wordt verbeterd.</string>
 </resources>
 

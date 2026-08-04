@@ -85,9 +85,16 @@ class UserRepository(
             // 3. Asignación de resultados reales
             profile.followersCountLocal = followersDeferred?.await()
             profile.followingCountLocal = followingDeferred?.await()
-            profile.readingGoal = readingGoalDeferred.await()
+            val fetchedGoal = readingGoalDeferred.await()
+            val cachedGoal = profile.id?.let { profileCache[it]?.readingGoal }
+            if (cachedGoal != null && fetchedGoal != null && cachedGoal.value > fetchedGoal.value) {
+                profile.readingGoal = cachedGoal
+            } else {
+                profile.readingGoal = fetchedGoal
+            }
         }
 
+        profile.id?.let { profileCache[it] = profile }
         profile
     }
     /**

@@ -417,5 +417,9 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
         <item quantity="one">…et %d de plus dans vos étagères</item>
         <item quantity="other">…et %d de plus dans vos étagères</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Corrections et améliorations
+• Compatibilité avec BookWyrm 0.8+ : Les erreurs 404 lors du déplacement de livres entre les étagères, de la mise à jour de la progression de la lecture, de l\'ajout de dates ou de la publication de critiques ont été définitivement résolues.
+• Gestion des éditions : L\'application utilise désormais l\'identifiant d\'édition exact du livre au lieu de l\'œuvre générale. Cela corrige les échecs lors de la création ou de l\'enregistrement des sessions de lecture.
+• Optimisation du réseau : Les téléchargements internes répétés ont été éliminés. L\'application utilise désormais mieux le cache lors des requêtes ou de la mise à jour des données de livre, réduisant ainsi la consommation de données et améliorant la vitesse.</string>
 </resources>
 

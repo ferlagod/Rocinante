@@ -72,7 +72,7 @@
     <string name="book_community_reviews">Recenze komunity</string>
     <string name="book_no_reviews">Pro toto vydání nebyly nalezeny žádné psané recenze.</string>
     <string name="book_review_date_unknown">Neznámé datum</string>
-    <string name="book_update_progress">Aktualizovat postup čtení</string>
+    <string name="book_update_progress">Aktualizovat postup</string>
     <string name="book_close">Zavřít</string>
     <string name="book_tab_synopsis">Synopse</string>
     <string name="book_tab_reviews">Recenze</string>
@@ -432,5 +432,9 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="many">…a %d dalšího v tvých policích</item>
         <item quantity="other">…a %d dalších v tvých policích</item>
     </plurals>
+    <string name="changelog_text_v1_2_2">Opravy a vylepšení
+• Kompatibilita s BookWyrm 0.8+: Trvale vyřešeny chyby 404 při přesouvání knih mezi poličkami, aktualizaci průběhu čtení, přidávání dat nebo zveřejňování recenzí.
+• Správa vydání: Aplikace nyní používá přesný identifikátor vydání knihy místo obecného díla. To opravuje chyby při vytváření nebo zaznamenávání relací čtení.
+• Optimalizace sítě: Bylo odstraněno opakované interní stahování. Aplikace nyní lépe využívá mezipaměť při dotazování nebo aktualizaci dat o knize, což snižuje spotřebu dat a zlepšuje rychlost.</string>
 </resources>
 

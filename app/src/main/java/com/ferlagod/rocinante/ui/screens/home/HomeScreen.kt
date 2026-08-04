@@ -195,6 +195,7 @@ fun HomeScreen(
                 dialogBookReviews = emptyList()
             },
             onShelved = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
+            onReadingFinished = { viewModel.incrementReadingGoal() },
             initialEnrichment = dialogBookEnrichment
         )
     }
@@ -320,7 +321,8 @@ fun HomeScreen(
                     },
                     onLoadMore = { viewModel.loadMoreActivities() },
                     onItemClick = { selectedActivity = it },
-                    api = api
+                    api = api,
+                    onReadingFinished = { viewModel.incrementReadingGoal() }
                 )
 
                 1 -> Box(modifier = Modifier.padding(paddingValues)) {
@@ -380,7 +382,8 @@ fun HomeScreen(
                     },
                     onFollowingDecremented = {
                         viewModel.decrementFollowingCount()
-                    }
+                    },
+                    onReadingFinished = { viewModel.incrementReadingGoal() }
                 )
             }
         }
@@ -763,7 +766,8 @@ fun ActivityTab(
     onShareClick: (TimelineUiItem) -> Unit,
     onLoadMore: () -> Unit,
     onItemClick: (TimelineUiItem) -> Unit,
-    api: com.ferlagod.rocinante.data.api.BookWyrmApi
+    api: com.ferlagod.rocinante.data.api.BookWyrmApi,
+    onReadingFinished: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -793,6 +797,7 @@ fun ActivityTab(
                 selectedBookReviews = emptyList()
             },
             onShelved = { onRefresh() },
+            onReadingFinished = onReadingFinished,
             initialEnrichment = selectedBookEnrichment
         )
     }
@@ -1205,7 +1210,8 @@ fun ProfileTab(
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
     onProfileUpdated: (String, String) -> Unit,
     onFollowingIncremented: () -> Unit = {},
-    onFollowingDecremented: () -> Unit = {}
+    onFollowingDecremented: () -> Unit = {},
+    onReadingFinished: () -> Unit = {}
 ) {
     val cleanSummary = HtmlUtils.stripHtml(profile?.summary)
     val avatarUrl = profile?.icon?.url
@@ -1373,6 +1379,7 @@ fun ProfileTab(
                 selectedBookReviews = emptyList()
             },
             onShelved = { refreshTrigger++ },
+            onReadingFinished = onReadingFinished,
             initialEnrichment = selectedBookEnrichment
         )
     }
