@@ -658,44 +658,7 @@ object BookWyrmScraper {
             val editUrl = "${localUrl.trimEnd('/')}/edit"
             val html = fetchHtmlWithRedirects(api, editUrl, baseUrl)
             if (html.isEmpty()) return@withContext null
-            val doc = org.jsoup.Jsoup.parse(html)
-            // El formulario bueno es el que trae el número de páginas; la página tiene además
-            // el de buscar y el de la portada.
-            val form = doc.select("form").firstOrNull { it.selectFirst("[name=pages]") != null }
-                ?: return@withContext null
-
-            val fields = mutableListOf<Pair<String, String>>()
-            for (el in form.select("input[name], select[name], textarea[name]")) {
-                val name = el.attr("name").trim()
-                if (name.isEmpty()) continue
-                when (el.tagName()) {
-                    "input" -> {
-                        val type = el.attr("type").lowercase().ifEmpty { "text" }
-                        // El fichero de la portada no se puede reenviar, y sin él la instancia
-                        // deja la que ya había. Los botones no son datos.
-                        if (type in setOf("file", "submit", "button", "image", "reset")) continue
-                        // Una casilla sin marcar no se envía; enviarla marcaría cosas como
-                        // «quitar este autor».
-                        if (type in setOf("checkbox", "radio") && !el.hasAttr("checked")) continue
-                        fields += name to el.attr("value")
-                    }
-                    "textarea" -> fields += name to el.wholeText()
-                    "select" -> {
-                        val chosen = el.select("option[selected]").firstOrNull()
-                            ?: el.select("option").firstOrNull()
-                        if (chosen != null) {
-                            fields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
-                        }
-                    }
-                }
-            }
-            if (fields.none { it.first == "pages" }) return@withContext null
-
-            val action = form.attr("action").trim().ifEmpty { editUrl }
-            BookEditForm(
-                actionUrl = if (action.startsWith("http")) action else baseUrl.trimEnd('/') + action,
-                fields = fields
-            )
+            parseEditForm(html, baseUrl, editUrl)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             null
@@ -730,6 +693,197 @@ object BookWyrmScraper {
             // sigue las redirecciones, así que un 302 es que se guardó. Un formulario con algo
             // mal se devuelve a sí mismo con un 200 y no ha guardado nada.
             response.code() == 302
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            false
+        }
+    }
+
+    /**
+     * Saca el formulario de edición de un HTML ya descargado, sea el de la página de edición o
+     * el que la instancia devuelve al pedir confirmación.
+     */
+    private fun parseEditForm(
+        html: String,
+        baseUrl: String,
+        fallbackAction: String
+    ): BookEditForm? {
+        val doc = org.jsoup.Jsoup.parse(html)
+        // El formulario bueno es el que trae el número de páginas; la página tiene además el de
+        // buscar y el de la portada.
+        val form = doc.select("form").firstOrNull { it.selectFirst("[name=pages]") != null }
+            ?: return null
+
+        val fields = mutableListOf<Pair<String, String>>()
+        for (el in form.select("input[name], select[name], textarea[name]")) {
+            val name = el.attr("name").trim()
+            if (name.isEmpty()) continue
+            when (el.tagName()) {
+                "input" -> {
+                    val type = el.attr("type").lowercase().ifEmpty { "text" }
+                    // El fichero de la portada no se puede reenviar, y sin él la instancia deja
+                    // la que ya había. Los botones no son datos.
+                    if (type in setOf("file", "submit", "button", "image", "reset")) continue
+                    // Una casilla sin marcar no se envía; enviarla marcaría cosas como «quitar
+                    // este autor». Lo mismo con los redondeles de la confirmación, que se
+                    // añaden aparte con lo que se haya elegido.
+                    if (type in setOf("checkbox", "radio") && !el.hasAttr("checked")) continue
+                    fields += name to el.attr("value")
+                }
+                "textarea" -> fields += name to el.wholeText()
+                "select" -> {
+                    val chosen = el.select("option[selected]").firstOrNull()
+                        ?: el.select("option").firstOrNull()
+                    if (chosen != null) {
+                        fields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
+                    }
+                }
+            }
+        }
+        if (fields.none { it.first == "pages" }) return null
+
+        val action = form.attr("action").trim().ifEmpty { fallbackAction }
+        return BookEditForm(
+            actionUrl = if (action.startsWith("http")) action else baseUrl.trimEnd('/') + action,
+            fields = fields
+        )
+    }
+
+    /**
+     * Una de las opciones que ofrece la instancia al añadir un autor.
+     *
+     * Son de tres clases y no dos, que es lo que despista: además de los autores que ya tienen
+     * ficha en la instancia y de dar de alta a uno nuevo, BookWyrm propone candidatos sacados
+     * del registro ISNI, cuyo identificador es una dirección web y no un número.
+     *
+     * @property field Nombre del campo del redondel (author_match-0, -1...).
+     * @property value Lo que hay que enviar.
+     * @property label El nombre, tal y como lo enseña la instancia.
+     * @property help La línea de debajo, que es lo que distingue a unos de otros cuando se
+     *   llaman igual: «Autor de tal libro», o de dónde sale el candidato.
+     * @property kind De qué clase es.
+     */
+    data class AuthorOption(
+        val field: String,
+        val value: String,
+        val label: String,
+        val help: String,
+        val kind: Kind
+    ) {
+        enum class Kind {
+            /** Ya tiene ficha en la instancia. Elegirlo es lo que evita duplicados. */
+            EXISTING,
+
+            /** Ficha nueva rellenada con los datos del registro ISNI. */
+            ISNI,
+
+            /** Ficha nueva con solo el nombre escrito. */
+            NEW
+        }
+    }
+
+    /** En qué punto ha quedado el intento de ponerle autor a un libro. */
+    sealed class AddAuthorResult {
+        /** Guardado sin más preguntas. */
+        object Saved : AddAuthorResult()
+
+        /**
+         * La instancia quiere saber a quién se refiere uno antes de guardar. Hay que volver con
+         * [confirmBookAuthor] y la opción elegida.
+         */
+        data class NeedsChoice(
+            val form: BookEditForm,
+            val options: List<AuthorOption>
+        ) : AddAuthorResult()
+
+        object Failed : AddAuthorResult()
+    }
+
+    /**
+     * Propone un autor para un libro que no tiene ninguno.
+     *
+     * BookWyrm no lo guarda a la primera: como un autor es una ficha suya y no un campo del
+     * libro, responde con una pantalla de confirmación preguntando si es alguno de los que ya
+     * tiene —y ahí es donde se evitan los duplicados, que esta instancia ya arrastra (la misma
+     * persona dada de alta dos veces)—. Por eso esto devuelve la elección en vez de decidir.
+     */
+    suspend fun proposeBookAuthor(
+        api: BookWyrmApi,
+        bookUrl: String,
+        authorName: String
+    ): AddAuthorResult = withContext(Dispatchers.IO) {
+        try {
+            val form = getBookEditForm(api, bookUrl) ?: return@withContext AddAuthorResult.Failed
+            val body = okhttp3.FormBody.Builder().apply {
+                var written = false
+                for ((name, value) in form.fields) {
+                    if (name == "add_author") {
+                        if (!written) { add(name, authorName); written = true }
+                    } else {
+                        add(name, value)
+                    }
+                }
+                if (!written) add("add_author", authorName)
+            }.build()
+            val response = api.postForm(form.actionUrl, body)
+            if (response.code() == 302) return@withContext AddAuthorResult.Saved
+
+            val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
+            if (html.isEmpty()) return@withContext AddAuthorResult.Failed
+            val baseUrl = java.net.URL(form.actionUrl).let { "${it.protocol}://${it.host}/" }
+            val confirmForm = parseEditForm(html, baseUrl, form.actionUrl)
+                ?: return@withContext AddAuthorResult.Failed
+
+            val doc = org.jsoup.Jsoup.parse(html)
+            val options = doc.select("input[type=radio][name^=author_match-]").map { radio ->
+                val value = radio.attr("value").trim()
+                val label = radio.parent()
+                val name = (label?.text() ?: "").trim()
+                // Debajo de cada nombre la instancia pone en qué se distingue («Autor de tal
+                // libro», o de dónde sale el candidato). Con cinco autores que se llaman igual
+                // es lo único con lo que se puede elegir.
+                val help = generateSequence(label?.nextElementSibling()) { it.nextElementSibling() }
+                    .takeWhile { it.tagName() == "p" && it.hasClass("help") }
+                    .map { it.text().trim() }
+                    .filter { it.isNotEmpty() }
+                    .joinToString(" · ")
+                val kind = when {
+                    value.toLongOrNull() != null -> AuthorOption.Kind.EXISTING
+                    value.startsWith("http") -> AuthorOption.Kind.ISNI
+                    else -> AuthorOption.Kind.NEW
+                }
+                AuthorOption(
+                    field = radio.attr("name").trim(),
+                    value = value,
+                    label = name.ifEmpty { value },
+                    help = help,
+                    kind = kind
+                )
+            // Primero los que ya existen, que son los que hay que elegir para no duplicar;
+            // dar de alta a uno nuevo, al final.
+            }.sortedBy { it.kind.ordinal }
+            if (options.isEmpty()) AddAuthorResult.Failed
+            else AddAuthorResult.NeedsChoice(confirmForm, options)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            AddAuthorResult.Failed
+        }
+    }
+
+    /**
+     * Contesta a la pregunta de la instancia y guarda el autor elegido.
+     */
+    suspend fun confirmBookAuthor(
+        api: BookWyrmApi,
+        form: BookEditForm,
+        option: AuthorOption
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val body = okhttp3.FormBody.Builder().apply {
+                for ((name, value) in form.fields) add(name, value)
+                add(option.field, option.value)
+            }.build()
+            api.postForm(form.actionUrl, body).code() == 302
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false

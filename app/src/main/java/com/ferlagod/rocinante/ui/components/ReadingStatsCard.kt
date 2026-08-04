@@ -270,7 +270,10 @@ fun ReadingGoalPaceSection(
 @Composable
 fun TopAuthorsCard(
     stats: ReadingStats,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer con los libros a los que les falta el autor; sin esto el aviso se queda en
+    // aviso, como estaba.
+    onFixMissingAuthors: (() -> Unit)? = null
 ) {
     if (!stats.hasAuthorData) return
 
@@ -316,6 +319,8 @@ fun TopAuthorsCard(
 
             if (stats.booksWithoutAuthor > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
+                // Igual que con las páginas: el aviso lleva a los libros de los que habla.
+                val canFix = onFixMissingAuthors != null
                 Text(
                     text = pluralStringResource(
                         R.plurals.profile_stats_missing_authors,
@@ -323,7 +328,9 @@ fun TopAuthorsCard(
                         stats.booksWithoutAuthor
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (canFix) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (canFix) Modifier.clickable { onFixMissingAuthors!!() } else Modifier
                 )
             }
         }

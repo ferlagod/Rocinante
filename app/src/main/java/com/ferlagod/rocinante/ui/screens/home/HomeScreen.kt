@@ -1263,11 +1263,17 @@ fun ProfileTab(
     // les faltan las páginas, que se pueden poner desde el propio perfil.
     var readBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
     var showMissingPages by remember { mutableStateOf(false) }
+    var showMissingAuthors by remember { mutableStateOf(false) }
+    // Lo enriquecido de cada libro: de ahí sale el nombre del autor, y por tanto quién falta.
+    var enrichment by remember {
+        mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap())
+    }
 
     LaunchedEffect(refreshTrigger) {
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
         readBooks = readShelf
         val enrichmentData = dataCache.loadEnrichment()
+        enrichment = enrichmentData
         readingStats = if (readShelf.isEmpty()) {
             null
         } else {
@@ -1301,6 +1307,33 @@ fun ProfileTab(
                 }
             },
             onDismiss = { showMissingPages = false }
+        )
+    }
+
+    if (showMissingAuthors) {
+        com.ferlagod.rocinante.ui.components.MissingAuthorsDialog(
+            // Los que el enriquecimiento no sabe de quién son: es de donde sale el aviso.
+            books = readBooks.filter { book ->
+                book.id?.let { enrichment[it]?.authorName }.isNullOrBlank()
+            },
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onSaved = { bookId, authorName ->
+                coroutineScope.launch {
+                    val stored = dataCache.loadEnrichment()
+                    val before = stored[bookId]
+                    val updated = before?.copy(authorName = authorName)
+                        ?: com.ferlagod.rocinante.data.model.BookEnrichment(
+                            bookId = bookId,
+                            authorName = authorName
+                        )
+                    dataCache.mergeEnrichment(updated)
+                    enrichment = dataCache.loadEnrichment()
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingAuthors = false }
         )
     }
 
@@ -1721,7 +1754,12 @@ fun ProfileTab(
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.TOP_AUTHORS -> {
                     readingStats?.let { stats ->
-                        item { com.ferlagod.rocinante.ui.components.TopAuthorsCard(stats = stats) }
+                        item {
+                            com.ferlagod.rocinante.ui.components.TopAuthorsCard(
+                                stats = stats,
+                                onFixMissingAuthors = { showMissingAuthors = true }
+                            )
+                        }
                     }
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.RATINGS -> {

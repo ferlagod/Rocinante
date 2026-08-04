@@ -403,10 +403,22 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_stats_books">Bøger</string>
     <string name="profile_stats_this_year">I år</string>
     <string name="profile_stats_pages">Sider</string>
-    <string name="missing_pages_title">%1$d bøger uden sideantal</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d bog uden sideantal</item>
+        <item quantity="other">%d bøger uden sideantal</item>
+    </plurals>
     <string name="missing_pages_explanation">Sideantallet hører til bogen, ikke til dig: det, du skriver her, gemmes på instansen, og alle ser det. Der gemmes én bog ad gangen.</string>
     <string name="missing_pages_save">Gem</string>
     <string name="missing_pages_failed">Kunne ikke gemme “%1$s”</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d bog uden forfatter</item>
+        <item quantity="other">%d bøger uden forfatter</item>
+    </plurals>
+    <string name="missing_authors_explanation">Forfatteren hører til bogen, ikke til dig: det, du skriver her, gemmes på instansen, og alle ser det. Findes forfatteren allerede, bliver du bedt om at vælge, så der ikke opstår en dublet.</string>
+    <string name="missing_authors_choice_title">Er “%1$s” en af disse?</string>
+    <string name="missing_authors_choice_new">Opret ny forfatter: %1$s</string>
+    <string name="missing_authors_choice_isni">Ny post hentet fra ISNI-registret</string>
+    <string name="missing_authors_failed">Kunne ikke gemme forfatteren for “%1$s”</string>
     <string name="profile_stats_per_year">Bøger pr. år</string>
     <string name="profile_stats_chart_desc">Bøger pr. år: %1$s</string>
     <plurals name="profile_stats_missing_dates">

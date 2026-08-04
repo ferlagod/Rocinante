@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -117,7 +118,7 @@ fun MissingPagesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.missing_pages_title, pending.size)) },
+        title = { Text(pluralStringResource(R.plurals.missing_pages_title, pending.size, pending.size)) },
         text = {
             Column {
                 Text(
