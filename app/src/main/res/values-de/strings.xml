@@ -321,6 +321,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="activity_fallback_type">Aktivität</string>
     <string name="book_finish_reading">Lesen beenden</string>
     <string name="book_start_reading">Lesen beginnen</string>
+    <string name="book_resume_reading">Weiterlesen</string>
     <string name="book_reading_actions">Leseaktionen</string>
     <string name="book_finish">Beenden</string>
     <string name="changelog_text_v1_1_8">NEUHEITEN\n• Lesen beenden: Du kannst jetzt das Lesen eines Buches direkt aus den Buchdetails abschließen. Diese Aktion schließt die Lesesitzung ab und zählt das Buch zu deinem Leseziel (genau wie auf der Bookwyrm-Website).</string>

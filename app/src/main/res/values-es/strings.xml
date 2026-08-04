@@ -367,6 +367,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="error_loading_data">Error cargando datos: %1$s</string>
     <string name="book_finish_reading">Terminar de leer</string>
     <string name="book_start_reading">Empezar a leer</string>
+    <string name="book_resume_reading">Seguir leyendo</string>
     <string name="book_reading_actions">Acciones de lectura</string>
     <string name="book_finish">Terminar</string>
     <string name="text_no_content">Sin contenido</string>

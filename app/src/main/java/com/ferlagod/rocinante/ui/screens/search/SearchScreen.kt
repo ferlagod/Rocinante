@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -786,6 +787,7 @@ private fun shelfDisplayName(slug: String): String = when (slug) {
     "reading" -> stringResource(R.string.shelf_reading_title)
     "to-read" -> stringResource(R.string.shelf_to_read_title)
     "read" -> stringResource(R.string.shelf_read_title)
+    "stopped-reading" -> stringResource(R.string.shelf_stopped_title)
     else -> slug
 }
 
@@ -795,6 +797,7 @@ private fun shelfDisplayName(slug: String): String = when (slug) {
 private fun shelfIcon(slug: String): androidx.compose.ui.graphics.vector.ImageVector = when (slug) {
     "reading" -> Icons.AutoMirrored.Filled.MenuBook
     "read" -> Icons.Default.CheckCircle
+    "stopped-reading" -> Icons.Default.PauseCircleOutline
     else -> Icons.Default.BookmarkBorder
 }
 

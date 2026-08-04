@@ -321,6 +321,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="activity_fallback_type">Activité</string>
     <string name="book_finish_reading">Terminer la lecture</string>
     <string name="book_start_reading">Commencer la lecture</string>
+    <string name="book_resume_reading">Reprendre la lecture</string>
     <string name="book_reading_actions">Actions de lecture</string>
     <string name="book_finish">Terminer</string>
     <string name="changelog_text_v1_1_8">NOUVEAUTÉS\n• Terminer la lecture: Vous pouvez maintenant terminer la lecture d\'\'un livre directement depuis sa fiche. Cette action clôturera la session de lecture et ajoutera le livre à votre objectif de lecture (comme sur le site Bookwyrm).</string>

@@ -51,6 +51,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -262,6 +263,10 @@ fun MyBooksScreen(
     backToShelvesKey: Int = 0
 ) {
     val shelves = listOf(
+        // La cuarta estantería que trae BookWyrm de serie: los libros que se dejaron a medias.
+        // Estaba sin enseñar, así que para verlos había que ir a la web; los nombres llevaban
+        // traducidos desde siempre, sin nada que los usara.
+        ShelfUiItem("stopped-reading", stringResource(R.string.shelf_stopped_title), stringResource(R.string.shelf_stopped_desc), Icons.Default.PauseCircleOutline),
         ShelfUiItem("to-read", stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder),
         ShelfUiItem("reading", stringResource(R.string.shelf_reading_title), stringResource(R.string.shelf_reading_desc), Icons.AutoMirrored.Filled.MenuBook),
         ShelfUiItem("read", stringResource(R.string.shelf_read_title), stringResource(R.string.shelf_read_desc), Icons.Default.CheckCircle)

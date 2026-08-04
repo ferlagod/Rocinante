@@ -382,6 +382,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="book_my_quotes_reviews">My quotes and reviews</string>
     <string name="book_finish_reading">Finish reading</string>
     <string name="book_start_reading">Start reading</string>
+    <string name="book_resume_reading">Continue reading</string>
     <string name="book_reading_actions">Reading actions</string>
     <string name="book_finish">Finish</string>
     <string name="post_validation_error">Validation error when posting</string>

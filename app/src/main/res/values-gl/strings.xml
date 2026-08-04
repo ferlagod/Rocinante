@@ -323,6 +323,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="activity_fallback_type">Actividade</string>
     <string name="book_finish_reading">Rematar de ler</string>
     <string name="book_start_reading">Comezar a ler</string>
+    <string name="book_resume_reading">Continuar lendo</string>
     <string name="book_reading_actions">Accións de lectura</string>
     <string name="book_finish">Rematar</string>
     <string name="changelog_text_v1_1_8">NOVIDADES\n• Rematar de ler: Agora podes rematar directamente a lectura dun libro en curso desde a ficha do libro. Esta acción pechará a sesión de lectura e sumará o libro ao teu obxectivo de lectura (igual que na web de Bookwyrm).</string>

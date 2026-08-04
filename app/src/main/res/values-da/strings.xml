@@ -68,7 +68,7 @@
     <string name="shelf_reading_desc">Bøger du er i gang med</string>
     <string name="shelf_read_title">Læst</string>
     <string name="shelf_read_desc">Bøger du er færdig med</string>
-    <string name="shelf_stopped_title">Ikke færdiglæst</string>
+    <string name="shelf_stopped_title">Stoppet med at læse</string>
     <string name="shelf_stopped_desc">Bøger du valgte ikke at læse færdig</string>
     <string name="book_no_title">Ingen titel</string>
     <string name="book_details_fallback">Bogdetaljer</string>
@@ -394,6 +394,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="activity_fallback_type">Aktivitet</string>
     <string name="book_finish_reading">Afslut læsning</string>
     <string name="book_start_reading">Start at læse</string>
+    <string name="book_resume_reading">Fortsæt med at læse</string>
     <string name="book_reading_actions">Læsehandlinger</string>
     <string name="book_finish">Afslut</string>
     <string name="changelog_text_v1_1_8">NYHEDER\n• Afslut læsning: Du kan nu afslutte læsning af en bog direkte fra bogens detaljer. Denne handling lukker læsesessionen og tilføjer bogen til dit læsemål (ligesom på Bookwyrm-websiden).</string>

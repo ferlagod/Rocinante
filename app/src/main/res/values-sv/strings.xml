@@ -321,6 +321,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="activity_fallback_type">Aktivitet</string>
     <string name="book_finish_reading">Avsluta läsning</string>
     <string name="book_start_reading">Börja läsa</string>
+    <string name="book_resume_reading">Fortsätt läsa</string>
     <string name="book_reading_actions">Läsåtgärder</string>
     <string name="book_finish">Avsluta</string>
     <string name="changelog_text_v1_1_8">NYHETER\n• Avsluta läsning: Du kan nu avsluta läsningen av en bok direkt från bokens detaljer. Denna åtgärd stänger lässessionen och lägger till boken i ditt läsmål (precis som på Bookwyrm-webbplatsen).</string>

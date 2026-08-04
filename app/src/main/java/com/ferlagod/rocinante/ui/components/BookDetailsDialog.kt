@@ -317,6 +317,12 @@ fun BookDetailsDialog(
     // el menú de ⋮. Abierto desde una estantería no hace falta, porque ya está en ella.
     val canShelve = activeShelf == null && shelfBookId == null
 
+    // Un libro que se dejó a medias solo tiene una cosa que ofrecer: retomarlo. Va en la barra
+    // de abajo, en el mismo sitio que «Empezar a leer», porque es la misma decisión. Lo devuelve
+    // a «Leyendo», que es lo que hace BookWyrm con el estado de lectura, así que además
+    // desaparece de donde estaba.
+    val resumeReading = activeShelf == "stopped-reading"
+
     // El progreso se pide en cuanto se sabe que el libro se está leyendo, que puede ser al
     // abrir la ficha (desde la estantería) o al llegar su página (desde cualquier otro sitio).
     LaunchedEffect(activeBookKey, activeShelf, progressRefreshKey) {
@@ -584,9 +590,12 @@ fun BookDetailsDialog(
                         "to-read" -> stringResource(R.string.shelf_chip_to_read)
                         "reading" -> stringResource(R.string.shelf_chip_reading)
                         "read" -> stringResource(R.string.shelf_chip_read)
+                        "stopped-reading" -> stringResource(R.string.shelf_stopped_title)
                         else -> enrichment?.otherEditionShelfName
                     }
-                    if (canShelve || startReading || isReading || otherEditionShelf != null) {
+                    if (canShelve || startReading || resumeReading || isReading ||
+                        otherEditionShelf != null
+                    ) {
                         Surface(tonalElevation = 3.dp) {
                             Column {
                                 otherEditionShelf?.let { shelfName ->
@@ -613,11 +622,14 @@ fun BookDetailsDialog(
                                         )
                                     }
                                 }
-                                if (canShelve || startReading) {
+                                if (canShelve || startReading || resumeReading) {
                                     Button(
                                         onClick = {
                                             if (canShelve) showShelfPicker = true
-                                            else moveToShelf("reading", context.getString(R.string.shelf_chip_reading))
+                                            else moveToShelf(
+                                                "reading",
+                                                context.getString(R.string.shelf_chip_reading)
+                                            )
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -633,7 +645,11 @@ fun BookDetailsDialog(
                                         }
                                         Text(
                                             text = stringResource(
-                                                if (canShelve) R.string.book_add_to_shelf else R.string.book_start_reading
+                                                when {
+                                                    canShelve -> R.string.book_add_to_shelf
+                                                    startReading -> R.string.book_start_reading
+                                                    else -> R.string.book_resume_reading
+                                                }
                                             )
                                         )
                                     }

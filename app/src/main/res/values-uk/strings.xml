@@ -325,6 +325,7 @@
     <string name="activity_fallback_type">Активність</string>
     <string name="book_finish_reading">Завершити читання</string>
     <string name="book_start_reading">Почати читання</string>
+    <string name="book_resume_reading">Продовжити читання</string>
     <string name="book_reading_actions">Дії читання</string>
     <string name="book_finish">Завершити</string>
     <string name="changelog_text_v1_1_8">НОВОВВЕДЕННЯ\n• Завершити читання: Тепер ви можете завершити читання книги безпосередньо з її деталей. Ця дія закриє сеанс читання та додасть книгу до вашої мети читання (як на веб-сайті Bookwyrm).</string>
