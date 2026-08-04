@@ -326,6 +326,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="book_finish_reading">Zakończ czytanie</string>
     <string name="book_start_reading">Zacznij czytać</string>
     <string name="book_resume_reading">Czytaj dalej</string>
+    <string name="book_stop_reading">Przerwij czytanie</string>
     <string name="book_reading_actions">Akcje czytania</string>
     <string name="book_finish">Zakończ</string>
     <string name="changelog_text_v1_1_8">NOWOŚCI\n• Zakończ czytanie: Możesz teraz zakończyć czytanie książki bezpośrednio z jej szczegółów. Ta akcja zamknie sesję czytania i doliczy książkę do Twojego celu czytelniczego (tak jak na stronie Bookwyrm).</string>

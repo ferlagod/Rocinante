@@ -323,6 +323,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="book_finish_reading">Lopeta lukeminen</string>
     <string name="book_start_reading">Aloita lukeminen</string>
     <string name="book_resume_reading">Jatka lukemista</string>
+    <string name="book_stop_reading">Lopeta lukeminen</string>
     <string name="book_reading_actions">Lukutoiminnot</string>
     <string name="book_finish">Lopeta</string>
     <string name="changelog_text_v1_1_8">UUTUUDET\n• Lopeta lukeminen: Voit nyt lopettaa kirjan lukemisen suoraan kirjan tiedoista. Tämä toiminto sulkee lukusession ja lisää kirjan lukutavoitteeseesi (kuten Bookwyrm-verkkosivustolla).</string>

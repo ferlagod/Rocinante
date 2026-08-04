@@ -322,6 +322,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="book_finish_reading">Termina la lettura</string>
     <string name="book_start_reading">Inizia la lettura</string>
     <string name="book_resume_reading">Riprendi la lettura</string>
+    <string name="book_stop_reading">Smetti di leggere</string>
     <string name="book_reading_actions">Azioni di lettura</string>
     <string name="book_finish">Termina</string>
     <string name="changelog_text_v1_1_8">NOVITÀ\n• Termina la lettura: Ora puoi terminare la lettura di un libro direttamente dalla sua scheda. Questa azione chiuderà la sessione di lettura e aggiungerà il libro al tuo obiettivo di lettura (proprio come sul sito Bookwyrm).</string>

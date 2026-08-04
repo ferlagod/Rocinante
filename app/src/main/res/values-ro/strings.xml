@@ -324,6 +324,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="book_finish_reading">Termină lectura</string>
     <string name="book_start_reading">Începe lectura</string>
     <string name="book_resume_reading">Continuă lectura</string>
+    <string name="book_stop_reading">Oprește lectura</string>
     <string name="book_reading_actions">Acțiuni de lectură</string>
     <string name="book_finish">Termină</string>
     <string name="changelog_text_v1_1_8">NOUTĂȚI\n• Termină lectura: Acum poți finaliza direct lectura unei cărți din fișa cărții. Această acțiune va închide sesiunea de lectură și va adăuga cartea la obiectivul tău de lectură (la fel ca pe site-ul Bookwyrm).</string>

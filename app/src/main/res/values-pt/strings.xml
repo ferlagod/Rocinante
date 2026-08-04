@@ -322,6 +322,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="book_finish_reading">Terminar a leitura</string>
     <string name="book_start_reading">Começar a ler</string>
     <string name="book_resume_reading">Continuar lendo</string>
+    <string name="book_stop_reading">Parar de ler</string>
     <string name="book_reading_actions">Ações de leitura</string>
     <string name="book_finish">Terminar</string>
     <string name="changelog_text_v1_1_8">NOVIDADES\n• Terminar a leitura: Agora podes terminar diretamente a leitura de um livro em curso a partir da ficha do livro. Esta ação encerrará a sessão de leitura e adicionará o livro ao teu objetivo de leitura (tal como no site do Bookwyrm).</string>

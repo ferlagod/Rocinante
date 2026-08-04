@@ -358,7 +358,14 @@ fun BookDetailsDialog(
                     Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
-                val mappedStatus = mapOf("to-read" to "want", "reading" to "start", "read" to "finish")[slug]
+                val mappedStatus = mapOf(
+                    "to-read" to "want",
+                    "reading" to "start",
+                    "read" to "finish",
+                    // Dejar un libro a medias también es un estado de lectura de BookWyrm, no una
+                    // estantería cualquiera: yendo por aquí lo saca él solo de «Leyendo».
+                    "stopped-reading" to "stop"
+                )[slug]
                 var response = if (mappedStatus != null) {
                     api.updateReadingStatus(mappedStatus, editionId)
                 } else {
@@ -528,6 +535,19 @@ fun BookDetailsDialog(
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.book_update_progress)) },
                                         onClick = { overflowExpanded = false; showProgressDialog = true }
+                                    )
+                                    // Dejarlo a medias: solo se ofrece leyendo, que es lo único
+                                    // que se puede dejar. Va aquí y no en la lista de estanterías
+                                    // porque no es mover un libro de sitio, es rendirse con él.
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.book_stop_reading)) },
+                                        onClick = {
+                                            overflowExpanded = false
+                                            moveToShelf(
+                                                "stopped-reading",
+                                                context.getString(R.string.shelf_stopped_title)
+                                            )
+                                        }
                                     )
                                 }
                                 DropdownMenuItem(

@@ -322,6 +322,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="book_finish_reading">Lezen voltooien</string>
     <string name="book_start_reading">Beginnen met lezen</string>
     <string name="book_resume_reading">Verder lezen</string>
+    <string name="book_stop_reading">Stoppen met lezen</string>
     <string name="book_reading_actions">Leesacties</string>
     <string name="book_finish">Voltooien</string>
     <string name="changelog_text_v1_1_8">NIEUW\n• Lezen voltooien: Je kunt nu het lezen van een boek direct vanuit de boekdetails voltooien. Deze actie sluit de leessessie af en telt het boek mee voor je leesdoel (net als op de Bookwyrm-website).</string>
