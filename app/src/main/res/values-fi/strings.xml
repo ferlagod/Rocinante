@@ -349,6 +349,22 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="profile_stats_books">Kirjat</string>
     <string name="profile_stats_this_year">Tänä vuonna</string>
     <string name="profile_stats_pages">Sivut</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d kirja ilman sivumäärää</item>
+        <item quantity="other">%d kirjaa ilman sivumäärää</item>
+    </plurals>
+    <string name="missing_pages_explanation">Sivumäärä kuuluu kirjalle, ei sinulle: se, minkä kirjoitat tähän, tallentuu instanssiin ja näkyy kaikille. Tallennus tapahtuu kirja kerrallaan.</string>
+    <string name="missing_pages_save">Tallenna</string>
+    <string name="missing_pages_failed">Kohteen ”%1$s” tallennus epäonnistui</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d kirja ilman tekijää</item>
+        <item quantity="other">%d kirjaa ilman tekijää</item>
+    </plurals>
+    <string name="missing_authors_explanation">Tekijä kuuluu kirjalle, ei sinulle: se, minkä kirjoitat tähän, tallentuu instanssiin ja näkyy kaikille. Jos tekijä on siellä jo, sinua pyydetään valitsemaan hänet, jottei synny kaksoiskappaletta.</string>
+    <string name="missing_authors_choice_title">Onko ”%1$s” joku näistä?</string>
+    <string name="missing_authors_choice_new">Luo uusi tekijä: %1$s</string>
+    <string name="missing_authors_choice_isni">Uusi tietue ISNI-rekisteristä</string>
+    <string name="missing_authors_failed">Kohteen ”%1$s” tekijän tallennus epäonnistui</string>
     <string name="profile_stats_per_year">Kirjoja vuodessa</string>
     <string name="profile_stats_chart_desc">Kirjoja vuodessa: %1$s</string>
     <string name="profile_top_rated">Parhaiten arvioidut</string>

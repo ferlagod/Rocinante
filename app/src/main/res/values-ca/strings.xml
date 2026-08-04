@@ -348,6 +348,22 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="profile_stats_books">Llibres</string>
     <string name="profile_stats_this_year">Enguany</string>
     <string name="profile_stats_pages">Pàgines</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d llibre sense nombre de pàgines</item>
+        <item quantity="other">%d llibres sense nombre de pàgines</item>
+    </plurals>
+    <string name="missing_pages_explanation">Les pàgines són del llibre, no de qui el llegeix: el que escriguis aquí es desa a la instància i ho veu tothom. Es desa d\'un en un.</string>
+    <string name="missing_pages_save">Desa</string>
+    <string name="missing_pages_failed">No s\'ha pogut desar «%1$s»</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d llibre sense autor</item>
+        <item quantity="other">%d llibres sense autor</item>
+    </plurals>
+    <string name="missing_authors_explanation">L\'autor és del llibre, no de qui el llegeix: el que escriguis aquí es desa a la instància i ho veu tothom. Si l\'autor ja hi és, se\'t demanarà que el triïs per no crear un duplicat.</string>
+    <string name="missing_authors_choice_title">«%1$s» és algun d\'aquests?</string>
+    <string name="missing_authors_choice_new">Crea un autor nou: %1$s</string>
+    <string name="missing_authors_choice_isni">Fitxa nova treta del registre ISNI</string>
+    <string name="missing_authors_failed">No s\'ha pogut desar l\'autor de «%1$s»</string>
     <string name="profile_stats_per_year">Llibres per any</string>
     <string name="profile_stats_chart_desc">Llibres per any: %1$s</string>
     <string name="profile_top_rated">Millor valorats</string>

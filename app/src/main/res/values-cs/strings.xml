@@ -352,6 +352,24 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_stats_books">Knihy</string>
     <string name="profile_stats_this_year">Letos</string>
     <string name="profile_stats_pages">Stránky</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d kniha bez počtu stran</item>
+        <item quantity="few">%d knihy bez počtu stran</item>
+        <item quantity="other">%d knih bez počtu stran</item>
+    </plurals>
+    <string name="missing_pages_explanation">Počet stran patří knize, ne tobě: co sem napíšeš, se uloží na instanci a uvidí to všichni. Ukládá se po jedné.</string>
+    <string name="missing_pages_save">Uložit</string>
+    <string name="missing_pages_failed">Knihu „%1$s“ se nepodařilo uložit</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d kniha bez autora</item>
+        <item quantity="few">%d knihy bez autora</item>
+        <item quantity="other">%d knih bez autora</item>
+    </plurals>
+    <string name="missing_authors_explanation">Autor patří knize, ne tobě: co sem napíšeš, se uloží na instanci a uvidí to všichni. Pokud tam autor už je, budeš vyzván(a) k jeho výběru, aby nevznikl duplikát.</string>
+    <string name="missing_authors_choice_title">Je „%1$s“ někdo z těchto?</string>
+    <string name="missing_authors_choice_new">Vytvořit nového autora: %1$s</string>
+    <string name="missing_authors_choice_isni">Nový záznam z registru ISNI</string>
+    <string name="missing_authors_failed">Autora knihy „%1$s“ se nepodařilo uložit</string>
     <string name="profile_stats_per_year">Knihy za rok</string>
     <string name="profile_stats_chart_desc">Knihy za rok: %1$s</string>
     <string name="profile_top_rated">Nejlépe hodnocené</string>

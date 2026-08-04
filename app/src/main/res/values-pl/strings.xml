@@ -352,6 +352,26 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="profile_stats_books">Książki</string>
     <string name="profile_stats_this_year">W tym roku</string>
     <string name="profile_stats_pages">Strony</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d książka bez liczby stron</item>
+        <item quantity="few">%d książki bez liczby stron</item>
+        <item quantity="many">%d książek bez liczby stron</item>
+        <item quantity="other">%d książki bez liczby stron</item>
+    </plurals>
+    <string name="missing_pages_explanation">Liczba stron należy do książki, a nie do Ciebie: to, co tu wpiszesz, zapisuje się na instancji i widzą to wszyscy. Zapisuje się po jednej.</string>
+    <string name="missing_pages_save">Zapisz</string>
+    <string name="missing_pages_failed">Nie udało się zapisać „%1$s”</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d książka bez autora</item>
+        <item quantity="few">%d książki bez autora</item>
+        <item quantity="many">%d książek bez autora</item>
+        <item quantity="other">%d książki bez autora</item>
+    </plurals>
+    <string name="missing_authors_explanation">Autor należy do książki, a nie do Ciebie: to, co tu wpiszesz, zapisuje się na instancji i widzą to wszyscy. Jeśli autor już tam jest, poprosimy o jego wybranie, aby nie powstał duplikat.</string>
+    <string name="missing_authors_choice_title">Czy „%1$s” to któryś z nich?</string>
+    <string name="missing_authors_choice_new">Utwórz nowego autora: %1$s</string>
+    <string name="missing_authors_choice_isni">Nowy wpis z rejestru ISNI</string>
+    <string name="missing_authors_failed">Nie udało się zapisać autora książki „%1$s”</string>
     <string name="profile_stats_per_year">Książki na rok</string>
     <string name="profile_stats_chart_desc">Książki na rok: %1$s</string>
     <string name="profile_top_rated">Najlepiej oceniane</string>

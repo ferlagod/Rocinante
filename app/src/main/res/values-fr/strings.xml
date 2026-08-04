@@ -348,6 +348,22 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="profile_stats_books">Livres</string>
     <string name="profile_stats_this_year">Cette année</string>
     <string name="profile_stats_pages">Pages</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d livre sans nombre de pages</item>
+        <item quantity="other">%d livres sans nombre de pages</item>
+    </plurals>
+    <string name="missing_pages_explanation">Le nombre de pages appartient au livre, pas à vous : ce que vous écrivez ici est enregistré sur l\'instance et tout le monde le voit. L\'enregistrement se fait livre par livre.</string>
+    <string name="missing_pages_save">Enregistrer</string>
+    <string name="missing_pages_failed">Impossible d\'enregistrer « %1$s »</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d livre sans auteur</item>
+        <item quantity="other">%d livres sans auteur</item>
+    </plurals>
+    <string name="missing_authors_explanation">L\'auteur appartient au livre, pas à vous : ce que vous écrivez ici est enregistré sur l\'instance et tout le monde le voit. Si l\'auteur y figure déjà, il vous sera demandé de le choisir afin de ne pas créer de doublon.</string>
+    <string name="missing_authors_choice_title">« %1$s » est-il l\'un de ceux-ci ?</string>
+    <string name="missing_authors_choice_new">Créer un nouvel auteur : %1$s</string>
+    <string name="missing_authors_choice_isni">Nouvelle fiche issue du registre ISNI</string>
+    <string name="missing_authors_failed">Impossible d\'enregistrer l\'auteur de « %1$s »</string>
     <string name="profile_stats_per_year">Livres par an</string>
     <string name="profile_stats_chart_desc">Livres par an : %1$s</string>
     <string name="profile_top_rated">Les mieux notés</string>

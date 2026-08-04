@@ -350,6 +350,22 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_stats_books">Libros</string>
     <string name="profile_stats_this_year">Este ano</string>
     <string name="profile_stats_pages">Páxinas</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d libro sen número de páxinas</item>
+        <item quantity="other">%d libros sen número de páxinas</item>
+    </plurals>
+    <string name="missing_pages_explanation">As páxinas son do libro, non de quen o le: o que escribas aquí gárdase na instancia e véno todos. Gárdase dun en un.</string>
+    <string name="missing_pages_save">Gardar</string>
+    <string name="missing_pages_failed">Non se puido gardar «%1$s»</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d libro sen autor</item>
+        <item quantity="other">%d libros sen autor</item>
+    </plurals>
+    <string name="missing_authors_explanation">O autor é do libro, non de quen o le: o que escribas aquí gárdase na instancia e véno todos. Se o autor xa está, pediráseche que o escollas para non crear un duplicado.</string>
+    <string name="missing_authors_choice_title">«%1$s» é algún destes?</string>
+    <string name="missing_authors_choice_new">Crear un autor novo: %1$s</string>
+    <string name="missing_authors_choice_isni">Ficha nova tirada do rexistro ISNI</string>
+    <string name="missing_authors_failed">Non se puido gardar o autor de «%1$s»</string>
     <string name="profile_stats_per_year">Libros por ano</string>
     <string name="profile_stats_chart_desc">Libros por ano: %1$s</string>
     <string name="profile_top_rated">Mellor valorados</string>

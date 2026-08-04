@@ -348,6 +348,22 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="profile_stats_books">Böcker</string>
     <string name="profile_stats_this_year">I år</string>
     <string name="profile_stats_pages">Sidor</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d bok utan sidantal</item>
+        <item quantity="other">%d böcker utan sidantal</item>
+    </plurals>
+    <string name="missing_pages_explanation">Sidantalet hör till boken, inte till dig: det du skriver här sparas på instansen och alla ser det. Det sparas en bok i taget.</string>
+    <string name="missing_pages_save">Spara</string>
+    <string name="missing_pages_failed">Det gick inte att spara ”%1$s”</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d bok utan författare</item>
+        <item quantity="other">%d böcker utan författare</item>
+    </plurals>
+    <string name="missing_authors_explanation">Författaren hör till boken, inte till dig: det du skriver här sparas på instansen och alla ser det. Finns författaren redan där får du välja vilken, så att ingen dubblett skapas.</string>
+    <string name="missing_authors_choice_title">Är ”%1$s” någon av dessa?</string>
+    <string name="missing_authors_choice_new">Skapa en ny författare: %1$s</string>
+    <string name="missing_authors_choice_isni">Ny post hämtad från ISNI-registret</string>
+    <string name="missing_authors_failed">Det gick inte att spara författaren till ”%1$s”</string>
     <string name="profile_stats_per_year">Böcker per år</string>
     <string name="profile_stats_chart_desc">Böcker per år: %1$s</string>
     <string name="profile_top_rated">Högst betyg</string>

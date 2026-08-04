@@ -348,6 +348,22 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="profile_stats_books">Libri</string>
     <string name="profile_stats_this_year">Quest\'anno</string>
     <string name="profile_stats_pages">Pagine</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d libro senza numero di pagine</item>
+        <item quantity="other">%d libri senza numero di pagine</item>
+    </plurals>
+    <string name="missing_pages_explanation">Le pagine sono del libro, non di chi lo legge: quello che scrivi qui viene salvato sull\'istanza e lo vedono tutti. Si salva un libro alla volta.</string>
+    <string name="missing_pages_save">Salva</string>
+    <string name="missing_pages_failed">Impossibile salvare «%1$s»</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d libro senza autore</item>
+        <item quantity="other">%d libri senza autore</item>
+    </plurals>
+    <string name="missing_authors_explanation">L\'autore è del libro, non di chi lo legge: quello che scrivi qui viene salvato sull\'istanza e lo vedono tutti. Se l\'autore c\'è già, ti verrà chiesto di sceglierlo per non creare un duplicato.</string>
+    <string name="missing_authors_choice_title">«%1$s» è uno di questi?</string>
+    <string name="missing_authors_choice_new">Crea un nuovo autore: %1$s</string>
+    <string name="missing_authors_choice_isni">Nuova scheda presa dal registro ISNI</string>
+    <string name="missing_authors_failed">Impossibile salvare l\'autore di «%1$s»</string>
     <string name="profile_stats_per_year">Libri per anno</string>
     <string name="profile_stats_chart_desc">Libri per anno: %1$s</string>
     <string name="profile_top_rated">I meglio valutati</string>

@@ -348,6 +348,22 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_stats_books">Bücher</string>
     <string name="profile_stats_this_year">Dieses Jahr</string>
     <string name="profile_stats_pages">Seiten</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d Buch ohne Seitenzahl</item>
+        <item quantity="other">%d Bücher ohne Seitenzahl</item>
+    </plurals>
+    <string name="missing_pages_explanation">Die Seitenzahl gehört zum Buch, nicht zu dir: Was du hier einträgst, wird auf der Instanz gespeichert und alle sehen es. Es wird eines nach dem anderen gespeichert.</string>
+    <string name="missing_pages_save">Speichern</string>
+    <string name="missing_pages_failed">„%1$s“ konnte nicht gespeichert werden</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d Buch ohne Autorenangabe</item>
+        <item quantity="other">%d Bücher ohne Autorenangabe</item>
+    </plurals>
+    <string name="missing_authors_explanation">Die Autorenangabe gehört zum Buch, nicht zu dir: Was du hier einträgst, wird auf der Instanz gespeichert und alle sehen es. Gibt es die Person dort schon, wirst du gebeten, sie auszuwählen, damit kein Duplikat entsteht.</string>
+    <string name="missing_authors_choice_title">Ist „%1$s“ eine dieser Personen?</string>
+    <string name="missing_authors_choice_new">Neue Autorenangabe anlegen: %1$s</string>
+    <string name="missing_authors_choice_isni">Neuer Eintrag aus dem ISNI-Register</string>
+    <string name="missing_authors_failed">Die Autorenangabe für „%1$s“ konnte nicht gespeichert werden</string>
     <string name="profile_stats_per_year">Bücher pro Jahr</string>
     <string name="profile_stats_chart_desc">Bücher pro Jahr: %1$s</string>
     <string name="profile_top_rated">Am besten bewertet</string>

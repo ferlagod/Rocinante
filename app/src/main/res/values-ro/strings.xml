@@ -350,6 +350,24 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_stats_books">Cărți</string>
     <string name="profile_stats_this_year">Anul acesta</string>
     <string name="profile_stats_pages">Pagini</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d carte fără număr de pagini</item>
+        <item quantity="few">%d cărți fără număr de pagini</item>
+        <item quantity="other">%d de cărți fără număr de pagini</item>
+    </plurals>
+    <string name="missing_pages_explanation">Numărul de pagini ține de carte, nu de tine: ce scrii aici se salvează pe instanță și văd toți. Se salvează câte una pe rând.</string>
+    <string name="missing_pages_save">Salvează</string>
+    <string name="missing_pages_failed">Nu s-a putut salva „%1$s”</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d carte fără autor</item>
+        <item quantity="few">%d cărți fără autor</item>
+        <item quantity="other">%d de cărți fără autor</item>
+    </plurals>
+    <string name="missing_authors_explanation">Autorul ține de carte, nu de tine: ce scrii aici se salvează pe instanță și văd toți. Dacă autorul există deja acolo, ți se va cere să îl alegi, ca să nu apară un duplicat.</string>
+    <string name="missing_authors_choice_title">„%1$s” este unul dintre aceștia?</string>
+    <string name="missing_authors_choice_new">Creează un autor nou: %1$s</string>
+    <string name="missing_authors_choice_isni">Intrare nouă din registrul ISNI</string>
+    <string name="missing_authors_failed">Nu s-a putut salva autorul pentru „%1$s”</string>
     <string name="profile_stats_per_year">Cărți pe an</string>
     <string name="profile_stats_chart_desc">Cărți pe an: %1$s</string>
     <string name="profile_top_rated">Cele mai bine evaluate</string>

@@ -352,6 +352,26 @@
     <string name="profile_stats_books">Книги</string>
     <string name="profile_stats_this_year">Цьогоріч</string>
     <string name="profile_stats_pages">Сторінки</string>
+    <plurals name="missing_pages_title">
+        <item quantity="one">%d книга без кількості сторінок</item>
+        <item quantity="few">%d книги без кількості сторінок</item>
+        <item quantity="many">%d книг без кількості сторінок</item>
+        <item quantity="other">%d книги без кількості сторінок</item>
+    </plurals>
+    <string name="missing_pages_explanation">Кількість сторінок належить книзі, а не вам: те, що ви впишете тут, зберігається на інстанції і це бачать усі. Зберігається по одній книзі.</string>
+    <string name="missing_pages_save">Зберегти</string>
+    <string name="missing_pages_failed">Не вдалося зберегти «%1$s»</string>
+    <plurals name="missing_authors_title">
+        <item quantity="one">%d книга без автора</item>
+        <item quantity="few">%d книги без автора</item>
+        <item quantity="many">%d книг без автора</item>
+        <item quantity="other">%d книги без автора</item>
+    </plurals>
+    <string name="missing_authors_explanation">Автор належить книзі, а не вам: те, що ви впишете тут, зберігається на інстанції і це бачать усі. Якщо автор там уже є, вам запропонують обрати його, щоб не виник дублікат.</string>
+    <string name="missing_authors_choice_title">Чи «%1$s» — це хтось із них?</string>
+    <string name="missing_authors_choice_new">Створити нового автора: %1$s</string>
+    <string name="missing_authors_choice_isni">Новий запис із реєстру ISNI</string>
+    <string name="missing_authors_failed">Не вдалося зберегти автора для «%1$s»</string>
     <string name="profile_stats_per_year">Книги за рік</string>
     <string name="profile_stats_chart_desc">Книги за рік: %1$s</string>
     <string name="profile_top_rated">Найкраще оцінені</string>
