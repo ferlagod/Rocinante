@@ -274,51 +274,15 @@ object BookWyrmScraper {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+                val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                val html = fetchBookPage(api, localUrl, baseUrl)
+                if (html.isEmpty()) return@withContext null
+
                 val localBookId = BookWyrmUtils.extractBookId(localUrl)
-
-                val response = api.getRawHtmlResponse(localUrl)
-                if (!response.isSuccessful) {
-                    var currentUrl = localUrl
-                    var html = ""
-                    for (i in 0..3) {
-                        val redirResponse = api.getRawHtmlResponse(currentUrl)
-                        if (redirResponse.isSuccessful) {
-                            html = redirResponse.body()?.string() ?: ""
-                            break
-                        } else if (redirResponse.code() in 300..399) {
-                            val location = redirResponse.headers()["Location"]
-                            if (location != null) {
-                                currentUrl = if (location.startsWith("http")) location else {
-                                    val hostUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}" }
-                                    "$hostUrl$location"
-                                }
-                            } else {
-                                break
-                            }
-                        } else {
-                            break
-                        }
-                    }
-                    if (html.isEmpty()) return@withContext null
-                    
-                    val readthroughId = extractReadthroughId(html)
-                    val userId = extractHiddenFieldValue(html, "user")
-                    val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
-                    val formBookId = extractHiddenFieldValue(html, "book") ?: localBookId
-
-                    if (readthroughId != null && userId != null) {
-                        return@withContext ProgressContext(readthroughId, userId, formBookId, extractCsrfToken(html), startDate)
-                    } else {
-                        return@withContext null
-                    }
-                }
-
-                val html = response.body()?.string() ?: return@withContext null
-
                 val readthroughId = extractReadthroughId(html)
                 val userId = extractHiddenFieldValue(html, "user")
                 val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
-                val formBookId = extractHiddenFieldValue(html, "book") ?: localBookId
+                val formBookId = extractEditionId(html) ?: localBookId
 
                 if (readthroughId != null && userId != null) {
                     ProgressContext(readthroughId, userId, formBookId, extractCsrfToken(html), startDate)
@@ -722,7 +686,7 @@ object BookWyrmScraper {
         val addForm = doc.selectFirst("form[action\$=create-readthrough]")
             ?: doc.selectFirst("#add-readthrough")
         val bookId = addForm?.selectFirst("input[name=book]")?.attr("value")?.trim()?.ifEmpty { null }
-            ?: extractHiddenFieldValue(html, "book")
+            ?: extractEditionId(html)
         val userId = addForm?.selectFirst("input[name=user]")?.attr("value")?.trim()?.ifEmpty { null }
             ?: extractHiddenFieldValue(html, "user")
 
@@ -741,7 +705,7 @@ object BookWyrmScraper {
         try {
             val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
             val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
-            val html = fetchHtmlWithRedirects(api, localUrl, baseUrl)
+            val html = fetchBookPage(api, localUrl, baseUrl)
             if (html.isEmpty()) return@withContext null
 
             val parsed = parseReadDates(html)
