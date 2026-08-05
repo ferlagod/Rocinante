@@ -79,6 +79,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -93,6 +98,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.google.gson.Gson
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
@@ -133,6 +139,45 @@ private val QUICK_FIELDS = listOf(
 private val MORE_FIELDS = ExploreQuery.Field.entries.filterNot { it in QUICK_FIELDS }
 
 /**
+ * Lo que hay que guardar cuando el sistema se lleva la pantalla por delante —girarla es lo
+ * corriente, pero también vale volver de otra aplicación—. Sin esto, girar el teléfono borra los
+ * filtros que uno acaba de montar y los libros que ya había buscado.
+ *
+ * Se guardan como JSON y no como Parcelable a propósito: [ExploreQuery] es Kotlin a secas, se
+ * prueba sin Android delante, y hacerlo Parcelable por una necesidad de la pantalla lo ataría al
+ * teléfono. Gson ya está en el proyecto y con los enum se entiende por su nombre.
+ */
+private val SAVER_GSON = Gson()
+
+private val ROWS_SAVER = listSaver<SnapshotStateList<ExploreQuery.Row>, String>(
+    save = { filas -> filas.map { SAVER_GSON.toJson(it) } },
+    restore = { guardadas ->
+        guardadas.mapNotNull {
+            // Una fila que no se pueda leer se tira. Perder un filtro es molesto; reventar al
+            // volver a la pantalla, no tiene arreglo desde dentro de la aplicación.
+            runCatching { SAVER_GSON.fromJson(it, ExploreQuery.Row::class.java) }.getOrNull()
+        }.toMutableStateList()
+    }
+)
+
+private val WORKS_SAVER = listSaver<List<OpenLibraryWork>, String>(
+    save = { obras -> obras.map { SAVER_GSON.toJson(it) } },
+    restore = { guardadas ->
+        guardadas.mapNotNull {
+            runCatching { SAVER_GSON.fromJson(it, OpenLibraryWork::class.java) }.getOrNull()
+        }
+    }
+)
+
+/** El orden, por su nombre. Si algún día se quita una opción, se vuelve a la relevancia. */
+private val ORDEN_SAVER = Saver<ExploreQuery.Orden, String>(
+    save = { it.name },
+    restore = {
+        runCatching { ExploreQuery.Orden.valueOf(it) }.getOrDefault(ExploreQuery.Orden.RELEVANCIA)
+    }
+)
+
+/**
  * «Explorar»: encontrar un libro nuevo apilando filtros sobre el catálogo de Open Library.
  *
  * Los libros salen de Open Library y no de la instancia porque BookWyrm no sabe buscar por
@@ -162,8 +207,10 @@ fun ExploreScreen(
     var subjectPickerFor by remember { mutableStateOf<Int?>(null) }
     var subjectPickerOpen by remember { mutableStateOf(false) }
 
-    val rows = remember { mutableStateListOf<ExploreQuery.Row>() }
-    var orden by remember { mutableStateOf(ExploreQuery.Orden.RELEVANCIA) }
+    val rows = rememberSaveable(saver = ROWS_SAVER) { mutableStateListOf<ExploreQuery.Row>() }
+    var orden by rememberSaveable(stateSaver = ORDEN_SAVER) {
+        mutableStateOf(ExploreQuery.Orden.RELEVANCIA)
+    }
     var ordenMenuOpen by remember { mutableStateOf(false) }
 
     // Lo que mide la barra de abajo de verdad. Antes era un número fijo, pero ahora crece cuando
@@ -175,8 +222,10 @@ fun ExploreScreen(
     var dialOpen by remember { mutableStateOf(false) }
     var moreSheetOpen by remember { mutableStateOf(false) }
 
-    var works by remember { mutableStateOf<List<OpenLibraryWork>>(emptyList()) }
-    var total by remember { mutableStateOf(0) }
+    var works by rememberSaveable(stateSaver = WORKS_SAVER) {
+        mutableStateOf<List<OpenLibraryWork>>(emptyList())
+    }
+    var total by rememberSaveable { mutableStateOf(0) }
     var searching by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var editionsOf by remember { mutableStateOf<OpenLibraryWork?>(null) }
@@ -184,8 +233,8 @@ fun ExploreScreen(
     // La consulta con la que se pidió lo que hay en pantalla. Se guarda aparte de las filas
     // porque «ver más» tiene que pedir la página siguiente de *esta* búsqueda: si usara las filas
     // de ahora, cambiar un filtro y seguir paginando mezclaría resultados de dos búsquedas.
-    var activeQuery by remember { mutableStateOf<String?>(null) }
-    var activeSort by remember { mutableStateOf<String?>(null) }
+    var activeQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    var activeSort by rememberSaveable { mutableStateOf<String?>(null) }
 
     val currentQuery = ExploreQuery.build(rows.toList(), orden)
     // Los filtros ya no son los de los resultados que se están viendo. No se busca solo: se avisa.
