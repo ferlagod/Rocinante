@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Solo en la build de depuración: en el cajón de aplicaciones conviven las dos y con el
+         mismo nombre no hay manera de saber cuál se está abriendo. -->
+    <string name="app_name" translatable="false">Rocinante debug</string>
+</resources>
