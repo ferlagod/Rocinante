@@ -44,6 +44,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -57,6 +59,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.StarHalf
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -95,14 +98,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.ui.components.RatingStars
+import com.ferlagod.rocinante.ui.components.ShelfLayoutDialog
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.api.NetworkClient
+import com.ferlagod.rocinante.data.local.SettingsData
+import com.ferlagod.rocinante.data.local.SettingsPreferences
 import com.ferlagod.rocinante.data.model.ShelfBookItem
 import com.ferlagod.rocinante.utils.BookWyrmUtils
+import com.ferlagod.rocinante.utils.ShelfAlignment
+import com.ferlagod.rocinante.utils.ShelfLayout
+import com.ferlagod.rocinante.utils.ShelfSection
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 
@@ -262,22 +272,41 @@ fun MyBooksScreen(
     onTargetConsumed: () -> Unit = {},
     backToShelvesKey: Int = 0
 ) {
-    val shelves = listOf(
-        // La cuarta estantería que trae BookWyrm de serie: los libros que se dejaron a medias.
-        // Estaba sin enseñar, así que para verlos había que ir a la web; los nombres llevaban
-        // traducidos desde siempre, sin nada que los usara.
-        ShelfUiItem("stopped-reading", stringResource(R.string.shelf_stopped_title), stringResource(R.string.shelf_stopped_desc), Icons.Default.PauseCircleOutline),
-        ShelfUiItem("to-read", stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder),
-        ShelfUiItem("reading", stringResource(R.string.shelf_reading_title), stringResource(R.string.shelf_reading_desc), Icons.AutoMirrored.Filled.MenuBook),
-        ShelfUiItem("read", stringResource(R.string.shelf_read_title), stringResource(R.string.shelf_read_desc), Icons.Default.CheckCircle)
+    // Cada estantería con lo suyo. La cuarta que trae BookWyrm de serie —los libros que se
+    // dejaron a medias— estaba sin enseñar, así que para verlos había que ir a la web; los
+    // nombres llevaban traducidos desde siempre, sin nada que los usara.
+    val shelvesBySection = ShelfSection.entries.associateWith { section ->
+        when (section) {
+            ShelfSection.STOPPED_READING -> ShelfUiItem(section.slug, stringResource(R.string.shelf_stopped_title), stringResource(R.string.shelf_stopped_desc), Icons.Default.PauseCircleOutline)
+            ShelfSection.TO_READ -> ShelfUiItem(section.slug, stringResource(R.string.shelf_to_read_title), stringResource(R.string.shelf_to_read_desc), Icons.Default.BookmarkBorder)
+            ShelfSection.READING -> ShelfUiItem(section.slug, stringResource(R.string.shelf_reading_title), stringResource(R.string.shelf_reading_desc), Icons.AutoMirrored.Filled.MenuBook)
+            ShelfSection.READ -> ShelfUiItem(section.slug, stringResource(R.string.shelf_read_title), stringResource(R.string.shelf_read_desc), Icons.Default.CheckCircle)
+        }
+    }
+
+    // Disposición elegida por el usuario, guardada en ajustes como la del perfil.
+    val layoutContext = LocalContext.current
+    val layoutScope = rememberCoroutineScope()
+    val settingsPreferences = remember(layoutContext) { SettingsPreferences(layoutContext) }
+    val settingsState by settingsPreferences.settingsFlow.collectAsStateWithLifecycle(
+        initialValue = SettingsData()
     )
+    val shelfLayout = remember(settingsState.shelfLayout, settingsState.shelfAlignment) {
+        ShelfLayout.decode(settingsState.shelfLayout, settingsState.shelfAlignment)
+    }
+    var showLayoutDialog by remember { mutableStateOf(false) }
+
+    // Las apagadas siguen existiendo: la búsqueda puede mandar aquí un libro de una de ellas, y
+    // esconder la tarjeta no debe cerrar el camino a la estantería.
+    val shelves = shelfLayout.visibleSections.map { shelvesBySection.getValue(it) }
+    val allShelves = ShelfSection.entries.map { shelvesBySection.getValue(it) }
 
     var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
 
     // Al pulsar un libro de las estanterías en la búsqueda se abre aquí su estantería.
     LaunchedEffect(targetShelfSlug) {
         val slug = targetShelfSlug ?: return@LaunchedEffect
-        shelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
+        allShelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
     }
 
     // Volver a tocar «Mis libros» estando ya aquí devuelve a la lista de estanterías, como
@@ -293,59 +322,109 @@ fun MyBooksScreen(
     }
 
     if (selectedShelf == null) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.shelf_screen_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.shelf_screen_subtitle),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            Text(
+                text = stringResource(R.string.shelf_screen_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.shelf_screen_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
 
-            items(shelves) { shelf ->
-                OutlinedCard(
-                    onClick = { selectedShelf = shelf },
-                    modifier = Modifier.fillMaxWidth()
+            // Cuatro tarjetas como mucho en una pantalla alta: arriba dejan medio móvil en
+            // blanco y hay que estirar el pulgar hasta ellas. El hueco sobrante lo ocupa esta
+            // caja, y la elección del usuario decide contra qué borde se apoyan las tarjetas.
+            // El título no se mueve: es de la pantalla, no de la lista.
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = when (shelfLayout.alignment) {
+                    ShelfAlignment.TOP -> Alignment.TopCenter
+                    ShelfAlignment.BOTTOM -> Alignment.BottomCenter
+                }
+            ) {
+                // Con letra muy grande las cuatro tarjetas pueden no caber; entonces la
+                // columna llena la caja y se desplaza, y la alineación deja de notarse.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    shelves.forEach { shelf ->
+                        OutlinedCard(
+                            onClick = { selectedShelf = shelf },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = shelf.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        text = shelf.title,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = shelf.description,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Ajustes de la propia página, detrás de las estanterías: se usa una vez y
+                    // no debe competir con ellas. Igual que en el perfil.
                     Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(
-                            imageVector = shelf.icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = shelf.title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold
+                        TextButton(onClick = { showLayoutDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Tune,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = shelf.description,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.shelf_layout_edit))
                         }
                     }
                 }
             }
+        }
+
+        if (showLayoutDialog) {
+            ShelfLayoutDialog(
+                initialLayout = shelfLayout,
+                onDismiss = { showLayoutDialog = false },
+                onSave = { updated ->
+                    showLayoutDialog = false
+                    layoutScope.launch {
+                        settingsPreferences.setShelfLayout(updated.encode(), updated.alignment.id)
+                    }
+                }
+            )
         }
     } else {
         selectedShelf?.let { shelf ->

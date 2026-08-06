@@ -62,7 +62,11 @@ data class SettingsData(
     val reminderMinute: Int = 0,
     val lastChangelogVersion: String = "",
     /** Orden y visibilidad de los bloques del perfil, codificados por [ProfileLayout]. */
-    val profileLayout: String = ""
+    val profileLayout: String = "",
+    /** Orden y visibilidad de las estanterías de «Mis libros», codificados por [ShelfLayout]. */
+    val shelfLayout: String = "",
+    /** Si las tarjetas de las estanterías se agrupan arriba o abajo ([ShelfAlignment]). */
+    val shelfAlignment: String = ""
 )
 
 /**
@@ -80,6 +84,8 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_REMINDER_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("reminder_minute")
         private val KEY_LAST_CHANGELOG_VERSION = stringPreferencesKey("last_changelog_version")
         private val KEY_PROFILE_LAYOUT = stringPreferencesKey("profile_layout")
+        private val KEY_SHELF_LAYOUT = stringPreferencesKey("shelf_layout")
+        private val KEY_SHELF_ALIGNMENT = stringPreferencesKey("shelf_alignment")
     }
 
     /**
@@ -107,6 +113,8 @@ class SettingsPreferences(private val context: Context) {
             val reminderMinute = prefs[KEY_REMINDER_MINUTE] ?: 0
             val lastChangelogVersion = prefs[KEY_LAST_CHANGELOG_VERSION] ?: ""
             val profileLayout = prefs[KEY_PROFILE_LAYOUT] ?: ""
+            val shelfLayout = prefs[KEY_SHELF_LAYOUT] ?: ""
+            val shelfAlignment = prefs[KEY_SHELF_ALIGNMENT] ?: ""
 
             SettingsData(
                 themeMode,
@@ -115,7 +123,9 @@ class SettingsPreferences(private val context: Context) {
                 reminderHour,
                 reminderMinute,
                 lastChangelogVersion,
-                profileLayout
+                profileLayout,
+                shelfLayout,
+                shelfAlignment
             )
         }
 
@@ -173,6 +183,21 @@ class SettingsPreferences(private val context: Context) {
     suspend fun setProfileLayout(layout: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_PROFILE_LAYOUT] = layout
+        }
+    }
+
+    /**
+     * Guarda la disposición de las estanterías de «Mis libros». El orden con la visibilidad y
+     * la posición van juntos en una sola escritura: se deciden en el mismo diálogo y con una
+     * sola pulsación de Guardar, así que la pantalla no debe llegar a ver medio cambio.
+     *
+     * @param layout cadena generada por `ShelfLayout.encode()`.
+     * @param alignment id de `ShelfAlignment`.
+     */
+    suspend fun setShelfLayout(layout: String, alignment: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_SHELF_LAYOUT] = layout
+            prefs[KEY_SHELF_ALIGNMENT] = alignment
         }
     }
 

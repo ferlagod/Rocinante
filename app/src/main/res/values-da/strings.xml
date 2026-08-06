@@ -483,6 +483,13 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_layout_help">Slå bokse til og fra, og træk i grebet for at ændre rækkefølgen.</string>
     <string name="profile_layout_reset">Nulstil</string>
     <string name="profile_layout_drag_desc">Træk for at flytte %1$s</string>
+    <string name="shelf_layout_edit">Rediger side</string>
+    <string name="shelf_layout_title">Rediger side</string>
+    <string name="shelf_layout_help">Slå hylder til og fra, og træk i grebet for at ændre rækkefølgen.</string>
+    <string name="shelf_layout_align">Placering på skærmen</string>
+    <string name="shelf_layout_align_top">Øverst</string>
+    <string name="shelf_layout_align_bottom">Nederst</string>
+    <string name="shelf_layout_always">%1$s vises altid</string>
     <string name="profile_section_stats">Læsestatistik</string>
     <string name="search_local_section">På dine hylder</string>
     <string name="search_instance_section">På denne instans</string>

@@ -476,6 +476,13 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_layout_help">Turn sections on or off, and drag the handle to reorder them.</string>
     <string name="profile_layout_reset">Reset</string>
     <string name="profile_layout_drag_desc">Drag to move %1$s</string>
+    <string name="shelf_layout_edit">Edit page</string>
+    <string name="shelf_layout_title">Edit page</string>
+    <string name="shelf_layout_help">Turn shelves on or off, and drag the handle to reorder them.</string>
+    <string name="shelf_layout_align">Position on screen</string>
+    <string name="shelf_layout_align_top">Top</string>
+    <string name="shelf_layout_align_bottom">Bottom</string>
+    <string name="shelf_layout_always">%1$s is always shown</string>
     <string name="profile_section_stats">Reading statistics</string>
     <string name="search_local_section">In your shelves</string>
     <string name="search_instance_section">On this instance</string>

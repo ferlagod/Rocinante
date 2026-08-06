@@ -482,6 +482,13 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="profile_layout_help">Activa o desactiva los bloques y arrastra el asa para ordenarlos.</string>
     <string name="profile_layout_reset">Restablecer</string>
     <string name="profile_layout_drag_desc">Arrastra para mover %1$s</string>
+    <string name="shelf_layout_edit">Editar página</string>
+    <string name="shelf_layout_title">Editar página</string>
+    <string name="shelf_layout_help">Activa o desactiva las estanterías y arrastra el asa para ordenarlas.</string>
+    <string name="shelf_layout_align">Posición en la pantalla</string>
+    <string name="shelf_layout_align_top">Arriba</string>
+    <string name="shelf_layout_align_bottom">Abajo</string>
+    <string name="shelf_layout_always">%1$s se muestra siempre</string>
     <string name="profile_section_stats">Estadísticas de lectura</string>
     <string name="search_local_section">En tus estanterías</string>
     <string name="search_instance_section">En esta instancia</string>
