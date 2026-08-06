@@ -23,9 +23,11 @@ import com.ferlagod.rocinante.data.model.*
 
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,9 +40,12 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -224,6 +229,7 @@ fun SearchScreen(
     }
 
     var showExplore by rememberSaveable { mutableStateOf(false) }
+    var toolsExpanded by remember { mutableStateOf(false) }
 
     /**
      * Abre la ficha de un libro que ya está en la instancia, sea porque estaba o porque
@@ -271,12 +277,85 @@ fun SearchScreen(
             onBack = { showExplore = false }
         )
     } else {
+    Box(modifier = modifier.fillMaxSize()) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Lo que se escribe filtra las estanterías propias al momento y sin red; preguntar a la
+        // instancia es otra cosa, y se pide desde el propio campo: con la lupa o con la tecla de
+        // buscar del teclado. Antes había un botón de ancho completo para ello, y otros tres
+        // debajo, así que el primer resultado no aparecía hasta dos tercios de la pantalla.
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text(if (searchMode == SearchMode.BOOKS) stringResource(R.string.search_hint) else stringResource(R.string.search_hint_users)) },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = { performSearch() }
+            ),
+            singleLine = true,
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchQuery = ""
+                            searchResults = emptyList()
+                            userSearchResults = emptyList()
+                            errorMessage = null
+                        }) {
+                            androidx.compose.material3.Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                                contentDescription = stringResource(R.string.search_clear)
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = { performSearch() },
+                        enabled = searchQuery.isNotBlank() && !isSearching
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search_tools_instance)
+                        )
+                    }
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Libros o gente: dos fichas pequeñas en vez de una fila de pestañas de ancho completo,
+        // que pesaba tanto como el campo del que depende.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = searchMode == SearchMode.BOOKS,
+                onClick = {
+                    searchMode = SearchMode.BOOKS
+                    if (searchQuery.isNotBlank() && searchResults.isEmpty()) performSearch()
+                },
+                label = { Text(stringResource(R.string.search_tab_books)) }
+            )
+            FilterChip(
+                selected = searchMode == SearchMode.USERS,
+                onClick = {
+                    searchMode = SearchMode.USERS
+                    if (searchQuery.isNotBlank() && userSearchResults.isEmpty()) performSearch()
+                },
+                label = { Text(stringResource(R.string.search_tab_users)) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // El aviso va aquí, junto a los resultados que no ha habido, y no encima del campo:
+        // ahí empujaba hacia abajo lo único que se usa siempre.
         // «No hay libros» sobra cuando el libro sí está en las estanterías del usuario;
         // los errores de red, en cambio, se siguen mostrando.
         val isEmptyBooksError = errorMessage == context.getString(R.string.search_books_empty)
@@ -304,85 +383,8 @@ fun SearchScreen(
             }
         }
 
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text(if (searchMode == SearchMode.BOOKS) stringResource(R.string.search_hint) else stringResource(R.string.search_hint_users)) },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = { performSearch() }
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Buscar es para cuando se sabe qué libro se quiere; explorar, para cuando no. Por eso
-        // está aquí y no en otra pestaña de abajo: se llega a ello queriendo buscar algo.
-        OutlinedButton(
-            onClick = { showExplore = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            androidx.compose.material3.Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.Explore,
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.explore_title))
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        PrimaryTabRow(selectedTabIndex = searchMode.ordinal, modifier = Modifier.fillMaxWidth()) {
-            Tab(
-                selected = searchMode == SearchMode.BOOKS,
-                onClick = { 
-                    searchMode = SearchMode.BOOKS
-                    if (searchQuery.isNotBlank() && searchResults.isEmpty()) performSearch()
-                },
-                text = { Text(stringResource(R.string.search_tab_books)) }
-            )
-            Tab(
-                selected = searchMode == SearchMode.USERS,
-                onClick = { 
-                    searchMode = SearchMode.USERS
-                    if (searchQuery.isNotBlank() && userSearchResults.isEmpty()) performSearch()
-                },
-                text = { Text(stringResource(R.string.search_tab_users)) }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = { performSearch() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(if (searchMode == SearchMode.BOOKS) stringResource(R.string.search_btn) else stringResource(R.string.search_btn_users))
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (searchMode == SearchMode.BOOKS) {
-            OutlinedButton(
-                onClick = {
-                    val options = ScanOptions()
-                    options.setPrompt(context.getString(R.string.search_barcode_prompt))
-                    options.setBeepEnabled(false)
-                    options.setOrientationLocked(false)
-                    barcodeLauncher.launch(options)
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                androidx.compose.material3.Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.QrCodeScanner,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.search_barcode_btn))
-            }
-        } else {
+        // El formato usuario@instancia solo hace falta mientras no hay a quién mirar.
+        if (searchMode == SearchMode.USERS && userSearchResults.isEmpty() && !isSearching) {
             Text(
                 text = stringResource(R.string.search_users_info),
                 style = MaterialTheme.typography.bodySmall,
@@ -390,9 +392,8 @@ fun SearchScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         if (isLoadingDetails) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -404,7 +405,9 @@ fun SearchScreen(
         } else if (searchMode == SearchMode.BOOKS && (localHits.isNotEmpty() || searchResults.isNotEmpty())) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                // Sitio para que el último libro no acabe debajo del botón de herramientas.
+                contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 if (localHits.isNotEmpty()) {
                     item(key = "local-header") {
@@ -536,7 +539,9 @@ fun SearchScreen(
         } else if (searchMode == SearchMode.USERS && userSearchResults.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                // Sitio para que el último libro no acabe debajo del botón de herramientas.
+                contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 items(items = userSearchResults, key = { it.handle }) { user ->
                     Card(
@@ -610,6 +615,50 @@ fun SearchScreen(
                 }
             }
         }
+    }
+
+        if (toolsExpanded) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { toolsExpanded = false }
+            )
+        }
+
+        // Explorar y el escáner son sidecarros de la búsqueda, no la búsqueda: se recogen en un
+        // botón flotante que se abre en dos, en vez de ocupar dos botones de ancho completo por
+        // encima de los resultados. El escáner solo tiene sentido buscando libros.
+        SearchToolsFab(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            expanded = toolsExpanded,
+            onExpandedChange = { toolsExpanded = it },
+            showScan = searchMode == SearchMode.BOOKS,
+            onExplore = {
+                toolsExpanded = false
+                showExplore = true
+            },
+            onAddBook = {
+                toolsExpanded = false
+                val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
+                val intent = android.content.Intent(
+                    android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://$cleanInstance/create-book")
+                )
+                context.startActivity(intent)
+            },
+            onScan = {
+                toolsExpanded = false
+                val options = ScanOptions()
+                options.setPrompt(context.getString(R.string.search_barcode_prompt))
+                options.setBeepEnabled(false)
+                options.setOrientationLocked(false)
+                barcodeLauncher.launch(options)
+            }
+        )
     }
     }
 
@@ -996,6 +1045,95 @@ fun SearchSkeletonLoader() {
                     }
                 }
             }
+        }
+    }
+}
+/**
+ * Botón flotante que se abre en las herramientas de la búsqueda: explorar por materias y el
+ * escáner de códigos. Ninguna de las dos es «buscar» —eso se pide desde el campo, escribiendo—,
+ * pero las dos empiezan aquí, así que se recogen en el mismo sitio en vez de repartirse en
+ * botones de ancho completo que competían con los resultados.
+ *
+ * @param expanded si el botón está abierto enseñando las herramientas.
+ * @param showScan el escáner solo se ofrece buscando libros; con gente no significa nada.
+ */
+@Composable
+private fun SearchToolsFab(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    showScan: Boolean,
+    onExplore: () -> Unit,
+    onAddBook: () -> Unit,
+    onScan: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AnimatedVisibility(visible = expanded) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SearchToolAction(
+                    label = stringResource(R.string.explore_title),
+                    icon = Icons.Default.Explore,
+                    onClick = onExplore
+                )
+                SearchToolAction(
+                    label = stringResource(R.string.search_tools_add_book),
+                    icon = Icons.Default.Add,
+                    onClick = onAddBook
+                )
+                if (showScan) {
+                    SearchToolAction(
+                        label = stringResource(R.string.search_tools_scan),
+                        icon = Icons.Default.QrCodeScanner,
+                        onClick = onScan
+                    )
+                }
+            }
+        }
+        FloatingActionButton(onClick = { onExpandedChange(!expanded) }) {
+            Icon(
+                imageVector = if (expanded) Icons.Default.Close else Icons.Default.Build,
+                contentDescription = stringResource(
+                    if (expanded) R.string.search_tools_close else R.string.search_tools_desc
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Una herramienta del botón flotante: su nombre escrito al lado, porque un icono suelto no dice
+ * cuál de las dos es, y menos el del escáner.
+ */
+@Composable
+private fun SearchToolAction(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            tonalElevation = 3.dp
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            )
+        }
+        SmallFloatingActionButton(onClick = onClick) {
+            Icon(imageVector = icon, contentDescription = null)
         }
     }
 }

@@ -517,6 +517,12 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_section_stats">Reading statistics</string>
     <string name="search_local_section">In your shelves</string>
     <string name="search_instance_section">On this instance</string>
+    <string name="search_clear">Clear</string>
+    <string name="search_tools_desc">Tools</string>
+    <string name="search_tools_close">Close tools</string>
+    <string name="search_tools_instance">Search this instance</string>
+    <string name="search_tools_scan">Scan barcode</string>
+    <string name="search_tools_add_book">Add a book</string>
     <plurals name="search_local_more">
         <item quantity="one">…and %d more in your shelves</item>
         <item quantity="other">…and %d more in your shelves</item>

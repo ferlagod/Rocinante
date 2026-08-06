@@ -524,6 +524,12 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_section_stats">Læsestatistik</string>
     <string name="search_local_section">På dine hylder</string>
     <string name="search_instance_section">På denne instans</string>
+    <string name="search_clear">Ryd</string>
+    <string name="search_tools_desc">Værktøjer</string>
+    <string name="search_tools_close">Luk værktøjer</string>
+    <string name="search_tools_instance">Søg på instansen</string>
+    <string name="search_tools_scan">Scan stregkode</string>
+    <string name="search_tools_add_book">Tilføj en bog</string>
     <plurals name="search_local_more">
         <item quantity="one">…og %d mere på dine hylder</item>
         <item quantity="other">…og %d mere på dine hylder</item>
