@@ -517,6 +517,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_section_stats">Reading statistics</string>
     <string name="search_local_section">In your shelves</string>
     <string name="search_instance_section">On this instance</string>
+    <string name="search_instance_prompt">Search this instance for \"%1$s\"</string>
     <string name="search_clear">Clear</string>
     <string name="search_tools_desc">Tools</string>
     <string name="search_tools_close">Close tools</string>

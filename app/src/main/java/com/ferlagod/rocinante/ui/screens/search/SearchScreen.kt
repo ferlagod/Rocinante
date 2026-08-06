@@ -433,6 +433,40 @@ fun SearchScreen(
                             )
                         }
                     }
+                    // Donde se acaba lo propio es donde uno se pregunta si no habrá más, así
+                    // que ahí mismo se ofrece preguntárselo a la instancia, con el término
+                    // escrito para que se vea qué se va a buscar. Es lo mismo que hace la lupa
+                    // del campo; aquí sale sola, sin tener que subir la vista.
+                    if (searchResults.isEmpty() && !isSearching) {
+                        item(key = "search-instance") {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { performSearch() }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = stringResource(
+                                            R.string.search_instance_prompt,
+                                            searchQuery
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
                     if (searchResults.isNotEmpty()) {
                         item(key = "remote-header") {
                             SearchSectionHeader(stringResource(R.string.search_instance_section))

@@ -524,6 +524,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_section_stats">Læsestatistik</string>
     <string name="search_local_section">På dine hylder</string>
     <string name="search_instance_section">På denne instans</string>
+    <string name="search_instance_prompt">Søg efter \"%1$s\" på instansen</string>
     <string name="search_clear">Ryd</string>
     <string name="search_tools_desc">Værktøjer</string>
     <string name="search_tools_close">Luk værktøjer</string>
