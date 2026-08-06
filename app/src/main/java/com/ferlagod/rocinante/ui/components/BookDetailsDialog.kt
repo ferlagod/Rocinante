@@ -112,6 +112,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -677,18 +678,37 @@ fun BookDetailsDialog(
                                             .padding(horizontal = 24.dp, vertical = 12.dp),
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
+                                        // Media pantalla por botón no da para «Actualizar
+                                        // progreso» en dos líneas sin que el botón crezca al
+                                        // doble de alto que su vecino. Una línea, con el hueco
+                                        // de los lados recortado y la letra un punto más
+                                        // pequeña, que es lo que cabe en danés y en castellano.
                                         OutlinedButton(
                                             onClick = { showProgressDialog = true },
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                                         ) {
-                                            Text(stringResource(R.string.book_update_progress))
+                                            Text(
+                                                text = stringResource(R.string.book_update_progress),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
                                         }
                                         Button(
                                             onClick = { finishReading() },
                                             enabled = !isFinishing,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                                         ) {
-                                            Text(stringResource(R.string.book_finish_reading))
+                                            Text(
+                                                text = stringResource(R.string.book_finish_reading),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
                                         }
                                     }
                                 } else {
