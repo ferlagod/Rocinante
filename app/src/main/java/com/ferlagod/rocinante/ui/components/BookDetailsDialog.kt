@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,7 +47,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -254,7 +252,6 @@ fun BookDetailsDialog(
     var showProgressDialog by remember { mutableStateOf(false) }
     // Progreso pendiente de publicar: mientras no sea null se muestra la hoja de publicación.
     var progressPost by remember { mutableStateOf<ProgressSubmission?>(null) }
-    var showReadingActionsDialog by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
     // Preguntar por la reseña en vez de abrirla sin más: terminar un libro y valorarlo son
     // dos cosas distintas, y quien solo quería apuntarlo se encontraba con el formulario
@@ -1104,40 +1101,19 @@ fun BookDetailsDialog(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
-                                    // Progreso (etiqueta + barra) con un botón de lápiz alto a la
-                                    // derecha que abarca ambas líneas.
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            Text(text = progressLabel, style = MaterialTheme.typography.bodyMedium)
-                                            if (printedLabel != null) {
-                                                Text(
-                                                    text = printedLabel,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            if (fraction != null) {
-                                                LinearProgressIndicator(
-                                                    progress = { fraction },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
-                                            }
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(text = progressLabel, style = MaterialTheme.typography.bodyMedium)
+                                        if (printedLabel != null) {
+                                            Text(
+                                                text = printedLabel,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
                                         }
-                                        FilledTonalButton(
-                                            onClick = { showReadingActionsDialog = true },
-                                            enabled = !isFinishing,
-                                            modifier = Modifier.fillMaxHeight()
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = stringResource(R.string.book_reading_actions)
+                                        if (fraction != null) {
+                                            LinearProgressIndicator(
+                                                progress = { fraction },
+                                                modifier = Modifier.fillMaxWidth()
                                             )
                                         }
                                     }
@@ -1286,44 +1262,6 @@ fun BookDetailsDialog(
                 showEditionPicker = false
                 onShelved?.invoke()
                 onDismiss()
-            }
-        )
-    }
-
-    // ── Diálogo de acciones de lectura (actualizar progreso / terminar) ──
-    if (showReadingActionsDialog) {
-        AlertDialog(
-            onDismissRequest = { showReadingActionsDialog = false },
-            title = { Text(stringResource(R.string.book_reading_actions)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            showReadingActionsDialog = false
-                            showProgressDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.book_update_progress))
-                    }
-                    Button(
-                        onClick = {
-                            showReadingActionsDialog = false
-                            finishReading()
-                        },
-                        enabled = !isFinishing,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(stringResource(R.string.book_finish_reading))
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showReadingActionsDialog = false }) {
-                    Text(stringResource(R.string.progress_btn_cancel))
-                }
             }
         )
     }
