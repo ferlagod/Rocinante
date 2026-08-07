@@ -251,6 +251,9 @@
     <string name="activity_type_add">Hat ein Buch hinzugefügt</string>
     <string name="profile_who_to_follow">Wem folgen</string>
     <string name="changelog_title">Neuigkeiten in %1$s</string>
+    <string name="news_card_title">Neu in %1$s</string>
+    <string name="news_card_body">Sieh, was diese Version bringt</string>
+    <string name="news_card_dismiss">Ausblenden</string>
     <string name="changelog_text_v1_0_3">🔹 Direkter Zugriff auf Buchdetails durch Tippen auf das Cover in Aktivitäten.
 🔹 Option, Benutzern direkt aus Rezensionen zu folgen.
 🔹 Es ist nun möglich, auf ActivityPub-Beiträge zu antworten und sie zu liken.

@@ -251,6 +251,9 @@
     <string name="activity_type_add">Lisäsi kirjan</string>
     <string name="profile_who_to_follow">Ehdotuksia seurattavaksi</string>
     <string name="changelog_title">Uutta versiossa %1$s</string>
+    <string name="news_card_title">Uutta versiossa %1$s</string>
+    <string name="news_card_body">Katso, mitä tämä versio tuo</string>
+    <string name="news_card_dismiss">Piilota</string>
     <string name="changelog_text_v1_0_3">🔹 Suora pääsy kirjan tietoihin napauttamalla sen kantta Toiminnassa.
 🔹 Mahdollisuus seurata käyttäjiä suoraan arvosteluista.
 🔹 Nyt on mahdollista vastata ja tykätä ActivityPub-julkaisuista.

@@ -251,6 +251,9 @@
     <string name="activity_type_add">Ha afegit un llibre</string>
     <string name="profile_who_to_follow">A qui seguir</string>
     <string name="changelog_title">Novetats de la %1$s</string>
+    <string name="news_card_title">Novetats de %1$s</string>
+    <string name="news_card_body">Mira què porta aquesta versió</string>
+    <string name="news_card_dismiss">Descartar</string>
     <string name="changelog_text_v1_0_3">🔹 Accés directe a la fitxa del llibre tocant la seva portada a Activitat.
 🔹 Opció de seguir usuaris directament des de les ressenyes.
 🔹 Ja és possible respondre i donar \"m\'agrada\" a publicacions d\'ActivityPub.

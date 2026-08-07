@@ -253,6 +253,9 @@
     <string name="activity_type_add">A adăugat o carte</string>
     <string name="profile_who_to_follow">Pe cine să urmărești</string>
     <string name="changelog_title">Noutăți în %1$s</string>
+    <string name="news_card_title">Noutăți în %1$s</string>
+    <string name="news_card_body">Vezi ce aduce această versiune</string>
+    <string name="news_card_dismiss">Ascunde</string>
     <string name="changelog_text_v1_0_3">🔹 Acces direct la detaliile cărții atingând coperta în Activitate.
 🔹 Opțiunea de a urmări utilizatori direct din recenzii.
 🔹 Acum este posibil să răspunzi și să apreciezi postările ActivityPub.

@@ -255,6 +255,9 @@
     <string name="activity_type_add">Додав(ла) книгу</string>
     <string name="profile_who_to_follow">За ким стежити</string>
     <string name="changelog_title">Що нового у %1$s</string>
+    <string name="news_card_title">Нове у %1$s</string>
+    <string name="news_card_body">Подивіться, що дає ця версія</string>
+    <string name="news_card_dismiss">Сховати</string>
     <string name="changelog_text_v1_0_3">🔹 Прямий доступ до деталей книги натисканням на її обкладинку в Активності.
 🔹 Можливість стежити за користувачами безпосередньо з відгуків.
 🔹 Тепер можна відповідати та ставити \"подобається\" на публікації ActivityPub.
