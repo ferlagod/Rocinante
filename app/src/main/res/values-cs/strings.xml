@@ -43,6 +43,8 @@
     </plurals>
     <string name="series_title">Série</string>
     <string name="series_empty">Zatím žádná série mezi přečtenými knihami</string>
+    <string name="authors_title">Autoři</string>
+    <string name="authors_empty">Mezi přečtenými knihami zatím nejsou žádní autoři</string>
     <string name="series_book_of">%1$s · kniha %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d kniha</item>
@@ -268,6 +270,9 @@ Oprava počítadel: Vyřešena chyba, která zobrazovala 0 sledujících/sledova
 Kompatibilita: Vylepšená synchronizace s účty Mastodon.
 
 Design: Přidána podpora pro jednobarevné ikony.</string>    <string name="book_write_review">Recenze</string>
+    <string name="book_review_prompt_title">Ohodnotit knihu?</string>
+    <string name="book_review_prompt_text">Je teď ve vaší polici Přečtené. Můžete napsat recenzi a dát hvězdičky, nebo ji nechat tak.</string>
+    <string name="book_review_prompt_skip">Teď ne</string>
     <string name="book_add_quote">Přidat citát</string>
     <string name="quotation_dialog_title">Přidat citát</string>
     <string name="quotation_quote_label">Fráze z knihy (volitelné)</string>
@@ -398,6 +403,13 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_layout_help">Zapni nebo vypni bloky a přetažením úchytu změň jejich pořadí.</string>
     <string name="profile_layout_reset">Obnovit</string>
     <string name="profile_layout_drag_desc">Přetažením přesuň %1$s</string>
+    <string name="shelf_layout_edit">Upravit stránku</string>
+    <string name="shelf_layout_title">Upravit stránku</string>
+    <string name="shelf_layout_help">Zapínejte a vypínejte police a tažením za úchyt měňte jejich pořadí.</string>
+    <string name="shelf_layout_align">Umístění na obrazovce</string>
+    <string name="shelf_layout_align_top">Nahoře</string>
+    <string name="shelf_layout_align_bottom">Dole</string>
+    <string name="shelf_layout_always">%1$s se zobrazuje vždy</string>
     <string name="profile_section_stats">Statistiky čtení</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d kniha nemá datum dočtení a není v grafu</item>

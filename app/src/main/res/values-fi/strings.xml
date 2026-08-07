@@ -50,6 +50,8 @@
     </plurals>
     <string name="series_title">Sarjat</string>
     <string name="series_empty">Ei vielä sarjoja lukemiesi kirjojen joukossa</string>
+    <string name="authors_title">Tekijät</string>
+    <string name="authors_empty">Lukemiesi kirjojen joukossa ei ole vielä tekijöitä</string>
     <string name="series_book_of">%1$s · kirja %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d kirja</item>
@@ -265,6 +267,9 @@ Yhteensopivuus: Parannettu synkronointia Mastodon-tilien kanssa.
 
 Muotoilu: Lisätty tuki yksivärisille kuvakkeille.</string>
     <string name="book_write_review">Arvostelu</string>
+    <string name="book_review_prompt_title">Arvioidaanko kirja?</string>
+    <string name="book_review_prompt_text">Se on nyt Luetut-hyllyssäsi. Voit kirjoittaa arvion ja antaa tähtiä, tai jättää sen tähän.</string>
+    <string name="book_review_prompt_skip">Ei nyt</string>
     <string name="book_add_quote">Lisää lainaus</string>
     <string name="quotation_dialog_title">Lisää lainaus</string>
     <string name="quotation_quote_label">Lause kirjasta (valinnainen)</string>
@@ -393,6 +398,13 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="profile_layout_help">Kytke lohkoja päälle tai pois ja järjestä ne vetämällä kahvasta.</string>
     <string name="profile_layout_reset">Palauta</string>
     <string name="profile_layout_drag_desc">Siirrä vetämällä: %1$s</string>
+    <string name="shelf_layout_edit">Muokkaa sivua</string>
+    <string name="shelf_layout_title">Muokkaa sivua</string>
+    <string name="shelf_layout_help">Ota hyllyjä käyttöön tai pois ja järjestä ne vetämällä kahvasta.</string>
+    <string name="shelf_layout_align">Sijainti näytöllä</string>
+    <string name="shelf_layout_align_top">Ylhäällä</string>
+    <string name="shelf_layout_align_bottom">Alhaalla</string>
+    <string name="shelf_layout_always">%1$s näkyy aina</string>
     <string name="profile_section_stats">Lukutilastot</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d kirjalta puuttuu lopetuspäivä, eikä se näy kaaviossa</item>

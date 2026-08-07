@@ -41,6 +41,8 @@
     </plurals>
     <string name="series_title">Σειρές</string>
     <string name="series_empty">Δεν υπάρχουν ακόμη σειρές στα βιβλία που έχετε διαβάσει</string>
+    <string name="authors_title">Συγγραφείς</string>
+    <string name="authors_empty">Δεν υπάρχουν ακόμη συγγραφείς ανάμεσα στα βιβλία που έχετε διαβάσει</string>
     <string name="series_book_of">%1$s · βιβλίο %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d βιβλίο</item>
@@ -264,6 +266,9 @@
 Συμβατότητα: Βελτιωμένος συγχρονισμός με λογαριασμούς Mastodon.
 
 Σχεδιασμός: Προστέθηκε υποστήριξη για μονοχρωματικά εικονίδια.</string>    <string name="book_write_review">Κριτική</string>
+    <string name="book_review_prompt_title">Να βαθμολογηθεί το βιβλίο;</string>
+    <string name="book_review_prompt_text">Βρίσκεται πλέον στο ράφι «Διαβασμένα». Μπορείτε να γράψετε κριτική και να βάλετε αστέρια, ή να το αφήσετε έτσι.</string>
+    <string name="book_review_prompt_skip">Όχι τώρα</string>
     <string name="book_add_quote">Προσθήκη παραθέματος</string>
     <string name="quotation_dialog_title">Προσθήκη παραθέματος</string>
     <string name="quotation_quote_label">Φράση από το βιβλίο (προαιρετικό)</string>
@@ -392,6 +397,13 @@
     <string name="profile_layout_help">Ενεργοποίησε ή απενεργοποίησε τα μπλοκ και σύρε τη λαβή για να τα αναδιατάξεις.</string>
     <string name="profile_layout_reset">Επαναφορά</string>
     <string name="profile_layout_drag_desc">Σύρε για να μετακινήσεις %1$s</string>
+    <string name="shelf_layout_edit">Επεξεργασία σελίδας</string>
+    <string name="shelf_layout_title">Επεξεργασία σελίδας</string>
+    <string name="shelf_layout_help">Ενεργοποιήστε ή απενεργοποιήστε ράφια και σύρετε τη λαβή για να τα ταξινομήσετε.</string>
+    <string name="shelf_layout_align">Θέση στην οθόνη</string>
+    <string name="shelf_layout_align_top">Επάνω</string>
+    <string name="shelf_layout_align_bottom">Κάτω</string>
+    <string name="shelf_layout_always">Το %1$s εμφανίζεται πάντα</string>
     <string name="profile_section_stats">Στατιστικά ανάγνωσης</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d βιβλίο δεν έχει ημερομηνία ολοκλήρωσης και δεν εμφανίζεται στο γράφημα</item>

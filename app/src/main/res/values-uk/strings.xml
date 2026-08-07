@@ -43,6 +43,8 @@
     </plurals>
     <string name="series_title">Серії</string>
     <string name="series_empty">Поки немає серій серед прочитаних книжок</string>
+    <string name="authors_title">Автори</string>
+    <string name="authors_empty">Серед прочитаних книжок ще немає авторів</string>
     <string name="series_book_of">%1$s · книга %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d книга</item>
@@ -268,6 +270,9 @@
 Сумісність: Покращена синхронізація з обліковими записами Mastodon.
 
 Дизайн: Додано підтримку монохромних піктограм.</string>    <string name="book_write_review">Відгук</string>
+    <string name="book_review_prompt_title">Оцінити книжку?</string>
+    <string name="book_review_prompt_text">Вона вже на вашій полиці «Прочитані». Можете написати рецензію й поставити зірки або залишити як є.</string>
+    <string name="book_review_prompt_skip">Не зараз</string>
     <string name="book_add_quote">Додати цитату</string>
     <string name="quotation_dialog_title">Додати цитату</string>
     <string name="quotation_quote_label">Фраза з книги (необов\'язково)</string>
@@ -400,6 +405,13 @@
     <string name="profile_layout_help">Вмикайте або вимикайте блоки та перетягуйте держак, щоб змінити порядок.</string>
     <string name="profile_layout_reset">Скинути</string>
     <string name="profile_layout_drag_desc">Перетягніть, щоб перемістити %1$s</string>
+    <string name="shelf_layout_edit">Редагувати сторінку</string>
+    <string name="shelf_layout_title">Редагувати сторінку</string>
+    <string name="shelf_layout_help">Вмикайте й вимикайте полиці, а щоб змінити порядок, тягніть за держак.</string>
+    <string name="shelf_layout_align">Розташування на екрані</string>
+    <string name="shelf_layout_align_top">Угорі</string>
+    <string name="shelf_layout_align_bottom">Унизу</string>
+    <string name="shelf_layout_always">%1$s показується завжди</string>
     <string name="profile_section_stats">Статистика читання</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d книга не має дати завершення й не показана на графіку</item>

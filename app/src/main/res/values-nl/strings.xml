@@ -41,6 +41,8 @@
     </plurals>
     <string name="series_title">Reeksen</string>
     <string name="series_empty">Nog geen reeksen bij de boeken die je hebt gelezen</string>
+    <string name="authors_title">Auteurs</string>
+    <string name="authors_empty">Nog geen auteurs onder de boeken die je hebt gelezen</string>
     <string name="series_book_of">%1$s · boek %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d boek</item>
@@ -264,6 +266,9 @@ Teller-fix: Bug opgelost die 0 volgers/volgend weergaf.
 Compatibiliteit: Verbeterde synchronisatie met Mastodon-accounts.
 
 Ontwerp: Ondersteuning toegevoegd voor monochrome pictogrammen.</string>    <string name="book_write_review">Recensie</string>
+    <string name="book_review_prompt_title">Boek beoordelen?</string>
+    <string name="book_review_prompt_text">Het staat nu op je plank Gelezen. Je kunt een recensie schrijven en sterren geven, of het zo laten.</string>
+    <string name="book_review_prompt_skip">Niet nu</string>
     <string name="book_add_quote">Citaat toevoegen</string>
     <string name="quotation_dialog_title">Citaat toevoegen</string>
     <string name="quotation_quote_label">Zin uit het boek (optioneel)</string>
@@ -392,6 +397,13 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="profile_layout_help">Zet blokken aan of uit en sleep aan de greep om ze te ordenen.</string>
     <string name="profile_layout_reset">Herstellen</string>
     <string name="profile_layout_drag_desc">Sleep om %1$s te verplaatsen</string>
+    <string name="shelf_layout_edit">Pagina bewerken</string>
+    <string name="shelf_layout_title">Pagina bewerken</string>
+    <string name="shelf_layout_help">Zet planken aan of uit en sleep aan de greep om ze te ordenen.</string>
+    <string name="shelf_layout_align">Positie op het scherm</string>
+    <string name="shelf_layout_align_top">Boven</string>
+    <string name="shelf_layout_align_bottom">Onder</string>
+    <string name="shelf_layout_always">%1$s wordt altijd getoond</string>
     <string name="profile_section_stats">Leesstatistieken</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d boek heeft geen einddatum en staat niet in de grafiek</item>

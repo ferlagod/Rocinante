@@ -41,6 +41,8 @@
     </plurals>
     <string name="series_title">Sèries</string>
     <string name="series_empty">Encara no hi ha cap sèrie entre els llibres que has llegit</string>
+    <string name="authors_title">Autors</string>
+    <string name="authors_empty">Encara no hi ha autors entre els llibres que has llegit</string>
     <string name="series_book_of">%1$s · llibre %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d llibre</item>
@@ -264,6 +266,9 @@ Correcció de comptadors: Solucionat l\'error que mostrava 0 seguidors/seguits.
 Compatibilitat: Millora en la sincronització amb comptes de Mastodon.
 
 Disseny: Suport afegit per a icones monocromàtiques.</string>    <string name="book_write_review">Ressenya</string>
+    <string name="book_review_prompt_title">Ressenyar el llibre?</string>
+    <string name="book_review_prompt_text">Ja és a la teva prestatgeria de llegits. Pots escriure una ressenya i posar-li estrelles, o deixar-ho així.</string>
+    <string name="book_review_prompt_skip">Ara no</string>
     <string name="book_add_quote">Afegir cita</string>
     <string name="quotation_dialog_title">Afegir cita</string>
     <string name="quotation_quote_label">Frase del llibre (opcional)</string>
@@ -392,6 +397,13 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="profile_layout_help">Activa o desactiva els blocs i arrossega l\'ansa per ordenar-los.</string>
     <string name="profile_layout_reset">Restableix</string>
     <string name="profile_layout_drag_desc">Arrossega per moure %1$s</string>
+    <string name="shelf_layout_edit">Editar la pàgina</string>
+    <string name="shelf_layout_title">Editar la pàgina</string>
+    <string name="shelf_layout_help">Activa o desactiva prestatgeries i arrossega l\'ansa per ordenar-les.</string>
+    <string name="shelf_layout_align">Posició a la pantalla</string>
+    <string name="shelf_layout_align_top">A dalt</string>
+    <string name="shelf_layout_align_bottom">A baix</string>
+    <string name="shelf_layout_always">%1$s es mostra sempre</string>
     <string name="profile_section_stats">Estadístiques de lectura</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d llibre no té data de finalització i no surt al gràfic</item>

@@ -41,6 +41,8 @@
     </plurals>
     <string name="series_title">Reihen</string>
     <string name="series_empty">Noch keine Reihen unter deinen gelesenen Büchern</string>
+    <string name="authors_title">Autoren</string>
+    <string name="authors_empty">Unter den gelesenen Büchern gibt es noch keine Autoren</string>
     <string name="series_book_of">%1$s · Band %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d Buch</item>
@@ -264,6 +266,9 @@ Zähler-Korrektur: Fehler behoben, der 0 Follower/Folgend anzeigte.
 Kompatibilität: Verbesserte Synchronisation mit Mastodon-Konten.
 
 Design: Unterstützung für monochrome Icons hinzugefügt.</string>    <string name="book_write_review">Rezension</string>
+    <string name="book_review_prompt_title">Buch bewerten?</string>
+    <string name="book_review_prompt_text">Es steht jetzt in deinem Regal „Gelesen“. Du kannst eine Rezension schreiben und Sterne vergeben, oder es so lassen.</string>
+    <string name="book_review_prompt_skip">Jetzt nicht</string>
     <string name="book_add_quote">Zitat hinzufügen</string>
     <string name="quotation_dialog_title">Zitat hinzufügen</string>
     <string name="quotation_quote_label">Satz aus dem Buch (optional)</string>
@@ -392,6 +397,13 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_layout_help">Blöcke ein- oder ausschalten und am Griff ziehen, um sie zu sortieren.</string>
     <string name="profile_layout_reset">Zurücksetzen</string>
     <string name="profile_layout_drag_desc">Ziehen, um %1$s zu verschieben</string>
+    <string name="shelf_layout_edit">Seite bearbeiten</string>
+    <string name="shelf_layout_title">Seite bearbeiten</string>
+    <string name="shelf_layout_help">Schalte Regale ein oder aus und zieh am Griff, um sie zu ordnen.</string>
+    <string name="shelf_layout_align">Position auf dem Bildschirm</string>
+    <string name="shelf_layout_align_top">Oben</string>
+    <string name="shelf_layout_align_bottom">Unten</string>
+    <string name="shelf_layout_always">%1$s wird immer angezeigt</string>
     <string name="profile_section_stats">Lesestatistik</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d Buch hat kein Enddatum und fehlt im Diagramm</item>

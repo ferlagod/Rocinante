@@ -52,6 +52,8 @@
     </plurals>
     <string name="series_title">Series</string>
     <string name="series_empty">Aínda non hai ningunha serie entre os libros que liches</string>
+    <string name="authors_title">Autores</string>
+    <string name="authors_empty">Aínda non hai autores entre os libros que liches</string>
     <string name="series_book_of">%1$s · libro %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d libro</item>
@@ -266,6 +268,9 @@ Corrección de contadores: Solucionado o erro que mostraba 0 seguidores/seguidos
 Compatibilidade: Mellora na sincronización con contas de Mastodon.
 
 Deseño: Soporte engadido para iconas monocromáticas.</string>    <string name="book_write_review">Recensión</string>
+    <string name="book_review_prompt_title">Recensionar o libro?</string>
+    <string name="book_review_prompt_text">Xa está no teu andel de lidos. Podes escribir unha recensión e poñerlle estrelas, ou deixalo así.</string>
+    <string name="book_review_prompt_skip">Agora non</string>
     <string name="book_add_quote">Engadir cita</string>
     <string name="quotation_dialog_title">Engadir cita</string>
     <string name="quotation_quote_label">Frase do libro (opcional)</string>
@@ -394,6 +399,13 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_layout_help">Activa ou desactiva os bloques e arrastra a asa para ordenalos.</string>
     <string name="profile_layout_reset">Restablecer</string>
     <string name="profile_layout_drag_desc">Arrastra para mover %1$s</string>
+    <string name="shelf_layout_edit">Editar a páxina</string>
+    <string name="shelf_layout_title">Editar a páxina</string>
+    <string name="shelf_layout_help">Activa ou desactiva andeis e arrastra a asa para ordenalos.</string>
+    <string name="shelf_layout_align">Posición na pantalla</string>
+    <string name="shelf_layout_align_top">Arriba</string>
+    <string name="shelf_layout_align_bottom">Abaixo</string>
+    <string name="shelf_layout_always">%1$s móstrase sempre</string>
     <string name="profile_section_stats">Estatísticas de lectura</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d libro non ten data de fin e non aparece na gráfica</item>

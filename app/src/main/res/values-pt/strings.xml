@@ -41,6 +41,8 @@
     </plurals>
     <string name="series_title">Séries</string>
     <string name="series_empty">Ainda não há séries entre os livros que leste</string>
+    <string name="authors_title">Autores</string>
+    <string name="authors_empty">Ainda não há autores entre os livros que você leu</string>
     <string name="series_book_of">%1$s · livro %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d livro</item>
@@ -264,6 +266,9 @@ Correção de contadores: Resolvido o erro que mostrava 0 seguidores/seguindo.
 Compatibilidade: Melhoria na sincronização com contas do Mastodon.
 
 Design: Suporte adicionado para ícones monocromáticos.</string>    <string name="book_write_review">Crítica</string>
+    <string name="book_review_prompt_title">Avaliar o livro?</string>
+    <string name="book_review_prompt_text">Ele já está na sua estante de lidos. Você pode escrever uma resenha e dar estrelas, ou deixar assim.</string>
+    <string name="book_review_prompt_skip">Agora não</string>
     <string name="book_add_quote">Adicionar citação</string>
     <string name="quotation_dialog_title">Adicionar citação</string>
     <string name="quotation_quote_label">Frase do livro (opcional)</string>
@@ -392,6 +397,13 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="profile_layout_help">Ativa ou desativa os blocos e arrasta a pega para os ordenar.</string>
     <string name="profile_layout_reset">Repor</string>
     <string name="profile_layout_drag_desc">Arrasta para mover %1$s</string>
+    <string name="shelf_layout_edit">Editar página</string>
+    <string name="shelf_layout_title">Editar página</string>
+    <string name="shelf_layout_help">Ative ou desative as estantes e arraste a alça para ordená-las.</string>
+    <string name="shelf_layout_align">Posição na tela</string>
+    <string name="shelf_layout_align_top">Em cima</string>
+    <string name="shelf_layout_align_bottom">Embaixo</string>
+    <string name="shelf_layout_always">%1$s é sempre mostrada</string>
     <string name="profile_section_stats">Estatísticas de leitura</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d livro não tem data de fim e não aparece no gráfico</item>

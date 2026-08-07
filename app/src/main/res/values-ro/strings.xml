@@ -42,6 +42,8 @@
     </plurals>
     <string name="series_title">Serii</string>
     <string name="series_empty">Încă nicio serie printre cărțile citite</string>
+    <string name="authors_title">Autori</string>
+    <string name="authors_empty">Încă nu sunt autori printre cărțile pe care le-ai citit</string>
     <string name="series_book_of">%1$s · cartea %2$d</string>
     <plurals name="series_books_count">
         <item quantity="one">%d carte</item>
@@ -266,6 +268,9 @@ Corecție contoare: S-a rezolvat eroarea care afișa 0 urmăritori/urmăriri.
 Compatibilitate: Sincronizare îmbunătățită cu conturile Mastodon.
 
 Design: S-a adăugat suport pentru pictograme monocromatice.</string>    <string name="book_write_review">Recenzie</string>
+    <string name="book_review_prompt_title">Evaluezi cartea?</string>
+    <string name="book_review_prompt_text">Este acum pe raftul tău Citite. Poți scrie o recenzie și să-i dai stele, sau o poți lăsa așa.</string>
+    <string name="book_review_prompt_skip">Nu acum</string>
     <string name="book_add_quote">Adaugă citat</string>
     <string name="quotation_dialog_title">Adaugă citat</string>
     <string name="quotation_quote_label">Frază din carte (opțional)</string>
@@ -396,6 +401,13 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_layout_help">Activează sau dezactivează blocurile și trage de mâner pentru a le reordona.</string>
     <string name="profile_layout_reset">Resetează</string>
     <string name="profile_layout_drag_desc">Trage pentru a muta %1$s</string>
+    <string name="shelf_layout_edit">Editează pagina</string>
+    <string name="shelf_layout_title">Editează pagina</string>
+    <string name="shelf_layout_help">Activează sau dezactivează rafturi și trage de mâner ca să le reordonezi.</string>
+    <string name="shelf_layout_align">Poziția pe ecran</string>
+    <string name="shelf_layout_align_top">Sus</string>
+    <string name="shelf_layout_align_bottom">Jos</string>
+    <string name="shelf_layout_always">%1$s se afișează întotdeauna</string>
     <string name="profile_section_stats">Statistici de lectură</string>
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d carte nu are dată de final și nu apare în grafic</item>
