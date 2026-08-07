@@ -335,7 +335,10 @@ fun HomeScreen(
                         targetShelfSlug = uiState.shelfTarget?.shelfSlug,
                         targetBookId = uiState.shelfTarget?.bookId,
                         onTargetConsumed = { viewModel.consumeShelfTarget() },
-                        backToShelvesKey = backToShelvesKey
+                        backToShelvesKey = backToShelvesKey,
+                        // El carrusel tiene compuestas también las pestañas de al lado; solo la
+                        // que se está viendo puede quedarse con el botón de atrás del móvil.
+                        isActive = uiState.selectedTab == 1
                     )
                 }
 

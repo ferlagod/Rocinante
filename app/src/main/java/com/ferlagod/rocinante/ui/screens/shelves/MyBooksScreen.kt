@@ -258,6 +258,8 @@ private fun readingDays(startIso: String?, finishIso: String?): Int? =
  * @param targetShelfSlug Estantería que hay que abrir automáticamente (viene de la búsqueda), o null.
  * @param targetBookId Libro al que desplazarse y que se resalta dentro de esa estantería, o null.
  * @param onTargetConsumed Se invoca cuando ya se ha saltado al libro, para no repetir el salto.
+ * @param isActive Si esta es la pestaña que se está viendo. El carrusel mantiene compuestas
+ *   también las de al lado, y solo la visible debe quedarse con el botón de atrás del móvil.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,7 +272,8 @@ fun MyBooksScreen(
     targetShelfSlug: String? = null,
     targetBookId: String? = null,
     onTargetConsumed: () -> Unit = {},
-    backToShelvesKey: Int = 0
+    backToShelvesKey: Int = 0,
+    isActive: Boolean = true
 ) {
     // Cada estantería con lo suyo. La cuarta que trae BookWyrm de serie —los libros que se
     // dejaron a medias— estaba sin enseñar, así que para verlos había que ir a la web; los
@@ -437,7 +440,8 @@ fun MyBooksScreen(
                 onBack = { selectedShelf = null },
                 onNavigateToSettings = onNavigateToSettings,
                 highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
-                onHighlightConsumed = onTargetConsumed
+                onHighlightConsumed = onTargetConsumed,
+                backEnabled = isActive
             )
         }
     }
@@ -456,6 +460,8 @@ fun MyBooksScreen(
  * @param onNavigateToSettings Callback para navegar a la configuración.
  * @param highlightBookId Libro al que desplazarse y resaltar al abrir la pantalla, o null.
  * @param onHighlightConsumed Se invoca cuando ya se ha localizado el libro (o se sabe que no está).
+ * @param backEnabled Si el botón de atrás del móvil lo atiende esta pantalla. Falso mientras la
+ *   pestaña no sea la que se ve, para no quitárselo a la que sí lo está.
  */
 @Composable
 fun ShelfNativeDetailScreen(
@@ -467,7 +473,8 @@ fun ShelfNativeDetailScreen(
     onBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
     highlightBookId: String? = null,
-    onHighlightConsumed: () -> Unit = {}
+    onHighlightConsumed: () -> Unit = {},
+    backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -853,6 +860,23 @@ fun ShelfNativeDetailScreen(
         }
     }
 
+    // «Volver» deshace un paso cada vez: de una serie a la lista de series, de ahí a la
+    // estantería, y solo entonces se sale a la lista de estanterías.
+    val goBack: () -> Unit = {
+        when {
+            openSeriesUrl != null -> openSeriesUrl = null
+            openAuthorKey != null -> openAuthorKey = null
+            showSeriesList -> showSeriesList = false
+            showAuthorList -> showAuthorList = false
+            else -> onBack()
+        }
+    }
+
+    // El botón de atrás del móvil deshace exactamente los mismos pasos que el de la pantalla.
+    // Ya en la lista de estanterías esta pantalla no existe, así que el toque le llega a quien
+    // lo atiende desde fuera y es entonces cuando se pregunta si se quiere salir de la app.
+    androidx.activity.compose.BackHandler(enabled = backEnabled) { goBack() }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -861,17 +885,7 @@ fun ShelfNativeDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // «Volver» deshace un paso cada vez: de una serie a la lista de series, de ahí a
-            // la estantería, y solo entonces se sale.
-            OutlinedButton(onClick = {
-                when {
-                    openSeriesUrl != null -> openSeriesUrl = null
-                    openAuthorKey != null -> openAuthorKey = null
-                    showSeriesList -> showSeriesList = false
-                    showAuthorList -> showAuthorList = false
-                    else -> onBack()
-                }
-            }) {
+            OutlinedButton(onClick = goBack) {
                 Text(stringResource(R.string.shelf_back))
             }
             Text(
