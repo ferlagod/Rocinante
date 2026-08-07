@@ -104,7 +104,10 @@ fun SearchScreen(
     cookie: String,
     api: BookWyrmApi? = null,
     modifier: Modifier = Modifier,
-    onOpenInShelf: (String, String) -> Unit = { _, _ -> }
+    onOpenInShelf: (String, String) -> Unit = { _, _ -> },
+    // Si esta es la pestaña que se está viendo. El carrusel mantiene compuestas también las de
+    // al lado, y solo la visible debe quedarse con el botón de atrás del móvil.
+    isActive: Boolean = true
 ) {
     val resolvedApi = remember(instanceUrl, cookie) {
         api ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
@@ -274,7 +277,8 @@ fun SearchScreen(
             api = resolvedApi,
             modifier = modifier,
             onOpenLocalBook = { url -> openBookByUrl(url) },
-            onBack = { showExplore = false }
+            onBack = { showExplore = false },
+            backEnabled = isActive
         )
     } else {
     Box(modifier = modifier.fillMaxSize()) {

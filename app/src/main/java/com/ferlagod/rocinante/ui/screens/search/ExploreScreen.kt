@@ -189,6 +189,8 @@ private val ORDEN_SAVER = Saver<ExploreQuery.Orden, String>(
  * peleándose consigo misma.
  *
  * @param onOpenLocalBook Recibe la dirección del libro ya en la instancia, para abrir su ficha.
+ * @param backEnabled Si el botón de atrás del móvil lo atiende esta pantalla. Falso mientras la
+ *   pestaña no sea la que se ve, para no quitárselo a la que sí lo está.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +198,8 @@ fun ExploreScreen(
     api: BookWyrmApi,
     modifier: Modifier = Modifier,
     onOpenLocalBook: (String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -240,7 +243,14 @@ fun ExploreScreen(
     // Los filtros ya no son los de los resultados que se están viendo. No se busca solo: se avisa.
     val stale = activeQuery != null && (currentQuery != activeQuery || orden.value != activeSort)
 
-    BackHandler(enabled = dialOpen) { dialOpen = false }
+    // El botón de atrás del móvil deshace un paso cada vez, igual que la flecha de arriba:
+    // primero cierra el desplegable de añadir filtros y, si no hay nada abierto, devuelve a la
+    // búsqueda. Lo que se pone encima —las hojas de abajo y el diálogo de ediciones— se cierra
+    // solo, y por eso no sale aquí. Ya en la búsqueda esta pantalla no existe, así que el toque
+    // llega a quien lo atiende desde fuera y es entonces cuando se pregunta si se sale de la app.
+    BackHandler(enabled = backEnabled) {
+        if (dialOpen) dialOpen = false else onBack()
+    }
 
     /** Añade una fila del tipo pedido, ya con el operador Y, que es el que casi siempre se quiere. */
     fun addRow(field: ExploreQuery.Field) {
