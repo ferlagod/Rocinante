@@ -474,6 +474,13 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     </plurals>
     <string name="search_local_section">Nas tuas estantes</string>
     <string name="search_instance_section">Nesta instância</string>
+    <string name="search_instance_prompt">Buscar “%1$s” nesta instância</string>
+    <string name="search_clear">Limpar</string>
+    <string name="search_tools_desc">Ferramentas</string>
+    <string name="search_tools_close">Fechar ferramentas</string>
+    <string name="search_tools_instance">Buscar nesta instância</string>
+    <string name="search_tools_scan">Escanear código</string>
+    <string name="search_tools_add_book">Adicionar um livro</string>
     <plurals name="search_local_more">
         <item quantity="one">…e mais %d nas tuas estantes</item>
         <item quantity="other">…e mais %d nas tuas estantes</item>

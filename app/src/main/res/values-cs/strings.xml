@@ -491,6 +491,13 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     </plurals>
     <string name="search_local_section">Ve tvých policích</string>
     <string name="search_instance_section">Na této instanci</string>
+    <string name="search_instance_prompt">Hledat „%1$s“ v této instanci</string>
+    <string name="search_clear">Vymazat</string>
+    <string name="search_tools_desc">Nástroje</string>
+    <string name="search_tools_close">Zavřít nástroje</string>
+    <string name="search_tools_instance">Hledat v této instanci</string>
+    <string name="search_tools_scan">Naskenovat čárový kód</string>
+    <string name="search_tools_add_book">Přidat knihu</string>
     <plurals name="search_local_more">
         <item quantity="one">…a %d další v tvých policích</item>
         <item quantity="few">…a %d další v tvých policích</item>

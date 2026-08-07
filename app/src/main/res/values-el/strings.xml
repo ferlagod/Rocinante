@@ -474,6 +474,13 @@
     </plurals>
     <string name="search_local_section">Στα ράφια σου</string>
     <string name="search_instance_section">Σε αυτήν την υπηρεσία</string>
+    <string name="search_instance_prompt">Αναζήτηση «%1$s» σε αυτό το instance</string>
+    <string name="search_clear">Καθαρισμός</string>
+    <string name="search_tools_desc">Εργαλεία</string>
+    <string name="search_tools_close">Κλείσιμο εργαλείων</string>
+    <string name="search_tools_instance">Αναζήτηση σε αυτό το instance</string>
+    <string name="search_tools_scan">Σάρωση κωδικού</string>
+    <string name="search_tools_add_book">Προσθήκη βιβλίου</string>
     <plurals name="search_local_more">
         <item quantity="one">…και %d ακόμη στα ράφια σου</item>
         <item quantity="other">…και %d ακόμη στα ράφια σου</item>

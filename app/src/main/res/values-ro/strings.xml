@@ -487,6 +487,13 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     </plurals>
     <string name="search_local_section">În rafturile tale</string>
     <string name="search_instance_section">Pe această instanță</string>
+    <string name="search_instance_prompt">Caută „%1$s” pe această instanță</string>
+    <string name="search_clear">Șterge</string>
+    <string name="search_tools_desc">Instrumente</string>
+    <string name="search_tools_close">Închide instrumentele</string>
+    <string name="search_tools_instance">Caută pe această instanță</string>
+    <string name="search_tools_scan">Scanează codul de bare</string>
+    <string name="search_tools_add_book">Adaugă o carte</string>
     <plurals name="search_local_more">
         <item quantity="one">…și încă %d în rafturile tale</item>
         <item quantity="few">…și încă %d în rafturile tale</item>

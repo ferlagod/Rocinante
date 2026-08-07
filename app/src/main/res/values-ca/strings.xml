@@ -474,6 +474,13 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     </plurals>
     <string name="search_local_section">A les teves prestatgeries</string>
     <string name="search_instance_section">En aquesta instància</string>
+    <string name="search_instance_prompt">Cercar «%1$s» a la instància</string>
+    <string name="search_clear">Esborrar</string>
+    <string name="search_tools_desc">Eines</string>
+    <string name="search_tools_close">Tancar les eines</string>
+    <string name="search_tools_instance">Cercar a la instància</string>
+    <string name="search_tools_scan">Escanejar el codi</string>
+    <string name="search_tools_add_book">Afegir un llibre</string>
     <plurals name="search_local_more">
         <item quantity="one">…i %d més a les teves prestatgeries</item>
         <item quantity="other">…i %d més a les teves prestatgeries</item>

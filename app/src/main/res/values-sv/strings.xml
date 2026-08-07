@@ -474,6 +474,13 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     </plurals>
     <string name="search_local_section">I dina hyllor</string>
     <string name="search_instance_section">På denna instans</string>
+    <string name="search_instance_prompt">Sök efter ”%1$s” på den här instansen</string>
+    <string name="search_clear">Rensa</string>
+    <string name="search_tools_desc">Verktyg</string>
+    <string name="search_tools_close">Stäng verktyg</string>
+    <string name="search_tools_instance">Sök på den här instansen</string>
+    <string name="search_tools_scan">Skanna streckkod</string>
+    <string name="search_tools_add_book">Lägg till en bok</string>
     <plurals name="search_local_more">
         <item quantity="one">…och %d till i dina hyllor</item>
         <item quantity="other">…och %d till i dina hyllor</item>

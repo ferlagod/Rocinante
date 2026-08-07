@@ -491,6 +491,13 @@
     </plurals>
     <string name="search_local_section">На твоїх полицях</string>
     <string name="search_instance_section">На цьому сервері</string>
+    <string name="search_instance_prompt">Шукати «%1$s» на цій інстанції</string>
+    <string name="search_clear">Очистити</string>
+    <string name="search_tools_desc">Інструменти</string>
+    <string name="search_tools_close">Закрити інструменти</string>
+    <string name="search_tools_instance">Шукати на цій інстанції</string>
+    <string name="search_tools_scan">Сканувати штрихкод</string>
+    <string name="search_tools_add_book">Додати книжку</string>
     <plurals name="search_local_more">
         <item quantity="one">…і ще %d на твоїх полицях</item>
         <item quantity="few">…і ще %d на твоїх полицях</item>

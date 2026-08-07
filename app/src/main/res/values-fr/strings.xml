@@ -474,6 +474,13 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     </plurals>
     <string name="search_local_section">Dans vos étagères</string>
     <string name="search_instance_section">Sur cette instance</string>
+    <string name="search_instance_prompt">Chercher « %1$s » sur cette instance</string>
+    <string name="search_clear">Effacer</string>
+    <string name="search_tools_desc">Outils</string>
+    <string name="search_tools_close">Fermer les outils</string>
+    <string name="search_tools_instance">Chercher sur cette instance</string>
+    <string name="search_tools_scan">Scanner le code-barres</string>
+    <string name="search_tools_add_book">Ajouter un livre</string>
     <plurals name="search_local_more">
         <item quantity="one">…et %d de plus dans vos étagères</item>
         <item quantity="other">…et %d de plus dans vos étagères</item>

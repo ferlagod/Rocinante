@@ -475,6 +475,13 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     </plurals>
     <string name="search_local_section">Omissa hyllyissäsi</string>
     <string name="search_instance_section">Tässä instanssissa</string>
+    <string name="search_instance_prompt">Hae tästä instanssista ”%1$s”</string>
+    <string name="search_clear">Tyhjennä</string>
+    <string name="search_tools_desc">Työkalut</string>
+    <string name="search_tools_close">Sulje työkalut</string>
+    <string name="search_tools_instance">Hae tästä instanssista</string>
+    <string name="search_tools_scan">Skannaa viivakoodi</string>
+    <string name="search_tools_add_book">Lisää kirja</string>
     <plurals name="search_local_more">
         <item quantity="one">…ja %d muu hyllyissäsi</item>
         <item quantity="other">…ja %d muuta hyllyissäsi</item>

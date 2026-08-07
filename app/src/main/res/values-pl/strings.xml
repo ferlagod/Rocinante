@@ -491,6 +491,13 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     </plurals>
     <string name="search_local_section">Na twoich półkach</string>
     <string name="search_instance_section">W tej instancji</string>
+    <string name="search_instance_prompt">Szukaj „%1$s” w tej instancji</string>
+    <string name="search_clear">Wyczyść</string>
+    <string name="search_tools_desc">Narzędzia</string>
+    <string name="search_tools_close">Zamknij narzędzia</string>
+    <string name="search_tools_instance">Szukaj w tej instancji</string>
+    <string name="search_tools_scan">Skanuj kod kreskowy</string>
+    <string name="search_tools_add_book">Dodaj książkę</string>
     <plurals name="search_local_more">
         <item quantity="one">…i %d więcej na twoich półkach</item>
         <item quantity="few">…i %d więcej na twoich półkach</item>

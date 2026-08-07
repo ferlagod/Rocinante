@@ -474,6 +474,13 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     </plurals>
     <string name="search_local_section">Nei tuoi scaffali</string>
     <string name="search_instance_section">In questa istanza</string>
+    <string name="search_instance_prompt">Cerca «%1$s» in questa istanza</string>
+    <string name="search_clear">Cancella</string>
+    <string name="search_tools_desc">Strumenti</string>
+    <string name="search_tools_close">Chiudi strumenti</string>
+    <string name="search_tools_instance">Cerca in questa istanza</string>
+    <string name="search_tools_scan">Scansiona il codice</string>
+    <string name="search_tools_add_book">Aggiungi un libro</string>
     <plurals name="search_local_more">
         <item quantity="one">…e altri %d nei tuoi scaffali</item>
         <item quantity="other">…e altri %d nei tuoi scaffali</item>

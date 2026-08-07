@@ -476,6 +476,13 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     </plurals>
     <string name="search_local_section">Nos teus estantes</string>
     <string name="search_instance_section">Nesta instancia</string>
+    <string name="search_instance_prompt">Buscar «%1$s» na instancia</string>
+    <string name="search_clear">Borrar</string>
+    <string name="search_tools_desc">Ferramentas</string>
+    <string name="search_tools_close">Pechar as ferramentas</string>
+    <string name="search_tools_instance">Buscar nesta instancia</string>
+    <string name="search_tools_scan">Escanear o código</string>
+    <string name="search_tools_add_book">Engadir un libro</string>
     <plurals name="search_local_more">
         <item quantity="one">…e %d máis nos teus estantes</item>
         <item quantity="other">…e %d máis nos teus estantes</item>

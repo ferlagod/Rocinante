@@ -474,6 +474,13 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     </plurals>
     <string name="search_local_section">In deinen Regalen</string>
     <string name="search_instance_section">Auf dieser Instanz</string>
+    <string name="search_instance_prompt">Diese Instanz nach „%1$s“ durchsuchen</string>
+    <string name="search_clear">Löschen</string>
+    <string name="search_tools_desc">Werkzeuge</string>
+    <string name="search_tools_close">Werkzeuge schließen</string>
+    <string name="search_tools_instance">Diese Instanz durchsuchen</string>
+    <string name="search_tools_scan">Barcode scannen</string>
+    <string name="search_tools_add_book">Ein Buch hinzufügen</string>
     <plurals name="search_local_more">
         <item quantity="one">…und %d weiteres in deinen Regalen</item>
         <item quantity="other">…und %d weitere in deinen Regalen</item>
