@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -222,12 +223,54 @@ fun SearchScreen(
         )
     }
 
+    var showExplore by rememberSaveable { mutableStateOf(false) }
+
+    /**
+     * Abre la ficha de un libro que ya está en la instancia, sea porque estaba o porque
+     * «Explorar» acaba de traerlo. Es el mismo camino que al pulsar un resultado de búsqueda.
+     */
+    fun openBookByUrl(bookUrl: String) {
+        isLoadingDetails = true
+        coroutineScope.launch {
+            try {
+                activeBookKey = bookUrl
+                selectedBookEnrichment = dataCache.loadEnrichment()[
+                    BookWyrmScraper.canonicalBookUrl(bookUrl)
+                ]
+                val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
+                selectedBookDetails = resolvedApi.getBookDetails(detailsUrl)
+                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                selectedBookReviews = try {
+                    BookWyrmScraper.scrapeBookReviews(resolvedApi, baseBookUrl)
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+            } finally {
+                isLoadingDetails = false
+            }
+        }
+    }
+
     val allLocalHits = remember(searchQuery, shelfIndex, searchMode) {
         if (searchMode != SearchMode.BOOKS) emptyList()
         else com.ferlagod.rocinante.data.repository.LocalShelfSearch.search(searchQuery, shelfIndex)
     }
     val localHits = allLocalHits.take(MAX_LOCAL_RESULTS)
 
+    // «Explorar» ocupa la pantalla entera mientras está abierto, como hace una estantería
+    // dentro de «Mis libros»: es otra manera de buscar, no un trozo más de esta.
+    if (showExplore) {
+        ExploreScreen(
+            api = resolvedApi,
+            modifier = modifier,
+            onOpenLocalBook = { url -> openBookByUrl(url) },
+            onBack = { showExplore = false }
+        )
+    } else {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -272,6 +315,22 @@ fun SearchScreen(
             ),
             singleLine = true
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Buscar es para cuando se sabe qué libro se quiere; explorar, para cuando no. Por eso
+        // está aquí y no en otra pestaña de abajo: se llega a ello queriendo buscar algo.
+        OutlinedButton(
+            onClick = { showExplore = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.Explore,
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.explore_title))
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -551,6 +610,7 @@ fun SearchScreen(
                 }
             }
         }
+    }
     }
 
     selectedBookDetails?.let { details ->
