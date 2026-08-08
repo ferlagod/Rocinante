@@ -444,6 +444,15 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
         <item quantity="many">%d książek bez liczby stron</item>
         <item quantity="other">%d książki bez liczby stron</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d książka bez dat</item>
+        <item quantity="few">%d książki bez dat</item>
+        <item quantity="many">%d książek bez dat</item>
+        <item quantity="other">%d książki bez dat</item>
+    </plurals>
+    <string name="missing_dates_explanation">Daty są Twoje, nie książki: to dotyczy tylko Twojego czytania. Bez daty zakończenia książki nie ma na wykresie lat, a bez obu nie liczy się do dni czytania.</string>
+    <string name="missing_dates_save">Zapisz daty</string>
+    <string name="missing_dates_failed">Nie udało się zapisać dat książki „%1$s”</string>
     <string name="missing_pages_explanation">Liczba stron należy do książki, a nie do Ciebie: to, co tu wpiszesz, zapisuje się na instancji i widzą to wszyscy. Zapisuje się po jednej.</string>
     <string name="missing_pages_save">Zapisz</string>
     <string name="missing_pages_failed">Nie udało się zapisać „%1$s”</string>

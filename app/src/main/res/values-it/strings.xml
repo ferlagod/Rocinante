@@ -434,6 +434,13 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
         <item quantity="one">%d libro senza numero di pagine</item>
         <item quantity="other">%d libri senza numero di pagine</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d libro senza date</item>
+        <item quantity="other">%d libri senza date</item>
+    </plurals>
+    <string name="missing_dates_explanation">Le date sono tue, non del libro: questo tocca solo la tua lettura. Senza data di fine il libro non compare nel grafico per anni, e senza entrambe non conta nei giorni di lettura.</string>
+    <string name="missing_dates_save">Salva le date</string>
+    <string name="missing_dates_failed">Non è stato possibile salvare le date di «%1$s»</string>
     <string name="missing_pages_explanation">Le pagine sono del libro, non di chi lo legge: quello che scrivi qui viene salvato sull\'istanza e lo vedono tutti. Si salva un libro alla volta.</string>
     <string name="missing_pages_save">Salva</string>
     <string name="missing_pages_failed">Impossibile salvare «%1$s»</string>

@@ -434,6 +434,13 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
         <item quantity="one">%d boek zonder aantal pagina\'s</item>
         <item quantity="other">%d boeken zonder aantal pagina\'s</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d boek zonder datums</item>
+        <item quantity="other">%d boeken zonder datums</item>
+    </plurals>
+    <string name="missing_dates_explanation">De datums zijn van jou, niet van het boek: dit raakt alleen je eigen lezen. Zonder einddatum staat het boek niet in de grafiek per jaar, en zonder allebei telt het niet mee in de leesdagen.</string>
+    <string name="missing_dates_save">Datums opslaan</string>
+    <string name="missing_dates_failed">De datums van ‘%1$s’ konden niet worden opgeslagen</string>
     <string name="missing_pages_explanation">Het aantal pagina\'s hoort bij het boek, niet bij jou: wat je hier invult, wordt op de instantie opgeslagen en iedereen ziet het. Er wordt één boek tegelijk opgeslagen.</string>
     <string name="missing_pages_save">Opslaan</string>
     <string name="missing_pages_failed">„%1$s” kon niet worden opgeslagen</string>

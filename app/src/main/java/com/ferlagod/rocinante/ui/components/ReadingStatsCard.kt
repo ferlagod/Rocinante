@@ -85,6 +85,9 @@ fun ReadingStatsCard(
     // Qué hacer con los libros a los que les faltan las páginas. Sin esto la advertencia se
     // queda en advertencia, que es como estaba.
     onFixMissingPages: (() -> Unit)? = null,
+    // Qué hacer con los libros a los que les falta la fecha de fin, que son los que no salen
+    // en la gráfica por años.
+    onFixMissingDates: (() -> Unit)? = null,
     // Qué hacer al tocar el año de la gráfica, para ir a ver los libros de ese año.
     onYearClick: ((Int) -> Unit)? = null
 ) {
@@ -136,6 +139,9 @@ fun ReadingStatsCard(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 if (stats.booksWithoutFinishDate > 0) {
+                    // Igual que las páginas: se puede hacer algo, así que el aviso lleva a
+                    // los libros de los que habla.
+                    val canFixDates = onFixMissingDates != null
                     Text(
                         text = pluralStringResource(
                             R.plurals.profile_stats_missing_dates,
@@ -143,7 +149,13 @@ fun ReadingStatsCard(
                             stats.booksWithoutFinishDate
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (canFixDates) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = if (canFixDates) {
+                            Modifier.clickable { onFixMissingDates!!() }
+                        } else {
+                            Modifier
+                        }
                     )
                 }
                 if (stats.booksWithoutPages > 0) {
@@ -185,7 +197,10 @@ fun ReadingStatsCard(
 fun ReadingGoalPaceSection(
     stats: ReadingStats,
     booksAheadOfSchedule: Int?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer con los libros a los que les falta alguna fecha. La media de días se calcula
+    // solo con los que tienen las dos, y ese es justo el renglón que lo dice.
+    onFixMissingDates: (() -> Unit)? = null
 ) {
     if (booksAheadOfSchedule == null && !stats.hasReadingDays) return
 
@@ -253,6 +268,7 @@ fun ReadingGoalPaceSection(
             }
             // La base es pequeña porque BookWyrm rara vez guarda la fecha de inicio: se dice
             // sobre cuántos libros se ha calculado en lugar de presentarlo como la media de todos.
+            val canFixDates = onFixMissingDates != null && stats.booksWithReadingDays < stats.totalBooks
             Text(
                 text = stringResource(
                     R.string.profile_stats_days_basis,
@@ -260,7 +276,13 @@ fun ReadingGoalPaceSection(
                     stats.totalBooks
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (canFixDates) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = if (canFixDates) {
+                    Modifier.clickable { onFixMissingDates!!() }
+                } else {
+                    Modifier
+                }
             )
         }
     }

@@ -434,6 +434,13 @@
         <item quantity="one">%d βιβλίο χωρίς αριθμό σελίδων</item>
         <item quantity="other">%d βιβλία χωρίς αριθμό σελίδων</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d βιβλίο χωρίς ημερομηνίες</item>
+        <item quantity="other">%d βιβλία χωρίς ημερομηνίες</item>
+    </plurals>
+    <string name="missing_dates_explanation">Οι ημερομηνίες είναι δικές σας, όχι του βιβλίου: αλλάζει μόνο το δικό σας διάβασμα. Χωρίς ημερομηνία λήξης το βιβλίο λείπει από το γράφημα ανά έτος, και χωρίς τις δύο δεν μετράει στις ημέρες ανάγνωσης.</string>
+    <string name="missing_dates_save">Αποθήκευση ημερομηνιών</string>
+    <string name="missing_dates_failed">Δεν ήταν δυνατή η αποθήκευση των ημερομηνιών του «%1$s»</string>
     <string name="missing_pages_explanation">Ο αριθμός σελίδων ανήκει στο βιβλίο, όχι σε εσάς: ό,τι γράψετε εδώ αποθηκεύεται στο instance και το βλέπουν όλοι. Αποθηκεύεται ένα κάθε φορά.</string>
     <string name="missing_pages_save">Αποθήκευση</string>
     <string name="missing_pages_failed">Δεν ήταν δυνατή η αποθήκευση του «%1$s»</string>

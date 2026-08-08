@@ -434,6 +434,13 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
         <item quantity="one">%d llibre sense nombre de pàgines</item>
         <item quantity="other">%d llibres sense nombre de pàgines</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d llibre sense dates</item>
+        <item quantity="other">%d llibres sense dates</item>
+    </plurals>
+    <string name="missing_dates_explanation">Les dates són teves, no del llibre: això només toca la teva pròpia lectura. Sense data de fi el llibre no surt al gràfic per anys, i sense totes dues no compta als dies de lectura.</string>
+    <string name="missing_dates_save">Desar les dates</string>
+    <string name="missing_dates_failed">No s\'han pogut desar les dates de «%1$s»</string>
     <string name="missing_pages_explanation">Les pàgines són del llibre, no de qui el llegeix: el que escriguis aquí es desa a la instància i ho veu tothom. Es desa d\'un en un.</string>
     <string name="missing_pages_save">Desa</string>
     <string name="missing_pages_failed">No s\'ha pogut desar «%1$s»</string>

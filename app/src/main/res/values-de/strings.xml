@@ -434,6 +434,13 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
         <item quantity="one">%d Buch ohne Seitenzahl</item>
         <item quantity="other">%d Bücher ohne Seitenzahl</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d Buch ohne Daten</item>
+        <item quantity="other">%d Bücher ohne Daten</item>
+    </plurals>
+    <string name="missing_dates_explanation">Die Daten gehören dir, nicht dem Buch: das ändert nur deine eigene Lektüre. Ohne Enddatum fehlt das Buch in der Jahresgrafik, und ohne beide zählt es nicht bei den Lesetagen.</string>
+    <string name="missing_dates_save">Daten speichern</string>
+    <string name="missing_dates_failed">Die Daten für „%1$s“ konnten nicht gespeichert werden</string>
     <string name="missing_pages_explanation">Die Seitenzahl gehört zum Buch, nicht zu dir: Was du hier einträgst, wird auf der Instanz gespeichert und alle sehen es. Es wird eines nach dem anderen gespeichert.</string>
     <string name="missing_pages_save">Speichern</string>
     <string name="missing_pages_failed">„%1$s“ konnte nicht gespeichert werden</string>

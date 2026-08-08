@@ -439,6 +439,14 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="few">%d cărți fără număr de pagini</item>
         <item quantity="other">%d de cărți fără număr de pagini</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d carte fără date</item>
+        <item quantity="few">%d cărți fără date</item>
+        <item quantity="other">%d de cărți fără date</item>
+    </plurals>
+    <string name="missing_dates_explanation">Datele sunt ale tale, nu ale cărții: asta schimbă doar propria ta lectură. Fără data de final cartea lipsește din graficul pe ani, iar fără amândouă nu contează la zilele de lectură.</string>
+    <string name="missing_dates_save">Salvează datele</string>
+    <string name="missing_dates_failed">Datele cărții „%1$s” nu au putut fi salvate</string>
     <string name="missing_pages_explanation">Numărul de pagini ține de carte, nu de tine: ce scrii aici se salvează pe instanță și văd toți. Se salvează câte una pe rând.</string>
     <string name="missing_pages_save">Salvează</string>
     <string name="missing_pages_failed">Nu s-a putut salva „%1$s”</string>

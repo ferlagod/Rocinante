@@ -477,6 +477,13 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book without page count</item>
         <item quantity="other">%d books without page count</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d book without dates</item>
+        <item quantity="other">%d books without dates</item>
+    </plurals>
+    <string name="missing_dates_explanation">The dates are yours, not the book\'s: this only changes your own reading. Without a finish date the book is missing from the year chart, and without both it does not count towards reading days.</string>
+    <string name="missing_dates_save">Save dates</string>
+    <string name="missing_dates_failed">Could not save the dates for “%1$s”</string>
     <string name="missing_pages_explanation">The page count belongs to the book, not to you: what you write here is saved on the instance and everyone sees it. Saved one by one.</string>
     <string name="missing_pages_save">Save</string>
     <string name="missing_pages_failed">Could not save “%1$s”</string>

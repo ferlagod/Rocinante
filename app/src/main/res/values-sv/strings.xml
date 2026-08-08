@@ -434,6 +434,13 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
         <item quantity="one">%d bok utan sidantal</item>
         <item quantity="other">%d böcker utan sidantal</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d bok utan datum</item>
+        <item quantity="other">%d böcker utan datum</item>
+    </plurals>
+    <string name="missing_dates_explanation">Datumen är dina, inte bokens: det här rör bara din egen läsning. Utan slutdatum saknas boken i diagrammet per år, och utan båda räknas den inte i lästa dagar.</string>
+    <string name="missing_dates_save">Spara datum</string>
+    <string name="missing_dates_failed">Datumen för ”%1$s” kunde inte sparas</string>
     <string name="missing_pages_explanation">Sidantalet hör till boken, inte till dig: det du skriver här sparas på instansen och alla ser det. Det sparas en bok i taget.</string>
     <string name="missing_pages_save">Spara</string>
     <string name="missing_pages_failed">Det gick inte att spara ”%1$s”</string>

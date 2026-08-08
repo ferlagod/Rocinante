@@ -435,6 +435,13 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
         <item quantity="one">%d kirja ilman sivumäärää</item>
         <item quantity="other">%d kirjaa ilman sivumäärää</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d kirja ilman päivämääriä</item>
+        <item quantity="other">%d kirjaa ilman päivämääriä</item>
+    </plurals>
+    <string name="missing_dates_explanation">Päivämäärät ovat sinun, eivät kirjan: tämä koskee vain omaa lukemistasi. Ilman lopetuspäivää kirja ei näy vuosikaaviossa, ja ilman molempia se ei kerrytä lukupäiviä.</string>
+    <string name="missing_dates_save">Tallenna päivämäärät</string>
+    <string name="missing_dates_failed">Kirjan ”%1$s” päivämääriä ei voitu tallentaa</string>
     <string name="missing_pages_explanation">Sivumäärä kuuluu kirjalle, ei sinulle: se, minkä kirjoitat tähän, tallentuu instanssiin ja näkyy kaikille. Tallennus tapahtuu kirja kerrallaan.</string>
     <string name="missing_pages_save">Tallenna</string>
     <string name="missing_pages_failed">Kohteen ”%1$s” tallennus epäonnistui</string>

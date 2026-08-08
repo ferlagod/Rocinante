@@ -434,6 +434,13 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
         <item quantity="one">%d livre sans nombre de pages</item>
         <item quantity="other">%d livres sans nombre de pages</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d livre sans dates</item>
+        <item quantity="other">%d livres sans dates</item>
+    </plurals>
+    <string name="missing_dates_explanation">Les dates sont les vôtres, pas celles du livre : cela ne touche que votre propre lecture. Sans date de fin, le livre n\'apparaît pas dans le graphique par années, et sans les deux il ne compte pas dans les jours de lecture.</string>
+    <string name="missing_dates_save">Enregistrer les dates</string>
+    <string name="missing_dates_failed">Impossible d\'enregistrer les dates de « %1$s »</string>
     <string name="missing_pages_explanation">Le nombre de pages appartient au livre, pas à vous : ce que vous écrivez ici est enregistré sur l\'instance et tout le monde le voit. L\'enregistrement se fait livre par livre.</string>
     <string name="missing_pages_save">Enregistrer</string>
     <string name="missing_pages_failed">Impossible d\'enregistrer « %1$s »</string>

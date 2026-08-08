@@ -443,6 +443,15 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="few">%d knihy bez počtu stran</item>
         <item quantity="other">%d knih bez počtu stran</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d kniha bez dat</item>
+        <item quantity="few">%d knihy bez dat</item>
+        <item quantity="many">%d knihy bez dat</item>
+        <item quantity="other">%d knih bez dat</item>
+    </plurals>
+    <string name="missing_dates_explanation">Data jsou vaše, ne knihy: mění se tím jen vaše vlastní čtení. Bez data dočtení kniha chybí v grafu podle let a bez obou se nepočítá do dnů čtení.</string>
+    <string name="missing_dates_save">Uložit data</string>
+    <string name="missing_dates_failed">Data knihy „%1$s“ se nepodařilo uložit</string>
     <string name="missing_pages_explanation">Počet stran patří knize, ne tobě: co sem napíšeš, se uloží na instanci a uvidí to všichni. Ukládá se po jedné.</string>
     <string name="missing_pages_save">Uložit</string>
     <string name="missing_pages_failed">Knihu „%1$s“ se nepodařilo uložit</string>

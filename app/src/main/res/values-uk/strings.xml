@@ -444,6 +444,15 @@
         <item quantity="many">%d книг без кількості сторінок</item>
         <item quantity="other">%d книги без кількості сторінок</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d книжка без дат</item>
+        <item quantity="few">%d книжки без дат</item>
+        <item quantity="many">%d книжок без дат</item>
+        <item quantity="other">%d книжки без дат</item>
+    </plurals>
+    <string name="missing_dates_explanation">Дати ваші, а не книжки: це стосується лише вашого читання. Без дати завершення книжки немає на графіку за роками, а без обох вона не рахується у днях читання.</string>
+    <string name="missing_dates_save">Зберегти дати</string>
+    <string name="missing_dates_failed">Не вдалося зберегти дати книжки «%1$s»</string>
     <string name="missing_pages_explanation">Кількість сторінок належить книзі, а не вам: те, що ви впишете тут, зберігається на інстанції і це бачать усі. Зберігається по одній книзі.</string>
     <string name="missing_pages_save">Зберегти</string>
     <string name="missing_pages_failed">Не вдалося зберегти «%1$s»</string>

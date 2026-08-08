@@ -1278,6 +1278,7 @@ fun ProfileTab(
     var readBooks by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.ShelfBookItem>>(emptyList()) }
     var showMissingPages by remember { mutableStateOf(false) }
     var showMissingAuthors by remember { mutableStateOf(false) }
+    var showMissingDates by remember { mutableStateOf(false) }
     // Lo enriquecido de cada libro: de ahí sale el nombre del autor, y por tanto quién falta.
     var enrichment by remember {
         mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap())
@@ -1348,6 +1349,38 @@ fun ProfileTab(
                 }
             },
             onDismiss = { showMissingAuthors = false }
+        )
+    }
+
+    if (showMissingDates) {
+        com.ferlagod.rocinante.ui.components.MissingReadDatesDialog(
+            // A los que les falta alguna de las dos: sin la de fin no salen en la gráfica por
+            // años, y sin las dos no cuentan en los días de lectura. Los dos avisos del perfil
+            // llevan aquí, así que la lista es la unión y no una por cada uno.
+            books = readBooks.filter { book ->
+                val data = book.id?.let { enrichment[it] }
+                data?.finished.isNullOrBlank() || data?.started.isNullOrBlank()
+            },
+            enrichment = enrichment,
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onSaved = { bookId, startIso, finishIso ->
+                coroutineScope.launch {
+                    val stored = dataCache.loadEnrichment()
+                    val before = stored[bookId]
+                    val updated = before?.copy(started = startIso, finished = finishIso)
+                        ?: com.ferlagod.rocinante.data.model.BookEnrichment(
+                            bookId = bookId,
+                            started = startIso,
+                            finished = finishIso
+                        )
+                    dataCache.mergeEnrichment(updated)
+                    enrichment = dataCache.loadEnrichment()
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingDates = false }
         )
     }
 
@@ -1643,6 +1676,7 @@ fun ProfileTab(
                                 currentYear = currentYear,
                                 modifier = Modifier.padding(top = 12.dp),
                                 onFixMissingPages = { showMissingPages = true },
+                                onFixMissingDates = { showMissingDates = true },
                                 onYearClick = {
                                     onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Year(it))
                                 }
@@ -1758,7 +1792,8 @@ fun ProfileTab(
                                         com.ferlagod.rocinante.ui.components.ReadingGoalPaceSection(
                                             stats = stats,
                                             booksAheadOfSchedule = com.ferlagod.rocinante.utils.ReadingGoalPace
-                                                .booksAheadOfSchedule(goal.value, goal.max, today)
+                                                .booksAheadOfSchedule(goal.value, goal.max, today),
+                                            onFixMissingDates = { showMissingDates = true }
                                         )
                                     }
                                 }

@@ -436,6 +436,13 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
         <item quantity="one">%d libro sen número de páxinas</item>
         <item quantity="other">%d libros sen número de páxinas</item>
     </plurals>
+    <plurals name="missing_dates_title">
+        <item quantity="one">%d libro sen datas</item>
+        <item quantity="other">%d libros sen datas</item>
+    </plurals>
+    <string name="missing_dates_explanation">As datas son túas, non do libro: isto só toca a túa propia lectura. Sen data de fin o libro non sae na gráfica por anos, e sen as dúas non conta nos días de lectura.</string>
+    <string name="missing_dates_save">Gardar as datas</string>
+    <string name="missing_dates_failed">Non se puideron gardar as datas de «%1$s»</string>
     <string name="missing_pages_explanation">As páxinas son do libro, non de quen o le: o que escribas aquí gárdase na instancia e véno todos. Gárdase dun en un.</string>
     <string name="missing_pages_save">Gardar</string>
     <string name="missing_pages_failed">Non se puido gardar «%1$s»</string>

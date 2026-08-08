@@ -3409,7 +3409,7 @@ private fun utcMillisToIso(millis: Long): String =
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReadDatePickerDialog(
+fun ReadDatePickerDialog(
     initialIso: String?,
     onDismiss: () -> Unit,
     onPick: (String) -> Unit
