@@ -335,6 +335,7 @@ fun HomeScreen(
                         targetShelfSlug = uiState.shelfTarget?.shelfSlug,
                         targetBookId = uiState.shelfTarget?.bookId,
                         targetAuthorName = uiState.shelfTarget?.authorName,
+                        targetFilter = uiState.shelfTarget?.filter,
                         onTargetConsumed = { viewModel.consumeShelfTarget() },
                         backToShelvesKey = backToShelvesKey,
                         // El carrusel tiene compuestas también las pestañas de al lado; solo la
@@ -389,7 +390,8 @@ fun HomeScreen(
                         viewModel.decrementFollowingCount()
                     },
                     onReadingFinished = { viewModel.incrementReadingGoal() },
-                    onOpenAuthor = { viewModel.openAuthorInShelf(it) }
+                    onOpenAuthor = { viewModel.openAuthorInShelf(it) },
+                    onOpenFilter = { viewModel.openFilterInShelf(it) }
                 )
             }
         }
@@ -1220,7 +1222,10 @@ fun ProfileTab(
     onReadingFinished: () -> Unit = {},
     // Se invoca con el nombre del autor al pulsar su barra en «autores más leídos», para ir a
     // ver esos libros en «Mis libros».
-    onOpenAuthor: (String) -> Unit = {}
+    onOpenAuthor: (String) -> Unit = {},
+    // Igual, con el recorte que pide la gráfica que se ha tocado: un año, una nota, un idioma
+    // o un formato.
+    onOpenFilter: (com.ferlagod.rocinante.utils.ShelfFilter) -> Unit = {}
 ) {
     val cleanSummary = HtmlUtils.stripHtml(profile?.summary)
     val avatarUrl = profile?.icon?.url
@@ -1637,7 +1642,10 @@ fun ProfileTab(
                                 stats = stats,
                                 currentYear = currentYear,
                                 modifier = Modifier.padding(top = 12.dp),
-                                onFixMissingPages = { showMissingPages = true }
+                                onFixMissingPages = { showMissingPages = true },
+                                onYearClick = {
+                                    onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Year(it))
+                                }
                             )
                         }
                     }
@@ -1721,12 +1729,19 @@ fun ProfileTab(
                                     Spacer(modifier = Modifier.height(16.dp))
 
                                     val progressRatio = if (goal.max > 0) (goal.value.toFloat() / goal.max.toFloat()).coerceIn(0f, 1f) else 0f
+                                    // La barra del reto cuenta lo leído este año; tocarla lleva
+                                    // a esos libros. Mismo sitio y mismo tamaño que antes.
                                     LinearProgressIndicator(
                                         progress = { progressRatio },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(8.dp)
-                                            .clip(MaterialTheme.shapes.small),
+                                            .clip(MaterialTheme.shapes.small)
+                                            .clickable {
+                                                onOpenFilter(
+                                                    com.ferlagod.rocinante.utils.ShelfFilter.Year(currentYear)
+                                                )
+                                            },
                                         color = MaterialTheme.colorScheme.primary,
                                         trackColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
@@ -1774,17 +1789,38 @@ fun ProfileTab(
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.RATINGS -> {
                     readingStats?.let { stats ->
-                        item { com.ferlagod.rocinante.ui.components.RatingsCard(stats = stats) }
+                        item {
+                            com.ferlagod.rocinante.ui.components.RatingsCard(
+                                stats = stats,
+                                onRatingClick = {
+                                    onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Rating(it))
+                                }
+                            )
+                        }
                     }
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.LANGUAGES -> {
                     readingStats?.let { stats ->
-                        item { com.ferlagod.rocinante.ui.components.LanguagesCard(stats = stats) }
+                        item {
+                            com.ferlagod.rocinante.ui.components.LanguagesCard(
+                                stats = stats,
+                                onLanguageClick = {
+                                    onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Language(it))
+                                }
+                            )
+                        }
                     }
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.FORMATS -> {
                     readingStats?.let { stats ->
-                        item { com.ferlagod.rocinante.ui.components.FormatsCard(stats = stats) }
+                        item {
+                            com.ferlagod.rocinante.ui.components.FormatsCard(
+                                stats = stats,
+                                onFormatClick = {
+                                    onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Format(it))
+                                }
+                            )
+                        }
                     }
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.SUGGESTED_USERS -> {

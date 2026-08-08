@@ -32,11 +32,14 @@ import com.ferlagod.rocinante.data.model.TimelineUiItem
  * @property authorName Autor cuyos libros hay que enseñar, tal y como lo escribe la instancia,
  *   o null. Va el nombre visible y no una clave porque es lo que tienen tanto el perfil como la
  *   estantería, y cada una lo normaliza igual por su cuenta.
+ * @property filter Recorte de la estantería que hay que enseñar (un año, una nota, un idioma,
+ *   un formato), o null. Viene de tocar una gráfica del perfil.
  */
 data class ShelfTarget(
     val shelfSlug: String,
     val bookId: String? = null,
-    val authorName: String? = null
+    val authorName: String? = null,
+    val filter: com.ferlagod.rocinante.utils.ShelfFilter? = null
 )
 
 /**

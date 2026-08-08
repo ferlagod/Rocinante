@@ -224,6 +224,20 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Salta a «Mis libros» para enseñar un recorte de la estantería de leídos: los libros de un
+     * año, de una nota, de un idioma o de un formato. Es lo que se pide al tocar una gráfica del
+     * perfil, y siempre esa estantería, porque es la única con la que se calculan.
+     *
+     * @param filter Qué recorte enseñar.
+     */
+    fun openFilterInShelf(filter: com.ferlagod.rocinante.utils.ShelfFilter) {
+        _uiState.value = _uiState.value.copy(
+            selectedTab = 1,
+            shelfTarget = ShelfTarget("read", filter = filter)
+        )
+    }
+
+    /**
      * Descarta el objetivo pendiente una vez que la estantería ya se ha desplazado hasta él,
      * para que volver a la pestaña no repita el salto.
      */

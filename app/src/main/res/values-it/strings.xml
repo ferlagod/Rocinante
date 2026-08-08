@@ -42,6 +42,7 @@
     <string name="series_title">Serie</string>
     <string name="series_empty">Ancora nessuna serie tra i libri che hai letto</string>
     <string name="authors_title">Autori</string>
+    <string name="shelf_filter_rating">%1$s stelle</string>
     <string name="authors_empty">Ancora nessun autore tra i libri che hai letto</string>
     <string name="series_book_of">%1$s · libro %2$d</string>
     <plurals name="series_books_count">

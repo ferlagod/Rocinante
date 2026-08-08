@@ -22,6 +22,7 @@ package com.ferlagod.rocinante.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +55,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.pluralStringResource
@@ -82,7 +84,9 @@ fun ReadingStatsCard(
     modifier: Modifier = Modifier,
     // Qué hacer con los libros a los que les faltan las páginas. Sin esto la advertencia se
     // queda en advertencia, que es como estaba.
-    onFixMissingPages: (() -> Unit)? = null
+    onFixMissingPages: (() -> Unit)? = null,
+    // Qué hacer al tocar el año de la gráfica, para ir a ver los libros de ese año.
+    onYearClick: ((Int) -> Unit)? = null
 ) {
     val numberFormat = remember { NumberFormat.getIntegerInstance() }
 
@@ -119,7 +123,8 @@ fun ReadingStatsCard(
                 data = stats.booksPerYear,
                 currentYear = currentYear,
                 numberFormat = numberFormat,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                onYearClick = onYearClick
             )
         }
 
@@ -348,7 +353,9 @@ fun TopAuthorsCard(
 @Composable
 fun RatingsCard(
     stats: ReadingStats,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer al tocar una nota, para ir a ver esos libros. Nada cambia de aspecto.
+    onRatingClick: ((Double) -> Unit)? = null
 ) {
     if (!stats.hasRatingData) return
 
@@ -398,7 +405,11 @@ fun RatingsCard(
                     maxCount = maxCount,
                     labelWeight = 0.30f,
                     barColor = barColor,
-                    trackColor = trackColor
+                    trackColor = trackColor,
+                    // Solo las notas que alguien ha usado: una barra a cero no lleva a ningún
+                    // sitio, y tocarla dejaría una lista vacía sin explicación.
+                    onClick = onRatingClick?.takeIf { bucket.count > 0 }
+                        ?.let { { it(bucket.rating) } }
                 ) {
                     RatingStars(rating = bucket.rating, starSize = 14.dp)
                 }
@@ -427,7 +438,9 @@ fun RatingsCard(
 @Composable
 fun LanguagesCard(
     stats: ReadingStats,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer al tocar un idioma, para ir a ver esos libros. Nada cambia de aspecto.
+    onLanguageClick: ((String) -> Unit)? = null
 ) {
     if (!stats.hasLanguageData) return
 
@@ -456,7 +469,8 @@ fun LanguagesCard(
                 maxCount = maxCount,
                 labelWeight = 0.42f,
                 barColor = barColor,
-                trackColor = trackColor
+                trackColor = trackColor,
+                onClick = onLanguageClick?.let { { it(language.label) } }
             ) {
                 Text(
                     text = language.flag?.let { "$it ${language.label}" } ?: language.label,
@@ -476,7 +490,9 @@ fun LanguagesCard(
 @Composable
 fun FormatsCard(
     stats: ReadingStats,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer al tocar un formato, para ir a ver esos libros. Nada cambia de aspecto.
+    onFormatClick: ((String) -> Unit)? = null
 ) {
     if (!stats.hasFormatData) return
 
@@ -505,7 +521,8 @@ fun FormatsCard(
                 maxCount = maxCount,
                 labelWeight = 0.42f,
                 barColor = barColor,
-                trackColor = trackColor
+                trackColor = trackColor,
+                onClick = onFormatClick?.let { { it(format.format) } }
             ) {
                 Text(
                     text = formatLabel(format.format),
@@ -524,7 +541,7 @@ fun FormatsCard(
  * cual: es preferible un término en inglés que esconder un dato real.
  */
 @Composable
-private fun formatLabel(rawFormat: String): String = when (rawFormat) {
+fun formatLabel(rawFormat: String): String = when (rawFormat) {
     "Hardcover" -> stringResource(R.string.book_format_hardcover)
     "Paperback" -> stringResource(R.string.book_format_paperback)
     "EBook" -> stringResource(R.string.book_format_ebook)
@@ -663,7 +680,9 @@ private fun BooksPerYearChart(
     data: List<ReadingStats.YearCount>,
     currentYear: Int,
     numberFormat: NumberFormat,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Qué hacer al tocar una barra, para ir a ver los libros de ese año.
+    onYearClick: ((Int) -> Unit)? = null
 ) {
     val barColor = MaterialTheme.colorScheme.primary
     val mutedBarColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
@@ -703,6 +722,21 @@ private fun BooksPerYearChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(88.dp)
+                // El gráfico es un lienzo, así que el toque hay que traducirlo a barra: se
+                // divide el ancho entre los años, igual que al dibujarlas. Los años a cero no
+                // llevan a ningún sitio; tocarlos dejaría una lista vacía sin explicación.
+                .then(
+                    if (onYearClick != null && data.isNotEmpty()) {
+                        Modifier.pointerInput(data) {
+                            detectTapGestures { offset ->
+                                val slot = size.width.toFloat() / data.size
+                                val index = (offset.x / slot).toInt().coerceIn(0, data.size - 1)
+                                val entry = data[index]
+                                if (entry.count > 0) onYearClick(entry.year)
+                            }
+                        }
+                    } else Modifier
+                )
         ) {
             val slotWidth = size.width / data.size
             val gap = 2.dp.toPx()

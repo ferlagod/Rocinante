@@ -51,6 +51,7 @@
     <string name="series_title">Sarjat</string>
     <string name="series_empty">Ei vielä sarjoja lukemiesi kirjojen joukossa</string>
     <string name="authors_title">Tekijät</string>
+    <string name="shelf_filter_rating">%1$s tähteä</string>
     <string name="authors_empty">Lukemiesi kirjojen joukossa ei ole vielä tekijöitä</string>
     <string name="series_book_of">%1$s · kirja %2$d</string>
     <plurals name="series_books_count">

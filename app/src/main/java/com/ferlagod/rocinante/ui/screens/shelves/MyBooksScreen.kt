@@ -228,6 +228,16 @@ private fun <T : Comparable<T>> nullsLastComparator(
  * (p. ej. "1. jan. 2025" en danés). Null si la entrada es nula/vacía; si no se puede
  * parsear, devuelve la cadena original.
  */
+/**
+ * La nota, con el separador decimal del idioma del teléfono y sin decimal cuando es entera:
+ * «4» y «4,5» en danés, «4.5» en inglés. Escribirla a pelo daría «4.0» en todas partes.
+ */
+private fun formatStars(stars: Double): String {
+    val format = java.text.NumberFormat.getInstance()
+    format.maximumFractionDigits = 1
+    return format.format(stars)
+}
+
 private fun formatDisplayDate(iso: String?): String? {
     if (iso.isNullOrBlank()) return null
     return try {
@@ -259,6 +269,8 @@ private fun readingDays(startIso: String?, finishIso: String?): Int? =
  * @param targetBookId Libro al que desplazarse y que se resalta dentro de esa estantería, o null.
  * @param targetAuthorName Autor cuyos libros hay que enseñar al abrir esa estantería (viene de
  *   «autores más leídos» del perfil), o null.
+ * @param targetFilter Recorte de la estantería que hay que enseñar al abrirla —un año, una nota,
+ *   un idioma, un formato—, o null. Viene de tocar una gráfica del perfil.
  * @param onTargetConsumed Se invoca cuando ya se ha saltado al libro, para no repetir el salto.
  * @param isActive Si esta es la pestaña que se está viendo. El carrusel mantiene compuestas
  *   también las de al lado, y solo la visible debe quedarse con el botón de atrás del móvil.
@@ -274,6 +286,7 @@ fun MyBooksScreen(
     targetShelfSlug: String? = null,
     targetBookId: String? = null,
     targetAuthorName: String? = null,
+    targetFilter: com.ferlagod.rocinante.utils.ShelfFilter? = null,
     onTargetConsumed: () -> Unit = {},
     backToShelvesKey: Int = 0,
     isActive: Boolean = true
@@ -445,6 +458,7 @@ fun MyBooksScreen(
                 highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
                 onHighlightConsumed = onTargetConsumed,
                 openAuthorName = targetAuthorName.takeIf { targetShelfSlug == shelf.slug },
+                openFilter = targetFilter.takeIf { targetShelfSlug == shelf.slug },
                 backEnabled = isActive
             )
         }
@@ -466,6 +480,8 @@ fun MyBooksScreen(
  * @param onHighlightConsumed Se invoca cuando ya se ha localizado el libro (o se sabe que no está).
  * @param openAuthorName Autor cuyos libros hay que enseñar nada más abrir, o null. Llega el
  *   nombre visible y se busca por él entre los grupos, con la misma normalización que usan.
+ * @param openFilter Recorte que hay que enseñar nada más abrir —un año, una nota, un idioma, un
+ *   formato—, o null.
  * @param backEnabled Si el botón de atrás del móvil lo atiende esta pantalla. Falso mientras la
  *   pestaña no sea la que se ve, para no quitárselo a la que sí lo está.
  */
@@ -481,6 +497,7 @@ fun ShelfNativeDetailScreen(
     highlightBookId: String? = null,
     onHighlightConsumed: () -> Unit = {},
     openAuthorName: String? = null,
+    openFilter: com.ferlagod.rocinante.utils.ShelfFilter? = null,
     backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
@@ -745,10 +762,24 @@ fun ShelfNativeDetailScreen(
         authorTargetDone = true
     }
 
-    // Con una serie abierta manda su orden —el de lectura—; con un autor abierto manda la
-    // ordenación elegida, y sin elegir nada sus libros salen alfabéticos, que es como se busca
-    // en la obra de alguien. Sin nada abierto, la estantería.
+    // Recorte que llega del perfil (un año, una nota, un idioma, un formato). Se copia a un
+    // estado propio para que «Volver» pueda deshacerlo: si se leyera del parámetro, quitarlo
+    // no serviría de nada porque volvería a entrar en la siguiente recomposición.
+    var activeFilter by remember {
+        mutableStateOf<com.ferlagod.rocinante.utils.ShelfFilter?>(null)
+    }
+    LaunchedEffect(openFilter) { activeFilter = openFilter }
+
+    // Con un recorte manda el recorte; con una serie abierta manda su orden —el de lectura—;
+    // con un autor abierto manda la ordenación elegida, y sin elegir nada sus libros salen
+    // alfabéticos, que es como se busca en la obra de alguien. Sin nada abierto, la estantería.
     val visibleBooks = when {
+        activeFilter != null -> sortBooks(
+            com.ferlagod.rocinante.utils.ShelfFiltering.apply(
+                books, enrichment, activeFilter!!
+            ),
+            sortMode
+        )
         openSeriesUrl != null ->
             seriesGroups.firstOrNull { it.url == openSeriesUrl }?.books ?: displayedBooks
         openAuthorKey != null -> {
@@ -887,6 +918,7 @@ fun ShelfNativeDetailScreen(
     // estantería, y solo entonces se sale a la lista de estanterías.
     val goBack: () -> Unit = {
         when {
+            activeFilter != null -> activeFilter = null
             openSeriesUrl != null -> openSeriesUrl = null
             openAuthorKey != null -> openAuthorKey = null
             showSeriesList -> showSeriesList = false
@@ -911,8 +943,21 @@ fun ShelfNativeDetailScreen(
             OutlinedButton(onClick = goBack) {
                 Text(stringResource(R.string.shelf_back))
             }
+            // El recorte dice cuál es, para que se sepa qué se está viendo: el año, la nota,
+            // el idioma o el formato que se tocó en el perfil.
+            val filterTitle = activeFilter?.let { f ->
+                when (f) {
+                    is com.ferlagod.rocinante.utils.ShelfFilter.Year -> f.year.toString()
+                    is com.ferlagod.rocinante.utils.ShelfFilter.Rating ->
+                        stringResource(R.string.shelf_filter_rating, formatStars(f.stars))
+                    is com.ferlagod.rocinante.utils.ShelfFilter.Language -> f.label
+                    is com.ferlagod.rocinante.utils.ShelfFilter.Format ->
+                        com.ferlagod.rocinante.ui.components.formatLabel(f.name)
+                }
+            }
             Text(
                 text = when {
+                    filterTitle != null -> filterTitle
                     openSeriesUrl != null ->
                         seriesGroups.firstOrNull { it.url == openSeriesUrl }?.name ?: shelf.title
                     openAuthorKey != null ->
