@@ -440,6 +440,14 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
         <item quantity="one">%d libro sen datas</item>
         <item quantity="other">%d libros sen datas</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d libro sen valorar</item>
+        <item quantity="other">%d libros sen valorar</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Valorar publica: en BookWyrm unha valoración é unha publicación coma calquera outra. Toca outra vez a mesma estrela para deixala á metade.</string>
+    <string name="missing_ratings_save">Valorar</string>
+    <string name="missing_ratings_privacy">Visibilidade:</string>
+    <string name="missing_ratings_failed">Non se puido valorar «%1$s»</string>
     <string name="missing_dates_explanation">As datas son túas, non do libro: isto só toca a túa propia lectura. Sen data de fin o libro non sae na gráfica por anos, e sen as dúas non conta nos días de lectura.</string>
     <string name="missing_dates_save">Gardar as datas</string>
     <string name="missing_dates_failed">Non se puideron gardar as datas de «%1$s»</string>

@@ -481,6 +481,14 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book without dates</item>
         <item quantity="other">%d books without dates</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d book without a rating</item>
+        <item quantity="other">%d books without a rating</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Rating publishes: in BookWyrm a rating is a post like any other. Tap a star again to make it a half star.</string>
+    <string name="missing_ratings_save">Rate</string>
+    <string name="missing_ratings_privacy">Visibility:</string>
+    <string name="missing_ratings_failed">Could not rate “%1$s”</string>
     <string name="missing_dates_explanation">The dates are yours, not the book\'s: this only changes your own reading. Without a finish date the book is missing from the year chart, and without both it does not count towards reading days.</string>
     <string name="missing_dates_save">Save dates</string>
     <string name="missing_dates_failed">Could not save the dates for “%1$s”</string>

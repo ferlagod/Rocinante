@@ -438,6 +438,14 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
         <item quantity="one">%d livre sans dates</item>
         <item quantity="other">%d livres sans dates</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d livre sans note</item>
+        <item quantity="other">%d livres sans note</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Noter publie : sur BookWyrm, une note est une publication comme une autre. Touchez de nouveau la même étoile pour la couper en deux.</string>
+    <string name="missing_ratings_save">Noter</string>
+    <string name="missing_ratings_privacy">Visibilité :</string>
+    <string name="missing_ratings_failed">Impossible de noter « %1$s »</string>
     <string name="missing_dates_explanation">Les dates sont les vôtres, pas celles du livre : cela ne touche que votre propre lecture. Sans date de fin, le livre n\'apparaît pas dans le graphique par années, et sans les deux il ne compte pas dans les jours de lecture.</string>
     <string name="missing_dates_save">Enregistrer les dates</string>
     <string name="missing_dates_failed">Impossible d\'enregistrer les dates de « %1$s »</string>

@@ -438,6 +438,14 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
         <item quantity="one">%d livro sem datas</item>
         <item quantity="other">%d livros sem datas</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d livro sem avaliação</item>
+        <item quantity="other">%d livros sem avaliação</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Avaliar publica: no BookWyrm uma avaliação é uma publicação como outra qualquer. Toque de novo na mesma estrela para deixá-la pela metade.</string>
+    <string name="missing_ratings_save">Avaliar</string>
+    <string name="missing_ratings_privacy">Visibilidade:</string>
+    <string name="missing_ratings_failed">Não foi possível avaliar “%1$s”</string>
     <string name="missing_dates_explanation">As datas são suas, não do livro: isto mexe só na sua leitura. Sem data de fim o livro não aparece no gráfico por anos, e sem as duas não conta nos dias de leitura.</string>
     <string name="missing_dates_save">Salvar as datas</string>
     <string name="missing_dates_failed">Não foi possível salvar as datas de “%1$s”</string>

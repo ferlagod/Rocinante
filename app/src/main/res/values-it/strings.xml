@@ -438,6 +438,14 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
         <item quantity="one">%d libro senza date</item>
         <item quantity="other">%d libri senza date</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d libro senza voto</item>
+        <item quantity="other">%d libri senza voto</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Votare pubblica: su BookWyrm un voto è un post come un altro. Tocca di nuovo la stessa stella per dimezzarla.</string>
+    <string name="missing_ratings_save">Vota</string>
+    <string name="missing_ratings_privacy">Visibilità:</string>
+    <string name="missing_ratings_failed">Non è stato possibile votare «%1$s»</string>
     <string name="missing_dates_explanation">Le date sono tue, non del libro: questo tocca solo la tua lettura. Senza data di fine il libro non compare nel grafico per anni, e senza entrambe non conta nei giorni di lettura.</string>
     <string name="missing_dates_save">Salva le date</string>
     <string name="missing_dates_failed">Non è stato possibile salvare le date di «%1$s»</string>

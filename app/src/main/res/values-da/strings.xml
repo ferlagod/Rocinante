@@ -488,6 +488,14 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog uden datoer</item>
         <item quantity="other">%d bøger uden datoer</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d bog uden vurdering</item>
+        <item quantity="other">%d bøger uden vurdering</item>
+    </plurals>
+    <string name="missing_ratings_explanation">At vurdere udgiver: i BookWyrm er en vurdering et opslag som alle andre. Tryk på samme stjerne igen for at gøre den til en halv.</string>
+    <string name="missing_ratings_save">Vurder</string>
+    <string name="missing_ratings_privacy">Synlighed:</string>
+    <string name="missing_ratings_failed">Kunne ikke vurdere «%1$s»</string>
     <string name="missing_dates_explanation">Datoerne er dine, ikke bogens: det her rører kun din egen læsning. Uden slutdato er bogen ikke med i grafen over år, og uden begge tæller den ikke med i læsedage.</string>
     <string name="missing_dates_save">Gem datoer</string>
     <string name="missing_dates_failed">Kunne ikke gemme datoerne for «%1$s»</string>

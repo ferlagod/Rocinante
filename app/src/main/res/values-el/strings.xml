@@ -438,6 +438,14 @@
         <item quantity="one">%d βιβλίο χωρίς ημερομηνίες</item>
         <item quantity="other">%d βιβλία χωρίς ημερομηνίες</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d βιβλίο χωρίς βαθμολογία</item>
+        <item quantity="other">%d βιβλία χωρίς βαθμολογία</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Η βαθμολόγηση δημοσιεύει: στο BookWyrm μια βαθμολογία είναι μια δημοσίευση σαν κάθε άλλη. Πατήστε ξανά το ίδιο αστέρι για μισό.</string>
+    <string name="missing_ratings_save">Βαθμολόγηση</string>
+    <string name="missing_ratings_privacy">Ορατότητα:</string>
+    <string name="missing_ratings_failed">Δεν ήταν δυνατή η βαθμολόγηση του «%1$s»</string>
     <string name="missing_dates_explanation">Οι ημερομηνίες είναι δικές σας, όχι του βιβλίου: αλλάζει μόνο το δικό σας διάβασμα. Χωρίς ημερομηνία λήξης το βιβλίο λείπει από το γράφημα ανά έτος, και χωρίς τις δύο δεν μετράει στις ημέρες ανάγνωσης.</string>
     <string name="missing_dates_save">Αποθήκευση ημερομηνιών</string>
     <string name="missing_dates_failed">Δεν ήταν δυνατή η αποθήκευση των ημερομηνιών του «%1$s»</string>

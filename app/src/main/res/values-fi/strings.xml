@@ -439,6 +439,14 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
         <item quantity="one">%d kirja ilman päivämääriä</item>
         <item quantity="other">%d kirjaa ilman päivämääriä</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d kirja ilman arviota</item>
+        <item quantity="other">%d kirjaa ilman arviota</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Arviointi julkaisee: BookWyrmissä arvio on julkaisu kuten mikä tahansa. Napauta samaa tähteä uudelleen, niin siitä tulee puolikas.</string>
+    <string name="missing_ratings_save">Arvioi</string>
+    <string name="missing_ratings_privacy">Näkyvyys:</string>
+    <string name="missing_ratings_failed">Kirjaa ”%1$s” ei voitu arvioida</string>
     <string name="missing_dates_explanation">Päivämäärät ovat sinun, eivät kirjan: tämä koskee vain omaa lukemistasi. Ilman lopetuspäivää kirja ei näy vuosikaaviossa, ja ilman molempia se ei kerrytä lukupäiviä.</string>
     <string name="missing_dates_save">Tallenna päivämäärät</string>
     <string name="missing_dates_failed">Kirjan ”%1$s” päivämääriä ei voitu tallentaa</string>

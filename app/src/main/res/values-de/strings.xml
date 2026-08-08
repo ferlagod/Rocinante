@@ -438,6 +438,14 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
         <item quantity="one">%d Buch ohne Daten</item>
         <item quantity="other">%d Bücher ohne Daten</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d Buch ohne Bewertung</item>
+        <item quantity="other">%d Bücher ohne Bewertung</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Bewerten veröffentlicht: in BookWyrm ist eine Bewertung ein Beitrag wie jeder andere. Tippe denselben Stern noch einmal an, um ihn zu halbieren.</string>
+    <string name="missing_ratings_save">Bewerten</string>
+    <string name="missing_ratings_privacy">Sichtbarkeit:</string>
+    <string name="missing_ratings_failed">„%1$s“ konnte nicht bewertet werden</string>
     <string name="missing_dates_explanation">Die Daten gehören dir, nicht dem Buch: das ändert nur deine eigene Lektüre. Ohne Enddatum fehlt das Buch in der Jahresgrafik, und ohne beide zählt es nicht bei den Lesetagen.</string>
     <string name="missing_dates_save">Daten speichern</string>
     <string name="missing_dates_failed">Die Daten für „%1$s“ konnten nicht gespeichert werden</string>

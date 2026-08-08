@@ -438,6 +438,14 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
         <item quantity="one">%d bok utan datum</item>
         <item quantity="other">%d böcker utan datum</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d bok utan betyg</item>
+        <item quantity="other">%d böcker utan betyg</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Att betygsätta publicerar: i BookWyrm är ett betyg ett inlägg som alla andra. Tryck på samma stjärna igen för en halv.</string>
+    <string name="missing_ratings_save">Betygsätt</string>
+    <string name="missing_ratings_privacy">Synlighet:</string>
+    <string name="missing_ratings_failed">Kunde inte betygsätta ”%1$s”</string>
     <string name="missing_dates_explanation">Datumen är dina, inte bokens: det här rör bara din egen läsning. Utan slutdatum saknas boken i diagrammet per år, och utan båda räknas den inte i lästa dagar.</string>
     <string name="missing_dates_save">Spara datum</string>
     <string name="missing_dates_failed">Datumen för ”%1$s” kunde inte sparas</string>

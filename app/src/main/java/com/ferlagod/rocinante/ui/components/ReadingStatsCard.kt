@@ -377,7 +377,9 @@ fun RatingsCard(
     stats: ReadingStats,
     modifier: Modifier = Modifier,
     // Qué hacer al tocar una nota, para ir a ver esos libros. Nada cambia de aspecto.
-    onRatingClick: ((Double) -> Unit)? = null
+    onRatingClick: ((Double) -> Unit)? = null,
+    // Qué hacer con los libros sin valorar, que son los que no entran en el reparto.
+    onFixMissingRatings: (() -> Unit)? = null
 ) {
     if (!stats.hasRatingData) return
 
@@ -439,6 +441,9 @@ fun RatingsCard(
 
             if (stats.booksWithoutRating > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
+                // Igual que las páginas y las fechas: el aviso lleva a los libros de los que
+                // habla, en vez de quedarse en aviso.
+                val canFix = onFixMissingRatings != null
                 Text(
                     text = pluralStringResource(
                         R.plurals.profile_stats_missing_ratings,
@@ -446,7 +451,13 @@ fun RatingsCard(
                         stats.booksWithoutRating
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (canFix) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (canFix) {
+                        Modifier.clickable { onFixMissingRatings!!() }
+                    } else {
+                        Modifier
+                    }
                 )
             }
         }

@@ -487,6 +487,14 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
         <item quantity="one">%d libro sin fechas</item>
         <item quantity="other">%d libros sin fechas</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d libro sin valorar</item>
+        <item quantity="other">%d libros sin valorar</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Puntuar publica: en BookWyrm una valoración es una publicación como otra cualquiera. Toca otra vez la misma estrella para dejarla a la mitad.</string>
+    <string name="missing_ratings_save">Puntuar</string>
+    <string name="missing_ratings_privacy">Visibilidad:</string>
+    <string name="missing_ratings_failed">No se pudo puntuar «%1$s»</string>
     <string name="missing_dates_explanation">Las fechas son tuyas, no del libro: esto solo toca tu propia lectura. Sin fecha de fin el libro no sale en la gráfica por años, y sin las dos no cuenta en los días de lectura.</string>
     <string name="missing_dates_save">Guardar fechas</string>
     <string name="missing_dates_failed">No se pudieron guardar las fechas de «%1$s»</string>

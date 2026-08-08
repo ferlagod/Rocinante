@@ -449,6 +449,16 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="many">%d knihy bez dat</item>
         <item quantity="other">%d knih bez dat</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d kniha bez hodnocení</item>
+        <item quantity="few">%d knih bez hodnocení</item>
+        <item quantity="many">%d knih bez hodnocení</item>
+        <item quantity="other">%d knih bez hodnocení</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Hodnocení se zveřejňuje: v BookWyrm je hodnocení příspěvek jako každý jiný. Klepnutím na stejnou hvězdičku znovu z ní uděláte půlku.</string>
+    <string name="missing_ratings_save">Ohodnotit</string>
+    <string name="missing_ratings_privacy">Viditelnost:</string>
+    <string name="missing_ratings_failed">Knihu „%1$s“ se nepodařilo ohodnotit</string>
     <string name="missing_dates_explanation">Data jsou vaše, ne knihy: mění se tím jen vaše vlastní čtení. Bez data dočtení kniha chybí v grafu podle let a bez obou se nepočítá do dnů čtení.</string>
     <string name="missing_dates_save">Uložit data</string>
     <string name="missing_dates_failed">Data knihy „%1$s“ se nepodařilo uložit</string>

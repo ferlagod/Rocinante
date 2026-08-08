@@ -450,6 +450,16 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
         <item quantity="many">%d książek bez dat</item>
         <item quantity="other">%d książki bez dat</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d książka bez oceny</item>
+        <item quantity="few">%d książek bez oceny</item>
+        <item quantity="many">%d książek bez oceny</item>
+        <item quantity="other">%d książek bez oceny</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Ocena to publikacja: w BookWyrm ocena jest wpisem jak każdy inny. Dotknij tej samej gwiazdki ponownie, aby dać połówkę.</string>
+    <string name="missing_ratings_save">Oceń</string>
+    <string name="missing_ratings_privacy">Widoczność:</string>
+    <string name="missing_ratings_failed">Nie udało się ocenić „%1$s”</string>
     <string name="missing_dates_explanation">Daty są Twoje, nie książki: to dotyczy tylko Twojego czytania. Bez daty zakończenia książki nie ma na wykresie lat, a bez obu nie liczy się do dni czytania.</string>
     <string name="missing_dates_save">Zapisz daty</string>
     <string name="missing_dates_failed">Nie udało się zapisać dat książki „%1$s”</string>

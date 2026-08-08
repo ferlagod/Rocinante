@@ -444,6 +444,15 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="few">%d cărți fără date</item>
         <item quantity="other">%d de cărți fără date</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d carte fără notă</item>
+        <item quantity="few">%d cărți fără notă</item>
+        <item quantity="other">%d cărți fără notă</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Notarea publică: în BookWyrm o notă este o postare ca oricare alta. Atinge din nou aceeași stea ca să o faci jumătate.</string>
+    <string name="missing_ratings_save">Notează</string>
+    <string name="missing_ratings_privacy">Vizibilitate:</string>
+    <string name="missing_ratings_failed">Cartea „%1$s” nu a putut fi notată</string>
     <string name="missing_dates_explanation">Datele sunt ale tale, nu ale cărții: asta schimbă doar propria ta lectură. Fără data de final cartea lipsește din graficul pe ani, iar fără amândouă nu contează la zilele de lectură.</string>
     <string name="missing_dates_save">Salvează datele</string>
     <string name="missing_dates_failed">Datele cărții „%1$s” nu au putut fi salvate</string>

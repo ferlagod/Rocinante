@@ -450,6 +450,16 @@
         <item quantity="many">%d книжок без дат</item>
         <item quantity="other">%d книжки без дат</item>
     </plurals>
+    <plurals name="missing_ratings_title">
+        <item quantity="one">%d книжка без оцінки</item>
+        <item quantity="few">%d книжок без оцінки</item>
+        <item quantity="many">%d книжок без оцінки</item>
+        <item quantity="other">%d книжок без оцінки</item>
+    </plurals>
+    <string name="missing_ratings_explanation">Оцінка публікується: у BookWyrm оцінка — це допис, як і будь-який інший. Торкніться тієї самої зірки ще раз, щоб зробити половину.</string>
+    <string name="missing_ratings_save">Оцінити</string>
+    <string name="missing_ratings_privacy">Видимість:</string>
+    <string name="missing_ratings_failed">Не вдалося оцінити «%1$s»</string>
     <string name="missing_dates_explanation">Дати ваші, а не книжки: це стосується лише вашого читання. Без дати завершення книжки немає на графіку за роками, а без обох вона не рахується у днях читання.</string>
     <string name="missing_dates_save">Зберегти дати</string>
     <string name="missing_dates_failed">Не вдалося зберегти дати книжки «%1$s»</string>

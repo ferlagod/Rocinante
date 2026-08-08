@@ -1279,6 +1279,7 @@ fun ProfileTab(
     var showMissingPages by remember { mutableStateOf(false) }
     var showMissingAuthors by remember { mutableStateOf(false) }
     var showMissingDates by remember { mutableStateOf(false) }
+    var showMissingRatings by remember { mutableStateOf(false) }
     // Lo enriquecido de cada libro: de ahí sale el nombre del autor, y por tanto quién falta.
     var enrichment by remember {
         mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap())
@@ -1381,6 +1382,32 @@ fun ProfileTab(
                 }
             },
             onDismiss = { showMissingDates = false }
+        )
+    }
+
+    if (showMissingRatings) {
+        com.ferlagod.rocinante.ui.components.MissingRatingsDialog(
+            books = readBooks.filter { book ->
+                book.id?.let { enrichment[it]?.rating } == null
+            },
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onSaved = { bookId, rating ->
+                coroutineScope.launch {
+                    val stored = dataCache.loadEnrichment()
+                    val before = stored[bookId]
+                    val updated = before?.copy(rating = rating)
+                        ?: com.ferlagod.rocinante.data.model.BookEnrichment(
+                            bookId = bookId,
+                            rating = rating
+                        )
+                    dataCache.mergeEnrichment(updated)
+                    enrichment = dataCache.loadEnrichment()
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingRatings = false }
         )
     }
 
@@ -1829,7 +1856,8 @@ fun ProfileTab(
                                 stats = stats,
                                 onRatingClick = {
                                     onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Rating(it))
-                                }
+                                },
+                                onFixMissingRatings = { showMissingRatings = true }
                             )
                         }
                     }
