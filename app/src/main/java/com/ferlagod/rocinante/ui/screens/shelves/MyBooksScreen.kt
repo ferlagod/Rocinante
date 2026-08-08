@@ -459,6 +459,7 @@ fun MyBooksScreen(
                 onHighlightConsumed = onTargetConsumed,
                 openAuthorName = targetAuthorName.takeIf { targetShelfSlug == shelf.slug },
                 openFilter = targetFilter.takeIf { targetShelfSlug == shelf.slug },
+                onTargetTaken = onTargetConsumed,
                 backEnabled = isActive
             )
         }
@@ -498,6 +499,9 @@ fun ShelfNativeDetailScreen(
     onHighlightConsumed: () -> Unit = {},
     openAuthorName: String? = null,
     openFilter: com.ferlagod.rocinante.utils.ShelfFilter? = null,
+    // Se invoca en cuanto esta pantalla se ha quedado con el autor o el recorte que le
+    // mandaban, para que quien lo mandó lo olvide.
+    onTargetTaken: () -> Unit = {},
     backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
@@ -760,6 +764,9 @@ fun ShelfNativeDetailScreen(
         // elegir, en vez de en una pantalla vacía.
         openAuthorKey = authorGroups.firstOrNull { it.key == authorKey(openAuthorName) }?.key
         authorTargetDone = true
+        // Servido, igual que el recorte: si no, volver a «Mis libros» desde la barra de abajo
+        // volvería a meter en los libros de ese autor.
+        onTargetTaken()
     }
 
     // Recorte que llega del perfil (un año, una nota, un idioma, un formato). Se copia a un
@@ -768,7 +775,15 @@ fun ShelfNativeDetailScreen(
     var activeFilter by remember {
         mutableStateOf<com.ferlagod.rocinante.utils.ShelfFilter?>(null)
     }
-    LaunchedEffect(openFilter) { activeFilter = openFilter }
+    LaunchedEffect(openFilter) {
+        if (openFilter == null) return@LaunchedEffect
+        activeFilter = openFilter
+        // Ya está servido: se avisa para que deje de mandarse. Si siguiera puesto, volver a
+        // «Mis libros» desde la barra de abajo y abrir cualquier estantería lo aplicaría otra
+        // vez, y un recorte que se acababa de deshacer reaparecería solo. Se avisa después de
+        // guardarlo, no antes, para que quitarlo no llegue a borrar lo que se acaba de coger.
+        onTargetTaken()
+    }
 
     // Con un recorte manda el recorte; con una serie abierta manda su orden —el de lectura—;
     // con un autor abierto manda la ordenación elegida, y sin elegir nada sus libros salen
