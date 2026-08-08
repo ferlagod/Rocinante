@@ -111,6 +111,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
@@ -189,12 +192,61 @@ private fun BookInfoSection(title: String, content: @Composable ColumnScope.() -
 }
 
 /**
- * Fila «etiqueta → valor» de la pestaña «Diverse». La etiqueta ocupa un ancho fijo para
- * que los valores queden alineados entre sí aunque las etiquetas midan distinto.
+ * Copia un texto al portapapeles y lo dice con un aviso.
+ *
+ * Desde Android 13 el propio sistema enseña además su confirmación al copiar, así que ahí se
+ * ve dos veces; se deja igualmente para que la respuesta sea la misma en todas las versiones,
+ * que es lo que se pidió. Quitarlo en las nuevas sería una línea.
  */
 @Composable
-private fun BookInfoRow(label: String, content: @Composable () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun rememberCopyToClipboard(): (String) -> Unit {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    return remember(clipboard, context) {
+        { text ->
+            clipboard.setText(AnnotatedString(text))
+            // Se enseña lo copiado, para no tener que ir a pegarlo para saber qué se llevó uno.
+            // Recortado, porque hay valores largos —un título, una lista de editoriales— y un
+            // aviso de cinco líneas tapa media pantalla.
+            val shown = if (text.length > COPY_PREVIEW_MAX) {
+                text.take(COPY_PREVIEW_MAX).trimEnd() + "…"
+            } else {
+                text
+            }
+            // Desde Android 13 el sistema enseña su propia confirmación al copiar y no se puede
+            // quitar, así que aquí va el valor a secas: se lee «Dan Brown» y, justo detrás, el
+            // «copiado» que pone el sistema. Antes de esa versión no hay tal confirmación, y el
+            // valor solo sería un nombre saliendo de la nada, así que ahí se dice entero.
+            val message = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                shown
+            } else {
+                context.getString(R.string.copied_to_clipboard, shown)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+/** Cuánto de lo copiado cabe en el aviso antes de recortarlo. */
+private const val COPY_PREVIEW_MAX = 60
+
+/**
+ * Fila «etiqueta → valor» de la pestaña «Diverse». La etiqueta ocupa un ancho fijo para
+ * que los valores queden alineados entre sí aunque las etiquetas midan distinto.
+ *
+ * @param onClick Qué hacer al tocar la fila, o null si no hace nada. No cambia nada de lo que
+ *   se ve: la fila mide y se coloca igual toque o no.
+ */
+@Composable
+private fun BookInfoRow(
+    label: String,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
+    Row(
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -205,9 +257,14 @@ private fun BookInfoRow(label: String, content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * Toda fila de dato suelto se copia al tocarla, y cada una copia lo suyo: con el ISBN, el OCLC
+ * y el de Open Library uno debajo de otro, se lleva uno el que ha tocado y no los tres.
+ */
 @Composable
 private fun BookInfoRow(label: String, value: String) {
-    BookInfoRow(label) {
+    val copy = rememberCopyToClipboard()
+    BookInfoRow(label, onClick = { copy(value) }) {
         Text(text = value, style = MaterialTheme.typography.bodyMedium)
     }
 }
@@ -250,6 +307,7 @@ fun BookDetailsDialog(
     // por sí sola no se vuelve a leer nunca una vez guardada.
     onEnrichmentUpdated: ((com.ferlagod.rocinante.data.model.BookEnrichment) -> Unit)? = null
 ) {
+    val copyToClipboard = rememberCopyToClipboard()
     var showProgressDialog by remember { mutableStateOf(false) }
     // Progreso pendiente de publicar: mientras no sea null se muestra la hoja de publicación.
     var progressPost by remember { mutableStateOf<ProgressSubmission?>(null) }
@@ -753,10 +811,20 @@ fun BookDetailsDialog(
 
                         val detailCoverUrl = bookDetails.cover?.url ?: fallbackCoverUrl
                         if (detailCoverUrl.isNotBlank()) {
+                            // La portada copia el título: es lo que representa, y el título de
+                            // arriba no es una fila de datos que se pueda tocar.
+                            val bookTitle = bookDetails.title?.trim()?.takeIf { it.isNotEmpty() }
                             AsyncImage(
                                 model = detailCoverUrl,
                                 contentDescription = stringResource(R.string.book_cover_detail_desc),
-                                modifier = Modifier.width(120.dp).height(180.dp),
+                                modifier = Modifier
+                                    .width(120.dp)
+                                    .height(180.dp)
+                                    .then(
+                                        if (bookTitle != null) {
+                                            Modifier.clickable { copyToClipboard(bookTitle) }
+                                        } else Modifier
+                                    ),
                                 contentScale = ContentScale.Crop
                             )
                         }

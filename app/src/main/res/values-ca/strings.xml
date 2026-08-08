@@ -60,6 +60,7 @@
     <string name="book_details_fallback">Detalls del llibre</string>
     <string name="book_cover_desc">Portada</string>
     <string name="book_cover_detail_desc">Portada del llibre</string>
+    <string name="copied_to_clipboard">Copiat: %1$s</string>
     <string name="book_published_date">Data de publicació: %1$s</string>
     <string name="book_pages">Pàgines: %1$s</string>
     <string name="book_no_description">Sense descripció disponible.</string>

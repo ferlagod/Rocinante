@@ -64,6 +64,7 @@
     <string name="book_details_fallback">Podrobnosti o knize</string>
     <string name="book_cover_desc">Obálka</string>
     <string name="book_cover_detail_desc">Obálka knihy</string>
+    <string name="copied_to_clipboard">Zkopírováno: %1$s</string>
     <string name="book_published_date">Datum vydání: %1$s</string>
     <string name="book_pages">Stran: %1$s</string>
     <string name="book_no_description">Popis není k dispozici.</string>

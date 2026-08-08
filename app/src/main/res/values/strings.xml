@@ -76,6 +76,7 @@
     <string name="book_details_fallback">Book details</string>
     <string name="book_cover_desc">Cover</string>
     <string name="book_cover_detail_desc">Book cover</string>
+    <string name="copied_to_clipboard">Copied: %1$s</string>
     <string name="book_published_date">Published: %1$s</string>
     <string name="book_pages">Pages: %1$s</string>
     <string name="book_no_description">No description available.</string>

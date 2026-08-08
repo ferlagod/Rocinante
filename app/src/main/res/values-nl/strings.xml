@@ -60,6 +60,7 @@
     <string name="book_details_fallback">Boekdetails</string>
     <string name="book_cover_desc">Omslag</string>
     <string name="book_cover_detail_desc">Boekomslag</string>
+    <string name="copied_to_clipboard">Gekopieerd: %1$s</string>
     <string name="book_published_date">Publicatiedatum: %1$s</string>
     <string name="book_pages">Pagina\'s: %1$s</string>
     <string name="book_no_description">Geen beschrijving beschikbaar.</string>

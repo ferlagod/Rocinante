@@ -74,6 +74,7 @@
     <string name="book_details_fallback">Bogdetaljer</string>
     <string name="book_cover_desc">Omslag</string>
     <string name="book_cover_detail_desc">Bogomslag</string>
+    <string name="copied_to_clipboard">Kopieret: %1$s</string>
     <string name="book_published_date">Udgivet: %1$s</string>
     <string name="book_pages">Sider: %1$s</string>
     <string name="book_no_description">Ingen beskrivelse tilgængelig.</string>

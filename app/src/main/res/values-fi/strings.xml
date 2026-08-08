@@ -69,6 +69,7 @@
     <string name="book_details_fallback">Kirjan tiedot</string>
     <string name="book_cover_desc">Kansi</string>
     <string name="book_cover_detail_desc">Kirjan kansi</string>
+    <string name="copied_to_clipboard">Kopioitu: %1$s</string>
     <string name="book_published_date">Julkaistu: %1$s</string>
     <string name="book_pages">Sivuja: %1$s</string>
     <string name="book_no_description">Ei kuvausta saatavilla.</string>

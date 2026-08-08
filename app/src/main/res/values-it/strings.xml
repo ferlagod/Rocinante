@@ -60,6 +60,7 @@
     <string name="book_details_fallback">Dettagli del libro</string>
     <string name="book_cover_desc">Copertina</string>
     <string name="book_cover_detail_desc">Copertina del libro</string>
+    <string name="copied_to_clipboard">Copiato: %1$s</string>
     <string name="book_published_date">Data di pubblicazione: %1$s</string>
     <string name="book_pages">Pagine: %1$s</string>
     <string name="book_no_description">Nessuna descrizione disponibile.</string>

@@ -62,6 +62,7 @@
     <string name="book_details_fallback">Detalii carte</string>
     <string name="book_cover_desc">Copertă</string>
     <string name="book_cover_detail_desc">Coperta cărții</string>
+    <string name="copied_to_clipboard">Copiat: %1$s</string>
     <string name="book_published_date">Data publicării: %1$s</string>
     <string name="book_pages">Pagini: %1$s</string>
     <string name="book_no_description">Nicio descriere disponibilă.</string>
