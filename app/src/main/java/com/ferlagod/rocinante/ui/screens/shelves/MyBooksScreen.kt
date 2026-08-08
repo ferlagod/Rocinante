@@ -257,6 +257,8 @@ private fun readingDays(startIso: String?, finishIso: String?): Int? =
  * @param onNavigateToSettings Acción a ejecutar cuando se solicita navegar a los ajustes desde la pantalla de estantes.
  * @param targetShelfSlug Estantería que hay que abrir automáticamente (viene de la búsqueda), o null.
  * @param targetBookId Libro al que desplazarse y que se resalta dentro de esa estantería, o null.
+ * @param targetAuthorName Autor cuyos libros hay que enseñar al abrir esa estantería (viene de
+ *   «autores más leídos» del perfil), o null.
  * @param onTargetConsumed Se invoca cuando ya se ha saltado al libro, para no repetir el salto.
  * @param isActive Si esta es la pestaña que se está viendo. El carrusel mantiene compuestas
  *   también las de al lado, y solo la visible debe quedarse con el botón de atrás del móvil.
@@ -271,6 +273,7 @@ fun MyBooksScreen(
     onNavigateToSettings: () -> Unit,
     targetShelfSlug: String? = null,
     targetBookId: String? = null,
+    targetAuthorName: String? = null,
     onTargetConsumed: () -> Unit = {},
     backToShelvesKey: Int = 0,
     isActive: Boolean = true
@@ -441,6 +444,7 @@ fun MyBooksScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
                 onHighlightConsumed = onTargetConsumed,
+                openAuthorName = targetAuthorName.takeIf { targetShelfSlug == shelf.slug },
                 backEnabled = isActive
             )
         }
@@ -460,6 +464,8 @@ fun MyBooksScreen(
  * @param onNavigateToSettings Callback para navegar a la configuración.
  * @param highlightBookId Libro al que desplazarse y resaltar al abrir la pantalla, o null.
  * @param onHighlightConsumed Se invoca cuando ya se ha localizado el libro (o se sabe que no está).
+ * @param openAuthorName Autor cuyos libros hay que enseñar nada más abrir, o null. Llega el
+ *   nombre visible y se busca por él entre los grupos, con la misma normalización que usan.
  * @param backEnabled Si el botón de atrás del móvil lo atiende esta pantalla. Falso mientras la
  *   pestaña no sea la que se ve, para no quitárselo a la que sí lo está.
  */
@@ -474,6 +480,7 @@ fun ShelfNativeDetailScreen(
     onNavigateToSettings: () -> Unit,
     highlightBookId: String? = null,
     onHighlightConsumed: () -> Unit = {},
+    openAuthorName: String? = null,
     backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
@@ -720,6 +727,22 @@ fun ShelfNativeDetailScreen(
                 )
             }
             .sortedWith(compareBy(collator) { it.name })
+    }
+
+    // Autor que llega del perfil: se entra directamente a sus libros. Los grupos se arman con
+    // los datos por libro, que tardan un momento en llegar de la caché, así que no basta con
+    // mirarlo al entrar; se espera a que haya autores y entonces se decide de una vez.
+    // Mientras tanto se enseña la lista de autores, que es a dónde lleva ese camino.
+    var authorTargetDone by remember(openAuthorName) { mutableStateOf(false) }
+    LaunchedEffect(openAuthorName, authorGroups.isNotEmpty()) {
+        if (openAuthorName == null || authorTargetDone) return@LaunchedEffect
+        showAuthorList = true
+        if (authorGroups.isEmpty()) return@LaunchedEffect
+        // Si el nombre no cuadra con ningún grupo —la instancia lo escribe de otra manera, o
+        // ese libro aún no se ha leído de la web— se queda en la lista, que al menos deja
+        // elegir, en vez de en una pantalla vacía.
+        openAuthorKey = authorGroups.firstOrNull { it.key == authorKey(openAuthorName) }?.key
+        authorTargetDone = true
     }
 
     // Con una serie abierta manda su orden —el de lectura—; con un autor abierto manda la

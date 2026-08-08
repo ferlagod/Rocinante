@@ -23,15 +23,20 @@ import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.TimelineUiItem
 
 /**
- * Libro concreto al que hay que saltar dentro de «Mis libros», normalmente porque se ha
- * pulsado un resultado de la búsqueda en las estanterías propias.
+ * A dónde hay que saltar dentro de «Mis libros»: a un libro concreto, porque se ha pulsado un
+ * resultado de la búsqueda en las estanterías propias, o a los libros de un autor, porque se ha
+ * pulsado su barra en el perfil.
  *
- * @property shelfSlug Estantería que hay que abrir ("to-read", "reading" o "read").
- * @property bookId Identificador (URL) del libro al que desplazarse y que se resalta.
+ * @property shelfSlug Estantería que hay que abrir ("to-read", "reading", "read"...).
+ * @property bookId Identificador (URL) del libro al que desplazarse y que se resalta, o null.
+ * @property authorName Autor cuyos libros hay que enseñar, tal y como lo escribe la instancia,
+ *   o null. Va el nombre visible y no una clave porque es lo que tienen tanto el perfil como la
+ *   estantería, y cada una lo normaliza igual por su cuenta.
  */
 data class ShelfTarget(
     val shelfSlug: String,
-    val bookId: String
+    val bookId: String? = null,
+    val authorName: String? = null
 )
 
 /**

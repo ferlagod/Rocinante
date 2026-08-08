@@ -273,7 +273,10 @@ fun TopAuthorsCard(
     modifier: Modifier = Modifier,
     // Qué hacer con los libros a los que les falta el autor; sin esto el aviso se queda en
     // aviso, como estaba.
-    onFixMissingAuthors: (() -> Unit)? = null
+    onFixMissingAuthors: (() -> Unit)? = null,
+    // Qué hacer al tocar un autor. La gráfica dice cuántos libros suyos hay leídos; esto lleva
+    // a verlos. Nada cambia de aspecto: la barra solo se puede tocar.
+    onAuthorClick: ((String) -> Unit)? = null
 ) {
     if (!stats.hasAuthorData) return
 
@@ -305,7 +308,8 @@ fun TopAuthorsCard(
                     maxCount = maxCount,
                     labelWeight = 0.42f,
                     barColor = barColor,
-                    trackColor = trackColor
+                    trackColor = trackColor,
+                    onClick = onAuthorClick?.let { { it(author.name) } }
                 ) {
                     Text(
                         text = author.name,
@@ -583,11 +587,15 @@ private fun HorizontalBarRow(
     labelWeight: Float,
     barColor: Color,
     trackColor: Color,
+    // Qué hacer al tocar la fila, o null si no hace nada. La fila mide y se coloca igual en
+    // ambos casos: solo gana el toque.
+    onClick: (() -> Unit)? = null,
     label: @Composable () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

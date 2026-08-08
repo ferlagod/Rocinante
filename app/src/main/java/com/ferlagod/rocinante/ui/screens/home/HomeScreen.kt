@@ -334,6 +334,7 @@ fun HomeScreen(
                         onNavigateToSettings = onSettingsClick,
                         targetShelfSlug = uiState.shelfTarget?.shelfSlug,
                         targetBookId = uiState.shelfTarget?.bookId,
+                        targetAuthorName = uiState.shelfTarget?.authorName,
                         onTargetConsumed = { viewModel.consumeShelfTarget() },
                         backToShelvesKey = backToShelvesKey,
                         // El carrusel tiene compuestas también las pestañas de al lado; solo la
@@ -387,7 +388,8 @@ fun HomeScreen(
                     onFollowingDecremented = {
                         viewModel.decrementFollowingCount()
                     },
-                    onReadingFinished = { viewModel.incrementReadingGoal() }
+                    onReadingFinished = { viewModel.incrementReadingGoal() },
+                    onOpenAuthor = { viewModel.openAuthorInShelf(it) }
                 )
             }
         }
@@ -1215,7 +1217,10 @@ fun ProfileTab(
     onProfileUpdated: (String, String) -> Unit,
     onFollowingIncremented: () -> Unit = {},
     onFollowingDecremented: () -> Unit = {},
-    onReadingFinished: () -> Unit = {}
+    onReadingFinished: () -> Unit = {},
+    // Se invoca con el nombre del autor al pulsar su barra en «autores más leídos», para ir a
+    // ver esos libros en «Mis libros».
+    onOpenAuthor: (String) -> Unit = {}
 ) {
     val cleanSummary = HtmlUtils.stripHtml(profile?.summary)
     val avatarUrl = profile?.icon?.url
@@ -1761,7 +1766,8 @@ fun ProfileTab(
                         item {
                             com.ferlagod.rocinante.ui.components.TopAuthorsCard(
                                 stats = stats,
-                                onFixMissingAuthors = { showMissingAuthors = true }
+                                onFixMissingAuthors = { showMissingAuthors = true },
+                                onAuthorClick = onOpenAuthor
                             )
                         }
                     }

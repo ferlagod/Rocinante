@@ -204,7 +204,22 @@ class HomeViewModel @Inject constructor(
     fun openBookInShelf(shelfSlug: String, bookId: String) {
         _uiState.value = _uiState.value.copy(
             selectedTab = 1,
-            shelfTarget = ShelfTarget(shelfSlug, bookId)
+            shelfTarget = ShelfTarget(shelfSlug, bookId = bookId)
+        )
+    }
+
+    /**
+     * Salta a «Mis libros» para enseñar los libros leídos de un autor, que es lo que se pide al
+     * pulsar su barra en «autores más leídos». Siempre la estantería de leídos: esa gráfica se
+     * calcula solo con ella, así que llevar a otra enseñaría una cuenta distinta de la que se
+     * acaba de tocar.
+     *
+     * @param authorName Nombre del autor tal y como sale en el perfil.
+     */
+    fun openAuthorInShelf(authorName: String) {
+        _uiState.value = _uiState.value.copy(
+            selectedTab = 1,
+            shelfTarget = ShelfTarget("read", authorName = authorName)
         )
     }
 
