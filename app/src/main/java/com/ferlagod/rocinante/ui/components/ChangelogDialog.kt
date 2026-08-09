@@ -40,10 +40,10 @@ import com.ferlagod.rocinante.R
  */
 object Changelog {
     /** Versión a la que corresponde el texto de abajo. */
-    const val CURRENT_VERSION = "1.2.2"
+    const val CURRENT_VERSION = "1.2.3"
 
     /** Texto de las novedades de [CURRENT_VERSION]. */
-    val textRes = R.string.changelog_text_v1_2_2
+    val textRes = R.string.changelog_text_v1_2_3
 }
 
 /**
