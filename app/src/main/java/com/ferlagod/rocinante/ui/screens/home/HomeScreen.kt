@@ -347,7 +347,8 @@ fun HomeScreen(
                     cookie = cookie,
                     api = api,
                     modifier = Modifier.padding(paddingValues),
-                    onOpenInShelf = { slug, bookId -> viewModel.openBookInShelf(slug, bookId) }
+                    onOpenInShelf = { slug, bookId -> viewModel.openBookInShelf(slug, bookId) },
+                    isActive = uiState.selectedTab == 2
                 )
 
                 3 -> Box(modifier = Modifier.padding(paddingValues)) {
