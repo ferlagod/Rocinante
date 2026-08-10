@@ -41,6 +41,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -550,7 +552,13 @@ fun BookDetailsDialog(
     }
 
     // Desde el estante "Leyendo" arrancamos en la pestaña Diverse (progreso); si no, en Resumen.
-    var selectedTab by remember { mutableStateOf(if (currentShelf == "reading") 2 else 0) }
+    // Las tres pestañas se pasan además arrastrando de lado, como la barra de abajo de la
+    // aplicación: quien está leyendo una reseña espera poder seguir con el dedo.
+    val pagerState = rememberPagerState(
+        initialPage = if (currentShelf == "reading") 2 else 0,
+        pageCount = { 3 }
+    )
+    val selectedTab = pagerState.currentPage
     val cleanDesc = HtmlUtils.stripHtml(bookDetails.description ?: stringResource(R.string.book_no_description))
 
     Dialog(
@@ -838,22 +846,28 @@ fun BookDetailsDialog(
                     TabRow(selectedTabIndex = selectedTab) {
                         Tab(
                             selected = selectedTab == 0,
-                            onClick = { selectedTab = 0 },
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
                             text = { Text(stringResource(R.string.book_tab_synopsis)) }
                         )
                         Tab(
                             selected = selectedTab == 1,
-                            onClick = { selectedTab = 1 },
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
                             text = { Text(stringResource(R.string.book_tab_reviews)) }
                         )
                         Tab(
                             selected = selectedTab == 2,
-                            onClick = { selectedTab = 2 },
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
                             text = { Text(stringResource(R.string.book_tab_misc)) }
                         )
                     }
 
-                    when (selectedTab) {
+                    // El peso acota la altura del carrusel: sin él, la página querría ser
+                    // infinita dentro de una columna que ya llena la pantalla.
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.weight(1f)
+                    ) { page ->
+                    when (page) {
                         // ── Resumen (sinopsis) ──
                         0 -> Column(
                             modifier = Modifier
@@ -1222,6 +1236,7 @@ fun BookDetailsDialog(
                             // Las funciones (cambiar de estante, progreso, citar, reseñar,
                             // mis citas/reseñas) están en el menú de tres puntos (⋮) de la barra.
                         }
+                    }
                     }
                 }
             }
