@@ -81,6 +81,11 @@
     <string name="book_section_reading">Jouw leeservaring</string>
     <string name="book_section_about">Over het boek</string>
     <string name="book_section_ids">Nummers</string>
+    <string name="book_section_downloads">Gelinkte kopieën</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratis</string>
+    <string name="book_link_purchase">betaald</string>
+    <string name="book_link_loan">te leen</string>
     <string name="book_label_rating">Beoordeling</string>
     <string name="book_label_started">Begonnen</string>
     <string name="book_label_author">Auteur</string>

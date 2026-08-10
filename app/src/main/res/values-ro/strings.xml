@@ -83,6 +83,11 @@
     <string name="book_section_reading">Lectura ta</string>
     <string name="book_section_about">Despre carte</string>
     <string name="book_section_ids">Numere</string>
+    <string name="book_section_downloads">Copii legate</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratuit</string>
+    <string name="book_link_purchase">cu plată</string>
+    <string name="book_link_loan">de împrumut</string>
     <string name="book_label_rating">Evaluare</string>
     <string name="book_label_started">Început</string>
     <string name="book_label_author">Autor</string>

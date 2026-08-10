@@ -81,6 +81,11 @@
     <string name="book_section_reading">Votre lecture</string>
     <string name="book_section_about">À propos du livre</string>
     <string name="book_section_ids">Numéros</string>
+    <string name="book_section_downloads">Copies liées</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratuit</string>
+    <string name="book_link_purchase">payant</string>
+    <string name="book_link_loan">en prêt</string>
     <string name="book_label_rating">Note</string>
     <string name="book_label_started">Commencé</string>
     <string name="book_label_author">Auteur</string>

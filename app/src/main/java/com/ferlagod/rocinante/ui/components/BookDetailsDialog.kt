@@ -48,6 +48,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
@@ -190,6 +191,68 @@ private fun BookInfoSection(title: String, content: @Composable ColumnScope.() -
             )
             content()
         }
+    }
+}
+
+/**
+ * Una copia enlazada del libro: adónde lleva, en qué formato y en qué condiciones.
+ *
+ * Se enseña el sitio y no la dirección entera —«standardebooks.org» dice más que setenta
+ * caracteres de URL—, y al lado el formato y si es gratis. Quien la añadió no sale: importa
+ * adónde lleva, no de quién es el mérito.
+ */
+@Composable
+private fun BookFileLinkRow(
+    link: com.ferlagod.rocinante.data.model.BookFileLink,
+    onOpen: (String) -> Unit
+) {
+    val href = link.href ?: return
+    val site = remember(href) {
+        runCatching { java.net.URL(href).host.removePrefix("www.") }.getOrDefault(href)
+    }
+    val availability = when (link.availability?.lowercase()?.trim()) {
+        "free" -> stringResource(R.string.book_link_free)
+        "purchase" -> stringResource(R.string.book_link_purchase)
+        "loan" -> stringResource(R.string.book_link_loan)
+        // Una condición que no habíamos previsto se enseña tal cual: mejor una palabra en
+        // inglés que dejar a alguien creer que algo es gratis.
+        else -> link.availability?.trim()?.takeIf { it.isNotEmpty() }
+    }
+    val detail = listOfNotNull(
+        link.mediaType?.trim()?.takeIf { it.isNotEmpty() },
+        availability
+    ).joinToString(" · ")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpen(href) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = site,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (detail.isNotEmpty()) {
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 
@@ -1156,7 +1219,8 @@ fun BookDetailsDialog(
                                 ?: bookDetails.isbn10?.trim()?.takeIf { it.isNotEmpty() }
                             val oclc = bookDetails.oclcNumber?.trim()?.takeIf { it.isNotEmpty() }
                             val openLibrary = bookDetails.openlibraryKey?.trim()?.takeIf { it.isNotEmpty() }
-                            if (isbn != null || oclc != null || openLibrary != null) {
+                            val inventaire = bookDetails.inventaireId?.trim()?.takeIf { it.isNotEmpty() }
+                            if (isbn != null || oclc != null || openLibrary != null || inventaire != null) {
                                 BookInfoSection(stringResource(R.string.book_section_ids)) {
                                     isbn?.let {
                                         BookInfoRow(stringResource(R.string.book_label_isbn), it)
@@ -1166,6 +1230,33 @@ fun BookDetailsDialog(
                                     }
                                     openLibrary?.let {
                                         BookInfoRow(stringResource(R.string.book_label_openlibrary), it)
+                                    }
+                                    inventaire?.let {
+                                        BookInfoRow(stringResource(R.string.book_label_inventaire), it)
+                                    }
+                                }
+                            }
+
+                            // ── Copias enlazadas desde la instancia ──
+                            // Pocos libros las tienen, pero cuando las tienen es lo que se
+                            // quiere pulsar, así que van encima de los números y no debajo.
+                            val links = bookDetails.fileLinks
+                                ?.filter { !it.href.isNullOrBlank() }
+                                // El mismo enlace aparece repetido cuando lo han añadido
+                                // varias personas; para quien lee es un solo sitio.
+                                ?.distinctBy { it.href }
+                                .orEmpty()
+                            if (links.isNotEmpty()) {
+                                BookInfoSection(stringResource(R.string.book_section_downloads)) {
+                                    links.forEach { link ->
+                                        BookFileLinkRow(link) { url ->
+                                            context.startActivity(
+                                                android.content.Intent(
+                                                    android.content.Intent.ACTION_VIEW,
+                                                    android.net.Uri.parse(url)
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }

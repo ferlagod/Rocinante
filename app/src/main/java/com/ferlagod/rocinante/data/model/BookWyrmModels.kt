@@ -162,7 +162,30 @@ data class BookWyrmBookDetails(
     val isbn13: String? = null,
     val isbn10: String? = null,
     val oclcNumber: String? = null,
-    val openlibraryKey: String? = null
+    val openlibraryKey: String? = null,
+    // Otro identificador del ejemplar, de la base de datos de Inventaire. Lo trae uno de cada
+    // cinco libros y va con los demás números.
+    val inventaireId: String? = null,
+    // Copias del libro que alguien ha enlazado desde la instancia: Standard Ebooks, Project
+    // Gutenberg y sitios así. Son pocos los libros que las tienen, pero cuando las tienen es
+    // lo que se quiere pulsar.
+    val fileLinks: List<BookFileLink>? = null
+)
+
+/**
+ * Un enlace a una copia del libro, tal y como lo guarda BookWyrm.
+ *
+ * @property href Dirección de la copia.
+ * @property mediaType Formato declarado por quien lo añadió ("ePub", "PDF"...).
+ * @property availability "free", "purchase" o "loan"; se enseña tal cual si es otra cosa,
+ *   que es preferible a esconder una condición que no se ha previsto.
+ * @property attributedTo Usuario que lo añadió. No se enseña: lo que importa es adónde lleva.
+ */
+data class BookFileLink(
+    val href: String? = null,
+    val mediaType: String? = null,
+    val availability: String? = null,
+    val attributedTo: String? = null
 )
 
 // NUEVOS MODELOS PARA LA ESTANTERÍA

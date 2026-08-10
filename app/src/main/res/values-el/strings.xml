@@ -81,6 +81,11 @@
     <string name="book_section_reading">Η ανάγνωσή σας</string>
     <string name="book_section_about">Σχετικά με το βιβλίο</string>
     <string name="book_section_ids">Αριθμοί</string>
+    <string name="book_section_downloads">Συνδεδεμένα αντίτυπα</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">δωρεάν</string>
+    <string name="book_link_purchase">με πληρωμή</string>
+    <string name="book_link_loan">προς δανεισμό</string>
     <string name="book_label_rating">Βαθμολογία</string>
     <string name="book_label_started">Ξεκίνησε</string>
     <string name="book_label_author">Συγγραφέας</string>

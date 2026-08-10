@@ -100,6 +100,11 @@
     <string name="book_section_reading">Tu lectura</string>
     <string name="book_section_about">Sobre el libro</string>
     <string name="book_section_ids">Números</string>
+    <string name="book_section_downloads">Copias enlazadas</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratis</string>
+    <string name="book_link_purchase">de pago</string>
+    <string name="book_link_loan">en préstamo</string>
     <string name="book_label_rating">Valoración</string>
     <string name="book_label_started">Empezado</string>
     <string name="book_label_finished">Terminado</string>

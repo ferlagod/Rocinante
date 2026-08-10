@@ -85,6 +85,11 @@
     <string name="book_section_reading">Ваше читання</string>
     <string name="book_section_about">Про книжку</string>
     <string name="book_section_ids">Номери</string>
+    <string name="book_section_downloads">Пов’язані копії</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">безкоштовно</string>
+    <string name="book_link_purchase">платно</string>
+    <string name="book_link_loan">у позику</string>
     <string name="book_label_rating">Оцінка</string>
     <string name="book_label_started">Розпочато</string>
     <string name="book_label_author">Автор</string>

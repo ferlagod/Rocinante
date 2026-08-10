@@ -85,6 +85,11 @@
     <string name="book_section_reading">Vaše čtení</string>
     <string name="book_section_about">O knize</string>
     <string name="book_section_ids">Čísla</string>
+    <string name="book_section_downloads">Odkazované kopie</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">zdarma</string>
+    <string name="book_link_purchase">placené</string>
+    <string name="book_link_loan">k zapůjčení</string>
     <string name="book_label_rating">Hodnocení</string>
     <string name="book_label_started">Začato</string>
     <string name="book_label_author">Autor</string>

@@ -81,6 +81,11 @@
     <string name="book_section_reading">Din läsning</string>
     <string name="book_section_about">Om boken</string>
     <string name="book_section_ids">Nummer</string>
+    <string name="book_section_downloads">Länkade kopior</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratis</string>
+    <string name="book_link_purchase">köp</string>
+    <string name="book_link_loan">till låns</string>
     <string name="book_label_rating">Betyg</string>
     <string name="book_label_started">Påbörjad</string>
     <string name="book_label_author">Författare</string>

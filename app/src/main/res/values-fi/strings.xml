@@ -90,6 +90,11 @@
     <string name="book_section_reading">Oma lukemisesi</string>
     <string name="book_section_about">Tietoja kirjasta</string>
     <string name="book_section_ids">Numerot</string>
+    <string name="book_section_downloads">Linkitetyt kappaleet</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">ilmainen</string>
+    <string name="book_link_purchase">maksullinen</string>
+    <string name="book_link_loan">lainattavissa</string>
     <string name="book_label_rating">Arvio</string>
     <string name="book_label_started">Aloitettu</string>
     <string name="book_label_author">Kirjailija</string>

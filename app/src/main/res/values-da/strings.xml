@@ -100,6 +100,11 @@
     <string name="book_section_reading">Din læsning</string>
     <string name="book_section_about">Om bogen</string>
     <string name="book_section_ids">Numre</string>
+    <string name="book_section_downloads">Kopier</string>
+    <string name="book_label_inventaire">Inventaire</string>
+    <string name="book_link_free">gratis</string>
+    <string name="book_link_purchase">køb</string>
+    <string name="book_link_loan">lån</string>
     <string name="book_label_rating">Vurdering</string>
     <string name="book_label_started">Startet</string>
     <string name="book_label_finished">Afsluttet</string>
