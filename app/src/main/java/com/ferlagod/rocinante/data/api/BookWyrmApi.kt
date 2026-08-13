@@ -156,7 +156,13 @@ interface BookWyrmApi {
         @Path("status") status: String,   // "want", "start", "finish", "stop"
         @Path("bookId") bookId: String,
         @Field("post_status") postStatus: Boolean = true,
-        @Field("privacy") privacy: String = "public"
+        @Field("privacy") privacy: String = "public",
+        // Las fechas que manda el formulario de la web, ya rellenas con el día de hoy. Sin
+        // ellas BookWyrm da de alta la lectura **sin fecha**, y luego no hay de dónde sacar
+        // ni cuándo se empezó ni cuándo se terminó. Se manda la que toque según el estado.
+        @Field("start_date") startDate: String? = null,
+        @Field("finish_date") finishDate: String? = null,
+        @Field("stopped_date") stoppedDate: String? = null
     ): retrofit2.Response<ResponseBody>
 
     // POST /reading-status/update/<book_id>/ — actualiza el readthrough y añade comentario.

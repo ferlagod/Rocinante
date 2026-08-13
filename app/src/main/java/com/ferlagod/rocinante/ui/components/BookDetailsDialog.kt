@@ -364,8 +364,19 @@ fun BookDetailsDialog(
                     // estantería cualquiera: yendo por aquí lo saca él solo de «Leyendo».
                     "stopped-reading" to "stop"
                 )[slug]
+                // La fecha del día, la misma que el formulario de la web trae ya rellena. Sin
+                // mandarla, BookWyrm da de alta la lectura **sin fechas**, y luego no hay de
+                // dónde sacar ni cuándo se empezó ni cuándo se terminó: hay que escribirlas a
+                // mano una por una.
+                val today = java.time.LocalDate.now().toString()
                 var response = if (mappedStatus != null) {
-                    api.updateReadingStatus(mappedStatus, editionId)
+                    api.updateReadingStatus(
+                        status = mappedStatus,
+                        bookId = editionId,
+                        startDate = today.takeIf { mappedStatus == "start" },
+                        finishDate = today.takeIf { mappedStatus == "finish" },
+                        stoppedDate = today.takeIf { mappedStatus == "stop" }
+                    )
                 } else {
                     api.shelveBook(editionId, slug)
                 }
