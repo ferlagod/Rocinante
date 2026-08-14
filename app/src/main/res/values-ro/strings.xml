@@ -516,6 +516,10 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="shelf_create_privacy">Cine îl vede:</string>
     <string name="shelf_create_failed">Raftul nu a putut fi creat</string>
     <string name="shelf_create_action">Creează raft</string>
+    <string name="shelf_send_failed">Nu a putut fi pusă pe „%1$s”</string>
+    <string name="shelf_move_instead">Mută în loc să copiezi</string>
+    <string name="shelf_move_help">O ia de unde este. Nu din Citite.</string>
+    <string name="shelf_own_section">Rafturile tale</string>
     <string name="shelf_layout_title">Editează pagina</string>
     <string name="shelf_layout_help">Activează sau dezactivează rafturi și trage de mâner ca să le reordonezi.</string>
     <string name="shelf_layout_align">Poziția pe ecran</string>

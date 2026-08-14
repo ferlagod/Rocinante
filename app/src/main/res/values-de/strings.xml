@@ -506,6 +506,10 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="shelf_create_privacy">Wer es sieht:</string>
     <string name="shelf_create_failed">Regal konnte nicht erstellt werden</string>
     <string name="shelf_create_action">Regal erstellen</string>
+    <string name="shelf_send_failed">Konnte nicht in „%1$s“ gelegt werden</string>
+    <string name="shelf_move_instead">Verschieben statt kopieren</string>
+    <string name="shelf_move_help">Nimmt es von dort weg, wo es jetzt ist. Nicht aus „Gelesen“.</string>
+    <string name="shelf_own_section">Deine Regale</string>
     <string name="shelf_layout_title">Seite bearbeiten</string>
     <string name="shelf_layout_help">Schalte Regale ein oder aus und zieh am Griff, um sie zu ordnen.</string>
     <string name="shelf_layout_align">Position auf dem Bildschirm</string>

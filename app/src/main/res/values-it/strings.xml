@@ -506,6 +506,10 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="shelf_create_privacy">Chi lo vede:</string>
     <string name="shelf_create_failed">Non è stato possibile creare lo scaffale</string>
     <string name="shelf_create_action">Crea scaffale</string>
+    <string name="shelf_send_failed">Non è stato possibile metterlo in «%1$s»</string>
+    <string name="shelf_move_instead">Sposta invece di copiare</string>
+    <string name="shelf_move_help">Lo toglie da dov\'è. Non dai letti.</string>
+    <string name="shelf_own_section">I tuoi scaffali</string>
     <string name="shelf_layout_title">Modifica pagina</string>
     <string name="shelf_layout_help">Attiva o disattiva gli scaffali e trascina la maniglia per ordinarli.</string>
     <string name="shelf_layout_align">Posizione sullo schermo</string>

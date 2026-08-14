@@ -591,6 +591,10 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="shelf_create_privacy">Quién la ve:</string>
     <string name="shelf_create_failed">No se pudo crear la estantería</string>
     <string name="shelf_create_action">Crear estantería</string>
+    <string name="shelf_send_failed">No se pudo poner en «%1$s»</string>
+    <string name="shelf_move_instead">Mover en vez de copiar</string>
+    <string name="shelf_move_help">Lo saca de donde está. No se puede desde «Leídos».</string>
+    <string name="shelf_own_section">Tus estanterías</string>
     <string name="shelf_layout_title">Editar página</string>
     <string name="shelf_layout_help">Activa o desactiva las estanterías y arrastra el asa para ordenarlas.</string>
     <string name="shelf_layout_align">Posición en la pantalla</string>

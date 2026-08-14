@@ -526,6 +526,10 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="shelf_create_privacy">Kto ją widzi:</string>
     <string name="shelf_create_failed">Nie udało się utworzyć półki</string>
     <string name="shelf_create_action">Utwórz półkę</string>
+    <string name="shelf_send_failed">Nie udało się umieścić na „%1$s”</string>
+    <string name="shelf_move_instead">Przenieś zamiast kopiować</string>
+    <string name="shelf_move_help">Zabiera ją stamtąd, gdzie jest. Nie z Przeczytane.</string>
+    <string name="shelf_own_section">Twoje półki</string>
     <string name="shelf_layout_title">Edytuj stronę</string>
     <string name="shelf_layout_help">Włączaj i wyłączaj półki, a uchwytem przeciągaj, żeby zmienić ich kolejność.</string>
     <string name="shelf_layout_align">Położenie na ekranie</string>

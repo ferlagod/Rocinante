@@ -526,6 +526,10 @@
     <string name="shelf_create_privacy">Хто її бачить:</string>
     <string name="shelf_create_failed">Не вдалося створити полицю</string>
     <string name="shelf_create_action">Створити полицю</string>
+    <string name="shelf_send_failed">Не вдалося покласти на «%1$s»</string>
+    <string name="shelf_move_instead">Перемістити замість копіювання</string>
+    <string name="shelf_move_help">Забирає її звідти, де вона є. Не з «Прочитані».</string>
+    <string name="shelf_own_section">Ваші полиці</string>
     <string name="shelf_layout_title">Редагувати сторінку</string>
     <string name="shelf_layout_help">Вмикайте й вимикайте полиці, а щоб змінити порядок, тягніть за держак.</string>
     <string name="shelf_layout_align">Розташування на екрані</string>

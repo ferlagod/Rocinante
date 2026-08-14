@@ -506,6 +506,10 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="shelf_create_privacy">Wie het ziet:</string>
     <string name="shelf_create_failed">Kon de plank niet aanmaken</string>
     <string name="shelf_create_action">Plank aanmaken</string>
+    <string name="shelf_send_failed">Kon het niet op ‘%1$s’ zetten</string>
+    <string name="shelf_move_instead">Verplaatsen in plaats van kopiëren</string>
+    <string name="shelf_move_help">Haalt het weg waar het nu staat. Niet vanaf Gelezen.</string>
+    <string name="shelf_own_section">Jouw planken</string>
     <string name="shelf_layout_title">Pagina bewerken</string>
     <string name="shelf_layout_help">Zet planken aan of uit en sleep aan de greep om ze te ordenen.</string>
     <string name="shelf_layout_align">Positie op het scherm</string>

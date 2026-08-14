@@ -506,6 +506,10 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="shelf_create_privacy">Qui la veu:</string>
     <string name="shelf_create_failed">No s\'ha pogut crear la prestatgeria</string>
     <string name="shelf_create_action">Crear prestatgeria</string>
+    <string name="shelf_send_failed">No s\'ha pogut posar a «%1$s»</string>
+    <string name="shelf_move_instead">Moure en lloc de copiar</string>
+    <string name="shelf_move_help">El treu d\'on és. No es pot des de Llegits.</string>
+    <string name="shelf_own_section">Les teves prestatgeries</string>
     <string name="shelf_layout_title">Editar la pàgina</string>
     <string name="shelf_layout_help">Activa o desactiva prestatgeries i arrossega l\'ansa per ordenar-les.</string>
     <string name="shelf_layout_align">Posició a la pantalla</string>

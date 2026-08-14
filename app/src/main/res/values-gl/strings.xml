@@ -508,6 +508,10 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="shelf_create_privacy">Quen o ve:</string>
     <string name="shelf_create_failed">Non se puido crear o andel</string>
     <string name="shelf_create_action">Crear andel</string>
+    <string name="shelf_send_failed">Non se puido poñer en «%1$s»</string>
+    <string name="shelf_move_instead">Mover en vez de copiar</string>
+    <string name="shelf_move_help">Quítao de onde está. Non desde Lidos.</string>
+    <string name="shelf_own_section">Os teus andeis</string>
     <string name="shelf_layout_title">Editar a páxina</string>
     <string name="shelf_layout_help">Activa ou desactiva andeis e arrastra a asa para ordenalos.</string>
     <string name="shelf_layout_align">Posición na pantalla</string>

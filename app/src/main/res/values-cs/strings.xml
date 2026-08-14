@@ -524,6 +524,10 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="shelf_create_privacy">Kdo ji vidí:</string>
     <string name="shelf_create_failed">Polici se nepodařilo vytvořit</string>
     <string name="shelf_create_action">Vytvořit polici</string>
+    <string name="shelf_send_failed">Nepodařilo se vložit do „%1$s“</string>
+    <string name="shelf_move_instead">Přesunout místo zkopírování</string>
+    <string name="shelf_move_help">Vezme ji odtud, kde je. Ne z Přečtené.</string>
+    <string name="shelf_own_section">Vaše police</string>
     <string name="shelf_layout_title">Upravit stránku</string>
     <string name="shelf_layout_help">Zapínejte a vypínejte police a tažením za úchyt měňte jejich pořadí.</string>
     <string name="shelf_layout_align">Umístění na obrazovce</string>

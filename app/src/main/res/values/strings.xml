@@ -591,6 +591,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="shelf_create_privacy">Who can see it:</string>
     <string name="shelf_create_failed">Could not create the shelf</string>
     <string name="shelf_create_action">Create shelf</string>
+    <string name="shelf_send_failed">Could not put it on “%1$s”</string>
+    <string name="shelf_move_instead">Move instead of copy</string>
+    <string name="shelf_move_help">Move it out of where it is now. Not possible from Read.</string>
+    <string name="shelf_own_section">Your shelves</string>
     <string name="shelf_layout_title">Edit page</string>
     <string name="shelf_layout_help">Turn shelves on or off, and drag the handle to reorder them.</string>
     <string name="shelf_layout_align">Position on screen</string>

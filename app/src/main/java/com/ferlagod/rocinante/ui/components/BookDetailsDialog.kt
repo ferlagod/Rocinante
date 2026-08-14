@@ -541,6 +541,20 @@ fun BookDetailsDialog(
     }
 
     var showShelfPicker by remember { mutableStateOf(false) }
+
+    // Las estanterías propias del usuario, para poder mandar el libro a una de ellas. Salen
+    // de lo que guardó «Mis libros»: pedirlas otra vez sería una página de 40 kB por ficha.
+    val ownShelfCache = remember(context) {
+        com.ferlagod.rocinante.data.local.TimelineCache(context)
+    }
+    var ownShelfList by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>>(emptyList())
+    }
+    LaunchedEffect(Unit) {
+        ownShelfList = ownShelfCache.loadUserShelves()?.filter { !it.isSystem }.orEmpty()
+    }
+    // Mover o copiar. Copiar de partida: es lo que no quita nada de donde estaba.
+    var moveInstead by remember { mutableStateOf(false) }
     // Confirmación antes de quitar el libro de su estantería.
     var showRemoveConfirm by remember { mutableStateOf(false) }
     var isRemoving by remember { mutableStateOf(false) }
@@ -663,6 +677,68 @@ fun BookDetailsDialog(
                 ).show()
             } finally {
                 favouriteBusy = false
+            }
+        }
+    }
+
+    /**
+     * Manda el libro a una estantería propia del usuario.
+     *
+     * Copiar lo añade y lo deja donde estuviera; mover lo saca además de donde venía. **Desde
+     * «leídos» nunca se mueve**: esa estantería no es un sitio cualquiera sino un estado de
+     * lectura, con sus fechas y sus relecturas colgando, y sacarlo de ahí puede llevárselas.
+     */
+    fun sendToOwnShelf(identifier: String, shelfName: String) {
+        coroutineScope.launch {
+            try {
+                val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey)
+                    ?: activeBookKey
+                val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                val html = BookWyrmScraper.fetchBookPage(api, localUrl, baseUrl)
+                val editionId = BookWyrmScraper.extractEditionId(html)
+                    ?: BookWyrmUtils.extractBookId(localUrl)
+                if (editionId.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.error_book_not_identified),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+                val canMove = moveInstead && activeShelf != null && activeShelf != "read"
+                val ok = com.ferlagod.rocinante.data.repository.FavouriteShelf.put(
+                    api = api,
+                    editionId = editionId,
+                    identifier = identifier,
+                    mode = if (canMove) {
+                        com.ferlagod.rocinante.data.repository.FavouriteShelf.Mode.MOVE
+                    } else {
+                        com.ferlagod.rocinante.data.repository.FavouriteShelf.Mode.COPY
+                    },
+                    from = activeShelf
+                )
+                if (ok) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.error_shelve_added, shelfName),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    if (canMove) activeShelf = null
+                    onShelved?.invoke()
+                } else {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.shelf_send_failed, shelfName),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(
+                    context,
+                    com.ferlagod.rocinante.utils.NetworkErrors.message(context, e),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -1618,6 +1694,61 @@ fun BookDetailsDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = target.label)
+                        }
+                    }
+
+                    // ── Las estanterías del usuario ──
+                    // Van aparte de las cuatro de arriba porque no son lo mismo: aquellas son
+                    // estados de lectura y se excluyen entre sí; estas son sitios donde uno
+                    // guarda, y un libro puede estar en varias a la vez.
+                    if (ownShelfList.isNotEmpty()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        Text(
+                            text = stringResource(R.string.shelf_own_section),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        // Desde «leídos» no se mueve: esa estantería lleva colgando las fechas
+                        // de lectura y las relecturas, y sacarlo de ahí puede llevárselas. Con
+                        // el libro en ninguna estantería tampoco hay nada de donde moverlo.
+                        val canOfferMove = activeShelf != null && activeShelf != "read"
+                        if (canOfferMove) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = moveInstead,
+                                    onCheckedChange = { moveInstead = it }
+                                )
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.shelf_move_instead),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.shelf_move_help),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        ownShelfList.forEach { shelf ->
+                            FilledTonalButton(
+                                onClick = {
+                                    showShelfPicker = false
+                                    sendToOwnShelf(shelf.identifier, shelf.name)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = shelf.name)
+                            }
                         }
                     }
                 }

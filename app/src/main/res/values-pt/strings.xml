@@ -506,6 +506,10 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="shelf_create_privacy">Quem vê:</string>
     <string name="shelf_create_failed">Não foi possível criar a estante</string>
     <string name="shelf_create_action">Criar estante</string>
+    <string name="shelf_send_failed">Não foi possível colocá-lo em “%1$s”</string>
+    <string name="shelf_move_instead">Mover em vez de copiar</string>
+    <string name="shelf_move_help">Tira-o de onde está. Não a partir de Lidos.</string>
+    <string name="shelf_own_section">Suas estantes</string>
     <string name="shelf_layout_title">Editar página</string>
     <string name="shelf_layout_help">Ative ou desative as estantes e arraste a alça para ordená-las.</string>
     <string name="shelf_layout_align">Posição na tela</string>

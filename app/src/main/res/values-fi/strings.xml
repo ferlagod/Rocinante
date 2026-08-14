@@ -507,6 +507,10 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="shelf_create_privacy">Kuka näkee:</string>
     <string name="shelf_create_failed">Hyllyä ei voitu luoda</string>
     <string name="shelf_create_action">Luo hylly</string>
+    <string name="shelf_send_failed">Kirjaa ei voitu laittaa hyllyyn ”%1$s”</string>
+    <string name="shelf_move_instead">Siirrä kopioinnin sijaan</string>
+    <string name="shelf_move_help">Ottaa sen pois nykyisestä paikasta. Ei Luetut-hyllystä.</string>
+    <string name="shelf_own_section">Omat hyllysi</string>
     <string name="shelf_layout_title">Muokkaa sivua</string>
     <string name="shelf_layout_help">Ota hyllyjä käyttöön tai pois ja järjestä ne vetämällä kahvasta.</string>
     <string name="shelf_layout_align">Sijainti näytöllä</string>

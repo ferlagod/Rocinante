@@ -506,6 +506,10 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="shelf_create_privacy">Qui la voit :</string>
     <string name="shelf_create_failed">Impossible de créer l\'étagère</string>
     <string name="shelf_create_action">Créer une étagère</string>
+    <string name="shelf_send_failed">Impossible de le mettre dans « %1$s »</string>
+    <string name="shelf_move_instead">Déplacer au lieu de copier</string>
+    <string name="shelf_move_help">Le retire d\'où il est. Impossible depuis « Lus ».</string>
+    <string name="shelf_own_section">Vos étagères</string>
     <string name="shelf_layout_title">Modifier la page</string>
     <string name="shelf_layout_help">Activez ou désactivez des étagères, et tirez la poignée pour les réordonner.</string>
     <string name="shelf_layout_align">Position à l\'écran</string>

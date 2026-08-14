@@ -592,6 +592,10 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="shelf_create_privacy">Hvem kan se den:</string>
     <string name="shelf_create_failed">Kunne ikke oprette hylden</string>
     <string name="shelf_create_action">Opret hylde</string>
+    <string name="shelf_send_failed">Kunne ikke lægge den på «%1$s»</string>
+    <string name="shelf_move_instead">Flyt i stedet for at kopiere</string>
+    <string name="shelf_move_help">Tager den væk fra der, hvor den står nu. Kan ikke fra Læst.</string>
+    <string name="shelf_own_section">Dine hylder</string>
     <string name="shelf_layout_title">Rediger side</string>
     <string name="shelf_layout_help">Slå hylder til og fra, og træk i grebet for at ændre rækkefølgen.</string>
     <string name="shelf_layout_align">Placering på skærmen</string>

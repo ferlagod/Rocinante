@@ -506,6 +506,10 @@
     <string name="shelf_create_privacy">Ποιος το βλέπει:</string>
     <string name="shelf_create_failed">Δεν ήταν δυνατή η δημιουργία του ραφιού</string>
     <string name="shelf_create_action">Δημιουργία ραφιού</string>
+    <string name="shelf_send_failed">Δεν ήταν δυνατή η τοποθέτηση στο «%1$s»</string>
+    <string name="shelf_move_instead">Μετακίνηση αντί για αντιγραφή</string>
+    <string name="shelf_move_help">Το βγάζει από εκεί που είναι. Όχι από τα Διαβασμένα.</string>
+    <string name="shelf_own_section">Τα ράφια σας</string>
     <string name="shelf_layout_title">Επεξεργασία σελίδας</string>
     <string name="shelf_layout_help">Ενεργοποιήστε ή απενεργοποιήστε ράφια και σύρετε τη λαβή για να τα ταξινομήσετε.</string>
     <string name="shelf_layout_align">Θέση στην οθόνη</string>
