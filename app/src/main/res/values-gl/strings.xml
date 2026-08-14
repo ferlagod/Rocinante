@@ -50,6 +50,10 @@
         <item quantity="one">%d día</item>
         <item quantity="other">%d días</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">queda %d día a este ritmo</item>
+        <item quantity="other">quedan %d días a este ritmo</item>
+    </plurals>
     <string name="series_title">Series</string>
     <string name="series_empty">Aínda non hai ningunha serie entre os libros que liches</string>
     <string name="authors_title">Autores</string>

@@ -39,6 +39,10 @@
         <item quantity="one">%d dag</item>
         <item quantity="other">%d dagen</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">nog %d dag in dit tempo</item>
+        <item quantity="other">nog %d dagen in dit tempo</item>
+    </plurals>
     <string name="series_title">Reeksen</string>
     <string name="series_empty">Nog geen reeksen bij de boeken die je hebt gelezen</string>
     <string name="authors_title">Auteurs</string>

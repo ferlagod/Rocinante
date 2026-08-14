@@ -41,6 +41,12 @@
         <item quantity="many">%d днів</item>
         <item quantity="other">%d дня</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">залишився %d день у цьому темпі</item>
+        <item quantity="few">залишилося %d днів у цьому темпі</item>
+        <item quantity="many">залишилося %d днів у цьому темпі</item>
+        <item quantity="other">залишилося %d днів у цьому темпі</item>
+    </plurals>
     <string name="series_title">Серії</string>
     <string name="series_empty">Поки немає серій серед прочитаних книжок</string>
     <string name="authors_title">Автори</string>

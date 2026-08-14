@@ -39,6 +39,10 @@
         <item quantity="one">%d dia</item>
         <item quantity="other">%d dies</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">queda %d dia a aquest ritme</item>
+        <item quantity="other">queden %d dies a aquest ritme</item>
+    </plurals>
     <string name="series_title">Sèries</string>
     <string name="series_empty">Encara no hi ha cap sèrie entre els llibres que has llegit</string>
     <string name="authors_title">Autors</string>

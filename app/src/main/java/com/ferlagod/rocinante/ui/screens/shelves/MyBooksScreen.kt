@@ -712,7 +712,43 @@ fun ShelfNativeDetailScreen(
     // Datos enriquecidos por libro (autor, valoración, fechas) obtenidos de la página HTML,
     // cacheados localmente. Clave = ShelfBookItem.id.
     var enrichment by remember { mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap()) }
+
+
     var isEnriching by remember { mutableStateOf(false) }
+
+    // Cuánto falta para terminar cada libro que se está leyendo. Solo en «Leyendo»: la cuenta
+    // necesita el progreso, que no viene en la estantería y cuesta una petición por libro. Ahí
+    // son dos o tres libros; en «Leídos» serían cientos, y además no significaría nada.
+    var daysLeftByBook by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    // Se espera a que termine el relleno de datos por libro: mientras corre, `enrichment`
+    // cambia con cada libro, y con él en las claves este efecto se reiniciaba sin parar y no
+    // llegaba nunca al final de su recorrido.
+    LaunchedEffect(shelf.slug, books.size, isEnriching) {
+        if (shelf.slug != "reading" || books.isEmpty() || isEnriching) {
+            if (shelf.slug != "reading") daysLeftByBook = emptyMap()
+            return@LaunchedEffect
+        }
+        val today = java.time.LocalDate.now()
+        val computed = mutableMapOf<String, Int>()
+        books.forEach { book ->
+            val id = book.id ?: return@forEach
+            val started = enrichment[id]?.started
+            val progress = runCatching {
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.getReadingProgress(api, id)
+            }.getOrNull()
+            val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
+                progress = progress?.progress,
+                isPercent = progress?.mode == "PCT",
+                totalPages = book.pages
+            )
+            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, fraction, today)?.let {
+                computed[id] = it
+                // Se van enseñando según se calculan, en vez de esperar a tenerlos todos.
+                daysLeftByBook = computed.toMap()
+            }
+            kotlinx.coroutines.delay(250)
+        }
+    }
     // Solo un recorrido de enriquecimiento a la vez: el de toda la estantería y el de un
     // libro suelto escriben en la misma caché.
     val enrichLock = remember { kotlinx.coroutines.sync.Mutex() }
@@ -1815,6 +1851,18 @@ fun ShelfNativeDetailScreen(
                                     }
                                     Text(
                                         text = dateText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Al ritmo que se lleva. Solo en «Leyendo», que es donde
+                                // significa algo y donde se ha podido calcular.
+                                book.id?.let { daysLeftByBook[it] }?.let { days ->
+                                    Text(
+                                        text = "⏳ " + pluralStringResource(
+                                            R.plurals.book_days_left, days, days
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

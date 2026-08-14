@@ -39,6 +39,10 @@
         <item quantity="one">%d Tag</item>
         <item quantity="other">%d Tage</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">noch %d Tag in diesem Tempo</item>
+        <item quantity="other">noch %d Tage in diesem Tempo</item>
+    </plurals>
     <string name="series_title">Reihen</string>
     <string name="series_empty">Noch keine Reihen unter deinen gelesenen Büchern</string>
     <string name="authors_title">Autoren</string>

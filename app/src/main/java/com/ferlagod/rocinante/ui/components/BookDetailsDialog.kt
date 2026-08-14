@@ -1711,6 +1711,23 @@ fun BookDetailsDialog(
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
+                                        // Al ritmo que se lleva, cuánto queda. No se enseña
+                                        // nada si falta con qué calcularlo —sin fecha de
+                                        // inicio, o recién empezado—: una previsión sacada del
+                                        // aire es peor que ninguna.
+                                        com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
+                                            startedIso = enrichment?.started,
+                                            fraction = fraction?.toDouble(),
+                                            today = java.time.LocalDate.now()
+                                        )?.let { days ->
+                                            Text(
+                                                text = pluralStringResource(
+                                                    R.plurals.book_days_left, days, days
+                                                ),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
                                 }
                             }

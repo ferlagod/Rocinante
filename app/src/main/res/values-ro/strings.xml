@@ -40,6 +40,11 @@
         <item quantity="few">%d zile</item>
         <item quantity="other">%d de zile</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">mai rămâne %d zi în acest ritm</item>
+        <item quantity="few">mai rămân %d zile în acest ritm</item>
+        <item quantity="other">mai rămân %d zile în acest ritm</item>
+    </plurals>
     <string name="series_title">Serii</string>
     <string name="series_empty">Încă nicio serie printre cărțile citite</string>
     <string name="authors_title">Autori</string>

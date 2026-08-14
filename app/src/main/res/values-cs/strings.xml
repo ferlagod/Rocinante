@@ -41,6 +41,12 @@
         <item quantity="many">%d dne</item>
         <item quantity="other">%d dní</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">zbývá %d den tímto tempem</item>
+        <item quantity="few">zbývá %d dní tímto tempem</item>
+        <item quantity="many">zbývá %d dní tímto tempem</item>
+        <item quantity="other">zbývá %d dní tímto tempem</item>
+    </plurals>
     <string name="series_title">Série</string>
     <string name="series_empty">Zatím žádná série mezi přečtenými knihami</string>
     <string name="authors_title">Autoři</string>

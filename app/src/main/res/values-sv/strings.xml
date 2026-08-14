@@ -39,6 +39,10 @@
         <item quantity="one">%d dag</item>
         <item quantity="other">%d dagar</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">%d dag kvar i den här takten</item>
+        <item quantity="other">%d dagar kvar i den här takten</item>
+    </plurals>
     <string name="series_title">Serier</string>
     <string name="series_empty">Inga serier ännu bland böckerna du läst</string>
     <string name="authors_title">Författare</string>

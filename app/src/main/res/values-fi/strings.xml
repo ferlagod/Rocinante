@@ -48,6 +48,10 @@
         <item quantity="one">%d päivä</item>
         <item quantity="other">%d päivää</item>
     </plurals>
+    <plurals name="book_days_left">
+        <item quantity="one">%d päivä jäljellä tällä tahdilla</item>
+        <item quantity="other">%d päivää jäljellä tällä tahdilla</item>
+    </plurals>
     <string name="series_title">Sarjat</string>
     <string name="series_empty">Ei vielä sarjoja lukemiesi kirjojen joukossa</string>
     <string name="authors_title">Tekijät</string>
