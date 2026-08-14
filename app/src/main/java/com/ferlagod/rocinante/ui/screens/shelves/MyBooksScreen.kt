@@ -87,6 +87,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -426,12 +427,17 @@ fun MyBooksScreen(
     val shelves = visibleSlugs.mapNotNull { slug -> everyShelf.firstOrNull { it.slug == slug } }
     val allShelves = everyShelf
 
-    var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
+    // Qué estantería está abierta. Guardado y no solo recordado: el carrusel deshace la
+    // pestaña en cuanto se pasa a la de al lado, y al volver se entraba otra vez por la lista
+    // de estanterías. Se guarda el nombre y no la estantería entera porque lleva un icono
+    // dentro, que no es de las cosas que se pueden guardar.
+    var selectedShelfSlug by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedShelf = allShelves.firstOrNull { it.slug == selectedShelfSlug }
 
     // Al pulsar un libro de las estanterías en la búsqueda se abre aquí su estantería.
     LaunchedEffect(targetShelfSlug) {
         val slug = targetShelfSlug ?: return@LaunchedEffect
-        allShelves.firstOrNull { it.slug == slug }?.let { selectedShelf = it }
+        if (allShelves.any { it.slug == slug }) selectedShelfSlug = slug
     }
 
     // Volver a tocar «Mis libros» estando ya aquí devuelve a la lista de estanterías, como
@@ -442,7 +448,7 @@ fun MyBooksScreen(
     LaunchedEffect(backToShelvesKey) {
         if (backToShelvesKey != lastBackToShelvesKey) {
             lastBackToShelvesKey = backToShelvesKey
-            selectedShelf = null
+            selectedShelfSlug = null
         }
     }
 
@@ -506,7 +512,7 @@ fun MyBooksScreen(
                 ) {
                     shelves.forEach { shelf ->
                         OutlinedCard(
-                            onClick = { selectedShelf = shelf },
+                            onClick = { selectedShelfSlug = shelf.slug },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -596,7 +602,7 @@ fun MyBooksScreen(
                 cookie = cookie,
                 sharedApi = api,
                 shelf = shelf,
-                onBack = { selectedShelf = null },
+                onBack = { selectedShelfSlug = null },
                 onNavigateToSettings = onNavigateToSettings,
                 highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
                 onHighlightConsumed = onTargetConsumed,
@@ -728,6 +734,15 @@ fun ShelfNativeDetailScreen(
 
     // Estado de la lista, necesario para poder desplazarse hasta un libro concreto.
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Por dónde iba la lista, guardado como **el libro** que estaba arriba y no como el número
+    // de fila. El número no aguanta: los libros llegan primero de la caché y luego de la red,
+    // y encima de la lista hay elementos que aparecen y desaparecen mientras carga, así que la
+    // misma fila deja de ser el mismo sitio. El libro sí es el mismo, llegue cuando llegue.
+    var savedTopBookId by rememberSaveable { mutableStateOf<String?>(null) }
+    var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
+    // Se repone una sola vez por cada vez que se entra; después manda quien esté leyendo.
+    var scrollRestored by remember { mutableStateOf(false) }
     var highlightedBookId by remember { mutableStateOf<String?>(null) }
     // Libro al que ya se ha viajado, para animar solo la primera vez.
     var scrolledToTarget by remember { mutableStateOf<String?>(null) }
@@ -879,8 +894,8 @@ fun ShelfNativeDetailScreen(
     // «Leídos» puede verse agrupado en series: primero la lista de series y, al elegir una,
     // sus libros en el orden en que se leen. Son las mismas tarjetas de siempre; lo único que
     // cambia es qué libros entran y en qué orden.
-    var showSeriesList by remember { mutableStateOf(false) }
-    var openSeriesUrl by remember { mutableStateOf<String?>(null) }
+    var showSeriesList by rememberSaveable { mutableStateOf(false) }
+    var openSeriesUrl by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Series de las que hay algún libro en la estantería. Solo salen los libros que alguien
     // haya atado a una serie en la instancia; del resto no se sabe y no aparecen.
@@ -911,8 +926,8 @@ fun ShelfNativeDetailScreen(
     // Igual que las series, pero por quien escribe: primero los autores en orden alfabético y,
     // al elegir uno, sus libros. Un libro escrito a cuatro manos sale bajo cada uno de ellos,
     // que es lo que se espera al buscar «qué he leído de esta persona».
-    var showAuthorList by remember { mutableStateOf(false) }
-    var openAuthorKey by remember { mutableStateOf<String?>(null) }
+    var showAuthorList by rememberSaveable { mutableStateOf(false) }
+    var openAuthorKey by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Mismo nombre, misma persona: se ignoran mayúsculas y espacios de más para que una ficha
     // escrita con dos espacios no abra un autor aparte.
@@ -1111,6 +1126,46 @@ fun ShelfNativeDetailScreen(
         }
 
         if (!isLoading && !hasMorePages) onHighlightConsumed()
+    }
+
+    // Cuántas filas van por delante de los libros; hay que contarlas para traducir entre
+    // «el libro tal» y «la fila tal».
+    val leadingRows = (if (isLoadingDetails) 1 else 0) + (if (shelf.slug == "reading") 1 else 0)
+
+    // De vuelta al sitio. Se espera a que el libro que estaba arriba esté de verdad en la
+    // lista: mientras no haya llegado su página no se toca nada, en vez de saltar a lo que
+    // haya y darlo por bueno.
+    LaunchedEffect(visibleBooks, leadingRows, highlightBookId) {
+        if (scrollRestored) return@LaunchedEffect
+        // Viniendo de un libro concreto —de la búsqueda o del perfil— ese salto es lo que se
+        // ha pedido, y reponer la posición de antes se lo llevaría por delante.
+        if (highlightBookId != null) {
+            scrollRestored = true
+            return@LaunchedEffect
+        }
+        val wanted = savedTopBookId
+        if (wanted == null) {
+            scrollRestored = true
+            return@LaunchedEffect
+        }
+        val index = visibleBooks.indexOfFirst { it.id == wanted }
+        if (index < 0) return@LaunchedEffect
+        listState.scrollToItem(index + leadingRows, savedScrollOffset)
+        scrollRestored = true
+    }
+
+    // Y mientras se lee, apuntar dónde se va. El efecto se rehace cuando cambian los libros o
+    // las filas de encima, que es justo cuando la cuenta de filas dejaría de valer.
+    LaunchedEffect(visibleBooks, leadingRows, scrollRestored) {
+        if (!scrollRestored) return@LaunchedEffect
+        androidx.compose.runtime.snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collect { (row, offset) ->
+            visibleBooks.getOrNull(row - leadingRows)?.id?.let {
+                savedTopBookId = it
+                savedScrollOffset = offset
+            }
+        }
     }
 
     // El resaltado se apaga en su propio efecto: descartar el objetivo cambia la clave del
