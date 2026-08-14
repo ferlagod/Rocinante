@@ -256,6 +256,41 @@ class TimelineCache(private val context: Context) {
         if (!file.exists()) Long.MAX_VALUE else System.currentTimeMillis() - file.lastModified()
     }
 
+    /**
+     * Por dónde va cada libro que se está leyendo, en tanto por uno.
+     *
+     * Se guarda porque sacarlo cuesta una petición **por libro**: sin esto, pasar por
+     * «Mis libros» en el carrusel volvía a pedirlas todas, y eso no cambia de un momento a
+     * otro. Lo que se anota desde la propia aplicación se escribe aquí en el acto, así que
+     * lo guardado solo se queda corto si se cambia el progreso desde la web.
+     */
+    suspend fun loadReadingFractions(): Map<String, Double>? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "reading_fractions_cache.json")
+            if (!file.exists()) return@withContext null
+            val type = object : TypeToken<Map<String, Double>>() {}.type
+            gson.fromJson<Map<String, Double>>(file.readText(), type)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    suspend fun saveReadingFractions(fractions: Map<String, Double>) = withContext(Dispatchers.IO) {
+        try {
+            File(context.cacheDir, "reading_fractions_cache.json")
+                .writeText(gson.toJson(fractions))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /** Cuánto hace que se guardaron, en milisegundos. Enorme si no hay nada. */
+    suspend fun readingFractionsAge(): Long = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, "reading_fractions_cache.json")
+        if (!file.exists()) Long.MAX_VALUE else System.currentTimeMillis() - file.lastModified()
+    }
+
     private fun authorFile(authorUrl: String): File {
         val key = authorUrl.removeSuffix(".json").trimEnd('/')
         val digest = java.security.MessageDigest.getInstance("SHA-1")

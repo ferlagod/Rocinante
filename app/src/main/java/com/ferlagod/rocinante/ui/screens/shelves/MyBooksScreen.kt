@@ -209,6 +209,13 @@ private data class AuthorGroup(
 /** Hvor gammel hyldelisten må blive, før den hentes igen. */
 private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
 
+/**
+ * Cada cuánto se vuelve a mirar por dónde va cada libro que se está leyendo. Cuesta una
+ * petición por libro, y solo cambia cuando alguien lo cambia: lo que se anota desde aquí se
+ * guarda en el acto, así que esta espera solo importa si se toca el progreso desde la web.
+ */
+private const val READING_PROGRESS_TTL_MS = 60L * 60 * 1000
+
 private enum class ShelfSortMode {
     DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC;
 
@@ -717,50 +724,6 @@ fun ShelfNativeDetailScreen(
 
     var isEnriching by remember { mutableStateOf(false) }
 
-    // Cuánto falta para terminar cada libro que se está leyendo. Solo en «Leyendo»: la cuenta
-    // necesita el progreso, que no viene en la estantería y cuesta una petición por libro. Ahí
-    // son dos o tres libros; en «Leídos» serían cientos, y además no significaría nada.
-    var daysLeftByBook by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-    // Y qué parte se lleva leída, para la barra del borde de la tarjeta. Va aparte de los días
-    // porque se sabe antes: sin fecha de inicio no hay previsión, pero el avance sí se conoce.
-    var fractionByBook by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
-    // Se espera a que termine el relleno de datos por libro: mientras corre, `enrichment`
-    // cambia con cada libro, y con él en las claves este efecto se reiniciaba sin parar y no
-    // llegaba nunca al final de su recorrido.
-    LaunchedEffect(shelf.slug, books.size, isEnriching) {
-        if (shelf.slug != "reading" || books.isEmpty() || isEnriching) {
-            if (shelf.slug != "reading") {
-                daysLeftByBook = emptyMap()
-                fractionByBook = emptyMap()
-            }
-            return@LaunchedEffect
-        }
-        val today = java.time.LocalDate.now()
-        val computed = mutableMapOf<String, Int>()
-        val fractions = mutableMapOf<String, Double>()
-        books.forEach { book ->
-            val id = book.id ?: return@forEach
-            val started = enrichment[id]?.started
-            val progress = runCatching {
-                com.ferlagod.rocinante.data.api.BookWyrmScraper.getReadingProgress(api, id)
-            }.getOrNull()
-            val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
-                progress = progress?.progress,
-                isPercent = progress?.mode == "PCT",
-                totalPages = book.pages
-            )
-            fraction?.let {
-                fractions[id] = it
-                fractionByBook = fractions.toMap()
-            }
-            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, fraction, today)?.let {
-                computed[id] = it
-                // Se van enseñando según se calculan, en vez de esperar a tenerlos todos.
-                daysLeftByBook = computed.toMap()
-            }
-            kotlinx.coroutines.delay(250)
-        }
-    }
     // Solo un recorrido de enriquecimiento a la vez: el de toda la estantería y el de un
     // libro suelto escriben en la misma caché.
     val enrichLock = remember { kotlinx.coroutines.sync.Mutex() }
@@ -799,6 +762,74 @@ fun ShelfNativeDetailScreen(
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
+    // Cuánto falta para terminar cada libro que se está leyendo. Solo en «Leyendo»: la cuenta
+    // necesita el progreso, que no viene en la estantería y cuesta una petición por libro. Ahí
+    // son dos o tres libros; en «Leídos» serían cientos, y además no significaría nada.
+    var daysLeftByBook by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    // Y qué parte se lleva leída, para la barra del borde de la tarjeta. Va aparte de los días
+    // porque se sabe antes: sin fecha de inicio no hay previsión, pero el avance sí se conoce.
+    var fractionByBook by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
+    // Se espera a que termine el relleno de datos por libro: mientras corre, `enrichment`
+    // cambia con cada libro, y con él en las claves este efecto se reiniciaba sin parar y no
+    // llegaba nunca al final de su recorrido.
+    LaunchedEffect(shelf.slug, books.size, isEnriching, resyncTrigger) {
+        if (shelf.slug != "reading" || books.isEmpty() || isEnriching) {
+            if (shelf.slug != "reading") {
+                daysLeftByBook = emptyMap()
+                fractionByBook = emptyMap()
+            }
+            return@LaunchedEffect
+        }
+        val today = java.time.LocalDate.now()
+        val computed = mutableMapOf<String, Int>()
+        val fractions = mutableMapOf<String, Double>()
+
+        // Lo guardado, que se pinta al instante y de paso evita las peticiones. Pasar por
+        // aquí en el carrusel deshace la pantalla y la vuelve a montar, y sin esto cada
+        // pasada volvía a pedir el progreso de todos los libros para el mismo resultado.
+        val stored = dataCache.loadReadingFractions().orEmpty()
+        val fresh = dataCache.readingFractionsAge() < READING_PROGRESS_TTL_MS &&
+            resyncTrigger == 0
+        stored.forEach { (id, value) -> fractions[id] = value }
+        fractionByBook = fractions.toMap()
+        books.forEach { book ->
+            val id = book.id ?: return@forEach
+            val started = enrichment[id]?.started
+            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, stored[id], today)?.let {
+                computed[id] = it
+            }
+        }
+        daysLeftByBook = computed.toMap()
+
+        books.forEach { book ->
+            val id = book.id ?: return@forEach
+            val started = enrichment[id]?.started
+            // Lo que ya se sabe y sigue siendo reciente no se vuelve a pedir.
+            if (fresh && stored.containsKey(id)) return@forEach
+            val progress = runCatching {
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.getReadingProgress(api, id)
+            }.getOrNull()
+            val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
+                progress = progress?.progress,
+                isPercent = progress?.mode == "PCT",
+                totalPages = book.pages
+            )
+            fraction?.let {
+                fractions[id] = it
+                fractionByBook = fractions.toMap()
+            }
+            // Los libros que ya no están en la estantería se caen solos: se guarda lo
+            // recogido en esta pasada, no lo de antes más esto.
+            dataCache.saveReadingFractions(fractions.toMap())
+            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, fraction, today)?.let {
+                computed[id] = it
+                // Se van enseñando según se calculan, en vez de esperar a tenerlos todos.
+                daysLeftByBook = computed.toMap()
+            }
+            kotlinx.coroutines.delay(250)
+        }
+    }
 
     // Qué libros llevan corazón. Se guarda solo la lista de direcciones, y se enseña desde
     // disco al instante; la instancia se pregunta detrás y solo si hace falta, con la misma
@@ -2002,9 +2033,12 @@ fun ShelfNativeDetailScreen(
                     isPercent = progress.mode == "PCT",
                     totalPages = pages
                 )
-                fractionByBook = fractionByBook.toMutableMap().apply {
+                val updatedFractions = fractionByBook.toMutableMap().apply {
                     if (fraction != null) put(id, fraction) else remove(id)
                 }
+                fractionByBook = updatedFractions
+                // También a disco: si no, al volver a entrar se pintaría el progreso viejo.
+                coroutineScope.launch { dataCache.saveReadingFractions(updatedFractions) }
                 val days = com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
                     startedIso = enrichment[id]?.started,
                     fraction = fraction,
