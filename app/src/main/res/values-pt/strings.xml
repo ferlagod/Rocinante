@@ -89,6 +89,10 @@
     <string name="book_label_rating">Avaliação</string>
     <string name="book_label_started">Começado</string>
     <string name="book_label_author">Autor</string>
+    <string name="author_born">Nascimento</string>
+    <string name="author_died">Falecimento</string>
+    <string name="author_website">Site</string>
+    <string name="author_wikipedia">Wikipédia</string>
     <string name="book_label_series">Série</string>
     <string name="book_label_pages">Páginas</string>
     <string name="book_label_language">Idioma</string>

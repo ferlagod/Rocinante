@@ -100,6 +100,10 @@
     <string name="book_label_rating">Valoración</string>
     <string name="book_label_started">Comezado</string>
     <string name="book_label_author">Autor</string>
+    <string name="author_born">Nacemento</string>
+    <string name="author_died">Falecemento</string>
+    <string name="author_website">Sitio web</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Páxinas</string>
     <string name="book_label_language">Idioma</string>

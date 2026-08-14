@@ -124,6 +124,10 @@
     <string name="book_read_dates_empty">Vælg mindst én dato</string>
     <string name="book_read_dates_order">Slutdatoen kan ikke ligge før startdatoen</string>
     <string name="book_label_author">Forfatter</string>
+    <string name="author_born">Født</string>
+    <string name="author_died">Død</string>
+    <string name="author_website">Websted</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Sider</string>
     <string name="book_label_language">Sprog</string>

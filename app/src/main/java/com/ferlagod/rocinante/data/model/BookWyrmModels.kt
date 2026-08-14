@@ -163,6 +163,9 @@ data class BookWyrmBookDetails(
     val isbn10: String? = null,
     val oclcNumber: String? = null,
     val openlibraryKey: String? = null,
+    // Las direcciones de sus autores, que es lo único que trae el .json: los nombres y todo
+    // lo demás están en la ficha de cada uno.
+    val authors: List<String>? = null,
     // Otro identificador del ejemplar, de la base de datos de Inventaire. Lo trae uno de cada
     // cinco libros y va con los demás números.
     val inventaireId: String? = null,
@@ -192,6 +195,29 @@ data class BookFileLink(
 /**
  * Representa una estantería (colección de libros) de un usuario.
  */
+/**
+ * La ficha de un autor, tal y como la sirve la instancia en `<autor>.json`.
+ *
+ * Solo lo que es para leer. La instancia trae además media docena de identificadores de
+ * catálogos —isni, viaf, bnfId…—; esos son para bibliotecarios y no para esta pantalla.
+ *
+ * @property bio Viene con HTML dentro, así que hay que limpiarlo antes de enseñarlo.
+ * @property born Fecha ISO, o vacía. La instancia no siempre la tiene.
+ */
+data class BookWyrmAuthor(
+    val id: String? = null,
+    val name: String? = null,
+    val bio: String? = null,
+    val born: String? = null,
+    val died: String? = null,
+    val website: String? = null,
+    val wikipediaLink: String? = null,
+    // Claves, no direcciones: la de Wikidata y la de Open Library se arman con ellas.
+    val wikidata: String? = null,
+    val openlibraryKey: String? = null,
+    val aliases: List<String>? = null
+)
+
 data class ShelfPage(
     @SerializedName("orderedItems") val orderedItems: List<ShelfBookItem>?
 )

@@ -181,6 +181,60 @@ class TimelineCache(private val context: Context) {
      * lleva barras y dos puntos, así que se resume en un hash: nombre corto, siempre válido
      * y sin colisiones entre libros de instancias distintas.
      */
+    /**
+     * Dónde se guarda la ficha de un autor. La clave es su dirección, resumida en un hash como
+     * la del libro: nombre corto y sin colisiones entre instancias.
+     */
+    private fun authorFile(authorUrl: String): File {
+        val key = authorUrl.removeSuffix(".json").trimEnd('/')
+        val digest = java.security.MessageDigest.getInstance("SHA-1")
+            .digest(key.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        return File(File(context.cacheDir, "authors").apply { mkdirs() }, "$digest.json")
+    }
+
+    /**
+     * La ficha de un autor guardada la última vez que se pidió.
+     *
+     * La clave es el autor y no el libro, así que el segundo libro del mismo autor la
+     * encuentra ya guardada y no cuesta ninguna petición.
+     */
+    suspend fun loadAuthor(authorUrl: String): com.ferlagod.rocinante.data.model.BookWyrmAuthor? =
+        withContext(Dispatchers.IO) {
+            try {
+                val file = authorFile(authorUrl)
+                if (!file.exists()) return@withContext null
+                gson.fromJson(
+                    file.readText(),
+                    com.ferlagod.rocinante.data.model.BookWyrmAuthor::class.java
+                )
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                null
+            }
+        }
+
+    suspend fun saveAuthor(
+        authorUrl: String,
+        author: com.ferlagod.rocinante.data.model.BookWyrmAuthor
+    ) = withContext(Dispatchers.IO) {
+        try {
+            authorFile(authorUrl).writeText(gson.toJson(author))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /** Olvida todas las fichas de autor. La rehace sola quien abra un libro. */
+    suspend fun clearAuthors() = withContext(Dispatchers.IO) {
+        try {
+            File(context.cacheDir, "authors").deleteRecursively()
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+        Unit
+    }
+
     private fun bookDetailsFile(bookId: String): File {
         val key = bookId.removeSuffix(".json").trimEnd('/')
         val digest = java.security.MessageDigest.getInstance("SHA-1")

@@ -89,6 +89,10 @@
     <string name="book_label_rating">Βαθμολογία</string>
     <string name="book_label_started">Ξεκίνησε</string>
     <string name="book_label_author">Συγγραφέας</string>
+    <string name="author_born">Γεννήθηκε</string>
+    <string name="author_died">Πέθανε</string>
+    <string name="author_website">Ιστότοπος</string>
+    <string name="author_wikipedia">Βικιπαίδεια</string>
     <string name="book_label_series">Σειρά</string>
     <string name="book_label_pages">Σελίδες</string>
     <string name="book_label_language">Γλώσσα</string>

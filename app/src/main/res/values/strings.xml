@@ -126,6 +126,10 @@
     <string name="book_read_dates_empty">Choose at least one date</string>
     <string name="book_read_dates_order">The finish date cannot be before the start date</string>
     <string name="book_label_author">Author</string>
+    <string name="author_born">Born</string>
+    <string name="author_died">Died</string>
+    <string name="author_website">Website</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Series</string>
     <string name="book_label_pages">Pages</string>
     <string name="book_label_language">Language</string>

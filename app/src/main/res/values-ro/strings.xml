@@ -91,6 +91,10 @@
     <string name="book_label_rating">Evaluare</string>
     <string name="book_label_started">Început</string>
     <string name="book_label_author">Autor</string>
+    <string name="author_born">Născut</string>
+    <string name="author_died">Decedat</string>
+    <string name="author_website">Site web</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Pagini</string>
     <string name="book_label_language">Limbă</string>

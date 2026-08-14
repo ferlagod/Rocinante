@@ -107,6 +107,13 @@ interface BookWyrmApi {
     @GET
     suspend fun getBookDetails(@Url fullUrl: String): BookWyrmBookDetails
 
+    /**
+     * La ficha de un autor. Su dirección viene en el `.json` del libro, así que no hay que
+     * buscarla: basta con pedirla.
+     */
+    @GET
+    suspend fun getAuthor(@Url fullUrl: String): com.ferlagod.rocinante.data.model.BookWyrmAuthor
+
     @GET
     suspend fun getShelfData(@Url fullUrl: String): ShelfPage
 

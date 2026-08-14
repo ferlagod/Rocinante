@@ -48,6 +48,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DataObject
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -177,7 +181,7 @@ private fun BookRatingStars(rating: Double) {
  * se queda con el título solo, así que quien la usa comprueba antes que haya algo.
  */
 @Composable
-private fun BookInfoSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun BookInfoSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -190,6 +194,38 @@ private fun BookInfoSection(title: String, content: @Composable ColumnScope.() -
                 color = MaterialTheme.colorScheme.primary
             )
             content()
+        }
+    }
+}
+
+/**
+ * Una fila que lleva a algún sitio: su nombre, el sitio al que va y la flecha que lo dice.
+ *
+ * Se enseña el servidor y no la dirección entera —«piratforlaget.se» dice más que setenta
+ * caracteres de URL—, igual que en las copias enlazadas del libro. Toca toda la fila, no solo
+ * la flecha: el icono es el cartel, no el botón.
+ */
+@Composable
+private fun BookLinkRow(label: String, url: String, onOpen: (String) -> Unit) {
+    val site = remember(url) {
+        runCatching { java.net.URL(url).host.removePrefix("www.") }.getOrDefault(url)
+    }
+    BookInfoRow(label, onClick = { onOpen(url) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = site,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
@@ -303,7 +339,7 @@ private const val COPY_PREVIEW_MAX = 60
  *   se ve: la fila mide y se coloca igual toque o no.
  */
 @Composable
-private fun BookInfoRow(
+internal fun BookInfoRow(
     label: String,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
@@ -327,7 +363,7 @@ private fun BookInfoRow(
  * y el de Open Library uno debajo de otro, se lleva uno el que ha tocado y no los tres.
  */
 @Composable
-private fun BookInfoRow(label: String, value: String) {
+internal fun BookInfoRow(label: String, value: String) {
     val copy = rememberCopyToClipboard()
     BookInfoRow(label, onClick = { copy(value) }) {
         Text(text = value, style = MaterialTheme.typography.bodyMedium)
@@ -335,7 +371,7 @@ private fun BookInfoRow(label: String, value: String) {
 }
 
 /** Formatea una fecha ISO (yyyy-MM-dd) al formato medio del idioma del dispositivo. */
-private fun formatDetailDate(iso: String?): String? {
+internal fun formatDetailDate(iso: String?): String? {
     if (iso.isNullOrBlank()) return null
     return try {
         val parser = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
@@ -460,6 +496,46 @@ fun BookDetailsDialog(
     var overflowExpanded by remember { mutableStateOf(false) }
     // Diálogo para elegir estantería. Al ser una elección deliberada en su propia lista,
     // no se pide además confirmación: se mueve el libro en cuanto se toca una.
+    // Abrir un enlace sigue el ajuste que ya tiene la aplicación para los del libro, en vez
+    // de inventar otro. No hay navegador propio: el WebView solo se usa para entrar y para
+    // Anubis, y mantener uno más no se paga con lo que daría.
+    val openLink: (String) -> Unit = { url ->
+        context.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+        )
+    }
+
+    // ── Los autores del libro ──
+    // El .json del libro solo trae sus direcciones; el nombre y lo demás están en la ficha de
+    // cada uno. Se piden **después** de que la pantalla esté abierta y aparecen cuando llegan:
+    // la ficha del libro no debe esperar por esto.
+    val authorCache = remember(context) {
+        com.ferlagod.rocinante.data.local.TimelineCache(context)
+    }
+    var authors by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.data.model.BookWyrmAuthor>>(emptyList())
+    }
+    LaunchedEffect(activeBookKey, bookDetails.authors) {
+        val urls = bookDetails.authors.orEmpty().filter { it.isNotBlank() }
+        if (urls.isEmpty()) {
+            authors = emptyList()
+            return@LaunchedEffect
+        }
+        val loaded = mutableListOf<com.ferlagod.rocinante.data.model.BookWyrmAuthor>()
+        urls.forEach { url ->
+            // Guardada la ficha, el segundo libro del mismo autor no cuesta nada.
+            val cached = authorCache.loadAuthor(url)
+            val author = cached ?: runCatching {
+                api.getAuthor(BookWyrmUtils.ensureJsonUrl(url))
+            }.getOrNull()?.also { authorCache.saveAuthor(url, it) }
+            if (author != null) {
+                loaded += author
+                // Se van enseñando según llegan, en vez de esperar a tenerlos todos.
+                authors = loaded.toList()
+            }
+        }
+    }
+
     var showShelfPicker by remember { mutableStateOf(false) }
     // Confirmación antes de quitar el libro de su estantería.
     var showRemoveConfirm by remember { mutableStateOf(false) }
@@ -1235,6 +1311,14 @@ fun BookDetailsDialog(
                                         BookInfoRow(stringResource(R.string.book_label_inventaire), it)
                                     }
                                 }
+                            }
+
+                            // ── Los autores, uno por bloque ──
+                            // Un bloque por persona y no una lista: la biografía, el año y el
+                            // sitio web son de alguien concreto, y con dos autores en el mismo
+                            // bloque habría que adivinar de quién es cada cosa.
+                            authors.forEach { author ->
+                                AuthorInfoBlock(author, openLink)
                             }
 
                             // ── Copias enlazadas desde la instancia ──

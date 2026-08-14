@@ -93,6 +93,10 @@
     <string name="book_label_rating">Оцінка</string>
     <string name="book_label_started">Розпочато</string>
     <string name="book_label_author">Автор</string>
+    <string name="author_born">Народився</string>
+    <string name="author_died">Помер</string>
+    <string name="author_website">Сайт</string>
+    <string name="author_wikipedia">Вікіпедія</string>
     <string name="book_label_series">Серія</string>
     <string name="book_label_pages">Сторінок</string>
     <string name="book_label_language">Мова</string>

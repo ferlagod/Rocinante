@@ -89,6 +89,10 @@
     <string name="book_label_rating">Betyg</string>
     <string name="book_label_started">Påbörjad</string>
     <string name="book_label_author">Författare</string>
+    <string name="author_born">Född</string>
+    <string name="author_died">Död</string>
+    <string name="author_website">Webbplats</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Serie</string>
     <string name="book_label_pages">Sidor</string>
     <string name="book_label_language">Språk</string>

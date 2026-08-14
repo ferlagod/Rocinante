@@ -98,6 +98,10 @@
     <string name="book_label_rating">Arvio</string>
     <string name="book_label_started">Aloitettu</string>
     <string name="book_label_author">Kirjailija</string>
+    <string name="author_born">Syntynyt</string>
+    <string name="author_died">Kuollut</string>
+    <string name="author_website">Verkkosivu</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Sarja</string>
     <string name="book_label_pages">Sivuja</string>
     <string name="book_label_language">Kieli</string>

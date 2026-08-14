@@ -93,6 +93,10 @@
     <string name="book_label_rating">Ocena</string>
     <string name="book_label_started">Rozpoczęto</string>
     <string name="book_label_author">Autor</string>
+    <string name="author_born">Urodzony</string>
+    <string name="author_died">Zmarły</string>
+    <string name="author_website">Strona</string>
+    <string name="author_wikipedia">Wikipedia</string>
     <string name="book_label_series">Seria</string>
     <string name="book_label_pages">Stron</string>
     <string name="book_label_language">Język</string>
