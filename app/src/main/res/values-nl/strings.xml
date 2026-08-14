@@ -84,6 +84,7 @@
     <string name="book_section_ids">Nummers</string>
     <string name="book_section_downloads">Gelinkte kopieën</string>
     <string name="favourite_shelf_name">Favorieten</string>
+    <string name="shelf_favourites_desc">Boeken die je met het hartje hebt gemarkeerd</string>
     <string name="favourite_add">Aan favorieten toevoegen</string>
     <string name="favourite_remove">Uit favorieten verwijderen</string>
     <string name="favourite_failed">Kon de favoriet niet wijzigen</string>
@@ -510,6 +511,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="shelf_move_instead">Verplaatsen in plaats van kopiëren</string>
     <string name="shelf_move_help">Haalt het weg waar het nu staat. Niet vanaf Gelezen.</string>
     <string name="shelf_own_section">Jouw planken</string>
+    <string name="shelf_allow_create">Planken aanmaken toestaan</string>
     <string name="shelf_layout_title">Pagina bewerken</string>
     <string name="shelf_layout_help">Zet planken aan of uit en sleep aan de greep om ze te ordenen.</string>
     <string name="shelf_layout_align">Positie op het scherm</string>

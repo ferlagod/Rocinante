@@ -38,6 +38,7 @@ enum class ShelfSection(val id: String, val slug: String, val canHide: Boolean) 
 
     companion object {
         fun fromId(id: String): ShelfSection? = entries.firstOrNull { it.id == id }
+        fun fromSlug(slug: String): ShelfSection? = entries.firstOrNull { it.slug == slug }
     }
 }
 
@@ -64,69 +65,111 @@ enum class ShelfAlignment(val id: String) {
  *   vuelven a encender.
  * @property alignment si las tarjetas se agrupan arriba o abajo.
  */
+/**
+ * Orden, visibilidad y posición de las estanterías de «Mis libros».
+ *
+ * Una sola lista para todas: las cuatro de BookWyrm y las que el usuario se hace. Estaban
+ * separadas y era artificial —quien quiere sus favoritos entre «Leyendo» y «Leídos» no debería
+ * tener que pensar en de quién es cada estantería—, así que el orden es común.
+ *
+ * @property order todos los identificadores, en el orden elegido. Puede haber alguno que ahora
+ *   mismo no exista: se conserva para cuando vuelva.
+ * @property hidden los apagados; siguen en [order] para conservar su sitio.
+ * @property alignment si las tarjetas se agrupan arriba o abajo.
+ */
 data class ShelfLayout(
-    val sections: List<ShelfSection>,
-    val hidden: Set<ShelfSection>,
+    val order: List<String>,
+    val hidden: Set<String>,
     val alignment: ShelfAlignment
 ) {
-    val visibleSections: List<ShelfSection> get() = sections.filterNot { it in hidden }
 
-    fun isVisible(section: ShelfSection): Boolean = section !in hidden
+    /**
+     * «Leyendo» y «Leídos» no se pueden apagar: son el sentido mismo de la pantalla, y sin
+     * ellas «Mis libros» no enseñaría ningún libro. Las propias del usuario sí, todas.
+     */
+    fun canHide(identifier: String): Boolean =
+        ShelfSection.fromSlug(identifier)?.canHide ?: true
 
-    /** Apagar una estantería que no se puede apagar no hace nada, en vez de fallar. */
-    fun toggled(section: ShelfSection): ShelfLayout = when {
-        !section.canHide -> this
-        section in hidden -> copy(hidden = hidden - section)
-        else -> copy(hidden = hidden + section)
+    fun isVisible(identifier: String): Boolean = identifier !in hidden
+
+    fun toggled(identifier: String): ShelfLayout = when {
+        !canHide(identifier) -> this
+        identifier in hidden -> copy(hidden = hidden - identifier)
+        else -> copy(hidden = hidden + identifier)
     }
 
     fun withAlignment(alignment: ShelfAlignment): ShelfLayout = copy(alignment = alignment)
 
-    /**
-     * Formato de disco: los ids separados por comas, con un "-" delante de los apagados
-     * ("stopped_reading,-to_read,reading,read"). El mismo que usa [ProfileLayout], por lo
-     * mismo: se lee de un vistazo al depurar. La posición se guarda aparte.
-     */
-    fun encode(): String = sections.joinToString(",") { section ->
-        if (section in hidden) "-${section.id}" else section.id
+    /** Saca la estantería de [from] y la deja en [to]. */
+    fun moved(from: Int, to: Int): ShelfLayout {
+        if (from !in order.indices || to !in order.indices || from == to) return this
+        val moved = order.toMutableList()
+        moved.add(to, moved.removeAt(from))
+        return copy(order = moved)
     }
 
+    /** Mete al final, encendidas, las que aún no estaban. Lo contrario escondería la recién hecha. */
+    fun withKnown(identifiers: List<String>): ShelfLayout {
+        val newcomers = identifiers.filterNot { it in order }
+        return if (newcomers.isEmpty()) this else copy(order = order + newcomers)
+    }
+
+    /** Las que existen ahora, en el orden elegido y sin las apagadas. */
+    fun visible(identifiers: List<String>): List<String> {
+        val present = identifiers.toSet()
+        val known = order.filter { it in present }
+        val newcomers = identifiers.filterNot { it in order }
+        return (known + newcomers).filterNot { it in hidden }
+    }
+
+    /**
+     * Formato de disco: los identificadores separados por comas, con un "-" delante de los
+     * apagados ("read,-to-read,favoritter-315769").
+     */
+    fun encode(): String = order.joinToString(",") { if (it in hidden) "-$it" else it }
+
     companion object {
-        /**
-         * Orden por defecto: el de la enumeración, que es el que tenía la pantalla antes de
-         * poder cambiarse.
-         */
-        val DEFAULT = ShelfLayout(ShelfSection.entries.toList(), emptySet(), ShelfAlignment.TOP)
+        val DEFAULT = ShelfLayout(
+            ShelfSection.entries.map { it.slug },
+            emptySet(),
+            ShelfAlignment.TOP
+        )
 
         /**
          * Reconstruye la disposición guardada.
          *
-         * Tolerante como la del perfil: ids desconocidos —estanterías retiradas en una versión
-         * posterior— se ignoran, y las que esta versión conoce pero no estaban guardadas se
-         * añaden al final, encendidas. Además ignora un "-" delante de una estantería que no se
-         * puede apagar, para que un fichero manipulado a mano no deje la pantalla vacía.
+         * Se guardan **slugs**, que es como llama la instancia a sus estanterías, para que las
+         * de serie y las del usuario quepan en la misma lista. Las versiones anteriores
+         * guardaban los ids de la enumeración ("to_read"), así que se siguen entendiendo y se
+         * traducen al leer: quien actualiza conserva su orden.
+         *
+         * Un identificador desconocido se conserva: puede ser una estantería propia que ahora
+         * no está —borrada en la web, o una lista que llegó a medias— y su sitio debe esperarla.
          */
         fun decode(raw: String?, alignment: String?): ShelfLayout {
             val align = ShelfAlignment.fromId(alignment)
             if (raw.isNullOrBlank()) return DEFAULT.copy(alignment = align)
 
-            val ordered = mutableListOf<ShelfSection>()
-            val hidden = mutableSetOf<ShelfSection>()
+            val order = mutableListOf<String>()
+            val hidden = mutableSetOf<String>()
             raw.split(",").forEach { entry ->
                 val token = entry.trim()
                 if (token.isEmpty()) return@forEach
                 val isHidden = token.startsWith("-")
-                val section = ShelfSection.fromId(token.removePrefix("-")) ?: return@forEach
-                if (section in ordered) return@forEach
-                ordered.add(section)
-                if (isHidden && section.canHide) hidden.add(section)
+                val stored = token.removePrefix("-")
+                if (stored.isEmpty()) return@forEach
+                val identifier = ShelfSection.fromId(stored)?.slug ?: stored
+                if (identifier in order) return@forEach
+                order += identifier
+                val canHide = ShelfSection.fromSlug(identifier)?.canHide ?: true
+                if (isHidden && canHide) hidden += identifier
             }
-            if (ordered.isEmpty()) return DEFAULT.copy(alignment = align)
+            if (order.isEmpty()) return DEFAULT.copy(alignment = align)
 
             ShelfSection.entries.forEach { section ->
-                if (section !in ordered) ordered.add(section)
+                if (section.slug !in order) order += section.slug
             }
-            return ShelfLayout(ordered, hidden, align)
+            return ShelfLayout(order, hidden, align)
         }
     }
 }

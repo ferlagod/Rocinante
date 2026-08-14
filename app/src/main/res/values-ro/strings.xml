@@ -86,6 +86,7 @@
     <string name="book_section_ids">Numere</string>
     <string name="book_section_downloads">Copii legate</string>
     <string name="favourite_shelf_name">Favorite</string>
+    <string name="shelf_favourites_desc">Cărțile pe care le-ai marcat cu inima</string>
     <string name="favourite_add">Adaugă la favorite</string>
     <string name="favourite_remove">Elimină de la favorite</string>
     <string name="favourite_failed">Favoritul nu a putut fi schimbat</string>
@@ -520,6 +521,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="shelf_move_instead">Mută în loc să copiezi</string>
     <string name="shelf_move_help">O ia de unde este. Nu din Citite.</string>
     <string name="shelf_own_section">Rafturile tale</string>
+    <string name="shelf_allow_create">Permite crearea rafturilor</string>
     <string name="shelf_layout_title">Editează pagina</string>
     <string name="shelf_layout_help">Activează sau dezactivează rafturi și trage de mâner ca să le reordonezi.</string>
     <string name="shelf_layout_align">Poziția pe ecran</string>

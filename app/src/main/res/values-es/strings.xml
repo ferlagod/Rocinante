@@ -103,6 +103,7 @@
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Copias enlazadas</string>
     <string name="favourite_shelf_name">Favoritos</string>
+    <string name="shelf_favourites_desc">Los libros que has marcado con el corazón</string>
     <string name="favourite_add">Añadir a favoritos</string>
     <string name="favourite_remove">Quitar de favoritos</string>
     <string name="favourite_failed">No se pudo cambiar el favorito</string>
@@ -595,6 +596,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="shelf_move_instead">Mover en vez de copiar</string>
     <string name="shelf_move_help">Lo saca de donde está. No se puede desde «Leídos».</string>
     <string name="shelf_own_section">Tus estanterías</string>
+    <string name="shelf_allow_create">Permitir crear estanterías</string>
     <string name="shelf_layout_title">Editar página</string>
     <string name="shelf_layout_help">Activa o desactiva las estanterías y arrastra el asa para ordenarlas.</string>
     <string name="shelf_layout_align">Posición en la pantalla</string>

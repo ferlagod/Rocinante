@@ -84,6 +84,7 @@
     <string name="book_section_ids">Nummern</string>
     <string name="book_section_downloads">Verlinkte Kopien</string>
     <string name="favourite_shelf_name">Favoriten</string>
+    <string name="shelf_favourites_desc">Bücher, die du mit dem Herz markiert hast</string>
     <string name="favourite_add">Zu Favoriten hinzufügen</string>
     <string name="favourite_remove">Aus Favoriten entfernen</string>
     <string name="favourite_failed">Favorit konnte nicht geändert werden</string>
@@ -510,6 +511,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="shelf_move_instead">Verschieben statt kopieren</string>
     <string name="shelf_move_help">Nimmt es von dort weg, wo es jetzt ist. Nicht aus „Gelesen“.</string>
     <string name="shelf_own_section">Deine Regale</string>
+    <string name="shelf_allow_create">Regale anlegen erlauben</string>
     <string name="shelf_layout_title">Seite bearbeiten</string>
     <string name="shelf_layout_help">Schalte Regale ein oder aus und zieh am Griff, um sie zu ordnen.</string>
     <string name="shelf_layout_align">Position auf dem Bildschirm</string>

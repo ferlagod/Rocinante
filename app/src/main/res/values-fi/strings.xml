@@ -93,6 +93,7 @@
     <string name="book_section_ids">Numerot</string>
     <string name="book_section_downloads">Linkitetyt kappaleet</string>
     <string name="favourite_shelf_name">Suosikit</string>
+    <string name="shelf_favourites_desc">Kirjat, jotka olet merkinnyt sydämellä</string>
     <string name="favourite_add">Lisää suosikkeihin</string>
     <string name="favourite_remove">Poista suosikeista</string>
     <string name="favourite_failed">Suosikkia ei voitu muuttaa</string>
@@ -511,6 +512,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="shelf_move_instead">Siirrä kopioinnin sijaan</string>
     <string name="shelf_move_help">Ottaa sen pois nykyisestä paikasta. Ei Luetut-hyllystä.</string>
     <string name="shelf_own_section">Omat hyllysi</string>
+    <string name="shelf_allow_create">Salli hyllyjen luonti</string>
     <string name="shelf_layout_title">Muokkaa sivua</string>
     <string name="shelf_layout_help">Ota hyllyjä käyttöön tai pois ja järjestä ne vetämällä kahvasta.</string>
     <string name="shelf_layout_align">Sijainti näytöllä</string>

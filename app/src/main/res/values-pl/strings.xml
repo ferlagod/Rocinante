@@ -88,6 +88,7 @@
     <string name="book_section_ids">Numery</string>
     <string name="book_section_downloads">Podlinkowane kopie</string>
     <string name="favourite_shelf_name">Ulubione</string>
+    <string name="shelf_favourites_desc">Książki oznaczone sercem</string>
     <string name="favourite_add">Dodaj do ulubionych</string>
     <string name="favourite_remove">Usuń z ulubionych</string>
     <string name="favourite_failed">Nie udało się zmienić ulubionego</string>
@@ -530,6 +531,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="shelf_move_instead">Przenieś zamiast kopiować</string>
     <string name="shelf_move_help">Zabiera ją stamtąd, gdzie jest. Nie z Przeczytane.</string>
     <string name="shelf_own_section">Twoje półki</string>
+    <string name="shelf_allow_create">Pozwól tworzyć półki</string>
     <string name="shelf_layout_title">Edytuj stronę</string>
     <string name="shelf_layout_help">Włączaj i wyłączaj półki, a uchwytem przeciągaj, żeby zmienić ich kolejność.</string>
     <string name="shelf_layout_align">Położenie na ekranie</string>

@@ -105,6 +105,7 @@
     <string name="book_section_ids">Numbers</string>
     <string name="book_section_downloads">Free copies</string>
     <string name="favourite_shelf_name">Favourites</string>
+    <string name="shelf_favourites_desc">Books you marked with the heart</string>
     <string name="favourite_add">Add to favourites</string>
     <string name="favourite_remove">Remove from favourites</string>
     <string name="favourite_failed">Could not change the favourite</string>
@@ -595,6 +596,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="shelf_move_instead">Move instead of copy</string>
     <string name="shelf_move_help">Move it out of where it is now. Not possible from Read.</string>
     <string name="shelf_own_section">Your shelves</string>
+    <string name="shelf_allow_create">Allow creating shelves</string>
     <string name="shelf_layout_title">Edit page</string>
     <string name="shelf_layout_help">Turn shelves on or off, and drag the handle to reorder them.</string>
     <string name="shelf_layout_align">Position on screen</string>

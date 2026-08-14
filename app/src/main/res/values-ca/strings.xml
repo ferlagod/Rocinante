@@ -84,6 +84,7 @@
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Còpies enllaçades</string>
     <string name="favourite_shelf_name">Preferits</string>
+    <string name="shelf_favourites_desc">Els llibres que has marcat amb el cor</string>
     <string name="favourite_add">Afegir als preferits</string>
     <string name="favourite_remove">Treure dels preferits</string>
     <string name="favourite_failed">No s\'ha pogut canviar el preferit</string>
@@ -510,6 +511,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="shelf_move_instead">Moure en lloc de copiar</string>
     <string name="shelf_move_help">El treu d\'on és. No es pot des de Llegits.</string>
     <string name="shelf_own_section">Les teves prestatgeries</string>
+    <string name="shelf_allow_create">Permetre crear prestatgeries</string>
     <string name="shelf_layout_title">Editar la pàgina</string>
     <string name="shelf_layout_help">Activa o desactiva prestatgeries i arrossega l\'ansa per ordenar-les.</string>
     <string name="shelf_layout_align">Posició a la pantalla</string>

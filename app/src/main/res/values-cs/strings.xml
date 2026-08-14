@@ -88,6 +88,7 @@
     <string name="book_section_ids">Čísla</string>
     <string name="book_section_downloads">Odkazované kopie</string>
     <string name="favourite_shelf_name">Oblíbené</string>
+    <string name="shelf_favourites_desc">Knihy, které jste označili srdíčkem</string>
     <string name="favourite_add">Přidat k oblíbeným</string>
     <string name="favourite_remove">Odebrat z oblíbených</string>
     <string name="favourite_failed">Oblíbenou položku se nepodařilo změnit</string>
@@ -528,6 +529,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="shelf_move_instead">Přesunout místo zkopírování</string>
     <string name="shelf_move_help">Vezme ji odtud, kde je. Ne z Přečtené.</string>
     <string name="shelf_own_section">Vaše police</string>
+    <string name="shelf_allow_create">Povolit vytváření polic</string>
     <string name="shelf_layout_title">Upravit stránku</string>
     <string name="shelf_layout_help">Zapínejte a vypínejte police a tažením za úchyt měňte jejich pořadí.</string>
     <string name="shelf_layout_align">Umístění na obrazovce</string>

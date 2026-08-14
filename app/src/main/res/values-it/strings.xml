@@ -84,6 +84,7 @@
     <string name="book_section_ids">Numeri</string>
     <string name="book_section_downloads">Copie collegate</string>
     <string name="favourite_shelf_name">Preferiti</string>
+    <string name="shelf_favourites_desc">I libri che hai segnato con il cuore</string>
     <string name="favourite_add">Aggiungi ai preferiti</string>
     <string name="favourite_remove">Togli dai preferiti</string>
     <string name="favourite_failed">Non è stato possibile cambiare il preferito</string>
@@ -510,6 +511,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="shelf_move_instead">Sposta invece di copiare</string>
     <string name="shelf_move_help">Lo toglie da dov\'è. Non dai letti.</string>
     <string name="shelf_own_section">I tuoi scaffali</string>
+    <string name="shelf_allow_create">Permetti creare scaffali</string>
     <string name="shelf_layout_title">Modifica pagina</string>
     <string name="shelf_layout_help">Attiva o disattiva gli scaffali e trascina la maniglia per ordinarli.</string>
     <string name="shelf_layout_align">Posizione sullo schermo</string>

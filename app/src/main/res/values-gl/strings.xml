@@ -95,6 +95,7 @@
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Copias ligadas</string>
     <string name="favourite_shelf_name">Favoritos</string>
+    <string name="shelf_favourites_desc">Os libros que marcaches co corazón</string>
     <string name="favourite_add">Engadir aos favoritos</string>
     <string name="favourite_remove">Quitar dos favoritos</string>
     <string name="favourite_failed">Non se puido cambiar o favorito</string>
@@ -512,6 +513,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="shelf_move_instead">Mover en vez de copiar</string>
     <string name="shelf_move_help">Quítao de onde está. Non desde Lidos.</string>
     <string name="shelf_own_section">Os teus andeis</string>
+    <string name="shelf_allow_create">Permitir crear andeis</string>
     <string name="shelf_layout_title">Editar a páxina</string>
     <string name="shelf_layout_help">Activa ou desactiva andeis e arrastra a asa para ordenalos.</string>
     <string name="shelf_layout_align">Posición na pantalla</string>

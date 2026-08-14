@@ -84,6 +84,7 @@
     <string name="book_section_ids">Nummer</string>
     <string name="book_section_downloads">Länkade kopior</string>
     <string name="favourite_shelf_name">Favoriter</string>
+    <string name="shelf_favourites_desc">Böcker du märkt med hjärtat</string>
     <string name="favourite_add">Lägg till i favoriter</string>
     <string name="favourite_remove">Ta bort från favoriter</string>
     <string name="favourite_failed">Kunde inte ändra favoriten</string>
@@ -510,6 +511,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="shelf_move_instead">Flytta i stället för att kopiera</string>
     <string name="shelf_move_help">Tar bort den där den står nu. Inte från Lästa.</string>
     <string name="shelf_own_section">Dina hyllor</string>
+    <string name="shelf_allow_create">Tillåt att skapa hyllor</string>
     <string name="shelf_layout_title">Redigera sidan</string>
     <string name="shelf_layout_help">Slå på eller av hyllor och dra i handtaget för att ordna dem.</string>
     <string name="shelf_layout_align">Placering på skärmen</string>

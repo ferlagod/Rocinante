@@ -88,6 +88,7 @@
     <string name="book_section_ids">Номери</string>
     <string name="book_section_downloads">Пов’язані копії</string>
     <string name="favourite_shelf_name">Улюблені</string>
+    <string name="shelf_favourites_desc">Книжки, позначені серцем</string>
     <string name="favourite_add">Додати до улюблених</string>
     <string name="favourite_remove">Прибрати з улюблених</string>
     <string name="favourite_failed">Не вдалося змінити улюблене</string>
@@ -530,6 +531,7 @@
     <string name="shelf_move_instead">Перемістити замість копіювання</string>
     <string name="shelf_move_help">Забирає її звідти, де вона є. Не з «Прочитані».</string>
     <string name="shelf_own_section">Ваші полиці</string>
+    <string name="shelf_allow_create">Дозволити створення полиць</string>
     <string name="shelf_layout_title">Редагувати сторінку</string>
     <string name="shelf_layout_help">Вмикайте й вимикайте полиці, а щоб змінити порядок, тягніть за держак.</string>
     <string name="shelf_layout_align">Розташування на екрані</string>

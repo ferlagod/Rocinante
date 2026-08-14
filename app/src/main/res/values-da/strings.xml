@@ -103,6 +103,7 @@
     <string name="book_section_ids">Numre</string>
     <string name="book_section_downloads">Kopier</string>
     <string name="favourite_shelf_name">Favoritter</string>
+    <string name="shelf_favourites_desc">Bøger du har markeret med hjertet</string>
     <string name="favourite_add">Føj til favoritter</string>
     <string name="favourite_remove">Fjern fra favoritter</string>
     <string name="favourite_failed">Kunne ikke ændre favoritten</string>
@@ -596,6 +597,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="shelf_move_instead">Flyt i stedet for at kopiere</string>
     <string name="shelf_move_help">Tager den væk fra der, hvor den står nu. Kan ikke fra Læst.</string>
     <string name="shelf_own_section">Dine hylder</string>
+    <string name="shelf_allow_create">Tillad at oprette hylder</string>
     <string name="shelf_layout_title">Rediger side</string>
     <string name="shelf_layout_help">Slå hylder til og fra, og træk i grebet for at ændre rækkefølgen.</string>
     <string name="shelf_layout_align">Placering på skærmen</string>

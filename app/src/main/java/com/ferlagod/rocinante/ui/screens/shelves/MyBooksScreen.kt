@@ -53,6 +53,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.People
@@ -358,20 +359,28 @@ fun MyBooksScreen(
         }
     }
 
-    // Las apagadas siguen existiendo: la búsqueda puede mandar aquí un libro de una de ellas, y
-    // esconder la tarjeta no debe cerrar el camino a la estantería.
-    val shelves = shelfLayout.visibleSections.map { shelvesBySection.getValue(it) } +
-        // Las propias van detrás de las de serie y con otro icono, para que se vea de un
-        // vistazo cuáles son estados de lectura y cuáles sitios donde uno guarda.
-        ownShelves.map {
+    // Todas las estanterías que hay, en una sola lista: las cuatro de BookWyrm y las del
+    // usuario, cada una con su tarjeta. El orden es común, así que aquí no se separan.
+    val everyShelf = ShelfSection.entries.map { shelvesBySection.getValue(it) } +
+        ownShelves.map { own ->
+            // La de favoritos es una estantería propia como las demás, pero la aplicación sabe
+            // cuál es, así que lleva su corazón y una línea que la explica. Las otras las ha
+            // nombrado el usuario y no hay nada que añadir a su nombre.
+            val isFavourites = own.identifier == settingsState.favouriteShelf &&
+                settingsState.favouriteShelf.isNotBlank()
             ShelfUiItem(
-                slug = it.identifier,
-                title = it.name,
-                description = "",
-                icon = Icons.AutoMirrored.Filled.LibraryBooks
+                slug = own.identifier,
+                title = own.name,
+                description = if (isFavourites) stringResource(R.string.shelf_favourites_desc) else "",
+                icon = if (isFavourites) Icons.Filled.Favorite else Icons.AutoMirrored.Filled.LibraryBooks
             )
         }
-    val allShelves = ShelfSection.entries.map { shelvesBySection.getValue(it) } + shelves
+
+    // Las apagadas siguen existiendo: la búsqueda puede mandar aquí un libro de una de ellas, y
+    // esconder la tarjeta no debe cerrar el camino a la estantería.
+    val visibleSlugs = shelfLayout.visible(everyShelf.map { it.slug })
+    val shelves = visibleSlugs.mapNotNull { slug -> everyShelf.firstOrNull { it.slug == slug } }
+    val allShelves = everyShelf
 
     var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
 
@@ -411,11 +420,15 @@ fun MyBooksScreen(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { showCreateShelf = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.shelf_create_action)
-                    )
+                // El más se puede quitar desde «editar página»: quien no se hace
+                // estanterías no necesita el botón mirándole todos los días.
+                if (settingsState.allowCreateShelves) {
+                    IconButton(onClick = { showCreateShelf = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.shelf_create_action)
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -517,11 +530,16 @@ fun MyBooksScreen(
         if (showLayoutDialog) {
             ShelfLayoutDialog(
                 initialLayout = shelfLayout,
+                shelves = everyShelf.map {
+                    com.ferlagod.rocinante.ui.components.ShelfEntry(it.slug, it.title)
+                },
+                initialAllowCreate = settingsState.allowCreateShelves,
                 onDismiss = { showLayoutDialog = false },
-                onSave = { updated ->
+                onSave = { updated, allowCreate ->
                     showLayoutDialog = false
                     layoutScope.launch {
                         settingsPreferences.setShelfLayout(updated.encode(), updated.alignment.id)
+                        settingsPreferences.setOwnShelfLayout("", allowCreate)
                     }
                 }
             )

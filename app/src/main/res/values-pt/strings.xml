@@ -84,6 +84,7 @@
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Cópias vinculadas</string>
     <string name="favourite_shelf_name">Favoritos</string>
+    <string name="shelf_favourites_desc">Os livros que você marcou com o coração</string>
     <string name="favourite_add">Adicionar aos favoritos</string>
     <string name="favourite_remove">Remover dos favoritos</string>
     <string name="favourite_failed">Não foi possível alterar o favorito</string>
@@ -510,6 +511,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="shelf_move_instead">Mover em vez de copiar</string>
     <string name="shelf_move_help">Tira-o de onde está. Não a partir de Lidos.</string>
     <string name="shelf_own_section">Suas estantes</string>
+    <string name="shelf_allow_create">Permitir criar estantes</string>
     <string name="shelf_layout_title">Editar página</string>
     <string name="shelf_layout_help">Ative ou desative as estantes e arraste a alça para ordená-las.</string>
     <string name="shelf_layout_align">Posição na tela</string>

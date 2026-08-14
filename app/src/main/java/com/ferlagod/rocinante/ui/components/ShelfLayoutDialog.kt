@@ -23,6 +23,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
@@ -66,6 +72,15 @@ import com.ferlagod.rocinante.utils.ShelfLayout
 import com.ferlagod.rocinante.utils.ShelfSection
 
 /** Alto fijo de cada fila: es lo que permite traducir el arrastre a un cambio de posición. */
+/**
+ * Una estantería tal y como la ve este diálogo: su identificador y el nombre que se le lee.
+ *
+ * Da igual si es de BookWyrm o del usuario. Esa diferencia importa en otros sitios —hay dos
+ * que no se pueden apagar—, pero para colocarlas en un orden no, y separarlas obligaría a
+ * quien quiere sus favoritos entre «Leyendo» y «Leídos» a pensar en de quién es cada una.
+ */
+data class ShelfEntry(val identifier: String, val name: String)
+
 private val RowHeight = 56.dp
 
 /**
@@ -80,10 +95,20 @@ private val RowHeight = 56.dp
 @Composable
 fun ShelfLayoutDialog(
     initialLayout: ShelfLayout,
+    // Las estanterías propias del usuario y su disposición. Van aparte de las cuatro de
+    // arriba porque no se conocen al compilar: aparecen y desaparecen desde la web.
+    // Todas las estanterías que hay ahora, las de serie y las del usuario, con el nombre que
+    // se les ve. Una sola lista: el orden es común, así que aquí no se distinguen.
+    shelves: List<ShelfEntry>,
+    initialAllowCreate: Boolean = true,
     onDismiss: () -> Unit,
-    onSave: (ShelfLayout) -> Unit
+    onSave: (ShelfLayout, Boolean) -> Unit
 ) {
-    var layout by remember(initialLayout) { mutableStateOf(initialLayout) }
+    // Las que aún no estaban guardadas entran ahora, para poder colocarlas y apagarlas.
+    var layout by remember(initialLayout, shelves) {
+        mutableStateOf(initialLayout.withKnown(shelves.map { it.identifier }))
+    }
+    var allowCreate by remember(initialAllowCreate) { mutableStateOf(initialAllowCreate) }
 
     // Índice de la fila que se está arrastrando y cuánto se ha movido desde su sitio.
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
@@ -107,37 +132,47 @@ fun ShelfLayoutDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                layout.sections.forEachIndexed { index, section ->
+                // Solo las que existen ahora. Un identificador guardado de una estantería que
+                // ya no está se conserva en el orden, pero no se dibuja: no se puede colocar
+                // algo que no se ve.
+                val rows = layout.order.mapNotNull { id -> shelves.firstOrNull { it.identifier == id } }
+                rows.forEachIndexed { index, entry ->
                     // La fila se identifica por su estantería y no por su posición: sin esta
                     // clave Compose reutiliza la fila al reordenar y reinicia el detector de
                     // gestos, con lo que el arrastre se pierde al pasar sobre la vecina.
-                    key(section) {
+                    key(entry.identifier) {
                         val isDragging = draggingIndex == index
                         ShelfRow(
-                            section = section,
-                            enabled = layout.isVisible(section),
+                            entry = entry,
+                            enabled = layout.isVisible(entry.identifier),
+                            canHide = layout.canHide(entry.identifier),
                             isDragging = isDragging,
                             dragOffset = if (isDragging) dragOffset else 0f,
-                            onToggle = { layout = layout.toggled(section) },
+                            onToggle = { layout = layout.toggled(entry.identifier) },
                             onDragStart = {
-                                draggingIndex = layout.sections.indexOf(section)
+                                draggingIndex = rows.indexOfFirst { it.identifier == entry.identifier }
                                 dragOffset = 0f
                             },
                             onDrag = { delta ->
                                 // Se parte de la posición actual de ESTA estantería, no del
                                 // índice capturado al componer, que se queda obsoleto en
                                 // cuanto la lista se reordena.
-                                val from = layout.sections.indexOf(section)
+                                val current = layout.order.mapNotNull { id ->
+                                    shelves.firstOrNull { it.identifier == id }
+                                }
+                                val from = current.indexOfFirst { it.identifier == entry.identifier }
+                                if (from < 0) return@ShelfRow
                                 dragOffset += delta
-                                // Al superar una fila entera se intercambia con la vecina y se
-                                // descuenta esa altura, así el dedo sigue sobre la fila.
                                 val steps = (dragOffset / rowHeightPx).toInt()
                                 if (steps != 0) {
-                                    val to = (from + steps).coerceIn(0, layout.sections.lastIndex)
+                                    val to = (from + steps).coerceIn(0, current.lastIndex)
                                     if (to != from) {
-                                        val reordered = layout.sections.toMutableList()
-                                        reordered.add(to, reordered.removeAt(from))
-                                        layout = layout.copy(sections = reordered)
+                                        // Los índices son de lo que se ve; el orden guardado
+                                        // puede llevar además estanterías ausentes, así que se
+                                        // traducen a la posición real antes de mover.
+                                        val fromAll = layout.order.indexOf(current[from].identifier)
+                                        val toAll = layout.order.indexOf(current[to].identifier)
+                                        layout = layout.moved(fromAll, toAll)
                                         dragOffset -= (to - from) * rowHeightPx
                                         draggingIndex = to
                                     }
@@ -152,6 +187,15 @@ fun ShelfLayoutDialog(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = allowCreate, onCheckedChange = { allowCreate = it })
+                    Text(
+                        text = stringResource(R.string.shelf_allow_create),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = stringResource(R.string.shelf_layout_align),
@@ -171,7 +215,7 @@ fun ShelfLayoutDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(layout) }) {
+            TextButton(onClick = { onSave(layout, allowCreate) }) {
                 Text(stringResource(R.string.profile_edit_save))
             }
         },
@@ -190,8 +234,9 @@ fun ShelfLayoutDialog(
 
 @Composable
 private fun ShelfRow(
-    section: ShelfSection,
+    entry: ShelfEntry,
     enabled: Boolean,
+    canHide: Boolean,
     isDragging: Boolean,
     dragOffset: Float,
     onToggle: () -> Unit,
@@ -199,7 +244,7 @@ private fun ShelfRow(
     onDrag: (Float) -> Unit,
     onDragEnd: () -> Unit
 ) {
-    val label = shelfLabel(section)
+    val label = entry.name
     val dragDescription = stringResource(R.string.profile_layout_drag_desc, label)
     val alwaysDescription = stringResource(R.string.shelf_layout_always, label)
 
@@ -225,7 +270,7 @@ private fun ShelfRow(
                 modifier = Modifier
                     .size(24.dp)
                     .semantics { contentDescription = dragDescription }
-                    .pointerInput(section) {
+                    .pointerInput(entry.identifier) {
                         detectDragGestures(
                             onDragStart = { onDragStart() },
                             onDragEnd = { onDragEnd() },
@@ -253,9 +298,9 @@ private fun ShelfRow(
             // vea que la fila también tiene ese ajuste y que ahí está decidido.
             Switch(
                 checked = enabled,
-                onCheckedChange = if (section.canHide) ({ onToggle() }) else null,
-                enabled = section.canHide,
-                modifier = if (section.canHide) {
+                onCheckedChange = if (canHide) ({ onToggle() }) else null,
+                enabled = canHide,
+                modifier = if (canHide) {
                     Modifier
                 } else {
                     Modifier.semantics { contentDescription = alwaysDescription }
@@ -269,13 +314,6 @@ private fun ShelfRow(
  * Nombre de cada estantería, el mismo que se lee en su tarjeta, para que la lista del diálogo
  * se corresponda con lo que hay en pantalla.
  */
-@Composable
-private fun shelfLabel(section: ShelfSection): String = when (section) {
-    ShelfSection.STOPPED_READING -> stringResource(R.string.shelf_stopped_title)
-    ShelfSection.TO_READ -> stringResource(R.string.shelf_to_read_title)
-    ShelfSection.READING -> stringResource(R.string.shelf_reading_title)
-    ShelfSection.READ -> stringResource(R.string.shelf_read_title)
-}
 
 @Composable
 private fun alignmentLabel(alignment: ShelfAlignment): String = when (alignment) {
