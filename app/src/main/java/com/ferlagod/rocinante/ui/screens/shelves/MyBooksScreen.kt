@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -720,16 +721,23 @@ fun ShelfNativeDetailScreen(
     // necesita el progreso, que no viene en la estantería y cuesta una petición por libro. Ahí
     // son dos o tres libros; en «Leídos» serían cientos, y además no significaría nada.
     var daysLeftByBook by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    // Y qué parte se lleva leída, para la barra del borde de la tarjeta. Va aparte de los días
+    // porque se sabe antes: sin fecha de inicio no hay previsión, pero el avance sí se conoce.
+    var fractionByBook by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
     // Se espera a que termine el relleno de datos por libro: mientras corre, `enrichment`
     // cambia con cada libro, y con él en las claves este efecto se reiniciaba sin parar y no
     // llegaba nunca al final de su recorrido.
     LaunchedEffect(shelf.slug, books.size, isEnriching) {
         if (shelf.slug != "reading" || books.isEmpty() || isEnriching) {
-            if (shelf.slug != "reading") daysLeftByBook = emptyMap()
+            if (shelf.slug != "reading") {
+                daysLeftByBook = emptyMap()
+                fractionByBook = emptyMap()
+            }
             return@LaunchedEffect
         }
         val today = java.time.LocalDate.now()
         val computed = mutableMapOf<String, Int>()
+        val fractions = mutableMapOf<String, Double>()
         books.forEach { book ->
             val id = book.id ?: return@forEach
             val started = enrichment[id]?.started
@@ -741,6 +749,10 @@ fun ShelfNativeDetailScreen(
                 isPercent = progress?.mode == "PCT",
                 totalPages = book.pages
             )
+            fraction?.let {
+                fractions[id] = it
+                fractionByBook = fractions.toMap()
+            }
             com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, fraction, today)?.let {
                 computed[id] = it
                 // Se van enseñando según se calculan, en vez de esperar a tenerlos todos.
@@ -1714,8 +1726,17 @@ fun ShelfNativeDetailScreen(
                                 }
                             }
                     ) {
+                        // Los días que faltan, si se han podido calcular. Se mira aquí arriba
+                        // porque de ello depende cuánto aire lleva la fila por abajo: con la
+                        // raya y la línea debajo, el margen de siempre las dejaba descolgadas.
+                        val paceDays = book.id?.let { daysLeftByBook[it] }
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 16.dp,
+                                bottom = if (paceDays != null) 8.dp else 16.dp
+                            ),
                             verticalAlignment = Alignment.Top
                         ) {
                             val enrich = book.id?.let { enrichment[it] }
@@ -1856,18 +1877,6 @@ fun ShelfNativeDetailScreen(
                                     )
                                 }
 
-                                // Al ritmo que se lleva. Solo en «Leyendo», que es donde
-                                // significa algo y donde se ha podido calcular.
-                                book.id?.let { daysLeftByBook[it] }?.let { days ->
-                                    Text(
-                                        text = "⏳ " + pluralStringResource(
-                                            R.plurals.book_days_left, days, days
-                                        ),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-
                                 // Serie del libro y qué número hace en ella. Solo consta si
                                 // alguien la ha atado en la instancia; mientras no, no hay línea.
                                 enrich?.seriesName?.takeIf { it.isNotBlank() }?.let { seriesName ->
@@ -1884,6 +1893,53 @@ fun ShelfNativeDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                            }
+                        }
+
+                        // Al ritmo que se lleva, centrado sobre la barra y pegado a ella: las
+                        // dos cuentan lo mismo —lo que se lleva y lo que queda—, así que se
+                        // leen de un vistazo. El aire de encima lo pone el margen de la fila.
+                        paceDays?.let { days ->
+                            // Una raya tenue para separarla de los datos del libro: lo de
+                            // arriba es lo que el libro es, y esto de aquí es cómo va la
+                            // lectura. Sale con la línea, no antes: sin ella no separa nada.
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                text = "⏳ " + pluralStringResource(
+                                    R.plurals.book_days_left, days, days
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 8.dp, bottom = 6.dp)
+                            )
+                        }
+
+                        // Lo leído, en el borde mismo de la tarjeta: va fuera del margen del
+                        // contenido a propósito, para que llegue de lado a lado y la esquina
+                        // redonda de la tarjeta la recorte. Hecha con dos cajas y no con la
+                        // barra de Material porque esa deja un hueco y las puntas redondeadas,
+                        // y aquí lo que se quiere es una línea entera pegada al borde.
+                        book.id?.let { fractionByBook[it] }?.let { fraction ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(fraction.toFloat().coerceIn(0f, 1f))
+                                        .fillMaxHeight()
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
                             }
                         }
                     }

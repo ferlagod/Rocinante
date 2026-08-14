@@ -1715,9 +1715,19 @@ fun BookDetailsDialog(
                                         // nada si falta con qué calcularlo —sin fecha de
                                         // inicio, o recién empezado—: una previsión sacada del
                                         // aire es peor que ninguna.
+                                        // La misma cuenta que en la estantería, con los
+                                        // mismos números: la de la barra de aquí arriba es un
+                                        // Float, y estirarlo a Double metía un pelo de error
+                                        // que bastaba para que el redondeo cayera del otro
+                                        // lado y los dos sitios dijeran un día distinto.
                                         com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
                                             startedIso = enrichment?.started,
-                                            fraction = fraction?.toDouble(),
+                                            fraction = com.ferlagod.rocinante.utils.ReadingPace
+                                                .fractionRead(
+                                                    progress = rp.progress,
+                                                    isPercent = rp.mode == "PCT",
+                                                    totalPages = totalPages
+                                                ),
                                             today = java.time.LocalDate.now()
                                         )?.let { days ->
                                             Text(
