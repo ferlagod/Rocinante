@@ -1990,6 +1990,31 @@ fun ShelfNativeDetailScreen(
                 books = books.filterNot { it.id == removedId }
                 incoming = incoming.filterNot { it.id == removedId }
             },
+            // Anotado un progreso nuevo, la barra y los días de la tarjeta de detrás se
+            // rehacen aquí mismo con el valor que acaba de mandarse. Las páginas del libro y
+            // la fecha de inicio ya están en pantalla, así que no hace falta volver a
+            // preguntarle nada a la instancia: es la misma cuenta con un número nuevo.
+            onProgressUpdated = { progress ->
+                val id = activeBookUrl
+                val pages = books.firstOrNull { it.id == id }?.pages
+                val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
+                    progress = progress.progress,
+                    isPercent = progress.mode == "PCT",
+                    totalPages = pages
+                )
+                fractionByBook = fractionByBook.toMutableMap().apply {
+                    if (fraction != null) put(id, fraction) else remove(id)
+                }
+                val days = com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
+                    startedIso = enrichment[id]?.started,
+                    fraction = fraction,
+                    today = java.time.LocalDate.now()
+                )
+                daysLeftByBook = daysLeftByBook.toMutableMap().apply {
+                    // Terminado el libro ya no queda nada que prever, así que la línea se va.
+                    if (days != null) put(id, days) else remove(id)
+                }
+            },
             // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
             initialEnrichment = enrichment[activeBookUrl],
             // La caché de enriquecimiento no se vuelve a leer una vez guardada, así que lo

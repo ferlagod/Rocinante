@@ -410,7 +410,11 @@ fun BookDetailsDialog(
     // Aviso con los datos enriquecidos recién leídos de la web (al abrir la ficha o tras
     // cambiar las fechas de lectura). Quien abre la ficha puede así refrescar su caché, que
     // por sí sola no se vuelve a leer nunca una vez guardada.
-    onEnrichmentUpdated: ((com.ferlagod.rocinante.data.model.BookEnrichment) -> Unit)? = null
+    onEnrichmentUpdated: ((com.ferlagod.rocinante.data.model.BookEnrichment) -> Unit)? = null,
+    // El progreso recién anotado, para quien tenga detrás la estantería pintada. Se pasa el
+    // valor, no un aviso de que algo cambió: quien lo recibe ya sabe las páginas del libro y
+    // la fecha de inicio, así que rehace su cuenta sin pedirle nada a la instancia.
+    onProgressUpdated: ((BookWyrmScraper.ReadingProgressInfo) -> Unit)? = null
 ) {
     val copyToClipboard = rememberCopyToClipboard()
     var showProgressDialog by remember { mutableStateOf(false) }
@@ -1950,6 +1954,7 @@ fun BookDetailsDialog(
         // Si por algún motivo no llegó el valor, recargar desde la red como respaldo.
         if (newProgress != null) {
             readingProgress = newProgress
+            onProgressUpdated?.invoke(newProgress)
         } else {
             progressRefreshKey++
         }
