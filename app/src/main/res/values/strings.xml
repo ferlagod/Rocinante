@@ -485,6 +485,14 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
         <item quantity="one">%d book without a rating</item>
         <item quantity="other">%d books without a rating</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d book without a language</item>
+        <item quantity="other">%d books without a language</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d book without a format</item>
+        <item quantity="other">%d books without a format</item>
+    </plurals>
     <string name="missing_ratings_explanation">Rating publishes: in BookWyrm a rating is a post like any other. Tap a star again to make it a half star.</string>
     <string name="missing_ratings_save">Rate</string>
     <string name="missing_ratings_privacy">Visibility:</string>
@@ -494,6 +502,9 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="missing_dates_failed">Could not save the dates for “%1$s”</string>
     <string name="missing_pages_explanation">The page count belongs to the book, not to you: what you write here is saved on the instance and everyone sees it. Saved one by one.</string>
     <string name="missing_pages_save">Save</string>
+    <string name="missing_field_explanation">This belongs to the book, not to you: what you pick here is saved on the instance and everyone sees it. The choices come from the instance itself. Saved one by one.</string>
+    <string name="missing_field_choose">Pick</string>
+    <string name="missing_field_failed">Could not save “%1$s”</string>
     <string name="missing_pages_failed">Could not save “%1$s”</string>
     <plurals name="missing_authors_title">
         <item quantity="one">%d book without an author</item>

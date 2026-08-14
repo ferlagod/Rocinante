@@ -442,6 +442,14 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
         <item quantity="one">%d livre sans note</item>
         <item quantity="other">%d livres sans note</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d livre sans langue</item>
+        <item quantity="other">%d livres sans langue</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d livre sans format</item>
+        <item quantity="other">%d livres sans format</item>
+    </plurals>
     <string name="missing_ratings_explanation">Noter publie : sur BookWyrm, une note est une publication comme une autre. Touchez de nouveau la même étoile pour la couper en deux.</string>
     <string name="missing_ratings_save">Noter</string>
     <string name="missing_ratings_privacy">Visibilité :</string>
@@ -549,5 +557,8 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
 • Gestion des éditions : L\'application utilise désormais l\'identifiant d\'édition exact du livre au lieu de l\'œuvre générale. Cela corrige les échecs lors de la création ou de l\'enregistrement des sessions de lecture.
 • Optimisation du réseau : Les téléchargements internes répétés ont été éliminés. L\'application utilise désormais mieux le cache lors des requêtes ou de la mise à jour des données de livre, réduisant ainsi la consommation de données et améliorant la vitesse.</string>
     <string name="changelog_text_v1_2_3">Nouveautés\n• Évaluation facultative : Il n\'est plus obligatoire d\'écrire une critique après avoir terminé un livre.\n• Regrouper par auteur : Dans l\'étagère \"Lus\", vous pouvez désormais filtrer par auteur.\n• Corriger les livres incomplets : Réparez rapidement les pages ou auteurs manquants depuis votre profil.\n• Étagère \"Arrêtés\" : Désormais visible par défaut dans \"Mes livres\".\n• Personnalisation des étagères : Triez, masquez et alignez vos étagères.\n• Améliorations de l\'exploration : Nouveaux filtres et recherche intégrée avec suggestions.\n• Recherche repensée : Interface plus claire et nouveau bouton pour le scanner.\n• Journal des modifications accessible : Relisez les nouveautés à tout moment.\n\nCorrections et Améliorations\n• Navigation intuitive : Le bouton retour annule les actions étape par étape.\n• Actions de lecture simplifiées : Unifiées dans la barre inférieure.\n• Affichage des couvertures : S\'adapte dynamiquement à la largeur de l\'écran.\n• Multilinguisme : Traductions entièrement révisées.\n• Versions de débogage : Identifiées clairement comme \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Cela appartient au livre, pas à vous : ce que vous choisissez ici est enregistré sur l\'instance et tout le monde le voit. Les choix viennent de l\'instance elle-même. Enregistré un par un.</string>
+    <string name="missing_field_choose">Choisir</string>
+    <string name="missing_field_failed">Impossible d\'enregistrer « %1$s »</string>
 </resources>
 

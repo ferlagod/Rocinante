@@ -492,6 +492,14 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
         <item quantity="one">%d bog uden vurdering</item>
         <item quantity="other">%d bøger uden vurdering</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d bog uden sprog</item>
+        <item quantity="other">%d bøger uden sprog</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d bog uden format</item>
+        <item quantity="other">%d bøger uden format</item>
+    </plurals>
     <string name="missing_ratings_explanation">At vurdere udgiver: i BookWyrm er en vurdering et opslag som alle andre. Tryk på samme stjerne igen for at gøre den til en halv.</string>
     <string name="missing_ratings_save">Vurder</string>
     <string name="missing_ratings_privacy">Synlighed:</string>
@@ -599,5 +607,8 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
 • Udgavehåndtering: Applikationen bruger nu den nøjagtige udgaveidentifikator for bogen i stedet for det generelle værk. Dette retter fejl ved oprettelse eller logføring af læsesessioner.
 • Netværksoptimering: Gentagne interne downloads er blevet elimineret. Appen udnytter nu cachen bedre, når der forespørges om eller opdateres bogdata, hvilket reducerer dataforbruget og forbedrer hastigheden.</string>
     <string name="changelog_text_v1_2_3">Nyheder\n• Valgfri anmeldelse: Det er ikke længere obligatorisk at skrive en anmeldelse.\n• Grupper efter forfatter: Filtrer bøger på hylden \"Læste\".\n• Ret ufuldstændige bøger: Tilføj manglende sider og forfattere fra din profil.\n• Hylden \"Stoppet\": Vises nu som standard i \"Mine bøger\".\n• Tilpasning af hylder: Sorter, skjul og juster dine hylder.\n• Udforsk-forbedringer: Nye filtre og integreret søgning.\n• Fornyet søgning: Renere grænseflade og flyttet scanner.\n• Tilgængelig ændringslog: Læs nyhederne når som helst.\n\nRettelser og forbedringer\n• Intuitiv navigation: Tilbage-knappen fortryder nu handlinger trin for trin.\n• Forenklede læsehandlinger: Samlet i den nederste bjælke.\n• Omslagsvisning: Tilpasser sig dynamisk til skærmen.\n• Flersprogethed: Oversættelser er grundigt gennemgået.\n• Fejlfindingsversioner: Tydeligt markeret som \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Det her hører til bogen, ikke til dig: det, du vælger, gemmes på instansen, og alle kan se det. Valgmulighederne kommer fra instansen selv. Gemmes én ad gangen.</string>
+    <string name="missing_field_choose">Vælg</string>
+    <string name="missing_field_failed">Kunne ikke gemme “%1$s”</string>
 </resources>
 

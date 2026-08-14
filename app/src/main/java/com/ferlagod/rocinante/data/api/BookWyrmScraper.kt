@@ -680,13 +680,40 @@ object BookWyrmScraper {
         api: BookWyrmApi,
         bookUrl: String,
         pages: Int
+    ): Boolean = setBookField(api, bookUrl, "pages", pages.toString())
+
+    /**
+     * Escribe **un** campo de la ficha del libro y deja los demás como estaban.
+     *
+     * Se manda el formulario de edición entero porque es lo que la instancia espera: mandar
+     * solo el campo suelto borraría todo lo que no viajara con él.
+     *
+     * Ojo: esto cambia la ficha para toda la instancia, igual que editarla desde la web.
+     *
+     * @param field nombre del campo tal y como lo llama el formulario ("pages", "languages",
+     *   "physical_format"…).
+     */
+    suspend fun setBookField(
+        api: BookWyrmApi,
+        bookUrl: String,
+        field: String,
+        value: String
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val form = getBookEditForm(api, bookUrl) ?: return@withContext false
+            // El campo puede no venir en el formulario —una instancia más vieja, un campo que
+            // ya no está—, y entonces se añade en vez de perderse por el camino.
+            var written = false
             val body = okhttp3.FormBody.Builder().apply {
-                for ((name, value) in form.fields) {
-                    add(name, if (name == "pages") pages.toString() else value)
+                for ((name, current) in form.fields) {
+                    if (name == field) {
+                        written = true
+                        add(name, value)
+                    } else {
+                        add(name, current)
+                    }
                 }
+                if (!written) add(field, value)
             }.build()
             val response = api.postForm(form.actionUrl, body)
             // Guardado, la instancia redirige a la ficha del libro; el cliente de la app no
@@ -696,6 +723,40 @@ object BookWyrmScraper {
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
+        }
+    }
+
+    /**
+     * Lo que la instancia acepta en un campo de lista de la ficha del libro.
+     *
+     * Se lee del propio formulario en vez de traerlo escrito en la aplicación: los formatos
+     * que admite BookWyrm son cosa de la instancia y de su versión, y una lista copiada aquí
+     * envejecería sin avisar. Vacía si el campo no es una lista, y entonces se escribe a mano.
+     *
+     * @return pares de valor y texto visible, en el orden en que los da la instancia y sin la
+     *   opción vacía que encabeza estas listas.
+     */
+    suspend fun getBookFieldOptions(
+        api: BookWyrmApi,
+        bookUrl: String,
+        field: String
+    ): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        try {
+            val current = canonicalBookUrl(bookUrl)
+            val localUrl = resolveLocalBookUrl(api, current) ?: current
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchHtmlWithRedirects(api, "${localUrl.trimEnd('/')}/edit", baseUrl)
+            if (html.isEmpty()) return@withContext emptyList()
+            org.jsoup.Jsoup.parse(html)
+                .select("select[name=$field] option")
+                .mapNotNull { option ->
+                    val value = option.attr("value").trim()
+                    if (value.isEmpty()) return@mapNotNull null
+                    value to option.text().trim().ifEmpty { value }
+                }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
         }
     }
 

@@ -442,6 +442,14 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
         <item quantity="one">%d Buch ohne Bewertung</item>
         <item quantity="other">%d Bücher ohne Bewertung</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d Buch ohne Sprache</item>
+        <item quantity="other">%d Bücher ohne Sprache</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d Buch ohne Format</item>
+        <item quantity="other">%d Bücher ohne Format</item>
+    </plurals>
     <string name="missing_ratings_explanation">Bewerten veröffentlicht: in BookWyrm ist eine Bewertung ein Beitrag wie jeder andere. Tippe denselben Stern noch einmal an, um ihn zu halbieren.</string>
     <string name="missing_ratings_save">Bewerten</string>
     <string name="missing_ratings_privacy">Sichtbarkeit:</string>
@@ -549,5 +557,8 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
 • Editionsverwaltung: Die Anwendung verwendet jetzt die genaue Editionskennung des Buches anstelle des allgemeinen Werks. Dies behebt Fehler beim Erstellen oder Protokollieren von Lesesitzungen.
 • Netzwerkoptimierung: Wiederholte interne Downloads wurden eliminiert. Die App nutzt jetzt den Cache besser, wenn Buchdaten abgefragt oder aktualisiert werden, was den Datenverbrauch reduziert und die Geschwindigkeit verbessert.</string>
     <string name="changelog_text_v1_2_3">Neuigkeiten\n• Optionale Bewertung: Es ist nicht mehr zwingend erforderlich, eine Rezension zu schreiben, wenn man ein Buch beendet.\n• Nach Autor gruppieren: Im Regal \"Gelesen\" können Sie nun nach Autor filtern.\n• Unvollständige Bücher korrigieren: Reparieren Sie fehlende Seiten oder Autoren direkt über Ihr Profil.\n• Regal \"Abgebrochen\": Jetzt standardmäßig unter \"Meine Bücher\" sichtbar.\n• Regal-Anpassung: Regale sortieren, ausblenden und ausrichten.\n• Entdecken-Verbesserungen: Neue Filter und integrierte Suche.\n• Überarbeitete Suche: Sauberere Oberfläche und neu positionierter Scanner.\n• Zugängliches Changelog: Neuigkeiten jederzeit erneut lesen.\n\nKorrekturen und Verbesserungen\n• Intuitive Navigation: Zurück-Taste macht Aktionen schrittweise rückgängig.\n• Vereinfachte Lese-Aktionen: In der unteren Leiste vereinheitlicht.\n• Cover-Anzeige: Passt sich dynamisch an die Bildschirmbreite an.\n• Mehrsprachigkeit: Übersetzungen gründlich überarbeitet.\n• Debug-Versionen: Klar als \"Rocinante debug\" gekennzeichnet.</string>
+    <string name="missing_field_explanation">Das gehört zum Buch, nicht zu dir: Was du hier wählst, wird auf der Instanz gespeichert und alle sehen es. Die Auswahl kommt von der Instanz selbst. Wird einzeln gespeichert.</string>
+    <string name="missing_field_choose">Wählen</string>
+    <string name="missing_field_failed">„%1$s“ konnte nicht gespeichert werden</string>
 </resources>
 

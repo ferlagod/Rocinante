@@ -455,6 +455,18 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="many">%d knih bez hodnocení</item>
         <item quantity="other">%d knih bez hodnocení</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d kniha bez jazyka</item>
+        <item quantity="few">%d knih bez jazyka</item>
+        <item quantity="many">%d knih bez jazyka</item>
+        <item quantity="other">%d knih bez jazyka</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d kniha bez formátu</item>
+        <item quantity="few">%d knih bez formátu</item>
+        <item quantity="many">%d knih bez formátu</item>
+        <item quantity="other">%d knih bez formátu</item>
+    </plurals>
     <string name="missing_ratings_explanation">Hodnocení se zveřejňuje: v BookWyrm je hodnocení příspěvek jako každý jiný. Klepnutím na stejnou hvězdičku znovu z ní uděláte půlku.</string>
     <string name="missing_ratings_save">Ohodnotit</string>
     <string name="missing_ratings_privacy">Viditelnost:</string>
@@ -574,5 +586,8 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
 • Správa vydání: Aplikace nyní používá přesný identifikátor vydání knihy místo obecného díla. To opravuje chyby při vytváření nebo zaznamenávání relací čtení.
 • Optimalizace sítě: Bylo odstraněno opakované interní stahování. Aplikace nyní lépe využívá mezipaměť při dotazování nebo aktualizaci dat o knize, což snižuje spotřebu dat a zlepšuje rychlost.</string>
     <string name="changelog_text_v1_2_3">Novinky\n• Volitelné hodnocení: Nyní již není povinné psát recenzi.\n• Seskupení podle autora: Filtrujte knihy v polici \"Přečtené\".\n• Oprava neúplných knih: Doplňte chybějící stránky a autory z profilu.\n• Police \"Nedokončeno\": Nyní je standardně viditelná.\n• Přizpůsobení polic: Seřaďte, skryjte a zarovnejte své police.\n• Vylepšení objevování: Nové filtry a integrované vyhledávání.\n• Obnovené vyhledávání: Čistší rozhraní a přemístěný skener.\n• Přístupný seznam změn: Přečtěte si novinky kdykoli.\n\nOpravy a vylepšení\n• Intuitivní navigace: Tlačítko zpět vrací akce krok za krokem.\n• Zjednodušené akce čtení: Sjednoceno na spodním panelu.\n• Zobrazení obálek: Dynamicky se přizpůsobuje obrazovce.\n• Vícejazyčnost: Důkladně revidované překlady.\n• Verze ladění: Označeny jako \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Tohle patří knize, ne tobě: co tu zvolíš, se uloží na instanci a uvidí to všichni. Možnosti dává sama instance. Ukládá se po jedné.</string>
+    <string name="missing_field_choose">Vybrat</string>
+    <string name="missing_field_failed">Nepodařilo se uložit „%1$s“</string>
 </resources>
 

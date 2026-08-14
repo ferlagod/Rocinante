@@ -444,6 +444,14 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
         <item quantity="one">%d libro sen valorar</item>
         <item quantity="other">%d libros sen valorar</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d libro sen idioma</item>
+        <item quantity="other">%d libros sen idioma</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d libro sen formato</item>
+        <item quantity="other">%d libros sen formato</item>
+    </plurals>
     <string name="missing_ratings_explanation">Valorar publica: en BookWyrm unha valoración é unha publicación coma calquera outra. Toca outra vez a mesma estrela para deixala á metade.</string>
     <string name="missing_ratings_save">Valorar</string>
     <string name="missing_ratings_privacy">Visibilidade:</string>
@@ -551,5 +559,8 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
 • Xestión de edicións: A aplicación agora usa o identificador exacto da edición do libro en lugar da obra xeral. Isto corrixe os fallos ao crear ou rexistrar sesións de lectura.
 • Optimización de rede: Elimináronse as descargas internas repetidas. Agora a aplicación aproveita mellor a caché ao consultar ou actualizar os datos dun libro, reducindo o consumo de datos e mellorando a velocidade.</string>
     <string name="changelog_text_v1_2_3">Novidades\n• Valoración opcional: Xa non é obrigatorio escribir unha reseña.\n• Agrupación por autor: No andel \"Lidos\", filtra por autor.\n• Arranxar libros incompletos: Repara páxinas ou autores dende o perfil.\n• Andel \"Deixados\": Agora visible por defecto.\n• Personalización de andeis: Ordena, oculta e aliña os andeis.\n• Melloras en Explorar: Novos filtros e buscador integrado.\n• Busca renovada: Interface máis limpa.\n• Rexistro de cambios: Le as novidades cando queiras.\n\nCorreccións e Melloras\n• Navegación intuitiva: O botón atrás desfai as accións paso a paso.\n• Accións de lectura simplificadas: Unificadas na barra inferior.\n• Visualización de portadas: Adáptase dinamicamente.\n• Multilingüismo: Traducións completamente revisadas.\n• Versións de depuración: Marcadas como \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Isto é do libro, non teu: o que escollas aquí gárdase na instancia e véo todo o mundo. As opcións dáas a propia instancia. Gárdase dun en un.</string>
+    <string name="missing_field_choose">Escoller</string>
+    <string name="missing_field_failed">Non se puido gardar «%1$s»</string>
 </resources>
 

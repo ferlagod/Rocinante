@@ -473,7 +473,10 @@ fun LanguagesCard(
     stats: ReadingStats,
     modifier: Modifier = Modifier,
     // Qué hacer al tocar un idioma, para ir a ver esos libros. Nada cambia de aspecto.
-    onLanguageClick: ((String) -> Unit)? = null
+    onLanguageClick: ((String) -> Unit)? = null,
+    // Qué hacer con los libros sin idioma. Ese dato no se toca desde aquí: lleva a la
+    // instancia, que es donde se edita.
+    onFixMissing: (() -> Unit)? = null
 ) {
     if (!stats.hasLanguageData) return
 
@@ -494,7 +497,8 @@ fun LanguagesCard(
         } else {
             null
         },
-        modifier = modifier
+        modifier = modifier,
+        onCaveatClick = onFixMissing
     ) { barColor, trackColor ->
         stats.languageDistribution.forEach { language ->
             HorizontalBarRow(
@@ -525,7 +529,9 @@ fun FormatsCard(
     stats: ReadingStats,
     modifier: Modifier = Modifier,
     // Qué hacer al tocar un formato, para ir a ver esos libros. Nada cambia de aspecto.
-    onFormatClick: ((String) -> Unit)? = null
+    onFormatClick: ((String) -> Unit)? = null,
+    // Qué hacer con los libros sin formato. Igual que el idioma: se edita en la instancia.
+    onFixMissing: (() -> Unit)? = null
 ) {
     if (!stats.hasFormatData) return
 
@@ -546,7 +552,8 @@ fun FormatsCard(
         } else {
             null
         },
-        modifier = modifier
+        modifier = modifier,
+        onCaveatClick = onFixMissing
     ) { barColor, trackColor ->
         stats.formatDistribution.forEach { format ->
             HorizontalBarRow(
@@ -593,6 +600,8 @@ private fun BarChartCard(
     chartDescription: String,
     caveat: String?,
     modifier: Modifier = Modifier,
+    // Qué hacer al tocar la nota de los que faltan, o null si no hay nada que hacer con ellos.
+    onCaveatClick: (() -> Unit)? = null,
     rows: @Composable (barColor: Color, trackColor: Color) -> Unit
 ) {
     val barColor = MaterialTheme.colorScheme.primary
@@ -616,7 +625,13 @@ private fun BarChartCard(
                 Text(
                     text = caveat,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (onCaveatClick != null) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (onCaveatClick != null) {
+                        Modifier.clickable { onCaveatClick() }
+                    } else {
+                        Modifier
+                    }
                 )
             }
         }

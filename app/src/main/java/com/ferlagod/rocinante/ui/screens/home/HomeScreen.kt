@@ -74,6 +74,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.ferlagod.rocinante.R
@@ -1280,6 +1281,9 @@ fun ProfileTab(
     var showMissingAuthors by remember { mutableStateOf(false) }
     var showMissingDates by remember { mutableStateOf(false) }
     var showMissingRatings by remember { mutableStateOf(false) }
+    // Idioma y formato se escriben como las páginas: con las opciones que da la instancia.
+    var showMissingLanguage by remember { mutableStateOf(false) }
+    var showMissingFormat by remember { mutableStateOf(false) }
     // Lo enriquecido de cada libro: de ahí sale el nombre del autor, y por tanto quién falta.
     var enrichment by remember {
         mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap())
@@ -1408,6 +1412,71 @@ fun ProfileTab(
                 }
             },
             onDismiss = { showMissingRatings = false }
+        )
+    }
+
+    // El idioma y el formato viven en el formulario de la ficha del libro, y rellenarlo desde
+    // aquí sería leer y reescribir su HTML. Se listan los libros y se abre la instancia, que
+    // además enseña las opciones que acepta.
+    val openOnInstance: (String) -> Unit = { url ->
+        context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+    }
+
+    if (showMissingLanguage) {
+        val withoutLanguage = readBooks.filter { it.languages.orEmpty().none { l -> l.isNotBlank() } }
+        com.ferlagod.rocinante.ui.components.MissingBookFieldDialog(
+            books = withoutLanguage,
+            field = "languages",
+            title = pluralStringResource(
+                R.plurals.missing_language_title,
+                withoutLanguage.size,
+                withoutLanguage.size
+            ),
+            explanation = stringResource(R.string.missing_field_explanation),
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            // Guardado en la instancia, se apunta también en la copia local: así el gráfico
+            // deja de decir que faltan libros sin esperar a releer la estantería.
+            onSaved = { bookId, value ->
+                val updated = readBooks.map {
+                    if (it.id == bookId) it.copy(languages = listOf(value)) else it
+                }
+                readBooks = updated
+                coroutineScope.launch {
+                    dataCache.saveShelfBooks("read", updated)
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingLanguage = false }
+        )
+    }
+
+    if (showMissingFormat) {
+        val withoutFormat = readBooks.filter { it.physicalFormat.isNullOrBlank() }
+        com.ferlagod.rocinante.ui.components.MissingBookFieldDialog(
+            books = withoutFormat,
+            field = "physical_format",
+            title = pluralStringResource(
+                R.plurals.missing_format_title,
+                withoutFormat.size,
+                withoutFormat.size
+            ),
+            explanation = stringResource(R.string.missing_field_explanation),
+            api = api,
+            context = context,
+            coroutineScope = coroutineScope,
+            onSaved = { bookId, value ->
+                val updated = readBooks.map {
+                    if (it.id == bookId) it.copy(physicalFormat = value) else it
+                }
+                readBooks = updated
+                coroutineScope.launch {
+                    dataCache.saveShelfBooks("read", updated)
+                    refreshTrigger++
+                }
+            },
+            onDismiss = { showMissingFormat = false }
         )
     }
 
@@ -1869,7 +1938,8 @@ fun ProfileTab(
                                 stats = stats,
                                 onLanguageClick = {
                                     onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Language(it))
-                                }
+                                },
+                                onFixMissing = { showMissingLanguage = true }
                             )
                         }
                     }
@@ -1881,7 +1951,8 @@ fun ProfileTab(
                                 stats = stats,
                                 onFormatClick = {
                                     onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Format(it))
-                                }
+                                },
+                                onFixMissing = { showMissingFormat = true }
                             )
                         }
                     }

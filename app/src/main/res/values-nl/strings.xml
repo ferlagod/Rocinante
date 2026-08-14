@@ -442,6 +442,14 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
         <item quantity="one">%d boek zonder beoordeling</item>
         <item quantity="other">%d boeken zonder beoordeling</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d boek zonder taal</item>
+        <item quantity="other">%d boeken zonder taal</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d boek zonder formaat</item>
+        <item quantity="other">%d boeken zonder formaat</item>
+    </plurals>
     <string name="missing_ratings_explanation">Beoordelen publiceert: in BookWyrm is een beoordeling een bericht als elk ander. Tik dezelfde ster nog eens aan voor een halve.</string>
     <string name="missing_ratings_save">Beoordelen</string>
     <string name="missing_ratings_privacy">Zichtbaarheid:</string>
@@ -549,5 +557,8 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
 • Editiebeheer: De applicatie gebruikt nu de exacte editie-identificatie van het boek in plaats van het algemene werk. Dit verhelpt fouten bij het maken of loggen van leessessies.
 • Netwerkoptimalisatie: Herhaalde interne downloads zijn geëlimineerd. De app maakt nu beter gebruik van de cache bij het opvragen of bijwerken van boekgegevens, waardoor het dataverbruik wordt verminderd en de snelheid wordt verbeterd.</string>
     <string name="changelog_text_v1_2_3">Wat is er nieuw\n• Optionele beoordeling: Het is niet langer verplicht om een recensie te schrijven.\n• Groeperen op auteur: Filter boeken in de plank \"Gelezen\" op auteur.\n• Onvolledige boeken corrigeren: Herstel ontbrekende pagina\'s of auteurs via je profiel.\n• Plank \"Gestopt\": Nu standaard zichtbaar in \"Mijn boeken\".\n• Planken aanpassen: Sorteer, verberg en lijn je planken uit.\n• Ontdek-verbeteringen: Nieuwe filters en geïntegreerde zoekfunctie.\n• Vernieuwde zoekopdracht: Schonere interface en verplaatste scanner.\n• Toegankelijk wijzigingslogboek: Lees de wijzigingen op elk gewenst moment.\n\nOplossingen en verbeteringen\n• Intuïtieve navigatie: Terugknop maakt acties stap voor stap ongedaan.\n• Vereenvoudigde leesacties: Verenigd in de onderste balk.\n• Coverweergave: Past zich dynamisch aan de schermbreedte aan.\n• Meertaligheid: Vertalingen grondig herzien.\n• Debug-versies: Duidelijk gemarkeerd als \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Dit hoort bij het boek, niet bij jou: wat je hier kiest wordt op de instantie opgeslagen en iedereen ziet het. De keuzes komen van de instantie zelf. Eén voor één opgeslagen.</string>
+    <string name="missing_field_choose">Kiezen</string>
+    <string name="missing_field_failed">Kon “%1$s” niet opslaan</string>
 </resources>
 

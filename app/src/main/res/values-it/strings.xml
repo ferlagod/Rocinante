@@ -442,6 +442,14 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
         <item quantity="one">%d libro senza voto</item>
         <item quantity="other">%d libri senza voto</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d libro senza lingua</item>
+        <item quantity="other">%d libri senza lingua</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d libro senza formato</item>
+        <item quantity="other">%d libri senza formato</item>
+    </plurals>
     <string name="missing_ratings_explanation">Votare pubblica: su BookWyrm un voto è un post come un altro. Tocca di nuovo la stessa stella per dimezzarla.</string>
     <string name="missing_ratings_save">Vota</string>
     <string name="missing_ratings_privacy">Visibilità:</string>
@@ -549,5 +557,8 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
 • Gestione delle edizioni: L\'applicazione ora utilizza l\'identificatore esatto dell\'edizione del libro invece dell\'opera generale. Questo corregge gli errori durante la creazione o la registrazione delle sessioni di lettura.
 • Ottimizzazione di rete: I download interni ripetuti sono stati eliminati. L\'app ora sfrutta meglio la cache quando interroga o aggiorna i dati del libro, riducendo il consumo di dati e migliorando la velocità.</string>
     <string name="changelog_text_v1_2_3">Novità\n• Valutazione opzionale: Non è più obbligatorio scrivere una recensione dopo aver finito un libro.\n• Raggruppa per autore: Nello scaffale \"Letti\", puoi filtrare per autore.\n• Correggi libri incompleti: Ripara rapidamente pagine o autori mancanti dal tuo profilo.\n• Scaffale \"Interrotti\": Ora visibile per impostazione predefinita in \"I miei libri\".\n• Personalizzazione scaffali: Ordina, nascondi e allinea i tuoi scaffali.\n• Miglioramenti Esplora: Nuovi filtri e ricerca integrata con suggerimenti.\n• Ricerca rinnovata: Interfaccia più pulita e scanner riposizionato.\n• Changelog accessibile: Rileggi le novità in qualsiasi momento.\n\nCorrezioni e Miglioramenti\n• Navigazione intuitiva: Il pulsante indietro annulla le azioni passo dopo passo.\n• Azioni di lettura semplificate: Unificate nella barra inferiore.\n• Visualizzazione copertine: Si adatta dinamicamente allo schermo.\n• Multilinguismo: Traduzioni accuratamente riviste.\n• Versioni di debug: Identificate come \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Questo appartiene al libro, non a te: quello che scegli qui viene salvato sull\'istanza e lo vedono tutti. Le opzioni le dà l\'istanza stessa. Si salva uno alla volta.</string>
+    <string name="missing_field_choose">Scegli</string>
+    <string name="missing_field_failed">Impossibile salvare «%1$s»</string>
 </resources>
 

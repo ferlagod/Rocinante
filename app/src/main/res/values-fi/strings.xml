@@ -443,6 +443,14 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
         <item quantity="one">%d kirja ilman arviota</item>
         <item quantity="other">%d kirjaa ilman arviota</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d kirja ilman kieltä</item>
+        <item quantity="other">%d kirjaa ilman kieltä</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d kirja ilman muotoa</item>
+        <item quantity="other">%d kirjaa ilman muotoa</item>
+    </plurals>
     <string name="missing_ratings_explanation">Arviointi julkaisee: BookWyrmissä arvio on julkaisu kuten mikä tahansa. Napauta samaa tähteä uudelleen, niin siitä tulee puolikas.</string>
     <string name="missing_ratings_save">Arvioi</string>
     <string name="missing_ratings_privacy">Näkyvyys:</string>
@@ -550,5 +558,8 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
 • Painosten hallinta: Sovellus käyttää nyt kirjan tarkkaa painoksen tunnistetta yleisen teoksen sijaan. Tämä korjaa virheet luotaessa tai tallennettaessa lukuistuntoja.
 • Verkon optimointi: Toistuvat sisäiset lataukset on poistettu. Sovellus hyödyntää nyt välimuistia paremmin kyselyissä tai kirjojen tietojen päivittämisessä, mikä vähentää tiedonsiirtoa ja parantaa nopeutta.</string>
     <string name="changelog_text_v1_2_3">Uutta\n• Valinnainen arvostelu: Arvostelun kirjoittaminen ei ole enää pakollista.\n• Ryhmittele kirjailijan mukaan: Suodata kirjoja \"Luetut\" -hyllyssä.\n• Korjaa puutteelliset kirjat: Lisää puuttuvat sivut ja kirjailijat profiilistasi.\n• \"Keskeytetty\" -hylly: Nyt oletuksena näkyvissä.\n• Hyllyjen mukauttaminen: Lajittele, piilota ja kohdista hyllyjä.\n• Tutki-parannukset: Uudet suodattimet ja integroitu haku.\n• Uudistettu haku: Puhdas käyttöliittymä ja siirretty skanneri.\n• Helppopääsyinen muutosloki: Lue uutiset milloin tahansa.\n\nKorjaukset ja parannukset\n• Intuitiivinen navigointi: Takaisin-painike kumoaa toiminnot askel askeleelta.\n• Yksinkertaistetut lukutoiminnot: Yhdistetty alareunan palkkiin.\n• Kansien näyttö: Mukautuu dynaamisesti näytön leveyteen.\n• Monikielisyys: Käännökset tarkistettu perusteellisesti.\n• Vianmääritysversiot: Merkitty selvästi \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Tämä kuuluu kirjalle, ei sinulle: valintasi tallentuu palvelimelle ja kaikki näkevät sen. Vaihtoehdot tulevat palvelimelta itseltään. Tallennetaan yksi kerrallaan.</string>
+    <string name="missing_field_choose">Valitse</string>
+    <string name="missing_field_failed">Kohdetta ”%1$s” ei voitu tallentaa</string>
 </resources>
 

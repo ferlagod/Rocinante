@@ -449,6 +449,16 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="few">%d cărți fără notă</item>
         <item quantity="other">%d cărți fără notă</item>
     </plurals>
+    <plurals name="missing_language_title">
+        <item quantity="one">%d carte fără limbă</item>
+        <item quantity="few">%d cărți fără limbă</item>
+        <item quantity="other">%d cărți fără limbă</item>
+    </plurals>
+    <plurals name="missing_format_title">
+        <item quantity="one">%d carte fără format</item>
+        <item quantity="few">%d cărți fără format</item>
+        <item quantity="other">%d cărți fără format</item>
+    </plurals>
     <string name="missing_ratings_explanation">Notarea publică: în BookWyrm o notă este o postare ca oricare alta. Atinge din nou aceeași stea ca să o faci jumătate.</string>
     <string name="missing_ratings_save">Notează</string>
     <string name="missing_ratings_privacy">Vizibilitate:</string>
@@ -567,5 +577,8 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
 • Gestionarea edițiilor: Aplicația folosește acum identificatorul exact al ediției cărții în loc de lucrarea generală. Aceasta remediază eșecurile la crearea sau înregistrarea sesiunilor de lectură.
 • Optimizarea rețelei: Descărcările interne repetate au fost eliminate. Aplicația utilizează acum mai bine memoria cache la interogarea sau actualizarea datelor despre cărți, reducând consumul de date și îmbunătățind viteza.</string>
     <string name="changelog_text_v1_2_3">Noutăți\n• Evaluare opțională: Nu mai este obligatoriu să scrii o recenzie.\n• Grupare după autor: Filtrați cărțile pe raftul \"Citite\".\n• Corectați cărțile incomplete: Adăugați pagini și autori din profil.\n• Raft \"Oprite\": Acum vizibil în mod implicit.\n• Personalizarea rafturilor: Sortați, ascundeți și aliniați rafturile.\n• Îmbunătățiri de explorare: Filtre noi și căutare integrată.\n• Căutare reînnoită: Interfață mai curată.\n• Jurnal de modificări: Citiți noutățile oricând.\n\nCorecții și îmbunătățiri\n• Navigare intuitivă: Butonul înapoi anulează acțiunile pas cu pas.\n• Acțiuni de lectură simplificate: Unificate în bara de jos.\n• Afișare coperți: Se adaptează dinamic la ecran.\n• Multilingvism: Traduceri revizuite cu atenție.\n• Versiuni de depanare: Marcate ca \"Rocinante debug\".</string>
+    <string name="missing_field_explanation">Asta ține de carte, nu de tine: ce alegi aici se salvează pe instanță și văd toți. Opțiunile vin chiar de la instanță. Se salvează una câte una.</string>
+    <string name="missing_field_choose">Alege</string>
+    <string name="missing_field_failed">Nu s-a putut salva „%1$s”</string>
 </resources>
 
