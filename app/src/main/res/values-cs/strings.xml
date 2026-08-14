@@ -87,6 +87,10 @@
     <string name="book_section_about">O knize</string>
     <string name="book_section_ids">Čísla</string>
     <string name="book_section_downloads">Odkazované kopie</string>
+    <string name="favourite_shelf_name">Oblíbené</string>
+    <string name="favourite_add">Přidat k oblíbeným</string>
+    <string name="favourite_remove">Odebrat z oblíbených</string>
+    <string name="favourite_failed">Oblíbenou položku se nepodařilo změnit</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">zdarma</string>
     <string name="book_link_purchase">placené</string>
@@ -514,6 +518,12 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_layout_reset">Obnovit</string>
     <string name="profile_layout_drag_desc">Přetažením přesuň %1$s</string>
     <string name="shelf_layout_edit">Upravit stránku</string>
+    <string name="shelf_create_title">Nová police</string>
+    <string name="shelf_create_name">Název</string>
+    <string name="shelf_create_description">Popis</string>
+    <string name="shelf_create_privacy">Kdo ji vidí:</string>
+    <string name="shelf_create_failed">Polici se nepodařilo vytvořit</string>
+    <string name="shelf_create_action">Vytvořit polici</string>
     <string name="shelf_layout_title">Upravit stránku</string>
     <string name="shelf_layout_help">Zapínejte a vypínejte police a tažením za úchyt měňte jejich pořadí.</string>
     <string name="shelf_layout_align">Umístění na obrazovce</string>

@@ -83,6 +83,10 @@
     <string name="book_section_about">Über das Buch</string>
     <string name="book_section_ids">Nummern</string>
     <string name="book_section_downloads">Verlinkte Kopien</string>
+    <string name="favourite_shelf_name">Favoriten</string>
+    <string name="favourite_add">Zu Favoriten hinzufügen</string>
+    <string name="favourite_remove">Aus Favoriten entfernen</string>
+    <string name="favourite_failed">Favorit konnte nicht geändert werden</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">kostenlos</string>
     <string name="book_link_purchase">kostenpflichtig</string>
@@ -496,6 +500,12 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_layout_reset">Zurücksetzen</string>
     <string name="profile_layout_drag_desc">Ziehen, um %1$s zu verschieben</string>
     <string name="shelf_layout_edit">Seite bearbeiten</string>
+    <string name="shelf_create_title">Neues Regal</string>
+    <string name="shelf_create_name">Name</string>
+    <string name="shelf_create_description">Beschreibung</string>
+    <string name="shelf_create_privacy">Wer es sieht:</string>
+    <string name="shelf_create_failed">Regal konnte nicht erstellt werden</string>
+    <string name="shelf_create_action">Regal erstellen</string>
     <string name="shelf_layout_title">Seite bearbeiten</string>
     <string name="shelf_layout_help">Schalte Regale ein oder aus und zieh am Griff, um sie zu ordnen.</string>
     <string name="shelf_layout_align">Position auf dem Bildschirm</string>

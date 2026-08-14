@@ -104,6 +104,10 @@
     <string name="book_section_about">About the book</string>
     <string name="book_section_ids">Numbers</string>
     <string name="book_section_downloads">Free copies</string>
+    <string name="favourite_shelf_name">Favourites</string>
+    <string name="favourite_add">Add to favourites</string>
+    <string name="favourite_remove">Remove from favourites</string>
+    <string name="favourite_failed">Could not change the favourite</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">free</string>
     <string name="book_link_purchase">to buy</string>
@@ -581,6 +585,12 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="profile_layout_reset">Reset</string>
     <string name="profile_layout_drag_desc">Drag to move %1$s</string>
     <string name="shelf_layout_edit">Edit page</string>
+    <string name="shelf_create_title">New shelf</string>
+    <string name="shelf_create_name">Name</string>
+    <string name="shelf_create_description">Description</string>
+    <string name="shelf_create_privacy">Who can see it:</string>
+    <string name="shelf_create_failed">Could not create the shelf</string>
+    <string name="shelf_create_action">Create shelf</string>
     <string name="shelf_layout_title">Edit page</string>
     <string name="shelf_layout_help">Turn shelves on or off, and drag the handle to reorder them.</string>
     <string name="shelf_layout_align">Position on screen</string>

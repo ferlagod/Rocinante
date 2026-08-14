@@ -83,6 +83,10 @@
     <string name="book_section_about">Sul libro</string>
     <string name="book_section_ids">Numeri</string>
     <string name="book_section_downloads">Copie collegate</string>
+    <string name="favourite_shelf_name">Preferiti</string>
+    <string name="favourite_add">Aggiungi ai preferiti</string>
+    <string name="favourite_remove">Togli dai preferiti</string>
+    <string name="favourite_failed">Non è stato possibile cambiare il preferito</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratis</string>
     <string name="book_link_purchase">a pagamento</string>
@@ -496,6 +500,12 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="profile_layout_reset">Ripristina</string>
     <string name="profile_layout_drag_desc">Trascina per spostare %1$s</string>
     <string name="shelf_layout_edit">Modifica pagina</string>
+    <string name="shelf_create_title">Nuovo scaffale</string>
+    <string name="shelf_create_name">Nome</string>
+    <string name="shelf_create_description">Descrizione</string>
+    <string name="shelf_create_privacy">Chi lo vede:</string>
+    <string name="shelf_create_failed">Non è stato possibile creare lo scaffale</string>
+    <string name="shelf_create_action">Crea scaffale</string>
     <string name="shelf_layout_title">Modifica pagina</string>
     <string name="shelf_layout_help">Attiva o disattiva gli scaffali e trascina la maniglia per ordinarli.</string>
     <string name="shelf_layout_align">Posizione sullo schermo</string>

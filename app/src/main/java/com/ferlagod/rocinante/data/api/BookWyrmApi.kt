@@ -310,7 +310,11 @@ interface BookWyrmApi {
         // BookWyrm espera el ID numérico del libro en el campo "book".
         // El campo "book_id" no existe en la vista Django y se ignora.
         @Field("book") bookId: String,
-        @Field("shelf") shelfType: String
+        @Field("shelf") shelfType: String,
+        // De dónde viene, y solo si se quiere MOVER. Sin este campo el libro se añade y se
+        // queda además donde estuviera, que es lo que permite tener un favorito ya leído.
+        // Lleva el identificador de la estantería de origen ("read"), no su número.
+        @Field("change-shelf-from") changeShelfFrom: String? = null
     ): retrofit2.Response<ResponseBody>
 
     /**
@@ -321,6 +325,22 @@ interface BookWyrmApi {
      * ambos valores hay que leerlos del formulario oculto de la página del libro
      * (los recoge `BookWyrmScraper.scrapeBookEnrichment` en `BookEnrichment.shelfId`).
      */
+    /**
+ * Crea una estantería propia del usuario.
+ *
+ * BookWyrm devuelve una redirección al perfil cuando la crea; un 200 es el formulario
+ * de vuelta porque algo no le valía, normalmente un nombre repetido.
+ */
+    @FormUrlEncoded
+    @POST("create-shelf/")
+    suspend fun createShelf(
+        @Field("name") name: String,
+        @Field("description") description: String,
+        @Field("privacy") privacy: String,
+        @Field("user") user: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = ""
+    ): retrofit2.Response<ResponseBody>
+
     @FormUrlEncoded
     @POST("unshelve/")
     suspend fun unshelveBook(

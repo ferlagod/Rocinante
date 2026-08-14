@@ -87,6 +87,10 @@
     <string name="book_section_about">O książce</string>
     <string name="book_section_ids">Numery</string>
     <string name="book_section_downloads">Podlinkowane kopie</string>
+    <string name="favourite_shelf_name">Ulubione</string>
+    <string name="favourite_add">Dodaj do ulubionych</string>
+    <string name="favourite_remove">Usuń z ulubionych</string>
+    <string name="favourite_failed">Nie udało się zmienić ulubionego</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">za darmo</string>
     <string name="book_link_purchase">płatne</string>
@@ -516,6 +520,12 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="profile_layout_reset">Przywróć</string>
     <string name="profile_layout_drag_desc">Przeciągnij, aby przenieść %1$s</string>
     <string name="shelf_layout_edit">Edytuj stronę</string>
+    <string name="shelf_create_title">Nowa półka</string>
+    <string name="shelf_create_name">Nazwa</string>
+    <string name="shelf_create_description">Opis</string>
+    <string name="shelf_create_privacy">Kto ją widzi:</string>
+    <string name="shelf_create_failed">Nie udało się utworzyć półki</string>
+    <string name="shelf_create_action">Utwórz półkę</string>
     <string name="shelf_layout_title">Edytuj stronę</string>
     <string name="shelf_layout_help">Włączaj i wyłączaj półki, a uchwytem przeciągaj, żeby zmienić ich kolejność.</string>
     <string name="shelf_layout_align">Położenie na ekranie</string>

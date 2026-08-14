@@ -192,6 +192,20 @@ object BookWyrmScraper {
      *
      * @return El HTML, o "" si no se pudo leer (en cuyo caso no se guarda nada).
      */
+    /**
+     * Olvida la página guardada, para que la siguiente lectura vaya a la red.
+     *
+     * Hace falta después de cambiar algo que se lee de ella —crear una estantería, meter o
+     * sacar un libro—: si no, se vuelve a mirar la copia de hace un momento, que es de antes
+     * del cambio, y parece que no ha pasado nada.
+     */
+    suspend fun invalidateBookPage() {
+        bookPageLock.withLock {
+            bookPageKey = null
+            bookPageHtml = ""
+        }
+    }
+
     suspend fun fetchBookPage(api: BookWyrmApi, url: String, baseUrl: String): String =
         bookPageLock.withLock {
             val key = bookPageKeyOf(url)
@@ -1021,6 +1035,179 @@ object BookWyrmScraper {
      *
      * @return null si la página no se pudo leer o no trae el formulario (sesión caducada).
      */
+    /**
+     * Una estantería propia del usuario en la que está este libro, tal y como la declara el
+     * formulario oculto de quitarlo de ella.
+     *
+     * @property identifier El nombre en el sistema («favoritter-4337»), que es lo que pide
+     *   `shelve/` para meter el libro.
+     * @property shelfId El número de la estantería, que es lo que pide `unshelve/` para
+     *   sacarlo. No son lo mismo y no se pueden intercambiar.
+     * @property bookId El número del libro en esa página, el otro campo del formulario.
+     */
+    data class ShelfPlacement(
+        val identifier: String,
+        val shelfId: String,
+        val bookId: String
+    )
+
+    /**
+     * Todas las estanterías en las que está el libro, no solo la primera.
+     *
+     * La página trae un formulario de quitar por cada una, y un libro puede estar a la vez en
+     * «Leídos» y en una propia: eso es justo lo que hace posible marcarlo como favorito sin
+     * sacarlo de donde estaba. Se lee de la misma página que ya se descarga para lo demás,
+     * así que no cuesta una petición aparte.
+     */
+    /** Los cuatro identificadores que crea BookWyrm en toda cuenta nueva. */
+    val SYSTEM_SHELVES = setOf("to-read", "reading", "read", "stopped-reading")
+
+    /**
+     * Una estantería del usuario.
+     *
+     * @property identifier Lo que pide `shelve/` («read», «favoritter-315769»).
+     * @property name El nombre que se le ve.
+     * @property isSystem Si es una de las cuatro de BookWyrm. **Solo eso las distingue**: no
+     *   se puede deducir de la forma del identificador, porque una propia puede llamarse
+     *   «did-not-finish» sin número detrás.
+     */
+    data class UserShelf(
+        val identifier: String,
+        val name: String,
+        val isSystem: Boolean
+    )
+
+    /**
+     * Todas las estanterías del usuario, las de serie y las suyas.
+     *
+     * Salen de la fila de pestañas de «tus libros», que es la única lista completa que da la
+     * instancia. **No sirve el desplegable de la página del libro**: allí lo que se ve son los
+     * pasos de lectura —«empezar», «terminar»—, no las estanterías, y confundirlos ofrece
+     * «Finish reading» como si fuera un sitio donde guardar libros.
+     */
+    suspend fun getUserShelves(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String
+    ): List<UserShelf> = withContext(Dispatchers.IO) {
+        try {
+            val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+                .trimEnd('/')
+            val user = username.removePrefix("@").substringBefore("@").trim()
+            val html = fetchHtmlWithRedirects(api, "$base/user/$user/books", "$base/")
+            if (html.isEmpty()) return@withContext emptyList()
+            org.jsoup.Jsoup.parse(html)
+                .select("#tour-user-shelves a[href*=/books/]")
+                .mapNotNull { link ->
+                    val identifier = link.attr("href").trimEnd('/').substringAfterLast("/books/")
+                        .substringAfterLast('/').trim()
+                    // «Todos los libros» apunta a /books sin nada detrás: no es una estantería.
+                    if (identifier.isEmpty() || identifier == "books") return@mapNotNull null
+                    UserShelf(
+                        identifier = identifier,
+                        name = link.text().trim().ifEmpty { identifier },
+                        isSystem = identifier in SYSTEM_SHELVES
+                    )
+                }
+                .distinctBy { it.identifier }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
+    }
+
+    /** Lo que pide el formulario de crear una estantería, aparte del nombre. */
+    data class ShelfCreateContext(val userId: String, val csrfToken: String)
+
+    /**
+     * Saca de la página de «tus libros» lo que hace falta para crear una estantería.
+     *
+     * El formulario está ahí escondido, con el usuario y el token ya puestos. Es preferible a
+     * sacarlos de la página de un libro, que es de donde se cogían: crear una estantería no
+     * tiene por qué depender de tener un libro delante.
+     */
+    suspend fun getShelfCreateContext(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String
+    ): ShelfCreateContext? = withContext(Dispatchers.IO) {
+        try {
+            val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+                .trimEnd('/')
+            val user = username.removePrefix("@").substringBefore("@").trim()
+            val html = fetchHtmlWithRedirects(api, "$base/user/$user/books", "$base/")
+            if (html.isEmpty()) return@withContext null
+            val form = org.jsoup.Jsoup.parse(html).selectFirst("form[name=create-shelf]")
+                ?: return@withContext null
+            val userId = form.selectFirst("input[name=user]")?.attr("value")?.trim()
+            val csrf = form.selectFirst("input[name=csrfmiddlewaretoken]")?.attr("value")?.trim()
+            if (userId.isNullOrEmpty() || csrf.isNullOrEmpty()) null
+            else ShelfCreateContext(userId, csrf)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /**
+     * El número de una estantería, que es lo único que acepta `unshelve/`.
+     *
+     * Se lee del formulario de quitar de la propia página de la estantería. **No se deduce del
+     * identificador**: «favoritter-315769» acaba en su número por casualidad, y
+     * «did-not-finish» no acaba en ninguno.
+     *
+     * @return null si la estantería está vacía —entonces no hay formulario, pero tampoco hay
+     *   nada que quitar— o si no se pudo leer.
+     */
+    suspend fun getShelfNumber(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String,
+        identifier: String
+    ): String? = withContext(Dispatchers.IO) {
+        try {
+            val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+                .trimEnd('/')
+            val user = username.removePrefix("@").substringBefore("@").trim()
+            val html = fetchHtmlWithRedirects(api, "$base/user/$user/books/$identifier", "$base/")
+            if (html.isEmpty()) return@withContext null
+            org.jsoup.Jsoup.parse(html)
+                .select("form[action$=/unshelve/], form[action=/unshelve/]")
+                .firstNotNullOfOrNull { form ->
+                    form.selectFirst("input[name=shelf]")?.attr("value")?.trim()?.ifEmpty { null }
+                }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    suspend fun getShelfPlacements(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): List<ShelfPlacement> = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchBookPage(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext emptyList()
+            val doc = org.jsoup.Jsoup.parse(html)
+            doc.select("form[name^=unshelve-]").mapNotNull { form ->
+                val identifier = form.attr("name").removePrefix("unshelve-").trim()
+                val shelfId = form.selectFirst("input[name=shelf]")?.attr("value")?.trim()
+                val bookId = form.selectFirst("input[name=book]")?.attr("value")?.trim()
+                if (identifier.isEmpty() || shelfId.isNullOrEmpty() || bookId.isNullOrEmpty()) {
+                    null
+                } else {
+                    ShelfPlacement(identifier, shelfId, bookId)
+                }
+            }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
+    }
+
     suspend fun getReadDatesContext(
         api: BookWyrmApi,
         bookUrl: String

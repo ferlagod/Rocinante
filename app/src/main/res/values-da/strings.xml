@@ -102,6 +102,10 @@
     <string name="book_section_about">Om bogen</string>
     <string name="book_section_ids">Numre</string>
     <string name="book_section_downloads">Kopier</string>
+    <string name="favourite_shelf_name">Favoritter</string>
+    <string name="favourite_add">Føj til favoritter</string>
+    <string name="favourite_remove">Fjern fra favoritter</string>
+    <string name="favourite_failed">Kunne ikke ændre favoritten</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratis</string>
     <string name="book_link_purchase">køb</string>
@@ -582,6 +586,12 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_layout_reset">Nulstil</string>
     <string name="profile_layout_drag_desc">Træk for at flytte %1$s</string>
     <string name="shelf_layout_edit">Rediger side</string>
+    <string name="shelf_create_title">Ny hylde</string>
+    <string name="shelf_create_name">Navn</string>
+    <string name="shelf_create_description">Beskrivelse</string>
+    <string name="shelf_create_privacy">Hvem kan se den:</string>
+    <string name="shelf_create_failed">Kunne ikke oprette hylden</string>
+    <string name="shelf_create_action">Opret hylde</string>
     <string name="shelf_layout_title">Rediger side</string>
     <string name="shelf_layout_help">Slå hylder til og fra, og træk i grebet for at ændre rækkefølgen.</string>
     <string name="shelf_layout_align">Placering på skærmen</string>

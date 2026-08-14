@@ -73,7 +73,13 @@ data class SettingsData(
     /** Orden y visibilidad de las estanterías de «Mis libros», codificados por [ShelfLayout]. */
     val shelfLayout: String = "",
     /** Si las tarjetas de las estanterías se agrupan arriba o abajo ([ShelfAlignment]). */
-    val shelfAlignment: String = ""
+    val shelfAlignment: String = "",
+    /**
+     * Identificador de la estantería que hace de favoritos («favoritter-4337»), aprendido la
+     * primera vez que se marca uno. Vacío mientras no haya ninguna; es la instancia la que
+     * manda, así que se vuelve a buscar si deja de existir.
+     */
+    val favouriteShelf: String = ""
 )
 
 /**
@@ -94,6 +100,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_PROFILE_LAYOUT = stringPreferencesKey("profile_layout")
         private val KEY_SHELF_LAYOUT = stringPreferencesKey("shelf_layout")
         private val KEY_SHELF_ALIGNMENT = stringPreferencesKey("shelf_alignment")
+        private val KEY_FAVOURITE_SHELF = stringPreferencesKey("favourite_shelf")
     }
 
     /**
@@ -124,6 +131,7 @@ class SettingsPreferences(private val context: Context) {
             val profileLayout = prefs[KEY_PROFILE_LAYOUT] ?: ""
             val shelfLayout = prefs[KEY_SHELF_LAYOUT] ?: ""
             val shelfAlignment = prefs[KEY_SHELF_ALIGNMENT] ?: ""
+            val favouriteShelf = prefs[KEY_FAVOURITE_SHELF] ?: ""
 
             SettingsData(
                 themeMode,
@@ -135,7 +143,8 @@ class SettingsPreferences(private val context: Context) {
                 newsSeenVersion,
                 profileLayout,
                 shelfLayout,
-                shelfAlignment
+                shelfAlignment,
+                favouriteShelf
             )
         }
 
@@ -216,6 +225,13 @@ class SettingsPreferences(private val context: Context) {
      *
      * @param version String de la versión (ej. "1.0.4").
      */
+    /** Guarda cuál es la estantería de favoritos, una vez encontrada o creada. */
+    suspend fun setFavouriteShelf(identifier: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_FAVOURITE_SHELF] = identifier
+        }
+    }
+
     suspend fun setLastChangelogVersion(version: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_LAST_CHANGELOG_VERSION] = version

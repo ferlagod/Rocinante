@@ -83,6 +83,10 @@
     <string name="book_section_about">Over het boek</string>
     <string name="book_section_ids">Nummers</string>
     <string name="book_section_downloads">Gelinkte kopieën</string>
+    <string name="favourite_shelf_name">Favorieten</string>
+    <string name="favourite_add">Aan favorieten toevoegen</string>
+    <string name="favourite_remove">Uit favorieten verwijderen</string>
+    <string name="favourite_failed">Kon de favoriet niet wijzigen</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratis</string>
     <string name="book_link_purchase">betaald</string>
@@ -496,6 +500,12 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="profile_layout_reset">Herstellen</string>
     <string name="profile_layout_drag_desc">Sleep om %1$s te verplaatsen</string>
     <string name="shelf_layout_edit">Pagina bewerken</string>
+    <string name="shelf_create_title">Nieuwe plank</string>
+    <string name="shelf_create_name">Naam</string>
+    <string name="shelf_create_description">Beschrijving</string>
+    <string name="shelf_create_privacy">Wie het ziet:</string>
+    <string name="shelf_create_failed">Kon de plank niet aanmaken</string>
+    <string name="shelf_create_action">Plank aanmaken</string>
     <string name="shelf_layout_title">Pagina bewerken</string>
     <string name="shelf_layout_help">Zet planken aan of uit en sleep aan de greep om ze te ordenen.</string>
     <string name="shelf_layout_align">Positie op het scherm</string>

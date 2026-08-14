@@ -87,6 +87,10 @@
     <string name="book_section_about">Про книжку</string>
     <string name="book_section_ids">Номери</string>
     <string name="book_section_downloads">Пов’язані копії</string>
+    <string name="favourite_shelf_name">Улюблені</string>
+    <string name="favourite_add">Додати до улюблених</string>
+    <string name="favourite_remove">Прибрати з улюблених</string>
+    <string name="favourite_failed">Не вдалося змінити улюблене</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">безкоштовно</string>
     <string name="book_link_purchase">платно</string>
@@ -516,6 +520,12 @@
     <string name="profile_layout_reset">Скинути</string>
     <string name="profile_layout_drag_desc">Перетягніть, щоб перемістити %1$s</string>
     <string name="shelf_layout_edit">Редагувати сторінку</string>
+    <string name="shelf_create_title">Нова полиця</string>
+    <string name="shelf_create_name">Назва</string>
+    <string name="shelf_create_description">Опис</string>
+    <string name="shelf_create_privacy">Хто її бачить:</string>
+    <string name="shelf_create_failed">Не вдалося створити полицю</string>
+    <string name="shelf_create_action">Створити полицю</string>
     <string name="shelf_layout_title">Редагувати сторінку</string>
     <string name="shelf_layout_help">Вмикайте й вимикайте полиці, а щоб змінити порядок, тягніть за держак.</string>
     <string name="shelf_layout_align">Розташування на екрані</string>

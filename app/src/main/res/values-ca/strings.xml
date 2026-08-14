@@ -83,6 +83,10 @@
     <string name="book_section_about">Sobre el llibre</string>
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Còpies enllaçades</string>
+    <string name="favourite_shelf_name">Preferits</string>
+    <string name="favourite_add">Afegir als preferits</string>
+    <string name="favourite_remove">Treure dels preferits</string>
+    <string name="favourite_failed">No s\'ha pogut canviar el preferit</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratis</string>
     <string name="book_link_purchase">de pagament</string>
@@ -496,6 +500,12 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="profile_layout_reset">Restableix</string>
     <string name="profile_layout_drag_desc">Arrossega per moure %1$s</string>
     <string name="shelf_layout_edit">Editar la pàgina</string>
+    <string name="shelf_create_title">Nova prestatgeria</string>
+    <string name="shelf_create_name">Nom</string>
+    <string name="shelf_create_description">Descripció</string>
+    <string name="shelf_create_privacy">Qui la veu:</string>
+    <string name="shelf_create_failed">No s\'ha pogut crear la prestatgeria</string>
+    <string name="shelf_create_action">Crear prestatgeria</string>
     <string name="shelf_layout_title">Editar la pàgina</string>
     <string name="shelf_layout_help">Activa o desactiva prestatgeries i arrossega l\'ansa per ordenar-les.</string>
     <string name="shelf_layout_align">Posició a la pantalla</string>

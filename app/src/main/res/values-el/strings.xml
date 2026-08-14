@@ -83,6 +83,10 @@
     <string name="book_section_about">Σχετικά με το βιβλίο</string>
     <string name="book_section_ids">Αριθμοί</string>
     <string name="book_section_downloads">Συνδεδεμένα αντίτυπα</string>
+    <string name="favourite_shelf_name">Αγαπημένα</string>
+    <string name="favourite_add">Προσθήκη στα αγαπημένα</string>
+    <string name="favourite_remove">Αφαίρεση από τα αγαπημένα</string>
+    <string name="favourite_failed">Δεν ήταν δυνατή η αλλαγή του αγαπημένου</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">δωρεάν</string>
     <string name="book_link_purchase">με πληρωμή</string>
@@ -496,6 +500,12 @@
     <string name="profile_layout_reset">Επαναφορά</string>
     <string name="profile_layout_drag_desc">Σύρε για να μετακινήσεις %1$s</string>
     <string name="shelf_layout_edit">Επεξεργασία σελίδας</string>
+    <string name="shelf_create_title">Νέο ράφι</string>
+    <string name="shelf_create_name">Όνομα</string>
+    <string name="shelf_create_description">Περιγραφή</string>
+    <string name="shelf_create_privacy">Ποιος το βλέπει:</string>
+    <string name="shelf_create_failed">Δεν ήταν δυνατή η δημιουργία του ραφιού</string>
+    <string name="shelf_create_action">Δημιουργία ραφιού</string>
     <string name="shelf_layout_title">Επεξεργασία σελίδας</string>
     <string name="shelf_layout_help">Ενεργοποιήστε ή απενεργοποιήστε ράφια και σύρετε τη λαβή για να τα ταξινομήσετε.</string>
     <string name="shelf_layout_align">Θέση στην οθόνη</string>

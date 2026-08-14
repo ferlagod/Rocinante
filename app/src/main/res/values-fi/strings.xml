@@ -92,6 +92,10 @@
     <string name="book_section_about">Tietoja kirjasta</string>
     <string name="book_section_ids">Numerot</string>
     <string name="book_section_downloads">Linkitetyt kappaleet</string>
+    <string name="favourite_shelf_name">Suosikit</string>
+    <string name="favourite_add">Lisää suosikkeihin</string>
+    <string name="favourite_remove">Poista suosikeista</string>
+    <string name="favourite_failed">Suosikkia ei voitu muuttaa</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">ilmainen</string>
     <string name="book_link_purchase">maksullinen</string>
@@ -497,6 +501,12 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="profile_layout_reset">Palauta</string>
     <string name="profile_layout_drag_desc">Siirrä vetämällä: %1$s</string>
     <string name="shelf_layout_edit">Muokkaa sivua</string>
+    <string name="shelf_create_title">Uusi hylly</string>
+    <string name="shelf_create_name">Nimi</string>
+    <string name="shelf_create_description">Kuvaus</string>
+    <string name="shelf_create_privacy">Kuka näkee:</string>
+    <string name="shelf_create_failed">Hyllyä ei voitu luoda</string>
+    <string name="shelf_create_action">Luo hylly</string>
     <string name="shelf_layout_title">Muokkaa sivua</string>
     <string name="shelf_layout_help">Ota hyllyjä käyttöön tai pois ja järjestä ne vetämällä kahvasta.</string>
     <string name="shelf_layout_align">Sijainti näytöllä</string>

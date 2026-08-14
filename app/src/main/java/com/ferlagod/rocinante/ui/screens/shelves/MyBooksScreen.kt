@@ -47,6 +47,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -314,11 +315,41 @@ fun MyBooksScreen(
         ShelfLayout.decode(settingsState.shelfLayout, settingsState.shelfAlignment)
     }
     var showLayoutDialog by remember { mutableStateOf(false) }
+    var showCreateShelf by remember { mutableStateOf(false) }
+
+    // Las estanterías que el usuario se ha hecho: las suyas, no las cuatro de BookWyrm. Se
+    // preguntan a la instancia porque solo ella sabe cuáles hay; mientras no llegue la
+    // respuesta se ve la pantalla de siempre, sin hueco ni espera.
+    val ownApi = remember(instanceUrl, cookie) {
+        api ?: NetworkClient.createAuthenticatedApi(instanceUrl, cookie)
+    }
+    var ownShelves by remember {
+        mutableStateOf<List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>>(emptyList())
+    }
+    // Sube al crear una estantería, para volver a preguntar sin recargar la pantalla entera.
+    var ownShelvesKey by remember { mutableStateOf(0) }
+    LaunchedEffect(instanceUrl, username, ownShelvesKey) {
+        ownShelves = runCatching {
+            com.ferlagod.rocinante.data.api.BookWyrmScraper
+                .getUserShelves(ownApi, instanceUrl, username)
+                .filter { !it.isSystem }
+        }.getOrDefault(emptyList())
+    }
 
     // Las apagadas siguen existiendo: la búsqueda puede mandar aquí un libro de una de ellas, y
     // esconder la tarjeta no debe cerrar el camino a la estantería.
-    val shelves = shelfLayout.visibleSections.map { shelvesBySection.getValue(it) }
-    val allShelves = ShelfSection.entries.map { shelvesBySection.getValue(it) }
+    val shelves = shelfLayout.visibleSections.map { shelvesBySection.getValue(it) } +
+        // Las propias van detrás de las de serie y con otro icono, para que se vea de un
+        // vistazo cuáles son estados de lectura y cuáles sitios donde uno guarda.
+        ownShelves.map {
+            ShelfUiItem(
+                slug = it.identifier,
+                title = it.name,
+                description = "",
+                icon = Icons.AutoMirrored.Filled.LibraryBooks
+            )
+        }
+    val allShelves = ShelfSection.entries.map { shelvesBySection.getValue(it) } + shelves
 
     var selectedShelf by remember { mutableStateOf<ShelfUiItem?>(null) }
 
@@ -346,11 +377,25 @@ fun MyBooksScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.shelf_screen_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            // El título con el más al lado: crear una estantería es cosa de esta pantalla, no
+            // de la lista, así que va arriba y se queda quieto aunque las tarjetas se muevan.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.shelf_screen_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { showCreateShelf = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.shelf_create_action)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.shelf_screen_subtitle),
@@ -431,6 +476,20 @@ fun MyBooksScreen(
                     }
                 }
             }
+        }
+
+        if (showCreateShelf) {
+            com.ferlagod.rocinante.ui.components.CreateShelfDialog(
+                api = ownApi,
+                instanceUrl = instanceUrl,
+                username = username,
+                context = layoutContext,
+                coroutineScope = layoutScope,
+                // Recién creada, se vuelve a preguntar por la lista, para que salga sin tener
+                // que salir de la pantalla y volver.
+                onCreated = { ownShelvesKey++ },
+                onDismiss = { showCreateShelf = false }
+            )
         }
 
         if (showLayoutDialog) {
@@ -593,7 +652,9 @@ fun ShelfNativeDetailScreen(
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val cleanUser = username.removePrefix("@").substringBefore("@").trim()
-            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/${shelf.slug}.json?page=$currentPage"
+            // Por /books/ y no por /shelf/: las cuatro de serie responden por las dos vías,
+            // pero las propias del usuario solo por esta.
+            val shelfJsonUrl = "${baseUrl}user/$cleanUser/books/${shelf.slug}.json?page=$currentPage"
 
             val response = api.getShelfData(shelfJsonUrl)
             val fetchedItems = response.orderedItems ?: emptyList()

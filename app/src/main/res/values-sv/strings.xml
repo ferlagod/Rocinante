@@ -83,6 +83,10 @@
     <string name="book_section_about">Om boken</string>
     <string name="book_section_ids">Nummer</string>
     <string name="book_section_downloads">Länkade kopior</string>
+    <string name="favourite_shelf_name">Favoriter</string>
+    <string name="favourite_add">Lägg till i favoriter</string>
+    <string name="favourite_remove">Ta bort från favoriter</string>
+    <string name="favourite_failed">Kunde inte ändra favoriten</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratis</string>
     <string name="book_link_purchase">köp</string>
@@ -496,6 +500,12 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="profile_layout_reset">Återställ</string>
     <string name="profile_layout_drag_desc">Dra för att flytta %1$s</string>
     <string name="shelf_layout_edit">Redigera sidan</string>
+    <string name="shelf_create_title">Ny hylla</string>
+    <string name="shelf_create_name">Namn</string>
+    <string name="shelf_create_description">Beskrivning</string>
+    <string name="shelf_create_privacy">Vem ser den:</string>
+    <string name="shelf_create_failed">Kunde inte skapa hyllan</string>
+    <string name="shelf_create_action">Skapa hylla</string>
     <string name="shelf_layout_title">Redigera sidan</string>
     <string name="shelf_layout_help">Slå på eller av hyllor och dra i handtaget för att ordna dem.</string>
     <string name="shelf_layout_align">Placering på skärmen</string>

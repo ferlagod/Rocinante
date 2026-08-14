@@ -83,6 +83,10 @@
     <string name="book_section_about">À propos du livre</string>
     <string name="book_section_ids">Numéros</string>
     <string name="book_section_downloads">Copies liées</string>
+    <string name="favourite_shelf_name">Favoris</string>
+    <string name="favourite_add">Ajouter aux favoris</string>
+    <string name="favourite_remove">Retirer des favoris</string>
+    <string name="favourite_failed">Impossible de modifier le favori</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratuit</string>
     <string name="book_link_purchase">payant</string>
@@ -496,6 +500,12 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="profile_layout_reset">Réinitialiser</string>
     <string name="profile_layout_drag_desc">Faites glisser pour déplacer %1$s</string>
     <string name="shelf_layout_edit">Modifier la page</string>
+    <string name="shelf_create_title">Nouvelle étagère</string>
+    <string name="shelf_create_name">Nom</string>
+    <string name="shelf_create_description">Description</string>
+    <string name="shelf_create_privacy">Qui la voit :</string>
+    <string name="shelf_create_failed">Impossible de créer l\'étagère</string>
+    <string name="shelf_create_action">Créer une étagère</string>
     <string name="shelf_layout_title">Modifier la page</string>
     <string name="shelf_layout_help">Activez ou désactivez des étagères, et tirez la poignée pour les réordonner.</string>
     <string name="shelf_layout_align">Position à l\'écran</string>

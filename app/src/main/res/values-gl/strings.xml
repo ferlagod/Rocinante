@@ -94,6 +94,10 @@
     <string name="book_section_about">Sobre o libro</string>
     <string name="book_section_ids">Números</string>
     <string name="book_section_downloads">Copias ligadas</string>
+    <string name="favourite_shelf_name">Favoritos</string>
+    <string name="favourite_add">Engadir aos favoritos</string>
+    <string name="favourite_remove">Quitar dos favoritos</string>
+    <string name="favourite_failed">Non se puido cambiar o favorito</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">de balde</string>
     <string name="book_link_purchase">de pago</string>
@@ -498,6 +502,12 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_layout_reset">Restablecer</string>
     <string name="profile_layout_drag_desc">Arrastra para mover %1$s</string>
     <string name="shelf_layout_edit">Editar a páxina</string>
+    <string name="shelf_create_title">Novo andel</string>
+    <string name="shelf_create_name">Nome</string>
+    <string name="shelf_create_description">Descrición</string>
+    <string name="shelf_create_privacy">Quen o ve:</string>
+    <string name="shelf_create_failed">Non se puido crear o andel</string>
+    <string name="shelf_create_action">Crear andel</string>
     <string name="shelf_layout_title">Editar a páxina</string>
     <string name="shelf_layout_help">Activa ou desactiva andeis e arrastra a asa para ordenalos.</string>
     <string name="shelf_layout_align">Posición na pantalla</string>

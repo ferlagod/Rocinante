@@ -85,6 +85,10 @@
     <string name="book_section_about">Despre carte</string>
     <string name="book_section_ids">Numere</string>
     <string name="book_section_downloads">Copii legate</string>
+    <string name="favourite_shelf_name">Favorite</string>
+    <string name="favourite_add">Adaugă la favorite</string>
+    <string name="favourite_remove">Elimină de la favorite</string>
+    <string name="favourite_failed">Favoritul nu a putut fi schimbat</string>
     <string name="book_label_inventaire">Inventaire</string>
     <string name="book_link_free">gratuit</string>
     <string name="book_link_purchase">cu plată</string>
@@ -506,6 +510,12 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_layout_reset">Resetează</string>
     <string name="profile_layout_drag_desc">Trage pentru a muta %1$s</string>
     <string name="shelf_layout_edit">Editează pagina</string>
+    <string name="shelf_create_title">Raft nou</string>
+    <string name="shelf_create_name">Nume</string>
+    <string name="shelf_create_description">Descriere</string>
+    <string name="shelf_create_privacy">Cine îl vede:</string>
+    <string name="shelf_create_failed">Raftul nu a putut fi creat</string>
+    <string name="shelf_create_action">Creează raft</string>
     <string name="shelf_layout_title">Editează pagina</string>
     <string name="shelf_layout_help">Activează sau dezactivează rafturi și trage de mâner ca să le reordonezi.</string>
     <string name="shelf_layout_align">Poziția pe ecran</string>

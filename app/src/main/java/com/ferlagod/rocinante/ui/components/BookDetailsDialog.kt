@@ -52,6 +52,8 @@ import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -88,6 +90,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -136,6 +139,7 @@ import com.ferlagod.rocinante.data.model.BookWyrmBookDetails
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import com.ferlagod.rocinante.utils.HtmlUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -541,6 +545,128 @@ fun BookDetailsDialog(
     var showRemoveConfirm by remember { mutableStateOf(false) }
     var isRemoving by remember { mutableStateOf(false) }
 
+    // ── Favorito ──
+    // No es un concepto de BookWyrm: es una estantería propia del usuario. No se pide en
+    // ningún ajuste; la primera vez que se marca uno, se busca entre las suyas y, si no hay,
+    // se crea. Un libro puede estar en ella y en «Leídos» a la vez, así que marcarlo no le
+    // quita el estado de lectura.
+    val favouritePrefs = remember(context) {
+        com.ferlagod.rocinante.data.local.SettingsPreferences(context)
+    }
+    val favouriteSettings by favouritePrefs.settingsFlow.collectAsState(
+        initial = com.ferlagod.rocinante.data.local.SettingsData()
+    )
+    val favouriteName = stringResource(R.string.favourite_shelf_name)
+    var favouriteIdentifier by remember { mutableStateOf<String?>(null) }
+    var isFavourite by remember { mutableStateOf(false) }
+    var favouriteBusy by remember { mutableStateOf(false) }
+
+    // Al abrir la ficha: cuál es la estantería y si el libro ya está en ella. Se lee de la
+    // página que la ficha descarga de todas formas, así que no cuesta otra petición.
+    // El nombre de usuario y la instancia, para poder mirar la estantería. No se piden a quien
+    // abre la ficha: la sesión ya está guardada y es la misma para todas las pantallas.
+    val favouriteSession = remember(context) {
+        com.ferlagod.rocinante.data.local.SessionStorage(context)
+    }
+    var favouriteAccount by remember {
+        mutableStateOf<com.ferlagod.rocinante.data.model.SessionData?>(null)
+    }
+    LaunchedEffect(Unit) {
+        favouriteAccount = runCatching { favouriteSession.sessionFlow.first() }.getOrNull()
+    }
+
+    LaunchedEffect(activeBookKey, favouriteSettings.favouriteShelf, favouriteAccount) {
+        val stored = favouriteSettings.favouriteShelf.takeIf { it.isNotBlank() }
+        val account = favouriteAccount
+        val known = if (account == null) null else runCatching {
+            com.ferlagod.rocinante.data.repository.FavouriteShelf.find(
+                api, account.instanceUrl, account.username, stored, favouriteName
+            )
+        }.getOrNull()
+        favouriteIdentifier = known
+        isFavourite = known != null && account != null && runCatching {
+            com.ferlagod.rocinante.data.repository.FavouriteShelf.contains(
+                api, account.instanceUrl, account.username, known, activeBookKey
+            )
+        }.getOrDefault(false)
+    }
+
+    fun toggleFavourite() {
+        if (favouriteBusy) return
+        coroutineScope.launch {
+            favouriteBusy = true
+            try {
+                val repo = com.ferlagod.rocinante.data.repository.FavouriteShelf
+                // Sin estantería todavía se crea ahora, que es la primera vez que hace falta.
+                val account = favouriteAccount
+                // Antes de crear, buscar: la ficha puede haberse abierto sin sesión aún.
+                val identifier = favouriteIdentifier
+                    ?: (if (account == null) null else repo.find(
+                        api, account.instanceUrl, account.username,
+                        favouriteSettings.favouriteShelf.takeIf { it.isNotBlank() },
+                        favouriteName
+                    ))
+                    ?: (if (account == null) null else repo.create(
+                        api, activeBookKey, account.instanceUrl, account.username,
+                        name = favouriteName
+                    ))
+                if (identifier == null) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.favourite_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+                if (identifier != favouriteSettings.favouriteShelf) {
+                    favouritePrefs.setFavouriteShelf(identifier)
+                }
+                favouriteIdentifier = identifier
+
+                // Los dos caminos necesitan el id de la edición, que es lo que la instancia
+                // llama «book» tanto al meter como al sacar.
+                val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey)
+                    ?: activeBookKey
+                val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                val html = BookWyrmScraper.fetchBookPage(api, localUrl, baseUrl)
+                val editionId = BookWyrmScraper.extractEditionId(html)
+                    ?: BookWyrmUtils.extractBookId(localUrl)
+                val ok = if (editionId.isBlank()) {
+                    false
+                } else if (isFavourite) {
+                    val ctx = BookWyrmScraper.getReadDatesContext(api, activeBookKey)
+                    ctx != null && account != null && repo.remove(
+                        api, account.instanceUrl, account.username,
+                        editionId, identifier, ctx.csrfToken
+                    )
+                } else {
+                    // Un favorito se añade; nunca se mueve, para no quitarle al libro la
+                    // estantería de lectura en la que esté.
+                    repo.put(api, editionId, identifier)
+                }
+                if (ok) {
+                    isFavourite = !isFavourite
+                    onShelved?.invoke()
+                } else {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.favourite_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(
+                    context,
+                    com.ferlagod.rocinante.utils.NetworkErrors.message(context, e),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                favouriteBusy = false
+            }
+        }
+    }
+
     // Ejecuta el cambio de estante (llamado tras confirmar en el diálogo).
     fun moveToShelf(slug: String, toastLabel: String) {
         coroutineScope.launch {
@@ -728,6 +854,27 @@ fun BookDetailsDialog(
                             }
                         },
                         actions = {
+                            IconButton(
+                                onClick = { toggleFavourite() },
+                                enabled = !favouriteBusy
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavourite) {
+                                        Icons.Filled.Favorite
+                                    } else {
+                                        Icons.Filled.FavoriteBorder
+                                    },
+                                    contentDescription = stringResource(
+                                        if (isFavourite) R.string.favourite_remove
+                                        else R.string.favourite_add
+                                    ),
+                                    tint = if (isFavourite) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        LocalContentColor.current
+                                    }
+                                )
+                            }
                             IconButton(onClick = { overflowExpanded = true }) {
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
