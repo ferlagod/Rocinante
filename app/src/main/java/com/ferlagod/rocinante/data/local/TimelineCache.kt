@@ -131,6 +131,45 @@ class TimelineCache(private val context: Context) {
     /**
      * Carga los libros guardados para una estantería específica.
      */
+    /**
+     * Las estanterías propias del usuario, guardadas en disco.
+     *
+     * La lista sale de una página HTML de 40 kB, y pedirla cada vez que se entra en «Mis
+     * libros» es caro para algo que cambia una vez cada muchos meses. Se enseña lo guardado
+     * y se refresca por detrás.
+     */
+    suspend fun loadUserShelves():
+        List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "user_shelves_cache.json")
+            if (!file.exists()) return@withContext null
+            val type = object :
+                TypeToken<List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>>() {}.type
+            gson.fromJson<List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>>(
+                file.readText(), type
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /** Cuánto hace que se guardó la lista, en milisegundos. Enorme si no hay nada. */
+    suspend fun userShelvesAge(): Long = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, "user_shelves_cache.json")
+        if (!file.exists()) Long.MAX_VALUE else System.currentTimeMillis() - file.lastModified()
+    }
+
+    suspend fun saveUserShelves(
+        shelves: List<com.ferlagod.rocinante.data.api.BookWyrmScraper.UserShelf>
+    ) = withContext(Dispatchers.IO) {
+        try {
+            File(context.cacheDir, "user_shelves_cache.json").writeText(gson.toJson(shelves))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
     suspend fun loadShelfBooks(slug: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem>? = withContext(Dispatchers.IO) {
         try {
             val file = File(context.cacheDir, "shelf_${slug}_cache.json")

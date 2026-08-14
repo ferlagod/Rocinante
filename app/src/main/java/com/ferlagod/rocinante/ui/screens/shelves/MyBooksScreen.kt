@@ -202,6 +202,9 @@ private data class AuthorGroup(
  * DEFAULT conserva el orden que devuelve el servidor. Los modos FINISHED_* y RATING_*
  * dependen de los datos enriquecidos (fecha de fin y valoración) obtenidos por libro.
  */
+/** Hvor gammel hyldelisten må blive, før den hentes igen. */
+private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
+
 private enum class ShelfSortMode {
     DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC
 }
@@ -328,12 +331,31 @@ fun MyBooksScreen(
     }
     // Sube al crear una estantería, para volver a preguntar sin recargar la pantalla entera.
     var ownShelvesKey by remember { mutableStateOf(0) }
+    val ownShelvesCache = remember(layoutContext) {
+        com.ferlagod.rocinante.data.local.TimelineCache(layoutContext)
+    }
     LaunchedEffect(instanceUrl, username, ownShelvesKey) {
-        ownShelves = runCatching {
-            com.ferlagod.rocinante.data.api.BookWyrmScraper
-                .getUserShelves(ownApi, instanceUrl, username)
-                .filter { !it.isSystem }
-        }.getOrDefault(emptyList())
+        val cached = ownShelvesCache.loadUserShelves()
+        cached?.let { ownShelves = it }
+        // Una lista de estanterías cambia dos veces al año, así que no se pide al entrar: solo
+        // si no hay nada guardado, si lo guardado ya tiene un día, o si se ha pedido a mano con
+        // «actualizar datos». Antes era una página de 40 kB cada vez que se pasaba por aquí.
+        val stale = cached == null || ownShelvesCache.userShelvesAge() > ONE_DAY_MS
+        if (stale || ownShelvesKey > 0) {
+            val fresh = runCatching {
+                com.ferlagod.rocinante.data.api.BookWyrmScraper
+                    .getUserShelves(ownApi, instanceUrl, username)
+                    .filter { !it.isSystem }
+            }.getOrNull()
+            // Una respuesta que no llega deja la lista como estaba, sin vaciarla.
+            if (fresh != null && fresh != ownShelves) {
+                ownShelves = fresh
+                ownShelvesCache.saveUserShelves(fresh)
+            } else if (fresh != null) {
+                // Igual que estaba, pero recién comprobada: cuenta como fresca.
+                ownShelvesCache.saveUserShelves(fresh)
+            }
+        }
     }
 
     // Las apagadas siguen existiendo: la búsqueda puede mandar aquí un libro de una de ellas, y
@@ -516,6 +538,7 @@ fun MyBooksScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 highlightBookId = targetBookId.takeIf { targetShelfSlug == shelf.slug },
                 onHighlightConsumed = onTargetConsumed,
+                onResync = { ownShelvesKey++ },
                 openAuthorName = targetAuthorName.takeIf { targetShelfSlug == shelf.slug },
                 openFilter = targetFilter.takeIf { targetShelfSlug == shelf.slug },
                 onTargetTaken = onTargetConsumed,
@@ -561,6 +584,9 @@ fun ShelfNativeDetailScreen(
     // Se invoca en cuanto esta pantalla se ha quedado con el autor o el recorte que le
     // mandaban, para que quien lo mandó lo olvide.
     onTargetTaken: () -> Unit = {},
+    // Se invoca al pedir «actualizar datos», para que también se vuelva a mirar qué
+    // estanterías tiene el usuario: es el momento en que uno espera que todo se repase.
+    onResync: () -> Unit = {},
     backEnabled: Boolean = true
 ) {
     val context = LocalContext.current
@@ -1116,6 +1142,7 @@ fun ShelfNativeDetailScreen(
                         onClick = {
                             enrichment = emptyMap()
                             resyncTrigger++
+                            onResync()
                             sortMenuExpanded = false
                         }
                     )
