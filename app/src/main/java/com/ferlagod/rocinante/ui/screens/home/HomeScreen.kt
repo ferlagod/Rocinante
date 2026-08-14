@@ -1668,7 +1668,7 @@ fun ProfileTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            ElevatedCard(
+            OutlinedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
@@ -1804,7 +1804,7 @@ fun ProfileTab(
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.BIO -> {
                     item {
-                        ElevatedCard(
+                        OutlinedCard(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
@@ -1974,7 +1974,7 @@ fun ProfileTab(
                 com.ferlagod.rocinante.utils.ProfileSection.SUGGESTED_USERS -> {
                     if (suggestedUsers.isNotEmpty()) {
                         item {
-                            ElevatedCard(
+                            OutlinedCard(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(20.dp)) {
@@ -2356,7 +2356,7 @@ private fun ProfileReadingExtremesCard(
     slowest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan,
     onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
                 text = stringResource(R.string.profile_reading_extremes),
@@ -2440,7 +2440,7 @@ private fun ProfileTopRatedCard(
     books: List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>,
     onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
                 text = stringResource(R.string.profile_top_rated),
