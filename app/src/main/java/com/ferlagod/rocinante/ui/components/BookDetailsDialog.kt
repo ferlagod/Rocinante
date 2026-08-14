@@ -589,6 +589,21 @@ fun BookDetailsDialog(
         favouriteAccount = runCatching { favouriteSession.sessionFlow.first() }.getOrNull()
     }
 
+    // El corazón, pintado ya: la lista de favoritos que guarda «Mis libros» está en disco y
+    // se lee al instante, mientras que preguntárselo a la instancia tarda sus segundos. Antes
+    // la ficha se abría con el corazón vacío y se encendía solo un rato después, que en un
+    // libro que uno sabe que es favorito se ve como un fallo.
+    val favouriteCache = remember(context) {
+        com.ferlagod.rocinante.data.local.TimelineCache(context)
+    }
+    LaunchedEffect(activeBookKey) {
+        favouriteCache.loadFavouriteBookIds()?.let { ids ->
+            isFavourite = ids.contains(
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(activeBookKey)
+            )
+        }
+    }
+
     LaunchedEffect(activeBookKey, favouriteSettings.favouriteShelf, favouriteAccount) {
         val stored = favouriteSettings.favouriteShelf.takeIf { it.isNotBlank() }
         val account = favouriteAccount
@@ -598,11 +613,15 @@ fun BookDetailsDialog(
             )
         }.getOrNull()
         favouriteIdentifier = known
-        isFavourite = known != null && account != null && runCatching {
-            com.ferlagod.rocinante.data.repository.FavouriteShelf.contains(
-                api, account.instanceUrl, account.username, known, activeBookKey
-            )
-        }.getOrDefault(false)
+        // Y ahora lo que diga la instancia, que manda sobre lo guardado. Si no contesta se
+        // queda lo de la caché: sin red, lo de ayer se acerca más que un corazón apagado.
+        if (known != null && account != null) {
+            runCatching {
+                com.ferlagod.rocinante.data.repository.FavouriteShelf.contains(
+                    api, account.instanceUrl, account.username, known, activeBookKey
+                )
+            }.getOrNull()?.let { isFavourite = it }
+        }
     }
 
     fun toggleFavourite() {
