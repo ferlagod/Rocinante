@@ -814,21 +814,53 @@ fun BookDetailsDialog(
 
     // Quita el libro de la estantería en la que está (llamado tras confirmar en el diálogo).
     fun removeFromShelf() {
-        val bookId = shelfBookId ?: return
-        val shelf = shelfId ?: return
         coroutineScope.launch {
             isRemoving = true
             try {
                 // Token sin enmascarar de la cookie: coincide siempre con lo que espera Django.
                 val csrfToken = com.ferlagod.rocinante.data.api.NetworkClient.currentCsrfToken() ?: ""
-                val response = api.unshelveBook(bookId, shelf, csrfToken)
+                // De QUÉ estantería se quita: la que se está viendo, no la que diga la página
+                // del libro. Esa solo trae el formulario de la estantería de lectura, así que
+                // estando dentro de una propia se quitaba de «leídos» —con sus fechas detrás—.
+                val account = favouriteAccount
+                val isOwnShelf = currentShelf != null &&
+                    currentShelf !in com.ferlagod.rocinante.data.api.BookWyrmScraper.SYSTEM_SHELVES
+                val targetShelf = if (isOwnShelf && account != null) {
+                    com.ferlagod.rocinante.data.api.BookWyrmScraper.getShelfNumber(
+                        api, account.instanceUrl, account.username, currentShelf!!
+                    )
+                } else {
+                    shelfId
+                }
+                // El libro es el mismo en cualquier formulario; si no hay ninguno, su edición.
+                val bookId = shelfBookId ?: run {
+                    val localUrl = BookWyrmScraper.resolveLocalBookUrl(api, activeBookKey)
+                        ?: activeBookKey
+                    val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+                    BookWyrmScraper.extractEditionId(
+                        BookWyrmScraper.fetchBookPage(api, localUrl, baseUrl)
+                    ) ?: BookWyrmUtils.extractBookId(localUrl)
+                }
+                if (targetShelf.isNullOrBlank() || bookId.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.error_book_not_identified),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+                val response = api.unshelveBook(bookId, targetShelf, csrfToken)
                 if (response.isSuccessful || response.code() == 302) {
-                    // La caché de estanterías alimenta la búsqueda local, así que se limpia
-                    // aquí: pase por donde pase la ficha, el libro deja de aparecer al momento.
-                    com.ferlagod.rocinante.data.local.TimelineCache(context)
-                        .removeBookFromShelfCaches(activeBookKey)
+                    BookWyrmScraper.invalidateBookPage()
+                    // Solo al salir de una estantería de lectura deja el libro de estar en
+                    // «sus libros»: de una propia sigue donde estaba, y vaciarle la caché lo
+                    // haría desaparecer de la búsqueda local sin motivo.
+                    if (!isOwnShelf) {
+                        com.ferlagod.rocinante.data.local.TimelineCache(context)
+                            .removeBookFromShelfCaches(activeBookKey)
+                        activeShelf = null
+                    }
                     Toast.makeText(context, context.getString(R.string.book_remove_toast), Toast.LENGTH_SHORT).show()
-                    activeShelf = null
                     if (onRemovedFromShelf != null) onRemovedFromShelf(activeBookKey) else onShelved?.invoke()
                     onDismiss()
                 } else {
