@@ -100,6 +100,15 @@ data class ShelfLayout(
 
     fun withAlignment(alignment: ShelfAlignment): ShelfLayout = copy(alignment = alignment)
 
+    /** Apaga una estantería, metiéndola en el orden si aún no estaba. */
+    fun hiding(identifier: String): ShelfLayout =
+        if (!canHide(identifier)) this
+        else withKnown(listOf(identifier)).copy(hidden = hidden + identifier)
+
+    /** La enciende. Vale aunque no estuviera apagada. */
+    fun showing(identifier: String): ShelfLayout =
+        withKnown(listOf(identifier)).copy(hidden = hidden - identifier)
+
     /** Saca la estantería de [from] y la deja en [to]. */
     fun moved(from: Int, to: Int): ShelfLayout {
         if (from !in order.indices || to !in order.indices || from == to) return this

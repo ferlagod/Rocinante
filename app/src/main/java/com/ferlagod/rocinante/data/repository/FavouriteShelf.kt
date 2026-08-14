@@ -136,6 +136,25 @@ object FavouriteShelf {
     }
 
     /**
+     * Cuántos libros hay en la estantería, o null si no se pudo saber.
+     *
+     * Lo dice la propia estantería en su cabecera, así que no hay que recorrer sus páginas.
+     */
+    suspend fun count(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String,
+        identifier: String
+    ): Int? {
+        val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+            .trimEnd('/')
+        val user = username.removePrefix("@").substringBefore("@").trim()
+        return runCatching {
+            api.getShelfData("$base/user/$user/books/$identifier.json").totalItems
+        }.getOrNull()
+    }
+
+    /**
      * Pone el libro en la estantería.
      *
      * @param from De dónde viene. Solo con [Mode.MOVE] se manda, y es lo único que separa

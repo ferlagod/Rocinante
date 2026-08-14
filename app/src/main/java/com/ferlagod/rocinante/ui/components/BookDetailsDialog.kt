@@ -634,6 +634,16 @@ fun BookDetailsDialog(
                 }
                 if (identifier != favouriteSettings.favouriteShelf) {
                     favouritePrefs.setFavouriteShelf(identifier)
+                    // Recién hecha, apagada: la tarjeta aparece cuando haya algo en ella.
+                    val fresh = com.ferlagod.rocinante.utils.ShelfLayout.decode(
+                        favouriteSettings.shelfLayout, favouriteSettings.shelfAlignment
+                    )
+                    if (identifier !in fresh.order) {
+                        favouritePrefs.setShelfLayout(
+                            fresh.hiding(identifier).encode(),
+                            fresh.alignment.id
+                        )
+                    }
                 }
                 favouriteIdentifier = identifier
 
@@ -654,9 +664,24 @@ fun BookDetailsDialog(
                         editionId, identifier, ctx.csrfToken
                     )
                 } else {
-                    // Un favorito se añade; nunca se mueve, para no quitarle al libro la
-                    // estantería de lectura en la que esté.
-                    repo.put(api, editionId, identifier)
+                    // La estantería de favoritos nace apagada: quien no marca favoritos no
+                    // tiene por qué ver su tarjeta. Se enciende sola al entrar el primero.
+                    // Solo entonces: si el usuario la apaga a mano después, el segundo libro
+                    // no debe volver a encenderla.
+                    val account2 = favouriteAccount
+                    val layout = com.ferlagod.rocinante.utils.ShelfLayout.decode(
+                        favouriteSettings.shelfLayout, favouriteSettings.shelfAlignment
+                    )
+                    val wasEmptyAndHidden = !layout.isVisible(identifier) && account2 != null &&
+                        repo.count(api, account2.instanceUrl, account2.username, identifier) == 0
+                    val added = repo.put(api, editionId, identifier)
+                    if (added && wasEmptyAndHidden) {
+                        favouritePrefs.setShelfLayout(
+                            layout.showing(identifier).encode(),
+                            layout.alignment.id
+                        )
+                    }
+                    added
                 }
                 if (ok) {
                     isFavourite = !isFavourite

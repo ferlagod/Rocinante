@@ -219,7 +219,10 @@ data class BookWyrmAuthor(
 )
 
 data class ShelfPage(
-    @SerializedName("orderedItems") val orderedItems: List<ShelfBookItem>?
+    @SerializedName("orderedItems") val orderedItems: List<ShelfBookItem>?,
+    // Cuántos libros hay en toda la estantería, no en esta página. Lo dice la cabecera, así
+    // que saberlo no obliga a recorrerla entera.
+    @SerializedName("totalItems") val totalItems: Int? = null
 )
 
 data class ShelfBookItem(
