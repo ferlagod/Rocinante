@@ -224,6 +224,38 @@ class TimelineCache(private val context: Context) {
      * Dónde se guarda la ficha de un autor. La clave es su dirección, resumida en un hash como
      * la del libro: nombre corto y sin colisiones entre instancias.
      */
+    /**
+     * Las direcciones de los libros que están en la estantería de favoritos.
+     *
+     * Se guardan aparte de la estantería entera porque quien mira una lista solo necesita
+     * saber cuáles llevan corazón, no sus portadas ni sus títulos otra vez.
+     */
+    suspend fun loadFavouriteBookIds(): Set<String>? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "favourite_ids_cache.json")
+            if (!file.exists()) return@withContext null
+            val type = object : TypeToken<Set<String>>() {}.type
+            gson.fromJson<Set<String>>(file.readText(), type)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    suspend fun saveFavouriteBookIds(ids: Set<String>) = withContext(Dispatchers.IO) {
+        try {
+            File(context.cacheDir, "favourite_ids_cache.json").writeText(gson.toJson(ids))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /** Cuánto hace que se guardaron, en milisegundos. Enorme si no hay nada. */
+    suspend fun favouriteBookIdsAge(): Long = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, "favourite_ids_cache.json")
+        if (!file.exists()) Long.MAX_VALUE else System.currentTimeMillis() - file.lastModified()
+    }
+
     private fun authorFile(authorUrl: String): File {
         val key = authorUrl.removeSuffix(".json").trimEnd('/')
         val digest = java.security.MessageDigest.getInstance("SHA-1")

@@ -136,6 +136,32 @@ object FavouriteShelf {
     }
 
     /**
+     * Las direcciones de todos los libros de una estantería.
+     *
+     * Para poder marcar con un corazón los que salen en una lista sin abrir cada uno.
+     */
+    suspend fun bookIds(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String,
+        identifier: String
+    ): Set<String> {
+        val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+            .trimEnd('/')
+        val user = username.removePrefix("@").substringBefore("@").trim()
+        val ids = mutableSetOf<String>()
+        for (page in 1..20) {
+            val response = runCatching {
+                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page")
+            }.getOrNull() ?: break
+            val items = response.orderedItems.orEmpty()
+            if (items.isEmpty()) break
+            items.mapNotNull { it.id }.forEach { ids += BookWyrmScraper.canonicalBookUrl(it) }
+        }
+        return ids
+    }
+
+    /**
      * Cuántos libros hay en la estantería, o null si no se pudo saber.
      *
      * Lo dice la propia estantería en su cabecera, así que no hay que recorrer sus páginas.

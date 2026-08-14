@@ -115,6 +115,7 @@ import com.ferlagod.rocinante.utils.BookWyrmUtils
 import com.ferlagod.rocinante.utils.ShelfAlignment
 import com.ferlagod.rocinante.utils.ShelfLayout
 import com.ferlagod.rocinante.utils.ShelfSection
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 
@@ -735,6 +736,38 @@ fun ShelfNativeDetailScreen(
     val settingsState by settingsPreferences.settingsFlow.collectAsState(initial = com.ferlagod.rocinante.data.local.SettingsData())
 
     val dataCache = remember(context) { com.ferlagod.rocinante.data.local.TimelineCache(context) }
+
+    // Qué libros llevan corazón. Se guarda solo la lista de direcciones, y se enseña desde
+    // disco al instante; la instancia se pregunta detrás y solo si hace falta, con la misma
+    // regla que la lista de estanterías: nada guardado, un día viejo, o «actualizar datos».
+    var favouriteIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    // Vuelve a mirar también al volver de la ficha de un libro: allí puede haberse marcado
+    // o desmarcado un favorito, y entonces lo guardado ya está al día. Eso no pide nada a
+    // la instancia: la condición de más abajo solo deja pasar lo que de verdad hace falta.
+    LaunchedEffect(settingsState.favouriteShelf, resyncTrigger, refreshTrigger) {
+        val identifier = settingsState.favouriteShelf.takeIf { it.isNotBlank() }
+        if (identifier == null) {
+            favouriteIds = emptySet()
+            return@LaunchedEffect
+        }
+        dataCache.loadFavouriteBookIds()?.let { favouriteIds = it }
+        val session = runCatching {
+            com.ferlagod.rocinante.data.local.SessionStorage(context).sessionFlow.first()
+        }.getOrNull() ?: return@LaunchedEffect
+        val stale = dataCache.favouriteBookIdsAge() > ONE_DAY_MS
+        if (favouriteIds.isEmpty() || stale || resyncTrigger > 0) {
+            val fresh = runCatching {
+                com.ferlagod.rocinante.data.repository.FavouriteShelf.bookIds(
+                    api, session.instanceUrl, session.username, identifier
+                )
+            }.getOrNull()
+            if (fresh != null) {
+                favouriteIds = fresh
+                dataCache.saveFavouriteBookIds(fresh)
+            }
+        }
+    }
+
 
     // Estantería que se está trayendo de la red, aparte de la que se ve. Sustituir lo que
     // hay en pantalla por la primera página encogía la lista a diez libros y la hacía crecer
@@ -1565,15 +1598,46 @@ fun ShelfNativeDetailScreen(
 
                             val coverUrl = book.cover?.url
                             if (!coverUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = stringResource(R.string.book_cover_desc),
-                                    modifier = Modifier
-                                        .width(70.dp)
-                                        .height(105.dp)
-                                        .clip(MaterialTheme.shapes.small),
-                                    contentScale = ContentScale.Crop
-                                )
+                                val isFavourite = book.id != null &&
+                                    com.ferlagod.rocinante.data.api.BookWyrmScraper
+                                        .canonicalBookUrl(book.id) in favouriteIds
+                                Box {
+                                    AsyncImage(
+                                        model = coverUrl,
+                                        contentDescription = stringResource(R.string.book_cover_desc),
+                                        modifier = Modifier
+                                            .width(70.dp)
+                                            .height(105.dp)
+                                            .clip(MaterialTheme.shapes.small),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    if (isFavourite) {
+                                        // Sobre la portada y no al lado: así se ve de un vistazo
+                                        // cuáles son sin leer los títulos. Con su sombra debajo,
+                                        // porque una portada puede ser de cualquier color y un
+                                        // corazón claro sobre un fondo claro no se ve.
+                                        Icon(
+                                            imageVector = Icons.Filled.Favorite,
+                                            contentDescription = stringResource(
+                                                R.string.shelf_favourites_desc
+                                            ),
+                                            tint = Color.Black.copy(alpha = 0.35f),
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(top = 5.dp, end = 4.dp)
+                                                .size(18.dp)
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Filled.Favorite,
+                                            contentDescription = null,
+                                            tint = Color(0xFFE53935),
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(top = 4.dp, end = 4.dp)
+                                                .size(18.dp)
+                                        )
+                                    }
+                                }
                                 Spacer(modifier = Modifier.width(16.dp))
                             }
 

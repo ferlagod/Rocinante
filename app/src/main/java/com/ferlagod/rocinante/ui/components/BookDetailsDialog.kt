@@ -685,6 +685,14 @@ fun BookDetailsDialog(
                 }
                 if (ok) {
                     isFavourite = !isFavourite
+                    // La lista de portadas con corazón se guarda en disco y solo se refresca
+                    // de tarde en tarde, así que se corrige aquí: si no, el libro que se acaba
+                    // de marcar no lleva su corazón en la estantería hasta el día siguiente.
+                    val marked = authorCache.loadFavouriteBookIds().orEmpty()
+                    val canonical = BookWyrmScraper.canonicalBookUrl(activeBookKey)
+                    authorCache.saveFavouriteBookIds(
+                        if (isFavourite) marked + canonical else marked - canonical
+                    )
                     onShelved?.invoke()
                 } else {
                     Toast.makeText(
