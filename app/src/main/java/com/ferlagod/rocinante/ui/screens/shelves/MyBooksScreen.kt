@@ -958,6 +958,40 @@ fun ShelfNativeDetailScreen(
             .sortedWith(compareBy(collator) { it.name })
     }
 
+    // La dirección de la ficha de cada autor, para poder enseñarla al final de sus libros.
+    // Solo se puede emparejar cuando el libro trae tantas direcciones como nombres; con un
+    // «Fulano, Mengano» en un solo campo no se sabe cuál es de quién y se deja sin.
+    val authorUrlByKey = remember(books, enrichment) {
+        val map = mutableMapOf<String, String>()
+        books.forEach { book ->
+            val urls = book.authors?.filter { it.isNotBlank() }.orEmpty()
+            val names = book.id?.let { enrichment[it]?.authorName }
+                ?.split(", ")?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
+            if (urls.isNotEmpty() && urls.size == names.size) {
+                names.forEachIndexed { i, name -> map.putIfAbsent(authorKey(name), urls[i]) }
+            } else if (urls.isNotEmpty() && names.isEmpty()) {
+                // Sin nombre todavía, la clave del grupo es la propia dirección.
+                urls.forEach { map.putIfAbsent(it, it) }
+            }
+        }
+        map.toMap()
+    }
+
+    // La ficha de quien firma los libros que se están mirando. Se pide **después** de pintar la
+    // lista y aparece cuando llega: la estantería no debe esperar por esto. Guardada una vez,
+    // volver a entrar no cuesta nada, y «Actualizar datos» la borra con las demás.
+    var openAuthorInfo by remember {
+        mutableStateOf<com.ferlagod.rocinante.data.model.BookWyrmAuthor?>(null)
+    }
+    LaunchedEffect(openAuthorKey, authorUrlByKey) {
+        openAuthorInfo = null
+        val url = openAuthorKey?.let { authorUrlByKey[it] } ?: return@LaunchedEffect
+        val cached = dataCache.loadAuthor(url)
+        openAuthorInfo = cached ?: runCatching {
+            api.getAuthor(com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(url))
+        }.getOrNull()?.also { dataCache.saveAuthor(url, it) }
+    }
+
     // Autor que llega del perfil: se entra directamente a sus libros. Los grupos se arman con
     // los datos por libro, que tardan un momento en llegar de la caché, así que no basta con
     // mirarlo al entrar; se espera a que haya autores y entonces se decide de una vez.
@@ -1278,6 +1312,9 @@ fun ShelfNativeDetailScreen(
                             enrichment = emptyMap()
                             resyncTrigger++
                             onResync()
+                            // «Actualizar datos» repasa todo, así que también las fichas de
+                            // autor: se rehacen solas al abrir un libro.
+                            coroutineScope.launch { dataCache.clearAuthors() }
                             sortMenuExpanded = false
                         }
                     )
@@ -1744,6 +1781,23 @@ fun ShelfNativeDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+                // La ficha del autor va al final de sus libros, y va aquí y no en la lista de
+                // arriba para que la ordenación no la mueva: se ordenan los libros, y esto
+                // queda detrás de todos ellos.
+                if (openAuthorKey != null) {
+                    openAuthorInfo?.let { author ->
+                        item(key = "author-info") {
+                            com.ferlagod.rocinante.ui.components.AuthorInfoBlock(author) { url ->
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW,
+                                        android.net.Uri.parse(url)
+                                    )
+                                )
                             }
                         }
                     }
