@@ -207,7 +207,50 @@ private data class AuthorGroup(
 private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
 
 private enum class ShelfSortMode {
-    DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC
+    DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC;
+
+    /**
+     * ¿Tiene sentido esta ordenación en esta estantería?
+     *
+     * Por fecha de fin solo en «leídos», y por nota en «leídos» y «leyendo»: en las demás el
+     * dato no existe y la lista saldría en un orden que no significa nada. Importa porque la
+     * ordenación se recuerda entre estanterías: quien ordena «leídos» por fecha y abre «por
+     * leer» debe encontrarla en su orden de siempre, no en uno vacío.
+     */
+    fun appliesTo(slug: String): Boolean = when (this) {
+        FINISHED_DESC, FINISHED_ASC -> slug == "read"
+        RATING_DESC, RATING_ASC -> slug == "read" || slug == "reading"
+        else -> true
+    }
+
+    companion object {
+        /**
+         * Lo guardado es un pequeño mapa —«read=FINISHED_DESC,to-read=TITLE_ASC»— porque cada
+         * estantería tiene su propia idea de orden: los leídos por fecha de fin, los pendientes
+         * por título. Recordar una sola para todas obligaría a reordenar a mano al cambiar.
+         */
+        fun decodeAll(raw: String?): Map<String, ShelfSortMode> =
+            raw.orEmpty().split(",").mapNotNull { entry ->
+                val (slug, name) = entry.split("=").takeIf { it.size == 2 } ?: return@mapNotNull null
+                val mode = entries.firstOrNull { it.name == name.trim() } ?: return@mapNotNull null
+                slug.trim().takeIf { it.isNotEmpty() }?.let { it to mode }
+            }.toMap()
+
+        fun encodeAll(modes: Map<String, ShelfSortMode>): String =
+            modes.entries.joinToString(",") { "${it.key}=${it.value.name}" }
+
+        /** La de esta estantería, o la de siempre si no vale aquí o no hay ninguna guardada. */
+        fun forShelf(raw: String?, slug: String): ShelfSortMode {
+            val mode = decodeAll(raw)[slug] ?: return DEFAULT
+            return if (mode.appliesTo(slug)) mode else DEFAULT
+        }
+
+        /** Lo guardado, con esta estantería puesta al día. */
+        fun withShelfName(raw: String?, slug: String, modeName: String): String {
+            val mode = entries.firstOrNull { it.name == modeName } ?: return raw.orEmpty()
+            return encodeAll(decodeAll(raw) + (slug to mode))
+        }
+    }
 }
 
 /**
@@ -560,6 +603,14 @@ fun MyBooksScreen(
                 openAuthorName = targetAuthorName.takeIf { targetShelfSlug == shelf.slug },
                 openFilter = targetFilter.takeIf { targetShelfSlug == shelf.slug },
                 onTargetTaken = onTargetConsumed,
+                storedSortModes = settingsState.shelfSortMode,
+                onSortModeChanged = { slug, modeName ->
+                    layoutScope.launch {
+                        settingsPreferences.setShelfSortMode(
+                            ShelfSortMode.withShelfName(settingsState.shelfSortMode, slug, modeName)
+                        )
+                    }
+                },
                 backEnabled = isActive
             )
         }
@@ -599,6 +650,12 @@ fun ShelfNativeDetailScreen(
     onHighlightConsumed: () -> Unit = {},
     openAuthorName: String? = null,
     openFilter: com.ferlagod.rocinante.utils.ShelfFilter? = null,
+    // La ordenación guardada de cada estantería, tal cual está en los ajustes. Se lee una vez
+    // al abrir: cambiarla luego en otra estantería no debe reordenar esta bajo el dedo.
+    storedSortModes: String = "",
+    // Se manda el nombre y no el tipo: la enumeración es privada de este fichero, y sacarla
+    // de aquí solo para pasar un valor la volvería parte de la interfaz sin motivo.
+    onSortModeChanged: (String, String) -> Unit = { _, _ -> },
     // Se invoca en cuanto esta pantalla se ha quedado con el autor o el recorte que le
     // mandaban, para que quien lo mandó lo olvide.
     onTargetTaken: () -> Unit = {},
@@ -624,7 +681,20 @@ fun ShelfNativeDetailScreen(
     var refreshTrigger by remember { mutableStateOf(0) }
     var isNetworkRefreshed by remember { mutableStateOf(false) }
 
-    var sortMode by remember { mutableStateOf(ShelfSortMode.DEFAULT) }
+    // La ordenación con la que se abrió la anterior, si vale aquí. Se lee una vez: cambiarla
+    // más tarde en otra estantería no debe reordenar esta bajo el dedo.
+    var sortMode by remember(shelf.slug) { mutableStateOf(ShelfSortMode.DEFAULT) }
+    // Los ajustes llegan de disco un instante después de componer, así que leerlos al crear el
+    // estado cogía siempre el valor vacío: la estantería salía en el orden del servidor por muy
+    // guardado que estuviera. Se aplican en cuanto llegan, y **una sola vez**: cambiar la
+    // ordenación de otra estantería no debe reordenar esta bajo el dedo.
+    var sortRestored by remember(shelf.slug) { mutableStateOf(false) }
+    LaunchedEffect(shelf.slug, storedSortModes) {
+        if (!sortRestored && storedSortModes.isNotEmpty()) {
+            sortMode = ShelfSortMode.forShelf(storedSortModes, shelf.slug)
+            sortRestored = true
+        }
+    }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     // Collator con nivel PRIMARY: ignora mayúsculas/acentos pero respeta el orden
     // alfabético del idioma (p. ej. æ/ø/å en danés se colocan correctamente).
@@ -1124,34 +1194,48 @@ fun ShelfNativeDetailScreen(
                 ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.shelf_sort_default)) },
-                        onClick = { sortMode = ShelfSortMode.DEFAULT; sortMenuExpanded = false }
+                        onClick = { sortMode = ShelfSortMode.DEFAULT
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.DEFAULT.name) }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.shelf_sort_title_asc)) },
-                        onClick = { sortMode = ShelfSortMode.TITLE_ASC; sortMenuExpanded = false }
+                        onClick = { sortMode = ShelfSortMode.TITLE_ASC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.TITLE_ASC.name) }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.shelf_sort_title_desc)) },
-                        onClick = { sortMode = ShelfSortMode.TITLE_DESC; sortMenuExpanded = false }
+                        onClick = { sortMode = ShelfSortMode.TITLE_DESC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.TITLE_DESC.name) }
                     )
                     if (shelf.slug == "read") {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.shelf_sort_finished_desc)) },
-                            onClick = { sortMode = ShelfSortMode.FINISHED_DESC; sortMenuExpanded = false }
+                            onClick = { sortMode = ShelfSortMode.FINISHED_DESC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.FINISHED_DESC.name) }
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.shelf_sort_finished_asc)) },
-                            onClick = { sortMode = ShelfSortMode.FINISHED_ASC; sortMenuExpanded = false }
+                            onClick = { sortMode = ShelfSortMode.FINISHED_ASC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.FINISHED_ASC.name) }
                         )
                     }
                     if (shelf.slug == "read" || shelf.slug == "reading") {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.shelf_sort_rating_desc)) },
-                            onClick = { sortMode = ShelfSortMode.RATING_DESC; sortMenuExpanded = false }
+                            onClick = { sortMode = ShelfSortMode.RATING_DESC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.RATING_DESC.name) }
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.shelf_sort_rating_asc)) },
-                            onClick = { sortMode = ShelfSortMode.RATING_ASC; sortMenuExpanded = false }
+                            onClick = { sortMode = ShelfSortMode.RATING_ASC
+                            sortMenuExpanded = false
+                            onSortModeChanged(shelf.slug, ShelfSortMode.RATING_ASC.name) }
                         )
                     }
                     HorizontalDivider()

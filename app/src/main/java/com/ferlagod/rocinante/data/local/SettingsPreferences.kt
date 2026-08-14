@@ -83,7 +83,13 @@ data class SettingsData(
     /** Orden y visibilidad de las estanterías propias, codificadas por [OwnShelfLayout]. */
     val ownShelfLayout: String = "",
     /** Si se enseña el más de crear estantería en «Mis libros». */
-    val allowCreateShelves: Boolean = true
+    val allowCreateShelves: Boolean = true,
+    /**
+     * La última ordenación elegida en una estantería, para volver a usarla en la siguiente.
+     * Es una sola para todas: quien ordena por fecha lo hace porque así quiere mirar sus
+     * libros, no solo los de una estantería.
+     */
+    val shelfSortMode: String = ""
 )
 
 /**
@@ -107,6 +113,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_FAVOURITE_SHELF = stringPreferencesKey("favourite_shelf")
         private val KEY_OWN_SHELF_LAYOUT = stringPreferencesKey("own_shelf_layout")
         private val KEY_ALLOW_CREATE_SHELVES = booleanPreferencesKey("allow_create_shelves")
+        private val KEY_SHELF_SORT_MODE = stringPreferencesKey("shelf_sort_mode")
     }
 
     /**
@@ -140,6 +147,7 @@ class SettingsPreferences(private val context: Context) {
             val favouriteShelf = prefs[KEY_FAVOURITE_SHELF] ?: ""
             val ownShelfLayout = prefs[KEY_OWN_SHELF_LAYOUT] ?: ""
             val allowCreateShelves = prefs[KEY_ALLOW_CREATE_SHELVES] ?: true
+            val shelfSortMode = prefs[KEY_SHELF_SORT_MODE] ?: ""
 
             SettingsData(
                 themeMode,
@@ -154,7 +162,8 @@ class SettingsPreferences(private val context: Context) {
                 shelfAlignment,
                 favouriteShelf,
                 ownShelfLayout,
-                allowCreateShelves
+                allowCreateShelves,
+                shelfSortMode
             )
         }
 
@@ -237,6 +246,13 @@ class SettingsPreferences(private val context: Context) {
      */
     /** Guarda cuál es la estantería de favoritos, una vez encontrada o creada. */
     /** Guarda el orden y la visibilidad de las estanterías propias, y si se puede crear. */
+    /** Recuerda cómo se ha ordenado una estantería, para abrir la siguiente igual. */
+    suspend fun setShelfSortMode(mode: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_SHELF_SORT_MODE] = mode
+        }
+    }
+
     suspend fun setOwnShelfLayout(layout: String, allowCreate: Boolean) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_OWN_SHELF_LAYOUT] = layout
