@@ -560,5 +560,8 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="missing_field_explanation">Dit hoort bij het boek, niet bij jou: wat je hier kiest wordt op de instantie opgeslagen en iedereen ziet het. De keuzes komen van de instantie zelf. Eén voor één opgeslagen.</string>
     <string name="missing_field_choose">Kiezen</string>
     <string name="missing_field_failed">Kon “%1$s” niet opslaan</string>
+    <string name="profile_reading_extremes">Snelst en langzaamst</string>
+    <string name="profile_reading_fastest">Snelst gelezen</string>
+    <string name="profile_reading_slowest">Duurde het langst</string>
 </resources>
 

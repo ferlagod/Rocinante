@@ -34,6 +34,7 @@ enum class ProfileSection(val id: String) {
     READING_GOAL("reading_goal"),
     TOP_RATED("top_rated"),
     TOP_AUTHORS("top_authors"),
+    READING_EXTREMES("reading_extremes"),
     RATINGS("ratings"),
     LANGUAGES("languages"),
     FORMATS("formats"),

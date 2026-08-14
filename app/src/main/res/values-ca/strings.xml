@@ -560,5 +560,8 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="missing_field_explanation">Això és del llibre, no teu: el que triïs aquí es desa a la instància i tothom ho veu. Les opcions les dona la instància mateixa. Es desa d\'un en un.</string>
     <string name="missing_field_choose">Tria</string>
     <string name="missing_field_failed">No s\'ha pogut desar «%1$s»</string>
+    <string name="profile_reading_extremes">Més ràpida i més lenta</string>
+    <string name="profile_reading_fastest">Llegit més ràpid</string>
+    <string name="profile_reading_slowest">Va costar més</string>
 </resources>
 

@@ -591,5 +591,8 @@
     <string name="missing_field_explanation">Це належить книжці, а не вам: обране тут зберігається на інстансі й бачать усі. Варіанти надає сам інстанс. Зберігається по одному.</string>
     <string name="missing_field_choose">Обрати</string>
     <string name="missing_field_failed">Не вдалося зберегти «%1$s»</string>
+    <string name="profile_reading_extremes">Найшвидше і найповільніше</string>
+    <string name="profile_reading_fastest">Прочитано найшвидше</string>
+    <string name="profile_reading_slowest">Зайняла найбільше часу</string>
 </resources>
 

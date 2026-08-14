@@ -562,5 +562,8 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="missing_field_explanation">Isto é do libro, non teu: o que escollas aquí gárdase na instancia e véo todo o mundo. As opcións dáas a propia instancia. Gárdase dun en un.</string>
     <string name="missing_field_choose">Escoller</string>
     <string name="missing_field_failed">Non se puido gardar «%1$s»</string>
+    <string name="profile_reading_extremes">Máis rápida e máis lenta</string>
+    <string name="profile_reading_fastest">Lido máis rápido</string>
+    <string name="profile_reading_slowest">O que máis custou</string>
 </resources>
 

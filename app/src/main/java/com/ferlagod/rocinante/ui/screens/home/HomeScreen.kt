@@ -1918,6 +1918,20 @@ fun ProfileTab(
                         }
                     }
                 }
+                com.ferlagod.rocinante.utils.ProfileSection.READING_EXTREMES -> {
+                    readingStats?.let { stats ->
+                        // Sin ninguna lectura con las dos fechas no hay tarjeta que enseñar.
+                        if (stats.fastestRead != null && stats.slowestRead != null) {
+                            item {
+                                ProfileReadingExtremesCard(
+                                    fastest = stats.fastestRead,
+                                    slowest = stats.slowestRead,
+                                    onBookClick = openBook
+                                )
+                            }
+                        }
+                    }
+                }
                 com.ferlagod.rocinante.utils.ProfileSection.RATINGS -> {
                     readingStats?.let { stats ->
                         item {
@@ -2329,6 +2343,98 @@ fun ActivityDetailsDialog(
  * Bloque del perfil con los libros mejor valorados. Al tocar uno se abre su ficha, igual
  * que en las filas de portadas del perfil.
  */
+/**
+ * La lectura más rápida y la más lenta, en días enteros.
+ *
+ * Solo cuentan las que tienen fecha de inicio **y** de fin: sin las dos no hay nada que medir,
+ * y BookWyrm deja la de inicio vacía a menudo, así que la tarjeta dice sobre cuántas lecturas
+ * habla en vez de dar a entender que habla de toda la estantería.
+ */
+@Composable
+private fun ProfileReadingExtremesCard(
+    fastest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan,
+    slowest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan,
+    onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(
+                text = stringResource(R.string.profile_reading_extremes),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            listOf(
+                stringResource(R.string.profile_reading_fastest) to fastest,
+                stringResource(R.string.profile_reading_slowest) to slowest
+            ).forEachIndexed { index, (label, span) ->
+                if (index > 0) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBookClick(span.book) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // La portada, del mismo tamaño que en «Mejor valorados»: se reconoce el
+                    // libro antes de leer el título.
+                    val coverModifier = Modifier
+                        .width(40.dp)
+                        .height(60.dp)
+                        .clip(MaterialTheme.shapes.small)
+                    val coverUrl = span.book.cover?.url
+                    if (!coverUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = coverUrl,
+                            contentDescription = span.book.title
+                                ?: stringResource(R.string.book_cover_desc),
+                            modifier = coverModifier,
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = coverModifier
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = span.book.title
+                                    ?: stringResource(R.string.book_cover_desc),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = span.book.title ?: stringResource(R.string.book_no_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.reading_days, span.days, span.days
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ProfileTopRatedCard(
     books: List<com.ferlagod.rocinante.utils.ReadingStatsCalculator.TopRatedBook>,

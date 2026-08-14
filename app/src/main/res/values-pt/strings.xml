@@ -560,5 +560,8 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="missing_field_explanation">Isto é do livro, não seu: o que escolher aqui fica guardado na instância e toda a gente vê. As opções vêm da própria instância. Guarda-se um a um.</string>
     <string name="missing_field_choose">Escolher</string>
     <string name="missing_field_failed">Não foi possível guardar «%1$s»</string>
+    <string name="profile_reading_extremes">Mais rápida e mais lenta</string>
+    <string name="profile_reading_fastest">Lido mais depressa</string>
+    <string name="profile_reading_slowest">Demorou mais tempo</string>
 </resources>
 

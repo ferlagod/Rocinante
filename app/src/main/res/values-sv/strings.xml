@@ -560,5 +560,8 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="missing_field_explanation">Det här hör till boken, inte till dig: det du väljer sparas på instansen och alla ser det. Alternativen kommer från instansen själv. Sparas en i taget.</string>
     <string name="missing_field_choose">Välj</string>
     <string name="missing_field_failed">Kunde inte spara ”%1$s”</string>
+    <string name="profile_reading_extremes">Snabbast och långsammast</string>
+    <string name="profile_reading_fastest">Lästes snabbast</string>
+    <string name="profile_reading_slowest">Tog längst tid</string>
 </resources>
 

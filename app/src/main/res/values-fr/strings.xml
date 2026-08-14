@@ -560,5 +560,8 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="missing_field_explanation">Cela appartient au livre, pas à vous : ce que vous choisissez ici est enregistré sur l\'instance et tout le monde le voit. Les choix viennent de l\'instance elle-même. Enregistré un par un.</string>
     <string name="missing_field_choose">Choisir</string>
     <string name="missing_field_failed">Impossible d\'enregistrer « %1$s »</string>
+    <string name="profile_reading_extremes">La plus rapide et la plus lente</string>
+    <string name="profile_reading_fastest">Lu le plus vite</string>
+    <string name="profile_reading_slowest">A pris le plus de temps</string>
 </resources>
 

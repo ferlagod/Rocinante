@@ -560,5 +560,8 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="missing_field_explanation">Das gehört zum Buch, nicht zu dir: Was du hier wählst, wird auf der Instanz gespeichert und alle sehen es. Die Auswahl kommt von der Instanz selbst. Wird einzeln gespeichert.</string>
     <string name="missing_field_choose">Wählen</string>
     <string name="missing_field_failed">„%1$s“ konnte nicht gespeichert werden</string>
+    <string name="profile_reading_extremes">Am schnellsten und am langsamsten</string>
+    <string name="profile_reading_fastest">Am schnellsten gelesen</string>
+    <string name="profile_reading_slowest">Hat am längsten gedauert</string>
 </resources>
 

@@ -560,5 +560,8 @@
     <string name="missing_field_explanation">Αυτό ανήκει στο βιβλίο, όχι σε εσένα: ό,τι επιλέξεις εδώ αποθηκεύεται στον διακομιστή και το βλέπουν όλοι. Οι επιλογές έρχονται από τον ίδιο τον διακομιστή. Αποθηκεύεται ένα κάθε φορά.</string>
     <string name="missing_field_choose">Επιλογή</string>
     <string name="missing_field_failed">Δεν αποθηκεύτηκε το «%1$s»</string>
+    <string name="profile_reading_extremes">Πιο γρήγορα και πιο αργά</string>
+    <string name="profile_reading_fastest">Διαβάστηκε πιο γρήγορα</string>
+    <string name="profile_reading_slowest">Πήρε τον περισσότερο χρόνο</string>
 </resources>
 

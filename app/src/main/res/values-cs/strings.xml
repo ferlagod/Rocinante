@@ -589,5 +589,8 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="missing_field_explanation">Tohle patří knize, ne tobě: co tu zvolíš, se uloží na instanci a uvidí to všichni. Možnosti dává sama instance. Ukládá se po jedné.</string>
     <string name="missing_field_choose">Vybrat</string>
     <string name="missing_field_failed">Nepodařilo se uložit „%1$s“</string>
+    <string name="profile_reading_extremes">Nejrychlejší a nejpomalejší</string>
+    <string name="profile_reading_fastest">Přečteno nejrychleji</string>
+    <string name="profile_reading_slowest">Trvalo nejdéle</string>
 </resources>
 

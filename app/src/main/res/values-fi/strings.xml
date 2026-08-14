@@ -561,5 +561,8 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="missing_field_explanation">Tämä kuuluu kirjalle, ei sinulle: valintasi tallentuu palvelimelle ja kaikki näkevät sen. Vaihtoehdot tulevat palvelimelta itseltään. Tallennetaan yksi kerrallaan.</string>
     <string name="missing_field_choose">Valitse</string>
     <string name="missing_field_failed">Kohdetta ”%1$s” ei voitu tallentaa</string>
+    <string name="profile_reading_extremes">Nopein ja hitain</string>
+    <string name="profile_reading_fastest">Luettu nopeimmin</string>
+    <string name="profile_reading_slowest">Kesti pisimpään</string>
 </resources>
 

@@ -52,6 +52,9 @@ import com.ferlagod.rocinante.data.model.ShelfBookItem
  * @property booksWithReadingDays libros con fecha de inicio Y de fin, que son los únicos que
  *   permiten medir cuánto se tardó. BookWyrm suele dejar vacía la de inicio, así que esta
  *   base es pequeña y la interfaz debe decir sobre cuántos libros se calcula la media.
+ * @property fastestRead la lectura más corta y [slowestRead] la más larga, de entre las que
+ *   tienen fecha de inicio **y** de fin; sin las dos no hay nada que medir. Son null si no
+ *   hay ninguna con las dos fechas.
  * @property languageDistribution idiomas leídos, de más a menos libros.
  * @property booksWithoutLanguage libros sin idioma declarado.
  * @property formatDistribution formatos leídos, con el valor tal cual lo da BookWyrm
@@ -74,6 +77,8 @@ data class ReadingStats(
     val avgReadingDaysThisYear: Double?,
     val avgReadingDaysAllTime: Double?,
     val booksWithReadingDays: Int,
+    val fastestRead: ReadSpan?,
+    val slowestRead: ReadSpan?,
     val languageDistribution: List<LanguageCount>,
     val booksWithoutLanguage: Int,
     val formatDistribution: List<FormatCount>,
@@ -90,6 +95,12 @@ data class ReadingStats(
      * @property flag bandera del idioma, o null si no hay ninguna asociada.
      */
     data class LanguageCount(val label: String, val flag: String?, val count: Int)
+
+    /**
+     * Una lectura con lo que tardó, en días enteros contando los dos extremos: empezar y
+     * terminar el mismo día es un día, no cero, igual que en la tarjeta de la estantería.
+     */
+    data class ReadSpan(val book: ShelfBookItem, val days: Int)
 
     data class FormatCount(val format: String, val count: Int)
 
@@ -286,6 +297,28 @@ object ReadingStatsCalculator {
         }
         val spansThisYear = spans.filter { it.second == currentYear }
 
+        // La lectura más corta y la más larga. Cuenta cada lectura y no cada libro: un libro
+        // releído son dos lecturas, y la media de arriba las cuenta así también. Los días van
+        // contando los dos extremos, como en la estantería, para que un mismo libro no diga
+        // «3 días» en un sitio y «2» en otro.
+        val spansByBook = books.flatMap { book ->
+            val enriched = book.id?.let { enrichment[it] } ?: return@flatMap emptyList()
+            val readthroughs = enriched.readthroughs
+            val durations = if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.mapNotNull { readingDays(it.started, it.finished) }
+            } else {
+                listOfNotNull(readingDays(enriched.started, enriched.finished))
+            }
+            durations.map { ReadingStats.ReadSpan(book, it) }
+        }
+        // Empates deshechos por título, para que la tarjeta no baile entre aperturas.
+        val byDuration = compareBy<ReadingStats.ReadSpan>({ it.days }, { it.book.title ?: "" })
+        val fastestRead = spansByBook.minWithOrNull(byDuration)
+        val slowestRead = spansByBook.maxWithOrNull(
+            compareBy<ReadingStats.ReadSpan> { it.days }
+                .thenByDescending { it.book.title ?: "" }
+        )
+
         // Idiomas: se agrupan por BANDERA, no por el texto. BookWyrm guarda el idioma tal y
         // como venga en la edición, así que una misma estantería mezcla "Danish" y "Dansk";
         // agrupar por el texto los contaría como dos idiomas distintos. Como etiqueta se usa
@@ -334,6 +367,8 @@ object ReadingStatsCalculator {
                 .takeIf { spansThisYear.isNotEmpty() },
             avgReadingDaysAllTime = spans.map { it.first }.average().takeIf { spans.isNotEmpty() },
             booksWithReadingDays = spans.size,
+            fastestRead = fastestRead,
+            slowestRead = slowestRead,
             languageDistribution = languageDistribution,
             booksWithoutLanguage = books.size - booksWithLanguage,
             formatDistribution = formatDistribution,

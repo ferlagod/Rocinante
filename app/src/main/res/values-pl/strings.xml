@@ -591,5 +591,8 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="missing_field_explanation">To należy do książki, nie do ciebie: wybór zapisze się na instancji i zobaczą go wszyscy. Opcje pochodzą z samej instancji. Zapisywane pojedynczo.</string>
     <string name="missing_field_choose">Wybierz</string>
     <string name="missing_field_failed">Nie udało się zapisać „%1$s”</string>
+    <string name="profile_reading_extremes">Najszybciej i najwolniej</string>
+    <string name="profile_reading_fastest">Przeczytane najszybciej</string>
+    <string name="profile_reading_slowest">Zajęło najwięcej czasu</string>
 </resources>
 

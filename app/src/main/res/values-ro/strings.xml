@@ -580,5 +580,8 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="missing_field_explanation">Asta ține de carte, nu de tine: ce alegi aici se salvează pe instanță și văd toți. Opțiunile vin chiar de la instanță. Se salvează una câte una.</string>
     <string name="missing_field_choose">Alege</string>
     <string name="missing_field_failed">Nu s-a putut salva „%1$s”</string>
+    <string name="profile_reading_extremes">Cea mai rapidă și cea mai lentă</string>
+    <string name="profile_reading_fastest">Citit cel mai repede</string>
+    <string name="profile_reading_slowest">A durat cel mai mult</string>
 </resources>
 

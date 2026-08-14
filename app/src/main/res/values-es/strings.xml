@@ -606,4 +606,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="missing_field_explanation">Esto es del libro, no tuyo: lo que elijas aquí se guarda en la instancia y lo ve todo el mundo. Las opciones las da la propia instancia. Se guarda de uno en uno.</string>
     <string name="missing_field_choose">Elegir</string>
     <string name="missing_field_failed">No se pudo guardar «%1$s»</string>
+    <string name="profile_reading_extremes">Más rápida y más lenta</string>
+    <string name="profile_reading_fastest">Leído más rápido</string>
+    <string name="profile_reading_slowest">Lo que más costó</string>
 </resources>

@@ -560,5 +560,8 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="missing_field_explanation">Questo appartiene al libro, non a te: quello che scegli qui viene salvato sull\'istanza e lo vedono tutti. Le opzioni le dà l\'istanza stessa. Si salva uno alla volta.</string>
     <string name="missing_field_choose">Scegli</string>
     <string name="missing_field_failed">Impossibile salvare «%1$s»</string>
+    <string name="profile_reading_extremes">Più veloce e più lento</string>
+    <string name="profile_reading_fastest">Letto più in fretta</string>
+    <string name="profile_reading_slowest">Ha richiesto più tempo</string>
 </resources>
 
