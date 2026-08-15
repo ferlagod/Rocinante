@@ -585,5 +585,6 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="profile_reading_extremes">Máis rápida e máis lenta</string>
     <string name="profile_reading_fastest">Lido máis rápido</string>
     <string name="profile_reading_slowest">O que máis custou</string>
+    <string name="changelog_text_v1_2_4">Novidades\n• Perfil interactivo: Toca as gráficas para ver listas, nova estatística «Extremos de lectura» e corrección rápida de datos.\n• Progreso intelixente: Barras de progreso en tarxetas, estimación de días restantes e actualización instantánea.\n• Andeis e favoritos: Crea andeis propios, icona de corazón para favoritos e carga inmediata desde caché.\n• Ficha do libro: Pasa o dedo para cambiar de pestana, toca para copiar datos, biografías de autores e novas ligazóns.\n• Rendemento: Precarga instantánea de estatísticas, memoria de desprazamento restaurada, menos peticións e datas corrixidas.</string>
 </resources>
 

@@ -614,5 +614,6 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="profile_reading_extremes">Nejrychlejší a nejpomalejší</string>
     <string name="profile_reading_fastest">Přečteno nejrychleji</string>
     <string name="profile_reading_slowest">Trvalo nejdéle</string>
+    <string name="changelog_text_v1_2_4">Co je nového\n• Interaktivní profil: Klepnutím na grafy zobrazíte seznamy, nová statistika «Extrémy čtení» a rychlá oprava dat.\n• Inteligentní postup: Zobrazují se ukazatele průběhu, odhadovaný zbývající čas a okamžitá aktualizace.\n• Poličky a oblíbené: Vytvořte si vlastní poličky, ikona srdce pro oblíbené a okamžité načtení z mezipaměti.\n• Detail knihy: Přejetím prstem můžete přepínat karty, klepnutím kopírovat data, životopisy autorů a nové odkazy.\n• Výkon: Okamžité načtení statistik do paměti, obnovená paměť posouvání, méně požadavků a opravené datumy.</string>
 </resources>
 

@@ -604,5 +604,6 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="profile_reading_extremes">Cea mai rapidă și cea mai lentă</string>
     <string name="profile_reading_fastest">Citit cel mai repede</string>
     <string name="profile_reading_slowest">A durat cel mai mult</string>
+    <string name="changelog_text_v1_2_4">Noutăți\n• Profil interactiv: Atingeți graficele pentru a vizualiza listele, o nouă statistică «Extreme de lectură» și corectarea rapidă a datelor.\n• Progres inteligent: Bare de progres pe carduri, estimarea zilelor rămase și actualizare instantanee.\n• Rafturi și favorite: Creați-vă propriile rafturi, pictogramă inimă pentru favorite și încărcare imediată din memoria cache.\n• Detalii despre carte: Glisați pentru a schimba filele, atingeți pentru a copia date, biografii ale autorilor și linkuri noi.\n• Performanță: Preîncărcare instantanee a statisticilor, memorie de defilare restaurată, mai puține solicitări și date corectate.</string>
 </resources>
 

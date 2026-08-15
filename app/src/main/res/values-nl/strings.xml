@@ -583,5 +583,6 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="profile_reading_extremes">Snelst en langzaamst</string>
     <string name="profile_reading_fastest">Snelst gelezen</string>
     <string name="profile_reading_slowest">Duurde het langst</string>
+    <string name="changelog_text_v1_2_4">Wat is er nieuw\n• Interactief profiel: Tik op grafieken om lijsten te zien, nieuwe statistiek «Lees-extremen» en snelle gegevenscorrectie.\n• Slimme voortgang: Voortgangsbalken op kaarten, schatting van resterende dagen en directe update.\n• Planken en favorieten: Maak uw eigen planken, hartpictogram voor favorieten en onmiddellijk laden vanuit de cache.\n• Boekdetails: Veeg om van tabblad te wisselen, tik om gegevens te kopiëren, biografieën van auteurs en nieuwe links.\n• Prestaties: Direct voorladen van statistieken, hersteld scrolgeheugen, minder verzoeken en vaste data.</string>
 </resources>
 
