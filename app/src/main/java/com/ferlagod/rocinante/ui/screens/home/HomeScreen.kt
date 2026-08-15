@@ -1654,6 +1654,22 @@ fun ProfileTab(
         } catch (_: Exception) {
         }
         try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val cleanUser = username.removePrefix("@").substringBefore("@").trim()
+            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/read.json?page=1"
+            val response = api.getShelfData(shelfJsonUrl)
+            val fetchedItems = response.orderedItems ?: emptyList()
+            if (fetchedItems.isNotEmpty()) {
+                // Solo se siembra la caché si está vacía para que las estadísticas puedan mostrarse.
+                if (dataCache.loadShelfBooks("read").isNullOrEmpty()) {
+                    dataCache.saveShelfBooks("read", fetchedItems)
+                    refreshTrigger++ // Recalcular las estadísticas con los nuevos datos
+                }
+            }
+        } catch (_: Exception) {
+        }
+        try {
             val fetchedUsers = com.ferlagod.rocinante.data.api.BookWyrmScraper.getSuggestedUsers(api, instanceUrl)
             suggestedUsers = fetchedUsers
             dataCache.saveSuggestedUsers(fetchedUsers)
