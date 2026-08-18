@@ -208,9 +208,9 @@ object AnubisClearance {
         if (cookies.isNullOrBlank()) return null
         return cookies.split(";")
             .map { it.trim() }
-            .firstOrNull { it.startsWith("$COOKIE_NAME=") }
-            ?.substringAfter('=')
-            ?.takeIf { it.isNotBlank() }
+            .filter { it.startsWith("techaro.lol-anubis") }
+            .map { it.substringAfter('=') }
+            .firstOrNull { it.isNotBlank() }
     }
 
     /** Normaliza la instancia a "https://host/", que es la clave del almacén de cookies. */
