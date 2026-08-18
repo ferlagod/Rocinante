@@ -95,7 +95,7 @@ object NetworkErrors {
 
     /** Clasifica una respuesta HTTP que no ha ido bien. */
     fun classify(httpCode: Int): NetworkErrorKind = when {
-        httpCode == 401 || httpCode == 403 -> NetworkErrorKind.SESSION_EXPIRED
+        httpCode == 401 -> NetworkErrorKind.SESSION_EXPIRED
         httpCode == 404 -> NetworkErrorKind.NOT_FOUND
         httpCode == 429 -> NetworkErrorKind.RATE_LIMITED
         httpCode in 500..599 -> NetworkErrorKind.SERVER_DOWN
