@@ -781,8 +781,6 @@ fun ShelfNativeDetailScreen(
             }
             return@LaunchedEffect
         }
-        val today = java.time.LocalDate.now()
-        val computed = mutableMapOf<String, Int>()
         val fractions = mutableMapOf<String, Double>()
 
         // Lo guardado, que se pinta al instante y de paso evita las peticiones. Pasar por
@@ -793,18 +791,9 @@ fun ShelfNativeDetailScreen(
             resyncTrigger == 0
         stored.forEach { (id, value) -> fractions[id] = value }
         fractionByBook = fractions.toMap()
-        books.forEach { book ->
-            val id = book.id ?: return@forEach
-            val started = enrichment[id]?.started
-            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, stored[id], today)?.let {
-                computed[id] = it
-            }
-        }
-        daysLeftByBook = computed.toMap()
 
         books.forEach { book ->
             val id = book.id ?: return@forEach
-            val started = enrichment[id]?.started
             // Lo que ya se sabe y sigue siendo reciente no se vuelve a pedir.
             if (fresh && stored.containsKey(id)) return@forEach
             val progress = runCatching {
@@ -822,13 +811,29 @@ fun ShelfNativeDetailScreen(
             // Los libros que ya no están en la estantería se caen solos: se guarda lo
             // recogido en esta pasada, no lo de antes más esto.
             dataCache.saveReadingFractions(fractions.toMap())
-            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(started, fraction, today)?.let {
-                computed[id] = it
-                // Se van enseñando según se calculan, en vez de esperar a tenerlos todos.
-                daysLeftByBook = computed.toMap()
-            }
             kotlinx.coroutines.delay(250)
         }
+    }
+
+    // Los días que faltan, en su propio efecto. La fecha de inicio no viene con la
+    // estantería: la trae el relleno por libro, que llega de disco un instante después. Antes
+    // se calculaban de una vez dentro del efecto de arriba, con lo que hubiera en ese momento
+    // —casi siempre nada—, y no se volvían a mirar: la línea no salía. Aquí no se pide nada a
+    // nadie, así que rehacer la cuenta cada vez que llega un dato no cuesta.
+    LaunchedEffect(shelf.slug, books, fractionByBook, enrichment) {
+        if (shelf.slug != "reading") {
+            daysLeftByBook = emptyMap()
+            return@LaunchedEffect
+        }
+        val today = java.time.LocalDate.now()
+        daysLeftByBook = books.mapNotNull { book ->
+            val id = book.id ?: return@mapNotNull null
+            com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
+                startedIso = enrichment[id]?.started,
+                fraction = fractionByBook[id],
+                today = today
+            )?.let { id to it }
+        }.toMap()
     }
 
     // Qué libros llevan corazón. Se guarda solo la lista de direcciones, y se enseña desde
@@ -2039,15 +2044,7 @@ fun ShelfNativeDetailScreen(
                 fractionByBook = updatedFractions
                 // También a disco: si no, al volver a entrar se pintaría el progreso viejo.
                 coroutineScope.launch { dataCache.saveReadingFractions(updatedFractions) }
-                val days = com.ferlagod.rocinante.utils.ReadingPace.daysLeft(
-                    startedIso = enrichment[id]?.started,
-                    fraction = fraction,
-                    today = java.time.LocalDate.now()
-                )
-                daysLeftByBook = daysLeftByBook.toMutableMap().apply {
-                    // Terminado el libro ya no queda nada que prever, así que la línea se va.
-                    if (days != null) put(id, days) else remove(id)
-                }
+                // Los días se rehacen solos: cambiar la fracción despierta a quien los cuenta.
             },
             // Estrellas al instante: pasamos lo que ya tenemos cacheado de la estantería.
             initialEnrichment = enrichment[activeBookUrl],
