@@ -584,5 +584,6 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="profile_reading_fastest">Letto più in fretta</string>
     <string name="profile_reading_slowest">Ha richiesto più tempo</string>
     <string name="changelog_text_v1_2_4">Novità\n• Profilo interattivo: Tocca i grafici per visualizzare gli elenchi, nuova statistica «Estremi di lettura» e correzione rapida dei dati.\n• Avanzamento intelligente: Barre di avanzamento sulle schede, stima dei giorni rimanenti e aggiornamento istantaneo.\n• Scaffali e preferiti: Crea i tuoi scaffali, icona a forma di cuore per i preferiti e caricamento immediato dalla cache.\n• Dettagli del libro: Scorri per cambiare scheda, tocca per copiare dati, biografie degli autori e nuovi link.\n• Prestazioni: Precaricamento istantaneo delle statistiche, memoria di scorrimento ripristinata, meno richieste e date corrette.</string>
+    <string name="changelog_text_v1_2_6">CORREZIONI\n• I giorni rimanenti per finire un libro sono ora visualizzati correttamente nello scaffale «In lettura».</string>
 </resources>
 

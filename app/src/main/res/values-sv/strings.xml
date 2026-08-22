@@ -584,5 +584,6 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="profile_reading_fastest">Lästes snabbast</string>
     <string name="profile_reading_slowest">Tog längst tid</string>
     <string name="changelog_text_v1_2_4">Nyheter\n• Interaktiv profil: Tryck på grafer för att se listor, ny statistik «Läs-extremer» och snabb datakorrigering.\n• Smart framsteg: Framstegsfält på kort, uppskattning av återstående dagar och omedelbar uppdatering.\n• Bokhyllor och favoriter: Skapa dina egna bokhyllor, hjärtikon för favoriter och omedelbar laddning från cache.\n• Bokdetaljer: Svep för att byta flikar, tryck för att kopiera data, författarbiografier och nya länkar.\n• Prestanda: Omedelbar förladdning av statistik, återställt rullningsminne, färre förfrågningar och korrigerade datum.</string>
+    <string name="changelog_text_v1_2_6">RÄTTELSER\n• Återstående dagar för att läsa ut en bok visas nu korrekt i hyllan «Läser».</string>
 </resources>
 

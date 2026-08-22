@@ -585,5 +585,6 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="profile_reading_fastest">Luettu nopeimmin</string>
     <string name="profile_reading_slowest">Kesti pisimpään</string>
     <string name="changelog_text_v1_2_4">Mitä uutta\n• Interaktiivinen profiili: Napauta kaavioita nähdäksesi luetteloita, uusi «Lukuääripäät»-tilasto ja nopea tietojen korjaus.\n• Älykäs edistyminen: Edistymispalkit korteissa, arvio jäljellä olevista päivistä ja välitön päivitys.\n• Hyllyt ja suosikit: Luo omia hyllyjä, sydänkuvake suosikeille ja välitön lataus välimuistista.\n• Kirjan tiedot: Pyyhkäise vaihtaaksesi välilehtiä, napauta kopioidaksesi tietoja, kirjailijoiden elämäkerrat ja uusia linkkejä.\n• Suorituskyky: Tilastojen välitön esilataus, palautettu vieritysmuisti, vähemmän pyyntöjä ja korjatut päivämäärät.</string>
+    <string name="changelog_text_v1_2_6">KORJAUKSET\n• Jäljellä olevat päivät kirjan loppuun lukemiseen näkyvät nyt oikein «Luennassa» -hyllyssä.</string>
 </resources>
 

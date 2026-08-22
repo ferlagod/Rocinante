@@ -584,5 +584,6 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="profile_reading_fastest">Lido mais depressa</string>
     <string name="profile_reading_slowest">Demorou mais tempo</string>
     <string name="changelog_text_v1_2_4">Novidades\n• Perfil interativo: Toque nos gráficos para ver listas, nova estatística «Extremos de leitura» e correção rápida de dados.\n• Progresso inteligente: Barras de progresso em cartões, estimativa de dias restantes e atualização instantânea.\n• Estantes e favoritos: Crie suas próprias estantes, ícone de coração para favoritos e carregamento imediato do cache.\n• Detalhes do livro: Deslize para mudar de guia, toque para copiar dados, biografias de autores e novos links.\n• Desempenho: Pré-carregamento instantâneo de estatísticas, memória de rolagem restaurada, menos solicitações e datas corrigidas.</string>
+    <string name="changelog_text_v1_2_6">CORREÇÕES\n• Os dias restantes para terminar um livro agora são exibidos corretamente na estante «Lendo».</string>
 </resources>
 

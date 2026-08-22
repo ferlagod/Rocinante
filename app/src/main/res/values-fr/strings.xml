@@ -584,5 +584,6 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="profile_reading_fastest">Lu le plus vite</string>
     <string name="profile_reading_slowest">A pris le plus de temps</string>
     <string name="changelog_text_v1_2_4">Nouveautés\n• Profil interactif : Appuyez sur les graphiques pour voir les listes, nouvelle statistique « Extrêmes de lecture » et correction rapide des données.\n• Progrès intelligent : Barres de progression sur les cartes, estimation des jours restants et mise à jour instantanée.\n• Étagères et favoris : Créez vos propres étagères, icône en forme de cœur pour les favoris et chargement immédiat depuis le cache.\n• Détails du livre : Balayez pour changer d\'onglet, appuyez pour copier des données, biographies des auteurs et nouveaux liens.\n• Performances : Préchargement instantané des statistiques, mémoire de défilement restaurée, moins de requêtes et dates corrigées.</string>
+    <string name="changelog_text_v1_2_6">CORRECTIONS\n• Les jours restants pour terminer un livre s\'affichent désormais correctement dans l\'étagère « En cours de lecture ».</string>
 </resources>
 

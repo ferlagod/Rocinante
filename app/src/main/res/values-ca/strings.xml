@@ -584,5 +584,6 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="profile_reading_fastest">Llegit més ràpid</string>
     <string name="profile_reading_slowest">Va costar més</string>
     <string name="changelog_text_v1_2_4">Novetats\n• Perfil interactiu: Toca les gràfiques per veure llistes, nova estadística «Extrems de lectura» i correcció ràpida de dades.\n• Progrés intel·ligent: Barres de progrés en targetes, estimació de dies restants i actualització instantània.\n• Prestatgeries i favorits: Crea prestatgeries pròpies, icona de cor per a favorits i càrrega immediata des de memòria cau.\n• Fitxa del llibre: Llisca per canviar de pestanya, toca per copiar dades, biografies d\'autors i nous enllaços.\n• Rendiment: Precàrrega instantània d\'estadístiques, memòria de desplaçament restaurada, menys peticions i dates corregides.</string>
+    <string name="changelog_text_v1_2_6">CORRECCIONS\n• Els dies restants per acabar de llegir un llibre ara es mostren correctament a la prestatgeria «Llegint».</string>
 </resources>
 

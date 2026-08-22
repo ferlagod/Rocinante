@@ -584,5 +584,6 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="profile_reading_fastest">Am schnellsten gelesen</string>
     <string name="profile_reading_slowest">Hat am längsten gedauert</string>
     <string name="changelog_text_v1_2_4">Was gibt\'s Neues\n• Interaktives Profil: Tippen Sie auf Diagramme, um Listen anzuzeigen, neue Statistik «Lese-Extreme» und schnelle Datenkorrektur.\n• Intelligenter Fortschritt: Fortschrittsbalken auf Karten, Schätzung der verbleibenden Tage und sofortige Aktualisierung.\n• Regale und Favoriten: Erstellen Sie eigene Regale, Herz-Symbol für Favoriten und sofortiges Laden aus dem Cache.\n• Buchdetails: Wischen Sie, um die Registerkarten zu wechseln, tippen Sie auf Daten, um sie zu kopieren, Autorenbiografien und neue Links.\n• Leistung: Sofortiges Vorladen von Statistiken, wiederhergestellter Scroll-Speicher, weniger Anfragen und korrigierte Daten.</string>
+    <string name="changelog_text_v1_2_6">FEHLERBEHEBUNGEN\n• Die verbleibenden Tage zum Beenden eines Buches werden nun im „Lese ich“-Regal korrekt angezeigt.</string>
 </resources>
 

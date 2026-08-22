@@ -634,5 +634,6 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="profile_reading_fastest">Læst hurtigst</string>
     <string name="profile_reading_slowest">Tog længst tid</string>
     <string name="changelog_text_v1_2_4">Hvad er nyt\n• Interaktiv profil: Tryk på graferne for at se lister, ny statistik «Læse-ekstremer» og hurtig fejlretning af data.\n• Smart læsefremskridt: Fremskridtsbjælker på kort, estimering af resterende dage og øjeblikkelig opdatering.\n• Bogreoler og favoritter: Opret dine egne bogreoler, hjerteikon for favoritter og øjeblikkelig indlæsning fra cache.\n• Bogdetaljer: Stryg for at skifte fane, tryk for at kopiere data, forfatterbiografier og nye links.\n• Ydeevne: Øjeblikkelig forudindlæsning af statistikker, gendannet rullehukommelse, færre anmodninger og rettede datoer.</string>
+    <string name="changelog_text_v1_2_6">RETTELSER\n• De resterende dage til at afslutte en bog vises nu korrekt på hylden «Læser».</string>
 </resources>
 

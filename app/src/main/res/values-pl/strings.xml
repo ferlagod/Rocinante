@@ -617,5 +617,6 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="profile_reading_fastest">Przeczytane najszybciej</string>
     <string name="profile_reading_slowest">Zajęło najwięcej czasu</string>
     <string name="changelog_text_v1_2_4">Nowości\n• Interaktywny profil: Dotknij wykresów, aby zobaczyć listy, nowe statystyki «Ekstrema czytelnicze» i szybkie naprawianie danych.\n• Inteligentny postęp: Paski postępu na kartach, szacowanie pozostałych dni i natychmiastowa aktualizacja.\n• Półki i ulubione: Twórz własne półki, ikona serca dla ulubionych i natychmiastowe ładowanie z pamięci podręcznej.\n• Szczegóły książki: Przesuń palcem, aby przełączać karty, dotknij, aby skopiować dane, biografie autorów i nowe linki.\n• Wydajność: Błyskawiczne wstępne ładowanie statystyk, przywrócona pamięć przewijania, mniej żądań i poprawione daty.</string>
+    <string name="changelog_text_v1_2_6">POPRAWKI\n• Pozostałe dni do ukończenia książki są teraz poprawnie wyświetlane na półce „Czytane”.</string>
 </resources>
 
