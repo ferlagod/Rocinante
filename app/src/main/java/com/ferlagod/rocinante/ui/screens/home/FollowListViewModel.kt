@@ -157,32 +157,18 @@ class FollowListViewModel @Inject constructor(
 
                     // 3. Construir items
                     val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
-                    val items = targetActorUrls.zip(profiles).map { (originalActorUrl, profile) ->
-                        val actorId = profile?.id
-                        if (actorId.isNullOrBlank()) {
-                            val host = try { java.net.URI(originalActorUrl).host ?: "" } catch (_: Exception) { "" }
-                            val preferredUsername = originalActorUrl.substringAfterLast("/")
-                            val handle = if (host.isNotEmpty()) "@$preferredUsername@$host" else "@$preferredUsername"
-                            FollowUserItem(
-                                actorUrl = originalActorUrl,
-                                name = preferredUsername,
-                                handle = handle,
-                                summary = "",
-                                avatarUrl = null,
-                                isFollowedByMe = normalizeActorUrl(originalActorUrl) in followingIds
-                            )
-                        } else {
-                            FollowUserItem(
-                                actorUrl = actorId,
-                                name = profile.name?.takeIf { it.isNotBlank() }
-                                    ?: profile.preferredUsername
-                                    ?: actorId.substringAfterLast("/"),
-                                handle = buildHandle(profile, baseUrl),
-                                summary = profile.summary,
-                                avatarUrl = profile.icon?.url,
-                                isFollowedByMe = normalizeActorUrl(actorId) in followingIds
-                            )
-                        }
+                    val items = profiles.filterNotNull().map { profile ->
+                        val actorId = profile.id.orEmpty()
+                        FollowUserItem(
+                            actorUrl = actorId,
+                            name = profile.name?.takeIf { it.isNotBlank() }
+                                ?: profile.preferredUsername
+                                ?: actorId.substringAfterLast("/"),
+                            handle = buildHandle(profile, baseUrl),
+                            summary = profile.summary,
+                            avatarUrl = profile.icon?.url,
+                            isFollowedByMe = normalizeActorUrl(actorId) in followingIds
+                        )
                     }
 
                     _uiState.update {
@@ -299,34 +285,21 @@ class FollowListViewModel @Inject constructor(
                 @Suppress("DEPRECATION")
                 var root = JsonParser().parse(raw).asJsonObject
                 
-                if (!root.has("orderedItems") && !root.has("items")) {
-                    val first = root.get("first")
-                    val firstUrl = if (first?.isJsonPrimitive == true) {
-                        first.asString
-                    } else if (first?.isJsonObject == true) {
-                        first.asJsonObject.get("id")?.asString
-                    } else null
-
-                    if (firstUrl != null) {
-                        val firstRaw = withTimeoutOrNull(15_000L) {
-                            api.getRawJson(firstUrl).string()
+                // Fallback para instancias antiguas (BookWyrm 0.8) que devuelven el perfil del usuario (Person)
+                // en lugar de la colección al consultar followers.json o following.json
+                if (!root.has("orderedItems") && root.get("type")?.asString == "Person") {
+                    val fallbackUrl = if (initialUrl.contains("/following")) {
+                        root.get("following")?.asString
+                    } else {
+                        root.get("followers")?.asString
+                    }
+                    if (fallbackUrl != null) {
+                        val pagedFallbackUrl = if (fallbackUrl.contains("?")) fallbackUrl else "$fallbackUrl?page=1"
+                        val fallbackRaw = withTimeoutOrNull(15_000L) {
+                            api.getRawJson(pagedFallbackUrl).string()
                         } ?: break
                         @Suppress("DEPRECATION")
-                        root = JsonParser().parse(firstRaw).asJsonObject
-                    } else if (root.get("type")?.asString == "Person") {
-                        val fallbackUrl = if (initialUrl.contains("/following")) {
-                            root.get("following")?.asString
-                        } else {
-                            root.get("followers")?.asString
-                        }
-                        if (fallbackUrl != null) {
-                            val pagedFallbackUrl = if (fallbackUrl.contains("?")) fallbackUrl else "$fallbackUrl?page=1"
-                            val fallbackRaw = withTimeoutOrNull(15_000L) {
-                                api.getRawJson(pagedFallbackUrl).string()
-                            } ?: break
-                            @Suppress("DEPRECATION")
-                            root = JsonParser().parse(fallbackRaw).asJsonObject
-                        }
+                        root = JsonParser().parse(fallbackRaw).asJsonObject
                     }
                 }
 
@@ -363,76 +336,11 @@ class FollowListViewModel @Inject constructor(
     }
 
     private suspend fun fetchProfileFollowingRedirects(actorUrl: String): BookWyrmProfile? {
-        var rawJson = ""
-        var isErrorJson = false
-        try {
-            val response = api.getRawJson(actorUrl)
-            rawJson = response.string()
-            isErrorJson = rawJson.trimStart().startsWith("{") && rawJson.contains("\"error\"")
-        } catch (e: Exception) {
-            // Retrofit lanza HttpException si el servidor devuelve un 401/403 (ej. requiere firma)
-            isErrorJson = true
-        }
-        
-        if (rawJson.trimStart().startsWith("{") && !isErrorJson) {
-            return try {
-                gson.fromJson(rawJson, BookWyrmProfile::class.java)
-            } catch (_: Exception) {
-                null
-            }
-        }
-
-        // Fallback a parsear HTML buscando meta etiquetas OpenGraph (og:image, og:title, og:description)
-        // Útil para instancias Mastodon u otras que rechazan llamadas ActivityPub sin firmar (devolviendo 4xx o error JSON).
         return try {
-            var htmlResponse = ""
-            var currentUrl = actorUrl
-            
-            var response = try { api.getRawHtmlResponse(currentUrl) } catch (_: Exception) { null }
-            if (response != null) {
-                // OkHttpClient tiene followRedirects(false), así que los 301/302 hay que seguirlos a mano
-                if (response.code() in 300..399) {
-                    val location = response.headers()["Location"]
-                    if (!location.isNullOrEmpty()) {
-                        currentUrl = if (location.startsWith("/")) {
-                            val host = try { java.net.URI(actorUrl).let { "${it.scheme}://${it.host}" } } catch (_: Exception) { "" }
-                            "$host$location"
-                        } else location
-                        response = try { api.getRawHtmlResponse(currentUrl) } catch (_: Exception) { null }
-                    }
-                }
-                htmlResponse = response?.body()?.string() ?: ""
-            }
-            
-            val htmlToParse = if (htmlResponse.isNotEmpty()) htmlResponse else rawJson
-            
-            if (htmlToParse.isNotEmpty()) {
-                val ogImageRegex = "<meta[^>]*property=\"og:image\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:image\"".toRegex(RegexOption.IGNORE_CASE)
-                val ogTitleRegex = "<meta[^>]*property=\"og:title\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:title\"".toRegex(RegexOption.IGNORE_CASE)
-                val ogDescRegex = "<meta[^>]*property=\"og:description\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:description\"".toRegex(RegexOption.IGNORE_CASE)
-
-                val imageUrl = ogImageRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
-                val title = ogTitleRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
-                val description = ogDescRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
-                
-                // Extraer preferredUsername del title (usualmente "Nombre (@username@host)" o similar)
-                val parsedName = title?.substringBefore("(")?.trim()?.takeIf { it.isNotBlank() } ?: actorUrl.substringAfterLast("/")
-                
-                BookWyrmProfile(
-                    id = actorUrl,
-                    type = "Person",
-                    name = parsedName,
-                    summary = description,
-                    outbox = null,
-                    inbox = null,
-                    preferredUsername = actorUrl.substringAfterLast("/"),
-                    followers = null,
-                    following = null,
-                    icon = if (imageUrl != null) com.ferlagod.rocinante.data.model.ProfileIcon(url = imageUrl) else null
-                )
-            } else {
-                null
-            }
+            val raw = api.getRawJson(actorUrl).string()
+            // Verificar que sea JSON antes de parsear (evita parsear HTML de redirects)
+            if (!raw.trimStart().startsWith("{")) return null
+            gson.fromJson(raw, BookWyrmProfile::class.java)
         } catch (_: Exception) {
             null
         }
