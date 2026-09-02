@@ -620,7 +620,8 @@ fun SuggestedUserDialog(
     val context = LocalContext.current
     var fullProfile by remember { mutableStateOf<BookWyrmProfile?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    var isFollowing by remember { mutableStateOf(false) }
+    var isFollowingAction by remember { mutableStateOf(false) }
+    var isFollowedByMe by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(suggestedUser.profileUrl) {
@@ -628,6 +629,13 @@ fun SuggestedUserDialog(
         try {
             val jsonUrl = if (suggestedUser.profileUrl.endsWith(".json")) suggestedUser.profileUrl else "${suggestedUser.profileUrl}.json"
             fullProfile = api.getFullUserProfile(jsonUrl)
+            
+            val localUrl = if (suggestedUser.profileUrl.startsWith("http")) suggestedUser.profileUrl else instanceUrl.trimEnd('/') + suggestedUser.profileUrl
+            val htmlResponse = api.getRawHtmlResponse(localUrl)
+            if (htmlResponse.isSuccessful) {
+                val html = htmlResponse.body()?.string() ?: ""
+                isFollowedByMe = html.contains("/unfollow\"") || html.contains("/unfollow'")
+            }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
@@ -676,7 +684,10 @@ fun SuggestedUserDialog(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     
-                    val handleToUse = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else "@${profile?.preferredUsername}"
+                    val handleToUse = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                        val host = try { java.net.URL(profile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                        "@${profile?.preferredUsername}@$host"
+                    }
                     Text(
                         text = handleToUse,
                         style = MaterialTheme.typography.bodyMedium,
@@ -684,7 +695,7 @@ fun SuggestedUserDialog(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
 
-                    val bio = HtmlUtils.stripHtml(profile?.summary ?: "")
+                    val bio = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(profile?.summary ?: "")
                     if (bio.isNotBlank()) {
                         Text(
                             text = bio,
@@ -699,41 +710,78 @@ fun SuggestedUserDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        isFollowing = true
-                        try {
-                            val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                val domain = java.net.URL(instanceUrl).host
-                                "@${fullProfile?.preferredUsername}@$domain"
+            if (isFollowedByMe) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            isFollowingAction = true
+                            try {
+                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                                    val host = try { java.net.URL(fullProfile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                                    "@${fullProfile?.preferredUsername}@$host"
+                                }
+                                val response = api.unfollowUser(handleToFollow.removePrefix("@"))
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
+                                    isFollowedByMe = false
+                                    onFollowSuccess()
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
+                            } finally {
+                                isFollowingAction = false
                             }
-                            val response = api.followUser(handleToFollow.removePrefix("@"))
-                            if (response.isSuccessful || response.code() == 302) {
-                                Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
-                                onFollowSuccess()
-                            } else {
-                                Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
-                            }
-                        } catch (e: Exception) {
-                            if (e is kotlinx.coroutines.CancellationException) throw e
-                            Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
-                        } finally {
-                            isFollowing = false
                         }
+                    },
+                    enabled = !isLoading && !isFollowingAction
+                ) {
+                    if (isFollowingAction) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.follow_btn_unfollow))
                     }
-                },
-                enabled = !isLoading && !isFollowing
-            ) {
-                if (isFollowing) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(R.string.follow_btn_follow))
+                }
+            } else {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isFollowingAction = true
+                            try {
+                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                                    val host = try { java.net.URL(fullProfile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                                    "@${fullProfile?.preferredUsername}@$host"
+                                }
+                                val response = api.followUser(handleToFollow.removePrefix("@"))
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
+                                    isFollowedByMe = true
+                                    onFollowSuccess()
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
+                            } finally {
+                                isFollowingAction = false
+                            }
+                        }
+                    },
+                    enabled = !isLoading && !isFollowingAction
+                ) {
+                    if (isFollowingAction) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.follow_btn_follow))
+                    }
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isFollowing) {
+            TextButton(onClick = onDismiss, enabled = !isFollowingAction) {
                 Text(stringResource(R.string.post_btn_cancel))
             }
         }

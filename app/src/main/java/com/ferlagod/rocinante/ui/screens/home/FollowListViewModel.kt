@@ -157,18 +157,32 @@ class FollowListViewModel @Inject constructor(
 
                     // 3. Construir items
                     val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
-                    val items = profiles.filterNotNull().map { profile ->
-                        val actorId = profile.id.orEmpty()
-                        FollowUserItem(
-                            actorUrl = actorId,
-                            name = profile.name?.takeIf { it.isNotBlank() }
-                                ?: profile.preferredUsername
-                                ?: actorId.substringAfterLast("/"),
-                            handle = buildHandle(profile, baseUrl),
-                            summary = profile.summary,
-                            avatarUrl = profile.icon?.url,
-                            isFollowedByMe = normalizeActorUrl(actorId) in followingIds
-                        )
+                    val items = targetActorUrls.zip(profiles).map { (originalActorUrl, profile) ->
+                        val actorId = profile?.id
+                        if (actorId.isNullOrBlank()) {
+                            val host = try { java.net.URI(originalActorUrl).host ?: "" } catch (_: Exception) { "" }
+                            val preferredUsername = originalActorUrl.substringAfterLast("/")
+                            val handle = if (host.isNotEmpty()) "@$preferredUsername@$host" else "@$preferredUsername"
+                            FollowUserItem(
+                                actorUrl = originalActorUrl,
+                                name = preferredUsername,
+                                handle = handle,
+                                summary = "",
+                                avatarUrl = null,
+                                isFollowedByMe = normalizeActorUrl(originalActorUrl) in followingIds
+                            )
+                        } else {
+                            FollowUserItem(
+                                actorUrl = actorId,
+                                name = profile.name?.takeIf { it.isNotBlank() }
+                                    ?: profile.preferredUsername
+                                    ?: actorId.substringAfterLast("/"),
+                                handle = buildHandle(profile, baseUrl),
+                                summary = profile.summary,
+                                avatarUrl = profile.icon?.url,
+                                isFollowedByMe = normalizeActorUrl(actorId) in followingIds
+                            )
+                        }
                     }
 
                     _uiState.update {
@@ -285,21 +299,34 @@ class FollowListViewModel @Inject constructor(
                 @Suppress("DEPRECATION")
                 var root = JsonParser().parse(raw).asJsonObject
                 
-                // Fallback para instancias antiguas (BookWyrm 0.8) que devuelven el perfil del usuario (Person)
-                // en lugar de la colección al consultar followers.json o following.json
-                if (!root.has("orderedItems") && root.get("type")?.asString == "Person") {
-                    val fallbackUrl = if (initialUrl.contains("/following")) {
-                        root.get("following")?.asString
-                    } else {
-                        root.get("followers")?.asString
-                    }
-                    if (fallbackUrl != null) {
-                        val pagedFallbackUrl = if (fallbackUrl.contains("?")) fallbackUrl else "$fallbackUrl?page=1"
-                        val fallbackRaw = withTimeoutOrNull(15_000L) {
-                            api.getRawJson(pagedFallbackUrl).string()
+                if (!root.has("orderedItems") && !root.has("items")) {
+                    val first = root.get("first")
+                    val firstUrl = if (first?.isJsonPrimitive == true) {
+                        first.asString
+                    } else if (first?.isJsonObject == true) {
+                        first.asJsonObject.get("id")?.asString
+                    } else null
+
+                    if (firstUrl != null) {
+                        val firstRaw = withTimeoutOrNull(15_000L) {
+                            api.getRawJson(firstUrl).string()
                         } ?: break
                         @Suppress("DEPRECATION")
-                        root = JsonParser().parse(fallbackRaw).asJsonObject
+                        root = JsonParser().parse(firstRaw).asJsonObject
+                    } else if (root.get("type")?.asString == "Person") {
+                        val fallbackUrl = if (initialUrl.contains("/following")) {
+                            root.get("following")?.asString
+                        } else {
+                            root.get("followers")?.asString
+                        }
+                        if (fallbackUrl != null) {
+                            val pagedFallbackUrl = if (fallbackUrl.contains("?")) fallbackUrl else "$fallbackUrl?page=1"
+                            val fallbackRaw = withTimeoutOrNull(15_000L) {
+                                api.getRawJson(pagedFallbackUrl).string()
+                            } ?: break
+                            @Suppress("DEPRECATION")
+                            root = JsonParser().parse(fallbackRaw).asJsonObject
+                        }
                     }
                 }
 

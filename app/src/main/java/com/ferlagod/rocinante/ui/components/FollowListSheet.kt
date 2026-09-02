@@ -78,6 +78,8 @@ import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.model.FollowUserItem
 import com.ferlagod.rocinante.ui.screens.home.FollowListDirection
 import com.ferlagod.rocinante.ui.screens.home.FollowListViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 
 
 /**
@@ -217,66 +219,103 @@ fun FollowListSheet(
     selectedUser?.let { user ->
         AlertDialog(
             onDismissRequest = { selectedActorUrl = null },
-            confirmButton = {
-                TextButton(onClick = { selectedActorUrl = null }) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
             title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AsyncImage(
-                        model = user.avatarUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    Column {
-                        Text(text = user.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(text = user.handle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-                    }
-                }
+                // Omitir título para centrarse en la imagen y nombre del usuario
             },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (user.avatarUrl != null) {
+                        AsyncImage(
+                            model = user.avatarUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.material3.Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    Text(
+                        text = user.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    
+                    Text(
+                        text = user.handle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+
                     val summaryText = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(user.summary)
                     if (summaryText.isNotBlank()) {
-                        Text(text = summaryText, style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = summaryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 5,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
-
-                    val isPending = user.handle in uiState.pendingHandles
-                    if (isPending) {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        }
-                    } else {
-                        if (user.isFollowedByMe) {
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.unfollow(user.actorUrl, user.handle)
-                                    onFollowToggled(false)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(stringResource(R.string.follow_btn_unfollow))
-                            }
+                }
+            },
+            confirmButton = {
+                val isPending = user.handle in uiState.pendingHandles
+                if (user.isFollowedByMe) {
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.unfollow(user.actorUrl, user.handle)
+                            onFollowToggled(false)
+                        },
+                        enabled = !isPending
+                    ) {
+                        if (isPending) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
-                            Button(
-                                onClick = {
-                                    viewModel.follow(user.actorUrl, user.handle)
-                                    onFollowToggled(true)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(stringResource(R.string.follow_btn_follow))
-                            }
+                            Text(stringResource(R.string.follow_btn_unfollow))
                         }
                     }
+                } else {
+                    Button(
+                        onClick = {
+                            viewModel.follow(user.actorUrl, user.handle)
+                            onFollowToggled(true)
+                        },
+                        enabled = !isPending
+                    ) {
+                        if (isPending) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text(stringResource(R.string.follow_btn_follow))
+                        }
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedActorUrl = null }) {
+                    Text(stringResource(R.string.post_btn_cancel))
                 }
             }
         )
@@ -308,14 +347,30 @@ private fun FollowUserRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Avatar
-        AsyncImage(
-            model = user.avatarUrl,
-            contentDescription = stringResource(R.string.profile_avatar_desc),
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
+        if (user.avatarUrl != null) {
+            AsyncImage(
+                model = user.avatarUrl,
+                contentDescription = stringResource(R.string.profile_avatar_desc),
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         // Nombre + handle
         Column(modifier = Modifier.weight(1f)) {
