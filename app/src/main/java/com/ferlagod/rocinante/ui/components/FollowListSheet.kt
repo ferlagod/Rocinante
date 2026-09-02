@@ -228,14 +228,29 @@ fun FollowListSheet(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (user.avatarUrl != null) {
-                        AsyncImage(
-                            model = user.avatarUrl,
+                    val avatarUrl = user.avatarUrl
+                    if (!avatarUrl.isNullOrEmpty()) {
+                        coil.compose.SubcomposeAsyncImage(
+                            model = avatarUrl,
                             contentDescription = null,
                             modifier = Modifier
                                 .size(80.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentScale = ContentScale.Crop,
+                            error = {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    androidx.compose.material3.Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         )
                     } else {
                         Box(
@@ -346,15 +361,28 @@ private fun FollowUserRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Avatar
-        if (user.avatarUrl != null) {
-            AsyncImage(
-                model = user.avatarUrl,
+        val avatarUrl = user.avatarUrl
+        if (!avatarUrl.isNullOrEmpty()) {
+            coil.compose.SubcomposeAsyncImage(
+                model = avatarUrl,
                 contentDescription = stringResource(R.string.profile_avatar_desc),
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop,
+                error = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             )
         } else {
             Box(

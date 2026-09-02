@@ -662,19 +662,44 @@ fun SuggestedUserDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val avatarToUse = profile?.icon?.url ?: suggestedUser.avatarUrl
-                    if (avatarToUse.isNotEmpty()) {
-                        AsyncImage(
+                    if (!avatarToUse.isNullOrEmpty()) {
+                        coil.compose.SubcomposeAsyncImage(
                             model = avatarToUse,
                             contentDescription = null,
-                            modifier = Modifier.size(80.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentScale = ContentScale.Crop,
+                            error = {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         )
                     } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp).clip(CircleShape)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     
                     Text(

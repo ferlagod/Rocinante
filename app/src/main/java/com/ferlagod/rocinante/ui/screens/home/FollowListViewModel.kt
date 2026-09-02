@@ -363,11 +363,76 @@ class FollowListViewModel @Inject constructor(
     }
 
     private suspend fun fetchProfileFollowingRedirects(actorUrl: String): BookWyrmProfile? {
+        var rawJson = ""
+        var isErrorJson = false
+        try {
+            val response = api.getRawJson(actorUrl)
+            rawJson = response.string()
+            isErrorJson = rawJson.trimStart().startsWith("{") && rawJson.contains("\"error\"")
+        } catch (e: Exception) {
+            // Retrofit lanza HttpException si el servidor devuelve un 401/403 (ej. requiere firma)
+            isErrorJson = true
+        }
+        
+        if (rawJson.trimStart().startsWith("{") && !isErrorJson) {
+            return try {
+                gson.fromJson(rawJson, BookWyrmProfile::class.java)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        // Fallback a parsear HTML buscando meta etiquetas OpenGraph (og:image, og:title, og:description)
+        // Útil para instancias Mastodon u otras que rechazan llamadas ActivityPub sin firmar (devolviendo 4xx o error JSON).
         return try {
-            val raw = api.getRawJson(actorUrl).string()
-            // Verificar que sea JSON antes de parsear (evita parsear HTML de redirects)
-            if (!raw.trimStart().startsWith("{")) return null
-            gson.fromJson(raw, BookWyrmProfile::class.java)
+            var htmlResponse = ""
+            var currentUrl = actorUrl
+            
+            var response = try { api.getRawHtmlResponse(currentUrl) } catch (_: Exception) { null }
+            if (response != null) {
+                // OkHttpClient tiene followRedirects(false), así que los 301/302 hay que seguirlos a mano
+                if (response.code() in 300..399) {
+                    val location = response.headers()["Location"]
+                    if (!location.isNullOrEmpty()) {
+                        currentUrl = if (location.startsWith("/")) {
+                            val host = try { java.net.URI(actorUrl).let { "${it.scheme}://${it.host}" } } catch (_: Exception) { "" }
+                            "$host$location"
+                        } else location
+                        response = try { api.getRawHtmlResponse(currentUrl) } catch (_: Exception) { null }
+                    }
+                }
+                htmlResponse = response?.body()?.string() ?: ""
+            }
+            
+            val htmlToParse = if (htmlResponse.isNotEmpty()) htmlResponse else rawJson
+            
+            if (htmlToParse.isNotEmpty()) {
+                val ogImageRegex = "<meta[^>]*property=\"og:image\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:image\"".toRegex(RegexOption.IGNORE_CASE)
+                val ogTitleRegex = "<meta[^>]*property=\"og:title\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:title\"".toRegex(RegexOption.IGNORE_CASE)
+                val ogDescRegex = "<meta[^>]*property=\"og:description\"[^>]*content=\"([^\"]+)\"|<meta[^>]*content=\"([^\"]+)\"[^>]*property=\"og:description\"".toRegex(RegexOption.IGNORE_CASE)
+
+                val imageUrl = ogImageRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
+                val title = ogTitleRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
+                val description = ogDescRegex.find(htmlToParse)?.let { it.groupValues[1].ifEmpty { it.groupValues[2] } }
+                
+                // Extraer preferredUsername del title (usualmente "Nombre (@username@host)" o similar)
+                val parsedName = title?.substringBefore("(")?.trim()?.takeIf { it.isNotBlank() } ?: actorUrl.substringAfterLast("/")
+                
+                BookWyrmProfile(
+                    id = actorUrl,
+                    type = "Person",
+                    name = parsedName,
+                    summary = description,
+                    outbox = null,
+                    inbox = null,
+                    preferredUsername = actorUrl.substringAfterLast("/"),
+                    followers = null,
+                    following = null,
+                    icon = if (imageUrl != null) com.ferlagod.rocinante.data.model.ProfileIcon(url = imageUrl) else null
+                )
+            } else {
+                null
+            }
         } catch (_: Exception) {
             null
         }
