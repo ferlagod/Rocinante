@@ -631,4 +631,5 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="profile_reading_extremes">Más rápida y más lenta</string>
     <string name="profile_reading_fastest">Leído más rápido</string>
     <string name="profile_reading_slowest">Lo que más costó</string>
+    <string name="changelog_text_v1_2_7">NOVEDADES\n• Timeline centralizado: El hilo de actividad ahora está adaptado y centrado en pantallas grandes como tablets y teléfonos plegables para una lectura más cómoda.\n• Dejar de seguir: Ahora puedes dejar de seguir a usuarios directamente desde la ventana emergente de su perfil.\n\nCORRECCIONES\n• Handles de perfiles: Mejorada la gestión de identificadores de usuario (handles) para dominios federados en perfiles sugeridos.\n• Limpieza HTML: Corregida la extracción de las biografías de perfiles sugeridos para evitar que se muestren etiquetas HTML.</string>
 </resources>
