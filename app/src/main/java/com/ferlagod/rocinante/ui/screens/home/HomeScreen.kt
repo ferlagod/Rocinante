@@ -201,78 +201,76 @@ fun HomeScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            AppTopBar(
-                title = when (uiState.selectedTab) {
-                    0 -> stringResource(R.string.nav_activity)
-                    1 -> stringResource(R.string.nav_my_books)
-                    2 -> stringResource(R.string.nav_search)
-                    3 -> stringResource(R.string.nav_notifications)
-                    else -> stringResource(R.string.nav_profile)
-                },
-                onSettingsClick = onSettingsClick
+    androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold(
+        navigationSuiteItems = {
+            item(
+                selected = uiState.selectedTab == 0,
+                onClick = { viewModel.selectTab(0) },
+                icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_activity)) },
+                label = { Text(stringResource(R.string.nav_activity), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
             )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = uiState.selectedTab == 0,
-                    onClick = { viewModel.selectTab(0) },
-                    icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_activity)) },
-                    label = { Text(stringResource(R.string.nav_activity), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-                )
-                NavigationBarItem(
-                    selected = uiState.selectedTab == 1,
-                    onClick = {
-                        // Estando ya en «Mis libros», el toque no cambia de pestaña: sirve
-                        // para volver a la lista de estanterías desde la que se esté abierta.
-                        if (uiState.selectedTab == 1) backToShelvesKey++
-                        viewModel.selectTab(1)
-                    },
-                    icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = stringResource(R.string.nav_my_books)) }, // ICONO CORREGIDO
-                    label = { Text(stringResource(R.string.nav_my_books), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-                )
-                NavigationBarItem(
-                    selected = uiState.selectedTab == 2,
-                    onClick = { viewModel.selectTab(2) },
-                    icon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search)) },
-                    label = { Text(stringResource(R.string.nav_search), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-                )
-                NavigationBarItem(
-                    selected = uiState.selectedTab == 3,
-                    onClick = { 
-                        viewModel.selectTab(3)
-                        unreadNotifications = 0 // Clear badge when tapped
-                    },
-                    icon = { 
-                        if (unreadNotifications > 0) {
-                            BadgedBox(badge = { Badge { Text(unreadNotifications.toString()) } }) {
-                                Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications))
-                            }
-                        } else {
+            item(
+                selected = uiState.selectedTab == 1,
+                onClick = {
+                    if (uiState.selectedTab == 1) backToShelvesKey++
+                    viewModel.selectTab(1)
+                },
+                icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = stringResource(R.string.nav_my_books)) },
+                label = { Text(stringResource(R.string.nav_my_books), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            )
+            item(
+                selected = uiState.selectedTab == 2,
+                onClick = { viewModel.selectTab(2) },
+                icon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search)) },
+                label = { Text(stringResource(R.string.nav_search), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            )
+            item(
+                selected = uiState.selectedTab == 3,
+                onClick = { 
+                    viewModel.selectTab(3)
+                    unreadNotifications = 0
+                },
+                icon = { 
+                    if (unreadNotifications > 0) {
+                        BadgedBox(badge = { Badge { Text(unreadNotifications.toString()) } }) {
                             Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications))
                         }
+                    } else {
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications))
+                    }
+                },
+                label = { Text(stringResource(R.string.nav_notifications), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            )
+            item(
+                selected = uiState.selectedTab == 4,
+                onClick = { viewModel.selectTab(4) },
+                icon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.nav_profile)) },
+                label = { Text(stringResource(R.string.nav_profile), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            )
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title = when (uiState.selectedTab) {
+                        0 -> stringResource(R.string.nav_activity)
+                        1 -> stringResource(R.string.nav_my_books)
+                        2 -> stringResource(R.string.nav_search)
+                        3 -> stringResource(R.string.nav_notifications)
+                        else -> stringResource(R.string.nav_profile)
                     },
-                    label = { Text(stringResource(R.string.nav_notifications), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+                    onSettingsClick = onSettingsClick
                 )
-                NavigationBarItem(
-                    selected = uiState.selectedTab == 4,
-                    onClick = { viewModel.selectTab(4) },
-                    icon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.nav_profile)) },
-                    label = { Text(stringResource(R.string.nav_profile), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-                )
-            }
-        },
-        floatingActionButton = {
-            if (uiState.selectedTab == 0) {
-                FloatingActionButton(onClick = { showPostDialog = true }) {
-                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.post_fab_desc))
+            },
+            floatingActionButton = {
+                if (uiState.selectedTab == 0) {
+                    FloatingActionButton(onClick = { showPostDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.post_fab_desc))
+                    }
                 }
             }
-        }
-    ) { paddingValues ->
-        HorizontalPager(
+        ) { paddingValues ->
+            HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             userScrollEnabled = true
@@ -597,6 +595,7 @@ fun HomeScreen(
             )
         }
     }
+    }
 }
 
 /**
@@ -887,6 +886,8 @@ fun ActivityTab(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = 600.dp)
             .padding(16.dp)
     ) {
         if (isLoading && timeline.isEmpty()) {
