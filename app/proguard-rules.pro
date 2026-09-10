@@ -30,8 +30,7 @@
 # Keep JSoup (used for HTML parsing in fallbacks and search)
 -keep class org.jsoup.** { *; }
 
-# Keep all data models and persistence classes (DataStore, Retrofit, Room, etc)
--keep class com.ferlagod.rocinante.data.** { *; }
-
-# Keep all Enums to prevent issues with string serialization (e.g. ThemeMode.valueOf)
--keep enum com.ferlagod.rocinante.** { *; }
+# Keep all source code from this project to prevent crashes with Compose Navigation,
+# Hilt injection, DataStore reflection, and Enums, while still allowing R8 to 
+# heavily minify and obfuscate the massive external libraries (which fulfills Google Play requirements).
+-keep class com.ferlagod.rocinante.** { *; }
