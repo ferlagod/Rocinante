@@ -273,6 +273,8 @@
     <string name="follow_btn_unfollow">Folge ich</string>
     <string name="follow_success">Gefolgt!</string>
     <string name="unfollow_success">Nicht mehr gefolgt</string>
+    <string name="follow_request_accept">Akzeptieren</string>
+    <string name="follow_request_reject">Ablehnen</string>
     <string name="follow_error">Fehler beim Folgen: %1$s</string>
     <string name="nav_settings">Einstellungen</string>
     <string name="review_dialog_title">Rezension veröffentlichen</string>

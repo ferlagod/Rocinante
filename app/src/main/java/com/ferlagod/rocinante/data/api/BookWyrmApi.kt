@@ -151,6 +151,24 @@ interface BookWyrmApi {
         @Field("user") userHandle: String
     ): retrofit2.Response<ResponseBody>
 
+    /**
+     * Acepta una solicitud de seguimiento pendiente.
+     */
+    @FormUrlEncoded
+    @POST("accept-follow-request/")
+    suspend fun acceptFollowRequest(
+        @Field("user") userHandle: String
+    ): retrofit2.Response<ResponseBody>
+
+    /**
+     * Rechaza (elimina) una solicitud de seguimiento pendiente.
+     */
+    @FormUrlEncoded
+    @POST("delete-follow-request/")
+    suspend fun deleteFollowRequest(
+        @Field("user") userHandle: String
+    ): retrofit2.Response<ResponseBody>
+
     // POST /reading-status/<status>/<book_id>/ — BookWyrm espera el estado
     // y el ID del libro en la ruta, NO como campos de formulario.
     // Statuses válidos: "want", "start", "finish", "stop"

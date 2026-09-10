@@ -1723,7 +1723,9 @@ object BookWyrmScraper {
                 }
                 
                 val fullText = element.text().lowercase()
+                val hasFollowRequestForm = element.select("form[action*=/accept-follow-request]").isNotEmpty()
                 val type = when {
+                    hasFollowRequestForm -> NotificationType.FOLLOW_REQUEST
                     fullText.contains("replied") || fullText.contains("respondió") -> NotificationType.REPLY
                     fullText.contains("mention") || fullText.contains("mencionó") -> NotificationType.MENTION
                     fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") -> NotificationType.FAVORITE

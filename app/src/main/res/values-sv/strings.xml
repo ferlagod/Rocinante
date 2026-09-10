@@ -273,6 +273,8 @@
     <string name="follow_btn_unfollow">Följer</string>
     <string name="follow_success">Följs!</string>
     <string name="unfollow_success">Avföljd</string>
+    <string name="follow_request_accept">Acceptera</string>
+    <string name="follow_request_reject">Avvisa</string>
     <string name="follow_error">Fel vid följning: %1$s</string>
     <string name="nav_settings">Inställningar</string>
     <string name="review_dialog_title">Publicera recension</string>

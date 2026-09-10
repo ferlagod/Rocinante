@@ -27,6 +27,8 @@
     <string name="follow_btn_unfollow">Following</string>
     <string name="follow_success">Followed!</string>
     <string name="unfollow_success">Unfollowed</string>
+    <string name="follow_request_accept">Accept</string>
+    <string name="follow_request_reject">Decline</string>
     <string name="follow_error">Follow error: %1$s</string>
     <string name="post_fab_desc">Compose post</string>
     <string name="post_dialog_title">New post</string>

@@ -283,6 +283,8 @@
     <string name="follow_btn_unfollow">Sledujete</string>
     <string name="follow_success">Sledováno!</string>
     <string name="unfollow_success">Zrušeno sledování</string>
+    <string name="follow_request_accept">Přijmout</string>
+    <string name="follow_request_reject">Odmítnout</string>
     <string name="follow_error">Chyba sledování: %1$s</string>
     <string name="nav_settings">Nastavení</string>
     <string name="review_dialog_title">Publikovat recenzi</string>

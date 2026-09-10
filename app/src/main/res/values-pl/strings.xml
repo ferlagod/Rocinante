@@ -283,6 +283,8 @@
     <string name="follow_btn_unfollow">Obserwujesz</string>
     <string name="follow_success">Zaobserwowano!</string>
     <string name="unfollow_success">Przestano obserwować</string>
+    <string name="follow_request_accept">Akceptuj</string>
+    <string name="follow_request_reject">Odrzuć</string>
     <string name="follow_error">Błąd obserwowania: %1$s</string>
     <string name="nav_settings">Ustawienia</string>
     <string name="review_dialog_title">Opublikuj recenzję</string>

@@ -273,6 +273,8 @@
     <string name="follow_btn_unfollow">Volgend</string>
     <string name="follow_success">Gevolgd!</string>
     <string name="unfollow_success">Ontvolgd</string>
+    <string name="follow_request_accept">Accepteren</string>
+    <string name="follow_request_reject">Weigeren</string>
     <string name="follow_error">Fout bij volgen: %1$s</string>
     <string name="nav_settings">Instellingen</string>
     <string name="review_dialog_title">Recensie publiceren</string>

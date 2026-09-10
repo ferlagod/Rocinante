@@ -329,5 +329,6 @@ data class SuggestedUser(
     val name: String,
     val handle: String,
     val avatarUrl: String,
-    val profileUrl: String
+    val profileUrl: String,
+    val isFollowRequest: Boolean = false
 ) : java.io.Serializable

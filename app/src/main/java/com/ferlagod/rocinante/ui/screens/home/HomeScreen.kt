@@ -357,12 +357,13 @@ fun HomeScreen(
                         api = api,
                         instanceUrl = instanceUrl,
                         onItemClicked = { item -> 
-                            if (item.type == NotificationType.FOLLOW) {
+                            if (item.type == NotificationType.FOLLOW || item.type == NotificationType.FOLLOW_REQUEST) {
                                 selectedNotificationUser = com.ferlagod.rocinante.data.model.SuggestedUser(
                                     profileUrl = item.permalink ?: "",
                                     name = item.actorName,
                                     handle = "",
-                                    avatarUrl = item.actorAvatarUrl ?: ""
+                                    avatarUrl = item.actorAvatarUrl ?: "",
+                                    isFollowRequest = item.type == NotificationType.FOLLOW_REQUEST
                                 )
                             } else {
                                 selectedNotificationDetail = item
@@ -709,7 +710,8 @@ fun SuggestedUserDialog(
                     )
                     
                     val handleToUse = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                        val host = try { java.net.URL(profile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                        val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                        val host = try { java.net.URL(profile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
                         "@${profile?.preferredUsername}@$host"
                     }
                     Text(
@@ -734,14 +736,49 @@ fun SuggestedUserDialog(
             }
         },
         confirmButton = {
-            if (isFollowedByMe) {
+            if (suggestedUser.isFollowRequest) {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isFollowingAction = true
+                            try {
+                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
+                                    "@${fullProfile?.preferredUsername}@$host"
+                                }
+                                val response = api.acceptFollowRequest(handleToFollow.removePrefix("@"))
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
+                                    onFollowSuccess()
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
+                            } finally {
+                                isFollowingAction = false
+                            }
+                        }
+                    },
+                    enabled = !isLoading && !isFollowingAction
+                ) {
+                    if (isFollowingAction) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.follow_request_accept))
+                    }
+                }
+            } else if (isFollowedByMe) {
                 androidx.compose.material3.OutlinedButton(
                     onClick = {
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
                                 val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                    val host = try { java.net.URL(fullProfile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
                                     "@${fullProfile?.preferredUsername}@$host"
                                 }
                                 val response = api.unfollowUser(handleToFollow.removePrefix("@"))
@@ -775,7 +812,8 @@ fun SuggestedUserDialog(
                             isFollowingAction = true
                             try {
                                 val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                    val host = try { java.net.URL(fullProfile?.id ?: instanceUrl).host } catch (e: Exception) { java.net.URL(instanceUrl).host }
+                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
                                     "@${fullProfile?.preferredUsername}@$host"
                                 }
                                 val response = api.followUser(handleToFollow.removePrefix("@"))
@@ -805,8 +843,40 @@ fun SuggestedUserDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isFollowingAction) {
-                Text(stringResource(R.string.post_btn_cancel))
+            if (suggestedUser.isFollowRequest) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            isFollowingAction = true
+                            try {
+                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
+                                    "@${fullProfile?.preferredUsername}@$host"
+                                }
+                                val response = api.deleteFollowRequest(handleToFollow.removePrefix("@"))
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.post_btn_cancel), Toast.LENGTH_SHORT).show()
+                                    onFollowSuccess()
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                                Toast.makeText(context, context.getString(R.string.profile_network_error, e.message), Toast.LENGTH_LONG).show()
+                            } finally {
+                                isFollowingAction = false
+                            }
+                        }
+                    },
+                    enabled = !isLoading && !isFollowingAction
+                ) {
+                    Text(stringResource(R.string.follow_request_reject))
+                }
+            } else {
+                TextButton(onClick = onDismiss, enabled = !isFollowingAction) {
+                    Text(stringResource(R.string.post_btn_cancel))
+                }
             }
         }
     )

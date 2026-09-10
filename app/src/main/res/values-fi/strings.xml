@@ -21,6 +21,8 @@
     <string name="follow_btn_unfollow">Seurataan</string>
     <string name="follow_success">Seurattu!</string>
     <string name="unfollow_success">Seuraaminen lopetettu</string>
+    <string name="follow_request_accept">Hyväksy</string>
+    <string name="follow_request_reject">Hylkää</string>
     <string name="follow_error">Seurannan virhe: %1$s</string>
     <string name="post_fab_desc">Luo julkaisu</string>
     <string name="post_dialog_title">Uusi julkaisu</string>

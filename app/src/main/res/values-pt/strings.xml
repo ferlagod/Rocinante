@@ -273,6 +273,8 @@
     <string name="follow_btn_unfollow">Seguindo</string>
     <string name="follow_success">Seguindo!</string>
     <string name="unfollow_success">Deixou de seguir</string>
+    <string name="follow_request_accept">Aceitar</string>
+    <string name="follow_request_reject">Recusar</string>
     <string name="follow_error">Erro ao seguir: %1$s</string>
     <string name="nav_settings">Configurações</string>
     <string name="review_dialog_title">Publicar resenha</string>

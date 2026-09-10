@@ -283,6 +283,8 @@
     <string name="follow_btn_unfollow">Читаєте</string>
     <string name="follow_success">Відстежується!</string>
     <string name="unfollow_success">Відписано</string>
+    <string name="follow_request_accept">Прийняти</string>
+    <string name="follow_request_reject">Відхилити</string>
     <string name="follow_error">Помилка підписки: %1$s</string>
     <string name="nav_settings">Налаштування</string>
     <string name="review_dialog_title">Опублікувати відгук</string>

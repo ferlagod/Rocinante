@@ -57,6 +57,8 @@ enum class NotificationType {
     BOOST,
     /** Un nuevo seguidor. */
     FOLLOW,
+    /** Una petición de seguimiento (cuenta privada). */
+    FOLLOW_REQUEST,
     /** Tipo desconocido o no parseable. */
     UNKNOWN
 }

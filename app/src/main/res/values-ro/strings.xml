@@ -278,6 +278,8 @@
     <string name="follow_btn_unfollow">Urmărești</string>
     <string name="follow_success">Urmărit!</string>
     <string name="unfollow_success">Nu mai urmărești</string>
+    <string name="follow_request_accept">Acceptă</string>
+    <string name="follow_request_reject">Respinge</string>
     <string name="follow_error">Eroare de urmărire: %1$s</string>
     <string name="nav_settings">Setări</string>
     <string name="review_dialog_title">Publică recenzia</string>
