@@ -336,14 +336,29 @@ class FollowListViewModel @Inject constructor(
     }
 
     private suspend fun fetchProfileFollowingRedirects(actorUrl: String): BookWyrmProfile? {
-        return try {
-            val raw = api.getRawJson(actorUrl).string()
-            // Verificar que sea JSON antes de parsear (evita parsear HTML de redirects)
-            if (!raw.trimStart().startsWith("{")) return null
-            gson.fromJson(raw, BookWyrmProfile::class.java)
-        } catch (_: Exception) {
-            null
+        var currentUrl = actorUrl
+        var redirects = 0
+        while (redirects < 5) {
+            try {
+                val response = api.getRawJsonResponse(currentUrl)
+                if (response.isSuccessful) {
+                    val raw = response.body()?.string() ?: return null
+                    if (!raw.trimStart().startsWith("{")) return null
+                    return gson.fromJson(raw, BookWyrmProfile::class.java)
+                } else if (response.code() in 300..399) {
+                    val location = response.headers()["Location"] ?: return null
+                    currentUrl = if (location.startsWith("http")) location else {
+                        java.net.URI(currentUrl).resolve(location).toString()
+                    }
+                    redirects++
+                } else {
+                    return null
+                }
+            } catch (_: Exception) {
+                return null
+            }
         }
+        return null
     }
 
     private fun buildHandle(profile: BookWyrmProfile, myBaseUrl: String): String {

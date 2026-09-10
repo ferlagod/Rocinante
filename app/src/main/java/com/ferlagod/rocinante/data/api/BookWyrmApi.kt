@@ -69,6 +69,12 @@ interface BookWyrmApi {
     suspend fun getRawJson(@Url fullUrl: String): ResponseBody
 
     /**
+     * Descarga un JSON genérico obteniendo la respuesta completa (para leer cabeceras como Location).
+     */
+    @GET
+    suspend fun getRawJsonResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
+
+    /**
      * Resuelve un identificador de libro remoto para agregarlo a la base de datos local de la instancia.
      */
     @FormUrlEncoded

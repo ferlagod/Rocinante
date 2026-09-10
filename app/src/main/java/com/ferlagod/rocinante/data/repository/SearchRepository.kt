@@ -185,7 +185,8 @@ class SearchRepository(
             
             val mediaElements = document.select(".media")
             for (element in mediaElements) {
-                val userAnchor = element.selectFirst("a[href*=/user/]") ?: continue
+                // Seleccionar el primer enlace útil (avatar o enlace con /user/)
+                val userAnchor = element.selectFirst("a.media-left") ?: element.selectFirst("a[href*=/user/]") ?: element.selectFirst("a") ?: continue
                 val profileUrl = userAnchor.attr("href")
                 
                 // Excluir links internos como /books o /followers
