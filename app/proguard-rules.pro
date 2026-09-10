@@ -20,13 +20,18 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Gson rules
+# Gson and Data layer rules
 -keepattributes Signature
 -keepattributes *Annotation*
 -keep class sun.misc.Unsafe { *; }
 -keep class com.google.gson.** { *; }
 -keepclassmembers class * extends com.google.gson.reflect.TypeToken { *; }
 
-# Keep data models used with Gson
--keep class com.ferlagod.rocinante.data.api.** { *; }
--keep class com.ferlagod.rocinante.data.model.** { *; }
+# Keep JSoup (used for HTML parsing in fallbacks and search)
+-keep class org.jsoup.** { *; }
+
+# Keep all data models and persistence classes (DataStore, Retrofit, Room, etc)
+-keep class com.ferlagod.rocinante.data.** { *; }
+
+# Keep all Enums to prevent issues with string serialization (e.g. ThemeMode.valueOf)
+-keep enum com.ferlagod.rocinante.** { *; }
