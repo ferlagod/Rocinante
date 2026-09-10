@@ -66,12 +66,14 @@ interface BookWyrmApi {
      * Descarga un JSON genérico desde una URL completa.
      */
     @GET
+    @Headers("Accept: application/activity+json, application/json")
     suspend fun getRawJson(@Url fullUrl: String): ResponseBody
 
     /**
      * Descarga un JSON genérico obteniendo la respuesta completa (para leer cabeceras como Location).
      */
     @GET
+    @Headers("Accept: application/activity+json, application/json")
     suspend fun getRawJsonResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
 
     /**

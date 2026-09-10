@@ -71,12 +71,13 @@ class SearchRepository(
                 val img = element.selectFirst("img.book-cover")
                 val coverRaw = img?.attr("src")
                 val cover = if (coverRaw != null && !coverRaw.startsWith("http")) {
-                    baseUrl.trimEnd('/') + coverRaw
+                    baseUrl.trimEnd('/') + "/" + coverRaw.trimStart('/')
                 } else coverRaw
                 
                 // Intentar extraer el año (ej: "(pubblicato 1949)" o "(published 1949)")
+                // Tomamos la ÚLTIMA coincidencia para evitar falsos positivos si el título es un año (ej. "1984")
                 val textContent = element.text()
-                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().find(textContent)
+                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().findAll(textContent).lastOrNull()
                 val year = yearMatch?.value?.toIntOrNull()
                 
                 if (key.isNotBlank()) {
@@ -108,15 +109,21 @@ class SearchRepository(
                 val strongElems = element.select("strong")
                 val title = if (strongElems.isNotEmpty()) strongElems.first()?.text() ?: "Libro remoto" else "Libro remoto"
                 
-                // Extraer autor si está disponible
+                // Extraer autor si está disponible, soportando inglés, italiano y español
                 val authorText = element.text()
                 val author = authorText.substringAfter(" by ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
                              ?: authorText.substringAfter(" di ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
+                             ?: authorText.substringAfter(" por ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
+                             ?: authorText.substringAfter(" de ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
                 
                 val img = element.selectFirst("img.book-cover")
-                val cover = img?.attr("src")
+                val coverRaw = img?.attr("src")
+                val cover = if (coverRaw != null && !coverRaw.startsWith("http")) {
+                    baseUrl.trimEnd('/') + "/" + coverRaw.trimStart('/')
+                } else coverRaw
                 
-                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().find(authorText)
+                // Tomamos la ÚLTIMA coincidencia para evitar falsos positivos si el título es un año (ej. "1984")
+                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().findAll(authorText).lastOrNull()
                 val year = yearMatch?.value?.toIntOrNull()
                 
                 results.add(

@@ -147,17 +147,32 @@ class FollowListViewModel @Inject constructor(
                         .take(MAX_PROFILES_TO_FETCH)
 
                     // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar timeouts)
-                    val profiles = mutableListOf<BookWyrmProfile?>()
+                    val profiles = mutableListOf<BookWyrmProfile>()
                     targetActorUrls.chunked(30).forEach { chunk ->
                         val chunkProfiles = chunk.map { actorUrl ->
-                            async { fetchProfileWithTimeout(actorUrl) }
+                            async { 
+                                fetchProfileWithTimeout(actorUrl) 
+                                    ?: fetchProfileHtmlFollowingRedirects(actorUrl)
+                                    ?: BookWyrmProfile(
+                                        id = actorUrl,
+                                        type = "Person",
+                                        name = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
+                                        summary = null,
+                                        outbox = null,
+                                        inbox = null,
+                                        icon = null,
+                                        preferredUsername = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
+                                        followers = null,
+                                        following = null
+                                    )
+                            }
                         }.map { it.await() }
                         profiles.addAll(chunkProfiles)
                     }
 
                     // 3. Construir items
                     val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
-                    val items = profiles.filterNotNull().map { profile ->
+                    val items = profiles.map { profile ->
                         val actorId = profile.id.orEmpty()
                         FollowUserItem(
                             actorUrl = actorId,
@@ -376,5 +391,58 @@ class FollowListViewModel @Inject constructor(
 
     private fun normalizeActorUrl(url: String): String {
         return url.removeSuffix(".json").removeSuffix("/").trim()
+    }
+
+    /**
+     * Intenta raspar (scrape) la información del perfil directamente desde el HTML público (OpenGraph)
+     * del usuario. Esto es vital como plan B porque las instancias restrictivas de Mastodon 
+     * no permiten descargas del JSON ActivityPub sin firma, pero sí permiten leer el HTML público del perfil.
+     */
+    private suspend fun fetchProfileHtmlFollowingRedirects(actorUrl: String): BookWyrmProfile? {
+        var currentUrl = actorUrl
+        var redirects = 0
+        while (redirects < 5) {
+            try {
+                // Se usa la API que ya incluye cabecera Accept: text/html
+                val response = api.getRawHtmlResponse(currentUrl)
+                if (response.isSuccessful) {
+                    val html = response.body()?.string() ?: return null
+                    val doc = org.jsoup.Jsoup.parse(html)
+                    
+                    // Extraer desde las etiquetas OpenGraph y meta estandar
+                    val title = doc.selectFirst("meta[property=og:title]")?.attr("content")
+                    val description = doc.selectFirst("meta[property=og:description]")?.attr("content")
+                        ?: doc.selectFirst("meta[name=description]")?.attr("content")
+                    val image = doc.selectFirst("meta[property=og:image]")?.attr("content")
+                    
+                    val nameExtracted = title?.substringBefore(" (@") ?: doc.title() 
+                        ?: actorUrl.substringAfterLast("/").substringBefore("?")
+                        
+                    return BookWyrmProfile(
+                        id = actorUrl,
+                        type = "Person",
+                        name = nameExtracted.trim(),
+                        summary = description?.trim(),
+                        outbox = null,
+                        inbox = null,
+                        icon = image?.takeIf { it.isNotBlank() }?.let { com.ferlagod.rocinante.data.model.ProfileIcon(it) },
+                        preferredUsername = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
+                        followers = null,
+                        following = null
+                    )
+                } else if (response.code() in 300..399) {
+                    val location = response.headers()["Location"] ?: return null
+                    currentUrl = if (location.startsWith("http")) location else {
+                        java.net.URI(currentUrl).resolve(location).toString()
+                    }
+                    redirects++
+                } else {
+                    return null
+                }
+            } catch (_: Exception) {
+                return null
+            }
+        }
+        return null
     }
 }
