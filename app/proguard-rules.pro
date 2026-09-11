@@ -34,3 +34,7 @@
 # Hilt injection, DataStore reflection, and Enums, while still allowing R8 to 
 # heavily minify and obfuscate the massive external libraries (which fulfills Google Play requirements).
 -keep class com.ferlagod.rocinante.** { *; }
+
+# Fix for AndroidX WorkManager Room database crash (R8 full mode strips the reflection-instantiated _Impl)
+-keep class androidx.work.impl.WorkDatabase { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
