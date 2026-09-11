@@ -631,4 +631,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"FIXES\n• Fixed an issue where the login webview closed prematurely when Two-Factor Authentication (2FA) was enabled."</string>
 </resources>

@@ -622,5 +622,6 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"OPRAVY\n• Opraven problém, kdy se přihlašovací obrazovka předčasně zavírala, když bylo povoleno dvoufázové ověření (2FA)."</string>
 </resources>
 

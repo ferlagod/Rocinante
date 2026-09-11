@@ -593,5 +593,6 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="changelog_text_v1_2_8">CORRECCIÓNS
 • Buscador de usuarios: Solucionados os erros ao realizar procuras de perfiles.
 • Solicitudes de seguimento: Corrixido o peche inesperado da aplicación que se producía ao acceder ás peticións de seguimento.</string>
+    <string name="changelog_text_v1_2_9">"CORRECCIÓNS\n• Solucionouse un problema polo cal a pantalla de inicio de sesión pechábase prematuramente ao ter activada a Autenticación de Dous Factores (2FA)."</string>
 </resources>
 

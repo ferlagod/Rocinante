@@ -637,4 +637,5 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="changelog_text_v1_2_8">CORRECCIONES
 • Buscador de usuarios: Solucionados los errores al realizar búsquedas de perfiles.
 • Solicitudes de seguimiento: Corregido el cierre inesperado de la aplicación que se producía al acceder a las peticiones de seguimiento.</string>
+    <string name="changelog_text_v1_2_9">"CORRECCIONES\n• Se ha solucionado un problema por el cual la pantalla de inicio de sesión se cerraba prematuramente al tener activada la Autenticación de Dos Factores (2FA)."</string>
 </resources>

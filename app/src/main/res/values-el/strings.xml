@@ -591,5 +591,6 @@
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"ΔΙΟΡΘΩΣΕΙΣ\n• Διορθώθηκε ένα πρόβλημα όπου η οθόνη σύνδεσης έκλεινε πρόωρα όταν ήταν ενεργοποιημένος ο έλεγχος ταυτότητας δύο παραγόντων (2FA)."</string>
 </resources>
 

@@ -591,5 +591,6 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="changelog_text_v1_2_8">CORRECCIONS
 • Cercador d\'usuaris: Solucionats els errors en realitzar cerques de perfils.
 • Sol·licituds de seguiment: Corregit el tancament inesperat de l\'aplicació que es produïa en accedir a les peticions de seguiment.</string>
+    <string name="changelog_text_v1_2_9">"CORRECCIONS\n• S'ha solucionat un problema on la pantalla d'inici de sessió es tancava prematurament quan l'autenticació de dos factors (2FA) estava activada."</string>
 </resources>
 

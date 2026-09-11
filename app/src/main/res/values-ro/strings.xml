@@ -612,5 +612,6 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"REPARAȚII\n• S-a rezolvat o problemă care făcea ca ecranul de conectare să se închidă prematur când autentificarea cu doi factori (2FA) era activată."</string>
 </resources>
 

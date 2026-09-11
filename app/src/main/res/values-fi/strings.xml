@@ -592,5 +592,6 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"KORJAUKSET\n• Korjattu ongelma, jossa kirjautumisnäkymä sulkeutui ennenaikaisesti, kun kaksivaiheinen tunnistautuminen (2FA) oli käytössä."</string>
 </resources>
 

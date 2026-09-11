@@ -591,5 +591,6 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="changelog_text_v1_2_8">CORREZIONI
 • Ricerca utenti: Risolti gli errori durante la ricerca dei profili.
 • Richieste di follow: Corretto l\'arresto anomalo imprevisto dell\'applicazione che si verificava durante l\'accesso alle richieste di follow.</string>
+    <string name="changelog_text_v1_2_9">"CORREZIONI\n• Risolto un problema per cui la schermata di accesso si chiudeva prematuramente quando l'autenticazione a due fattori (2FA) era abilitata."</string>
 </resources>
 

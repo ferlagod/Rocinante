@@ -591,5 +591,6 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="changelog_text_v1_2_8">CORRECTIONS
 • Recherche d\'utilisateurs : Correction des erreurs lors de la recherche de profils.
 • Demandes de suivi : Correction d\'un plantage inattendu de l\'application lors de l\'accès aux demandes de suivi.</string>
+    <string name="changelog_text_v1_2_9">"CORRECTIONS\n• Résolution d'un problème où l'écran de connexion se fermait prématurément lorsque l'authentification à deux facteurs (2FA) était activée."</string>
 </resources>
 

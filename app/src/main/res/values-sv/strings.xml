@@ -591,5 +591,6 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="changelog_text_v1_2_8">FIXES
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
+    <string name="changelog_text_v1_2_9">"RÄTTELSER\n• Åtgärdade ett problem där inloggningsskärmen stängdes i förtid när tvåfaktorsautentisering (2FA) var aktiverad."</string>
 </resources>
 
