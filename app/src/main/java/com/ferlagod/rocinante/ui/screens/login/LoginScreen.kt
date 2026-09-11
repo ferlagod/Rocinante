@@ -297,7 +297,10 @@ fun BookWyrmLoginWebView(
                             .orEmpty()
 
                         val hasSession = cookies.contains("sessionid=")
-                        val isStillLoginPage = url.contains("/login")
+                        val isStillLoginPage = url.contains("/login") || 
+                                url.contains("/two_factor") || 
+                                url.contains("/two-factor") ||
+                                url.contains("/2fa")
 
                         if (hasSession && !isStillLoginPage) {
                             // Inyectamos JavaScript para extraer el nombre de usuario de la sesión real en BookWyrm
