@@ -637,4 +637,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"FIXES\n• Fixed an issue where the login webview closed prematurely when Two-Factor Authentication (2FA) was enabled."</string>
+    <string name="changelog_text_v1_3_0">"• Connection &amp; Compatibility: Improved stability with BookWyrm servers (0.8+ and Anubis-protected), fixing 403 errors and image loading.\n• Performance &amp; Fluidity: Ultra-fast image loading with new memory/disk cache and smoother scrolling in lists.\n• Activity &amp; Following: Instant book covers in posts, localized reading texts, and fixed follow/unfollow status."</string>
 </resources>

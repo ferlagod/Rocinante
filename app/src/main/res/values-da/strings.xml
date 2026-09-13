@@ -642,5 +642,5 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"RETTELSER\n• Løst et problem, hvor loginskærmen lukkede for tidligt, når to-faktor-godkendelse (2FA) var aktiveret."</string>
+    <string name="changelog_text_v1_3_0">"• Forbindelse og kompatibilitet: Forbedret stabilitet med BookWyrm-servere (0.8+ og med Anubis), løser 403-fejl og billedindlæsning.\n• Ydeevne og flydende oplevelse: Hurtig billedindlæsning med ny hukommelses-/diskcache og mere flydende rulning på lister.\n• Aktivitet og følgere: Øjeblikkelige bogomslag i indlæg, oversatte læsetekster og rettet følg/afmeld-status."</string>
 </resources>
-

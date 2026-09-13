@@ -592,5 +592,5 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
 • Ricerca utenti: Risolti gli errori durante la ricerca dei profili.
 • Richieste di follow: Corretto l\'arresto anomalo imprevisto dell\'applicazione che si verificava durante l\'accesso alle richieste di follow.</string>
     <string name="changelog_text_v1_2_9">"CORREZIONI\n• Risolto un problema per cui la schermata di accesso si chiudeva prematuramente quando l'autenticazione a due fattori (2FA) era abilitata."</string>
+    <string name="changelog_text_v1_3_0">"• Connessione e compatibilità: Maggiore stabilità con i server BookWyrm (0.8+ e protetti da Anubis), risolvendo errori 403 e caricamento immagini.\n• Prestazioni e fluidità: Caricamento immagini ultra-rapido con nuova cache in memoria/disco e scorrimento più fluido negli elenchi.\n• Attività e seguiti: Copertine visibili all'istante nei post, testi di lettura tradotti e stato di follow corretto."</string>
 </resources>
-

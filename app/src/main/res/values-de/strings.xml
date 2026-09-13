@@ -592,5 +592,5 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
 • Benutzersuche: Fehler bei der Durchführung von Profilsuchen wurden behoben.
 • Folgeanfragen: Unerwarteter Absturz der Anwendung beim Zugriff auf Folgeanfragen behoben.</string>
     <string name="changelog_text_v1_2_9">"FEHLERBEHEBUNGEN\n• Es wurde ein Problem behoben, bei dem sich der Anmeldebildschirm vorzeitig schloss, wenn die Zwei-Faktor-Authentifizierung (2FA) aktiviert war."</string>
+    <string name="changelog_text_v1_3_0">"• Verbindung &amp; Kompatibilität: Verbesserte Stabilität mit BookWyrm-Servern (0.8+ und Anubis-geschützt), Behebung von 403-Fehlern und Bildladen.\n• Leistung &amp; Flüssigkeit: Ultraschnelles Laden von Bildern mit neuem Speicher-/Festplatten-Cache und flüssigeres Scrollen in Listen.\n• Aktivität &amp; Folgen: Sofort sichtbare Buchcover in Beiträgen, übersetzte Lesetexte und korrigierter Folge-Status."</string>
 </resources>
-

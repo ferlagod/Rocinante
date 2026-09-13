@@ -625,5 +625,5 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"POPRAWKI\n• Rozwiązano problem, w którym ekran logowania zamykał się przedwcześnie, gdy uwierzytelnianie dwuskładnikowe (2FA) było włączone."</string>
+    <string name="changelog_text_v1_3_0">"• Połączenie i zgodność: Większa stabilność z serwerami BookWyrm (0.8+ i z Anubis), naprawa błędów 403 i ładowania obrazów.\n• Wydajność i płynność: Błyskawiczne ładowanie obrazów z nową pamięcią podręczną w pamięci/dysku i płynniejsze przewijanie list.\n• Aktywność i obserwowanie: Okładki widoczne natychmiast we wpisach, przetłumaczone teksty czytania i naprawiony stan obserwowania."</string>
 </resources>
-

@@ -592,5 +592,5 @@
 • User Search: Fixed errors when performing profile searches.
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"ΔΙΟΡΘΩΣΕΙΣ\n• Διορθώθηκε ένα πρόβλημα όπου η οθόνη σύνδεσης έκλεινε πρόωρα όταν ήταν ενεργοποιημένος ο έλεγχος ταυτότητας δύο παραγόντων (2FA)."</string>
+    <string name="changelog_text_v1_3_0">"• Σύνδεση &amp; Συμβατότητα: Βελτιωμένη σταθερότητα με διακομιστές BookWyrm (0.8+ και προστασία Anubis), επιλύοντας σφάλματα 403 και εικόνες.\n• Απόδοση &amp; Ομαλότητα: Εξαιρετικά γρήγορη φόρτωση εικόνων με νέα προσωρινή μνήμη και πιο ομαλή κύλιση σε λίστες.\n• Δραστηριότητα &amp; Ακολουθήσεις: Άμεσα ορατά εξώφυλλα σε δημοσιεύσεις, μεταφρασμένα κείμενα και διορθωμένη κατάσταση παρακολούθησης."</string>
 </resources>
-

@@ -592,5 +592,5 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
 • Pesquisa de utilizadores: Corrigidos os erros ao realizar pesquisas de perfis.
 • Pedidos de seguimento: Corrigido o encerramento inesperado da aplicação que ocorria ao aceder aos pedidos de seguimento.</string>
     <string name="changelog_text_v1_2_9">"CORREÇÕES\n• Resolvido um problema onde o ecrã de início de sessão fechava prematuramente quando a Autenticação de Dois Fatores (2FA) estava ativada."</string>
+    <string name="changelog_text_v1_3_0">"• Conexão e compatibilidade: Maior estabilidade com servidores BookWyrm (0.8+ e com Anubis), corrigindo erros 403 e carregamento de imagens.\n• Desempenho e fluidez: Carregamento de imagens ultrarrápido com nova cache em memória/disco e navegação mais suave em listas.\n• Atividade e seguir: Capas visíveis instantaneamente nas publicações, textos de leitura traduzidos e estado de seguimento corrigido."</string>
 </resources>
-
