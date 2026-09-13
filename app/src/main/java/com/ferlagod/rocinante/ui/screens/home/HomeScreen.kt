@@ -2276,7 +2276,7 @@ fun ProfileTab(
                                     androidx.compose.foundation.lazy.LazyRow(
                                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                                     ) {
-                                        items(suggestedUsers) { user ->
+                                        items(suggestedUsers, key = { it.handle.ifEmpty { it.profileUrl } }) { user ->
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier

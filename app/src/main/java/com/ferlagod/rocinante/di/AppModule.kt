@@ -229,13 +229,18 @@ object AppModule {
             if (body != null) {
                 val contentType = body.contentType()
                 if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("activity+json") == true) {
-                    val rawJson = body.string()
-                    if (rawJson.startsWith("\uFEFF")) {
-                        val cleanJson = rawJson.substring(1)
+                    val source = body.source()
+                    source.request(3)
+                    val buffer = source.buffer
+                    // UTF-8 BOM bytes: 0xEF, 0xBB, 0xBF
+                    if (buffer.size >= 3 && 
+                        buffer[0] == 0xEF.toByte() && 
+                        buffer[1] == 0xBB.toByte() && 
+                        buffer[2] == 0xBF.toByte()
+                    ) {
+                        buffer.skip(3)
+                        val cleanJson = buffer.readUtf8()
                         val newBody = cleanJson.toResponseBody(contentType)
-                        return@Interceptor response.newBuilder().body(newBody).build()
-                    } else {
-                        val newBody = rawJson.toResponseBody(contentType)
                         return@Interceptor response.newBuilder().body(newBody).build()
                     }
                 }
@@ -247,19 +252,26 @@ object AppModule {
         val cache = okhttp3.Cache(java.io.File(context.cacheDir, "http_cache"), cacheSize)
 
         val cacheInterceptor = okhttp3.Interceptor { chain ->
-            var response = chain.proceed(chain.request())
-            val contentType = response.body?.contentType()
-            if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("html") == true || contentType?.subtype?.contains("activity+json") == true) {
-                response = response.newBuilder()
-                    .removeHeader("Pragma")
-                    .removeHeader("Cache-Control")
-                    .header("Cache-Control", "public, max-age=120")
-                    .build()
+            val request = chain.request()
+            var response = chain.proceed(request)
+            if (request.method == "GET" && response.isSuccessful) {
+                val urlPath = request.url.encodedPath
+                if (urlPath.contains("/book/") || urlPath.contains("/author/") || urlPath.contains("/edition/") || urlPath.contains("/images/")) {
+                    val contentType = response.body?.contentType()
+                    if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("html") == true || contentType?.subtype?.contains("activity+json") == true || contentType?.type?.contains("image") == true) {
+                        response = response.newBuilder()
+                            .removeHeader("Pragma")
+                            .removeHeader("Cache-Control")
+                            .header("Cache-Control", "public, max-age=600")
+                            .build()
+                    }
+                }
             }
             response
         }
 
         val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .connectionPool(okhttp3.ConnectionPool(10, 5, java.util.concurrent.TimeUnit.MINUTES))
             .cache(cache)
             .cookieJar(cookieJar)
             .addInterceptor(interceptor)

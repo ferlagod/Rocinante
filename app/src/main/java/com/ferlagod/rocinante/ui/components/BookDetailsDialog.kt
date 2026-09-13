@@ -1350,7 +1350,7 @@ fun BookDetailsDialog(
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(sortedReviews) { review ->
+                                items(sortedReviews, key = { it.id?.ifBlank { null } ?: "${it.published}_${it.hashCode()}" }) { review ->
                                     val rawContent = review.objectData?.content ?: review.content ?: ""
                                     val cleanReview = HtmlUtils.stripHtml(rawContent).trim()
                                     val rating = review.objectData?.rating
@@ -3740,7 +3740,7 @@ fun MyBookActivityDialog(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(activities) { activity ->
+                    items(activities, key = { it.id.ifEmpty { "${it.published}_${it.hashCode()}" } }) { activity ->
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth()
                         ) {
