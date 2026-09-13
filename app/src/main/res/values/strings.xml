@@ -384,6 +384,11 @@
     <string name="activity_type_announce">Shared</string>
     <string name="activity_type_comment">Commented</string>
     <string name="activity_type_add">Added a book</string>
+    <string name="activity_started_reading">Started reading</string>
+    <string name="activity_finished_reading">Finished reading</string>
+    <string name="activity_wants_to_read">Wants to read</string>
+    <string name="activity_stopped_reading">Stopped reading</string>
+    <string name="activity_rated">Rated a book</string>
     <string name="profile_who_to_follow">Who to follow</string>
     <string name="changelog_title">What\'s new in %1$s</string>
     <string name="news_card_title">New in %1$s</string>

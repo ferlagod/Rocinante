@@ -25,6 +25,7 @@ import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.local.FollowListCache
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.FollowUserItem
+import com.ferlagod.rocinante.data.repository.UserRepository
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -66,10 +67,10 @@ data class FollowListUiState(
 )
 
 /** Máximo de perfiles a cargar para mostrar en la lista */
-private const val MAX_PROFILES_TO_FETCH = 500
+private const val MAX_PROFILES_TO_FETCH = 200
 
 /** Timeout por petición de perfil individual (ms) */
-private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
+private const val PROFILE_FETCH_TIMEOUT_MS = 3_000L
 
 
 
@@ -81,24 +82,31 @@ private const val PROFILE_FETCH_TIMEOUT_MS = 10_000L
  *
  * @property api Interfaz de red autenticada para interactuar con BookWyrm.
  * @property cache Mecanismo de persistencia local de la lista.
+ * @property userRepository Repositorio de perfiles de usuario con caché concurrente.
  */
 @HiltViewModel
 class FollowListViewModel @Inject constructor(
     private val api: BookWyrmApi,
-    private val cache: FollowListCache
+    private val cache: FollowListCache,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FollowListUiState())
     val uiState: StateFlow<FollowListUiState> = _uiState.asStateFlow()
 
-    private val gson = Gson()
+    private val gson = com.google.gson.GsonBuilder()
+        .registerTypeAdapter(
+            com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
+            com.ferlagod.rocinante.data.model.ProfileIconDeserializer()
+        )
+        .setLenient()
+        .create()
 
     /**
      * Carga la lista de seguidores o seguidos del usuario.
      * Estrategia:
-     * 1. Obtiene la lista de mis seguidos (IDs) en paralelo con la lista target
-     * 2. Para cada actor de la lista target, obtiene el perfil con timeout individual
-     * 3. Construye el estado con isFollowedByMe cruzando los dos conjuntos
+     * 1. Muestra inmediatamente los datos de la caché en memoria o persistida
+     * 2. Si no hay datos o forceRefresh es true, realiza la petición en segundo plano
      */
     fun load(baseUrl: String, username: String, direction: FollowListDirection, forceRefresh: Boolean = false) {
         if (!forceRefresh && _uiState.value.users.isNotEmpty()) {
@@ -112,6 +120,7 @@ class FollowListViewModel @Inject constructor(
                     _uiState.update { it.copy(
                         users = cachedUsers,
                         isLoading = false,
+                        isRefreshing = true,
                         myFollowingIds = cachedUsers.filter { user -> user.isFollowedByMe }.map { user -> user.actorUrl }.toSet()
                     ) }
                 }
@@ -132,7 +141,7 @@ class FollowListViewModel @Inject constructor(
                 coroutineScope {
                     // 1. Cargar mis seguidos y la lista target en paralelo
                     val myFollowingDeferred = async {
-                        loadAllActorUrls("${baseUrl}user/$cleanUser/following.json?page=1")
+                        loadAllActorUrls("${baseUrl}user/$cleanUser/following.json?page=1", maxPages = 5)
                     }
                     val targetListDeferred = async {
                         val path = when (direction) {
@@ -146,25 +155,12 @@ class FollowListViewModel @Inject constructor(
                     val targetActorUrls = targetListDeferred.await()
                         .take(MAX_PROFILES_TO_FETCH)
 
-                    // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar timeouts)
+                    // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar saturación)
                     val profiles = mutableListOf<BookWyrmProfile>()
-                    targetActorUrls.chunked(30).forEach { chunk ->
+                    targetActorUrls.chunked(20).forEach { chunk ->
                         val chunkProfiles = chunk.map { actorUrl ->
                             async { 
-                                fetchProfileWithTimeout(actorUrl) 
-                                    ?: fetchProfileHtmlFollowingRedirects(actorUrl)
-                                    ?: BookWyrmProfile(
-                                        id = actorUrl,
-                                        type = "Person",
-                                        name = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
-                                        summary = null,
-                                        outbox = null,
-                                        inbox = null,
-                                        icon = null,
-                                        preferredUsername = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
-                                        followers = null,
-                                        following = null
-                                    )
+                                resolveProfile(actorUrl, baseUrl)
                             }
                         }.map { it.await() }
                         profiles.addAll(chunkProfiles)
@@ -179,7 +175,7 @@ class FollowListViewModel @Inject constructor(
                             name = profile.name?.takeIf { it.isNotBlank() }
                                 ?: profile.preferredUsername
                                 ?: actorId.substringAfterLast("/"),
-                            handle = buildHandle(profile, baseUrl),
+                            handle = buildHandle(profile, baseUrl, actorId),
                             summary = profile.summary,
                             avatarUrl = profile.icon?.url,
                             isFollowedByMe = normalizeActorUrl(actorId) in followingIds
@@ -233,40 +229,66 @@ class FollowListViewModel @Inject constructor(
     }
 
     private fun toggleFollow(actorUrl: String, handle: String, follow: Boolean) {
+        val updatedUsers = _uiState.value.users.map { user ->
+            if (user.actorUrl == actorUrl || user.handle == handle) user.copy(isFollowedByMe = follow) else user
+        }
+        val updatedFollowing = if (follow) {
+            _uiState.value.myFollowingIds + normalizeActorUrl(actorUrl)
+        } else {
+            _uiState.value.myFollowingIds - normalizeActorUrl(actorUrl)
+        }
+
         _uiState.update { state ->
             state.copy(
                 pendingHandles = state.pendingHandles + handle,
-                users = state.users.map { user ->
-                    if (user.actorUrl == actorUrl) user.copy(isFollowedByMe = follow) else user
-                }
+                users = updatedUsers,
+                myFollowingIds = updatedFollowing
             )
         }
 
         viewModelScope.launch {
             try {
                 val cleanHandle = handle.removePrefix("@")
-                val response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
+                var response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
                 
                 val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
+                val isSuccess = (response.isSuccessful || (response.code() in 300..399 && !isRedirectToLogin))
 
-                // BookWyrm devuelve 200 o 302 en éxito
-                if ((!response.isSuccessful && response.code() !in 300..399) || isRedirectToLogin) {
-                    revertFollowState(actorUrl, !follow)
+                if (!isSuccess && actorUrl.isNotBlank() && actorUrl != cleanHandle) {
+                    // Fallback con actorUrl
+                    response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
+                }
+
+                val finalRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
+                val finalSuccess = (response.isSuccessful || (response.code() in 300..399 && !finalRedirectToLogin))
+
+                if (!finalSuccess) {
+                    revertFollowState(actorUrl, handle, !follow)
+                } else {
+                    cache.saveList(FollowListDirection.FOLLOWING.name, _uiState.value.users)
+                    cache.saveList(FollowListDirection.FOLLOWERS.name, _uiState.value.users)
                 }
             } catch (_: Exception) {
-                revertFollowState(actorUrl, !follow)
+                revertFollowState(actorUrl, handle, !follow)
             } finally {
                 _uiState.update { it.copy(pendingHandles = it.pendingHandles - handle) }
             }
         }
     }
 
-    private fun revertFollowState(actorUrl: String, revertedValue: Boolean) {
+    private fun revertFollowState(actorUrl: String, handle: String, revertedValue: Boolean) {
         _uiState.update { state ->
+            val revertedUsers = state.users.map { user ->
+                if (user.actorUrl == actorUrl || user.handle == handle) user.copy(isFollowedByMe = revertedValue) else user
+            }
+            val revertedFollowing = if (revertedValue) {
+                state.myFollowingIds + normalizeActorUrl(actorUrl)
+            } else {
+                state.myFollowingIds - normalizeActorUrl(actorUrl)
+            }
             state.copy(
-                users = state.users.map { user ->
-                    if (user.actorUrl == actorUrl) user.copy(isFollowedByMe = revertedValue) else user
-                }
+                users = revertedUsers,
+                myFollowingIds = revertedFollowing
             )
         }
     }
@@ -324,8 +346,18 @@ class FollowListViewModel @Inject constructor(
                     when {
                         element.isJsonPrimitive -> element.asString  // URL directa
                         element.isJsonObject -> {
-                            // Objeto actor completo — extraemos el id
-                            (element as JsonObject).get("id")?.asString
+                            val obj = element.asJsonObject
+                            val id = obj.get("id")?.asString
+                            if (id != null) {
+                                try {
+                                    val profile = gson.fromJson(obj, BookWyrmProfile::class.java)
+                                    if (profile != null) {
+                                        userRepository.profileCache[id] = profile
+                                        userRepository.profileCache[normalizeActorUrl(id)] = profile
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                            id
                         }
                         else -> null
                     }
@@ -338,6 +370,56 @@ class FollowListViewModel @Inject constructor(
             }
         }
         return allUrls
+    }
+
+    /**
+     * Resuelve el perfil de un actor consultando primero la caché, luego directamente,
+     * posteriormente a través de la instancia local (para usuarios federados) y finalmente
+     * mediante raspado de OpenGraph HTML.
+     */
+    private suspend fun resolveProfile(actorUrl: String, baseUrl: String): BookWyrmProfile {
+        // 1. Comprobar caché en memoria
+        userRepository.profileCache[actorUrl]?.let { return it }
+        userRepository.profileCache[normalizeActorUrl(actorUrl)]?.let { return it }
+
+        // 2. Intento de descarga directa
+        var profile = fetchProfileWithTimeout(actorUrl)
+
+        // 3. Fallback: resolver a través de la instancia local para usuarios federados
+        if (profile == null) {
+            val uri = try { java.net.URI(actorUrl) } catch (_: Exception) { null }
+            val host = uri?.host
+            val username = actorUrl.removeSuffix("/").substringAfterLast("/")
+            val localHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { null }
+
+            if (!host.isNullOrBlank() && !localHost.isNullOrBlank() && !host.equals(localHost, ignoreCase = true) && username.isNotBlank()) {
+                val localFederatedUrl = "${baseUrl.trimEnd('/')}/user/$username@$host.json"
+                profile = fetchProfileWithTimeout(localFederatedUrl)
+            }
+        }
+
+        // 4. Fallback: raspado OpenGraph HTML
+        if (profile == null) {
+            profile = fetchProfileHtmlFollowingRedirects(actorUrl)
+        }
+
+        // 5. Fallback final con información básica
+        val resolved = profile ?: BookWyrmProfile(
+            id = actorUrl,
+            type = "Person",
+            name = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
+            summary = null,
+            outbox = null,
+            inbox = null,
+            icon = null,
+            preferredUsername = actorUrl.substringAfterLast("/").substringBefore("?").replace("@", ""),
+            followers = null,
+            following = null
+        )
+
+        userRepository.profileCache[actorUrl] = resolved
+        userRepository.profileCache[normalizeActorUrl(actorUrl)] = resolved
+        return resolved
     }
 
     /**
@@ -376,17 +458,22 @@ class FollowListViewModel @Inject constructor(
         return null
     }
 
-    private fun buildHandle(profile: BookWyrmProfile, myBaseUrl: String): String {
-        val preferredUsername = profile.preferredUsername
-            ?: profile.id?.substringAfterLast("/")
+    private fun buildHandle(profile: BookWyrmProfile, myBaseUrl: String, actorUrl: String = ""): String {
+        val preferredUsername = profile.preferredUsername?.takeIf { it.isNotBlank() }
+            ?: profile.name?.takeIf { it.isNotBlank() }
+            ?: actorUrl.substringAfterLast("/").takeIf { it.isNotBlank() }
             ?: ""
 
+        val myHost = try { java.net.URI(myBaseUrl).host ?: "" } catch (_: Exception) { "" }
         val actorHost = try {
-            java.net.URI(profile.id ?: myBaseUrl).host ?: ""
+            java.net.URI(profile.id ?: actorUrl).host ?: ""
         } catch (_: Exception) { "" }
 
-        return if (actorHost.isNotEmpty()) "@$preferredUsername@$actorHost"
-        else "@$preferredUsername"
+        return if (actorHost.isNotEmpty() && !actorHost.equals(myHost, ignoreCase = true)) {
+            "@${preferredUsername.removePrefix("@")}@$actorHost"
+        } else {
+            "@${preferredUsername.removePrefix("@")}"
+        }
     }
 
     private fun normalizeActorUrl(url: String): String {

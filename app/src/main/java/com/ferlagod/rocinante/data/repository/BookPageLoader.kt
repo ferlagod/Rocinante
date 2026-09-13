@@ -58,13 +58,24 @@ object BookPageLoader {
         onFailure: (error: Throwable, hadCache: Boolean) -> Unit = { _, _ -> }
     ) {
         val cached = cache.loadBookDetails(cacheKey)
-        if (cached != null) onDetails(cached, true)
+        if (cached != null) {
+            onDetails(cached, true)
+            cached.cover?.url?.let { cUrl ->
+                BookWyrmScraper.bookCoverCache[cacheKey] = cUrl
+                BookWyrmScraper.bookCoverCache[BookWyrmScraper.canonicalBookUrl(cacheKey)] = cUrl
+            }
+        }
 
         try {
             val detailsUrl = resolveDetailsUrl()
             val fresh = api.getBookDetails(detailsUrl)
             onDetails(fresh, false)
             cache.saveBookDetails(cacheKey, fresh)
+            fresh.cover?.url?.let { cUrl ->
+                BookWyrmScraper.bookCoverCache[cacheKey] = cUrl
+                BookWyrmScraper.bookCoverCache[detailsUrl] = cUrl
+                BookWyrmScraper.bookCoverCache[BookWyrmScraper.canonicalBookUrl(cacheKey)] = cUrl
+            }
 
             val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
             val reviews = try {

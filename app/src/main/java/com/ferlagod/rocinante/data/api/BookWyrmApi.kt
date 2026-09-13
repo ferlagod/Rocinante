@@ -139,42 +139,46 @@ interface BookWyrmApi {
     @GET
     suspend fun getFollowersData(@Url fullUrl: String): FollowingPage
 
-    // Seguir a un usuario: POST /follow/ con campo "user" = "@handle@instance"
+    // Seguir a un usuario: POST /follow con campo "user" = "@handle@instance"
     /**
      * Envía una petición para seguir a un usuario remoto o local.
      */
     @FormUrlEncoded
-    @POST("follow/")
+    @POST("follow")
     suspend fun followUser(
-        @Field("user") userHandle: String
+        @Field("user") userHandle: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 
-    // Dejar de seguir: POST /unfollow/ con campo "user" = "@handle@instance"
+    // Dejar de seguir: POST /unfollow con campo "user" = "@handle@instance"
     /**
      * Envía una petición para dejar de seguir a un usuario.
      */
     @FormUrlEncoded
-    @POST("unfollow/")
+    @POST("unfollow")
     suspend fun unfollowUser(
-        @Field("user") userHandle: String
+        @Field("user") userHandle: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 
     /**
      * Acepta una solicitud de seguimiento pendiente.
      */
     @FormUrlEncoded
-    @POST("accept-follow-request/")
+    @POST("accept-follow-request")
     suspend fun acceptFollowRequest(
-        @Field("user") userHandle: String
+        @Field("user") userHandle: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 
     /**
      * Rechaza (elimina) una solicitud de seguimiento pendiente.
      */
     @FormUrlEncoded
-    @POST("delete-follow-request/")
+    @POST("delete-follow-request")
     suspend fun deleteFollowRequest(
-        @Field("user") userHandle: String
+        @Field("user") userHandle: String,
+        @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 
     // POST /reading-status/<status>/<book_id>/ — BookWyrm espera el estado
@@ -195,7 +199,8 @@ interface BookWyrmApi {
         // ni cuándo se empezó ni cuándo se terminó. Se manda la que toque según el estado.
         @Field("start_date") startDate: String? = null,
         @Field("finish_date") finishDate: String? = null,
-        @Field("stopped_date") stoppedDate: String? = null
+        @Field("stopped_date") stoppedDate: String? = null,
+        @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 
     // POST /reading-status/update/<book_id>/ — actualiza el readthrough y añade comentario.

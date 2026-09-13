@@ -382,6 +382,11 @@
     <string name="activity_type_announce">Compartió</string>
     <string name="activity_type_comment">Comentó</string>
     <string name="activity_type_add">Añadió un libro</string>
+    <string name="activity_started_reading">Empezó a leer</string>
+    <string name="activity_finished_reading">Terminó de leer</string>
+    <string name="activity_wants_to_read">Quiere leer</string>
+    <string name="activity_stopped_reading">Dejó de leer</string>
+    <string name="activity_rated">Puntuó un libro</string>
     <string name="profile_who_to_follow">A quien seguir</string>
     <string name="changelog_title">Novedades de la %1$s</string>
     <string name="news_card_title">Novedades de %1$s</string>

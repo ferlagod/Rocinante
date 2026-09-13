@@ -42,9 +42,9 @@ private const val MAX_FOLLOWING_TO_LOAD = 200
 
 /**
  * Tipos de actividad ActivityPub que no tienen relevancia en el timeline y deben filtrarse.
- * Incluye actividades de borrado, reversión y actualizaciones de perfil.
+ * Incluye actividades de borrado, reversión, seguimiento y actualizaciones de perfil.
  */
-private val IGNORED_ACTIVITY_TYPES = setOf("Delete", "Undo", "Update", "Like", "Reject", "Block")
+private val IGNORED_ACTIVITY_TYPES = setOf("Delete", "Undo", "Update", "Like", "Reject", "Block", "Follow", "Accept")
 
 
 class TimelineRepository(
@@ -114,6 +114,11 @@ class TimelineRepository(
         }
 
         val allActivities = (ownActivitiesDeferred.await() + followingActivitiesDeferred.await())
+            .distinctBy { 
+                it.id.takeIf { id -> id.isNotBlank() }
+                    ?: it.objectId.takeIf { oid -> oid.isNotBlank() }
+                    ?: "${it.actorName}_${it.published}_${it.type}_${it.bookUrl.orEmpty()}_${it.content.take(30)}"
+            }
             .sortedByDescending { it.published } // más recientes primero
 
         allActivities
@@ -369,7 +374,7 @@ class TimelineRepository(
                             ?: currentObjectData?.name
                             ?: activity.content
                             ?: activity.name
-                            ?: context.getString(R.string.text_no_content)
+                            ?: ""
                 }
 
                 // Portada: preferimos el primer attachment de tipo imagen o directamente el campo cover (si es un libro)
@@ -381,6 +386,34 @@ class TimelineRepository(
 
                 val isBook = currentObjectData?.type in listOf("Edition", "Work", "Book")
                 val bookUrl = currentObjectData?.inReplyToBook ?: activity.inReplyToBook ?: if (isBook) currentObjectData?.id else null
+
+                var resolvedCoverUrl = bookCoverUrl
+                if (resolvedCoverUrl == null && bookUrl != null) {
+                    resolvedCoverUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[bookUrl]
+                        ?: com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)]
+                        ?: run {
+                            try {
+                                val jsonUrl = if (bookUrl.endsWith(".json")) bookUrl else "$bookUrl.json"
+                                val fetchedJson = withTimeoutOrNull(1500L) {
+                                    api.getRawJson(jsonUrl).string()
+                                }
+                                if (fetchedJson != null && fetchedJson.trimStart().startsWith("{")) {
+                                    val jsonObject = JsonParser().parse(fetchedJson).asJsonObject
+                                    val coverObj = jsonObject.getAsJsonObject("cover")
+                                    val fetchedCover = coverObj?.get("url")?.asString
+                                        ?: jsonObject.getAsJsonArray("attachment")?.firstOrNull()?.asJsonObject?.get("url")?.asString
+                                    if (fetchedCover != null) {
+                                        com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[bookUrl] = fetchedCover
+                                        com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)] = fetchedCover
+                                        fetchedCover
+                                    } else null
+                                } else null
+                            } catch (_: Exception) { null }
+                        }
+                } else if (resolvedCoverUrl != null && bookUrl != null) {
+                    com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[bookUrl] = resolvedCoverUrl
+                    com.ferlagod.rocinante.data.api.BookWyrmScraper.bookCoverCache[com.ferlagod.rocinante.data.api.BookWyrmScraper.canonicalBookUrl(bookUrl)] = resolvedCoverUrl
+                }
 
                 var resolvedActorName = actorNameHint ?: ""
                 var resolvedActorAvatar = actorAvatarHint
@@ -407,12 +440,14 @@ class TimelineRepository(
                     } catch (_: Exception) {}
                 }
 
+                val finalContent = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) context.getString(R.string.activity_added_book_generic) else "" }
+
                 TimelineUiItem(
                     id = activity.id.orEmpty(),
                     type = resolvedType,
                     published = activity.published ?: "",
-                    content = HtmlUtils.stripHtml(rawContent).ifBlank { if (isAddActivity) context.getString(R.string.activity_added_book_generic) else context.getString(R.string.text_no_content) },
-                    bookCoverUrl = bookCoverUrl,
+                    content = finalContent,
+                    bookCoverUrl = resolvedCoverUrl,
                     bookUrl = bookUrl,
                     actorName = resolvedActorName.ifBlank { context.getString(R.string.activity_unknown_user) },
                     actorAvatarUrl = resolvedActorAvatar,
@@ -420,6 +455,8 @@ class TimelineRepository(
                 )
             }
         }
-        deferredItems.map { it.await() }
+        deferredItems.map { it.await() }.filter { item ->
+            item.content.isNotBlank() || !item.bookUrl.isNullOrEmpty() || !item.bookCoverUrl.isNullOrEmpty()
+        }
     }
 }

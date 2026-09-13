@@ -42,6 +42,7 @@ import javax.inject.Singleton
 import com.ferlagod.rocinante.data.local.SettingsPreferences
 import com.ferlagod.rocinante.data.local.TimelineCache
 import com.ferlagod.rocinante.data.local.FollowListCache
+import kotlinx.coroutines.launch
 
 /**
  * Módulo de inyección de dependencias principal de la aplicación mediante Hilt.
@@ -111,63 +112,100 @@ object AppModule {
         // que no puede recibir inyección: el contexto para el WebView y la sesión que guardar.
         AnubisClearance.init(context, sessionStorage)
 
+        val currentSession = sessionStorage.currentSession
+        val initialCookies = currentSession?.cookie.orEmpty()
+        val initialHost = currentSession?.let {
+            val clean = if (it.instanceUrl.startsWith("http")) it.instanceUrl else "https://${it.instanceUrl}"
+            clean.toHttpUrlOrNull()?.host?.lowercase() ?: clean.lowercase()
+        } ?: "bookwyrm.social"
+
+        val cookieJar = com.ferlagod.rocinante.data.api.SessionCookieJar(initialCookies, initialHost) { newCookies ->
+            val sess = sessionStorage.currentSession
+            if (sess != null && sess.cookie != newCookies) {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    try {
+                        sessionStorage.saveSession(sess.copy(cookie = newCookies))
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+
         // We create a singleton Retrofit instance using a base URL placeholder.
         // An interceptor reads the active session from SessionStorage dynamically.
         val interceptor = okhttp3.Interceptor { chain ->
             val session = sessionStorage.currentSession
-            val requestBuilder = chain.request().newBuilder()
+            val request = chain.request()
+            val requestBuilder = request.newBuilder()
+
+            var isToInstance = false
+            var finalUrl = "https://bookwyrm.social/"
 
             if (session != null) {
                 val cleanUrl = if (session.instanceUrl.startsWith("http")) session.instanceUrl else "https://${session.instanceUrl}"
-                val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
+                finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
                 val hostUrl = finalUrl.toHttpUrlOrNull()
+                val host = hostUrl?.host?.lowercase() ?: cleanUrl.lowercase()
+                val scheme = hostUrl?.scheme ?: "https"
+                val origin = "$scheme://$host"
+                val referer = "$origin/"
 
-                if (hostUrl != null) {
-                    val newUrl = chain.request().url.newBuilder()
+                // Solo reescribir si la URL apunta al host placeholder de Retrofit ("bookwyrm.social").
+                // Si va a una URL remota federada (otra instancia, OpenLibrary, etc.), NO alteramos el host.
+                if (request.url.host.equals("bookwyrm.social", ignoreCase = true) && hostUrl != null) {
+                    val newUrl = request.url.newBuilder()
                         .scheme(hostUrl.scheme)
                         .host(hostUrl.host)
                         .port(hostUrl.port)
                         .build()
                     requestBuilder.url(newUrl)
+                    isToInstance = true
+                } else if (request.url.host.equals(host, ignoreCase = true) || request.url.host.endsWith(".$host", ignoreCase = true)) {
+                    isToInstance = true
                 }
 
-                // Add authentication and standard headers (same as NetworkClient)
-                requestBuilder.addHeader("Referer", finalUrl)
+                if (isToInstance) {
+                    requestBuilder.addHeader("Origin", origin)
+                    requestBuilder.addHeader("Referer", referer)
+                }
+
                 requestBuilder.addHeader("User-Agent", NetworkClient.userAgent)
-                
-                val acceptHeader = chain.request().header("Accept")
+
+                val acceptHeader = request.header("Accept")
                 if (acceptHeader?.contains("text/html") != true) {
                     requestBuilder.addHeader("X-Requested-With", "XMLHttpRequest")
                 }
                 if (acceptHeader == null) {
                     requestBuilder.addHeader("Accept", "application/activity+json, application/json")
                 }
-                
-                // Add cookies manually since we don't use CookieJar here
-                requestBuilder.addHeader("Cookie", session.cookie)
-                
-                // Extract CSRF from cookie if possible
-                val csrfMatch = "csrftoken=([^;]+)".toRegex().find(session.cookie)
-                if (csrfMatch != null) {
-                    requestBuilder.addHeader("X-CSRFToken", csrfMatch.groupValues[1])
+
+                // Sincronizar cookies si el tarro aún no las tiene
+                if (cookieJar.asCookieString().isBlank() && session.cookie.isNotBlank()) {
+                    cookieJar.merge(session.cookie)
+                }
+
+                if (isToInstance) {
+                    val csrf = cookieJar.currentCsrfToken()
+                        ?: "csrftoken=([^;]+)".toRegex().find(cookieJar.asCookieString())?.groupValues?.get(1)
+                        ?: "csrftoken=([^;]+)".toRegex().find(session.cookie)?.groupValues?.get(1)
+                    if (!csrf.isNullOrBlank()) {
+                        requestBuilder.addHeader("X-CSRFToken", csrf)
+                    }
                 }
             }
 
             var response = chain.proceed(requestBuilder.build())
 
-            // Anubis: si su cookie de paso ha caducado, la instancia responde con un 307 hacia
-            // el reto y seguirlo devolvería la página "no eres un bot" en lugar del JSON pedido.
-            // Se resuelve el reto en un WebView y se repite la petición con las cookies nuevas.
+            // Anubis: renovación automática ante 307 hacia el reto o 403 de protección
             if (session != null && AnubisClearance.isChallenge(response)) {
-                val fresh = AnubisClearance.refreshBlocking(session.instanceUrl, session.cookie)
+                val fresh = AnubisClearance.refreshBlocking(session.instanceUrl, cookieJar.asCookieString())
                 if (fresh != null) {
+                    cookieJar.merge(fresh)
                     response.close()
-                    val csrf = "csrftoken=([^;]+)".toRegex().find(fresh)?.groupValues?.get(1)
-                    val retry = requestBuilder
-                        .removeHeader("Cookie").addHeader("Cookie", fresh)
+                    val csrf = cookieJar.currentCsrfToken()
+                    val retryRequest = requestBuilder
                         .apply { if (csrf != null) removeHeader("X-CSRFToken").addHeader("X-CSRFToken", csrf) }
                         .build()
-                    response = chain.proceed(retry)
+                    response = chain.proceed(retryRequest)
                 }
             }
 
@@ -215,7 +253,6 @@ object AppModule {
                 response = response.newBuilder()
                     .removeHeader("Pragma")
                     .removeHeader("Cache-Control")
-                    .removeHeader("Set-Cookie") // Prevent OkHttp from bypassing cache due to session cookies
                     .header("Cache-Control", "public, max-age=120")
                     .build()
             }
@@ -224,6 +261,7 @@ object AppModule {
 
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .cache(cache)
+            .cookieJar(cookieJar)
             .addInterceptor(interceptor)
             .addInterceptor(bomInterceptor)
             .addNetworkInterceptor(cacheInterceptor)
@@ -233,7 +271,14 @@ object AppModule {
             .callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
             .build()
 
+        NetworkClient.lastOkHttpClient = okHttpClient
+        NetworkClient.lastInstanceHost = initialHost
+
         val gson = com.google.gson.GsonBuilder()
+            .registerTypeAdapter(
+                com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
+                com.ferlagod.rocinante.data.model.ProfileIconDeserializer()
+            )
             .setLenient()
             .create()
 

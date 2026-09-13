@@ -36,7 +36,11 @@ import java.util.concurrent.TimeUnit
  * 2. Actualiza automáticamente `csrftoken` con cada respuesta Set-Cookie del servidor.
  *    Esto es imprescindible para Django, que rota el token CSRF en cada respuesta POST.
  */
-class SessionCookieJar(initialCookieString: String, private val host: String) : CookieJar {
+class SessionCookieJar(
+    initialCookieString: String,
+    private val host: String,
+    private val onCookiesUpdated: ((String) -> Unit)? = null
+) : CookieJar {
 
     // Mapa mutable nombre → valor; se actualiza con cada respuesta
     private val cookieMap: MutableMap<String, String> = mutableMapOf()
@@ -54,12 +58,21 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
             }
     }
 
+    private fun cleanDomain(h: String): String =
+        h.lowercase().trim().removePrefix("http://").removePrefix("https://").substringBefore("/").removePrefix("www.")
+
+    private fun matchesHost(requestHost: String): Boolean {
+        val r = requestHost.lowercase().trim()
+        val h = cleanDomain(host)
+        if (h.isEmpty()) return true
+        return r == h || r.endsWith(".$h") || h.endsWith(".$r") || r.contains(h)
+    }
+
     /** Devuelve el valor actual del csrftoken (puede haber rotado). */
     fun currentCsrfToken(): String? = cookieMap["csrftoken"]
 
     /**
-     * Mezcla una cadena "nombre=valor; ..." recién obtenida del WebView. Se usa al renovar
-     * la autorización de Anubis, para que el tarro deje de reenviar la cookie caducada.
+     * Mezcla una cadena "nombre=valor; ..." recién obtenida del WebView o renovada.
      * No borra las que no vengan en la cadena, porque el WebView puede no exponerlas todas.
      */
     fun merge(cookieString: String) {
@@ -72,6 +85,7 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
                     cookieMap[part.substring(0, idx).trim()] = part.substring(idx + 1).trim()
                 }
             }
+        onCookiesUpdated?.invoke(asCookieString())
     }
 
     /** Las cookies actuales como cadena "nombre=valor; ...". */
@@ -79,17 +93,19 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         // Solo guardar cookies si la respuesta proviene del host principal
-        if (!url.host.contains(host)) return
+        if (!matchesHost(url.host)) return
+        if (cookies.isEmpty()) return
         
         // Actualizar el mapa con los nuevos valores enviados por el servidor
         cookies.forEach { cookie ->
             cookieMap[cookie.name] = cookie.value
         }
+        onCookiesUpdated?.invoke(asCookieString())
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
         // Solo enviar cookies si la petición se dirige al host principal
-        if (!url.host.contains(host)) return emptyList()
+        if (!matchesHost(url.host)) return emptyList()
         
         return cookieMap.map { (name, value) ->
             Cookie.Builder()
@@ -109,14 +125,14 @@ class SessionCookieJar(initialCookieString: String, private val host: String) : 
 object NetworkClient {
     /** Último OkHttpClient creado; permite acceder al CookieJar desde la UI. */
     var lastOkHttpClient: OkHttpClient? = null
-        private set
+        internal set
 
     /**
      * Host de la instancia con la que se ha iniciado sesión, en minúsculas. Sirve para saber
      * si un libro es de casa o viene de otra instancia, y ahorrarse así el resolverlo.
      */
     var lastInstanceHost: String? = null
-        private set
+        internal set
 
     /**
      * User-Agent que se envía en TODAS las peticiones HTTP. Debe coincidir con el del
@@ -146,28 +162,29 @@ object NetworkClient {
         (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.merge(cookieString)
     }
 
-    fun createAuthenticatedApi(baseUrl: String, cookieString: String): BookWyrmApi {
+    fun createAuthenticatedApi(
+        baseUrl: String,
+        cookieString: String,
+        onCookiesUpdated: ((String) -> Unit)? = null
+    ): BookWyrmApi {
         val cleanUrl = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
         val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
-        val host = finalUrl.toHttpUrlOrNull()?.host ?: cleanUrl
-        // Referer con host normalizado en minúsculas. Django compara el Referer contra
-        // el host de la petición de forma sensible a mayúsculas (is_same_domain solo
-        // pasa el patrón a minúsculas, no el host del Referer); un "BookWyrm.social"
-        // frente a "bookwyrm.social" hace fallar la verificación CSRF con un 403.
-        val refererHeader = finalUrl.toHttpUrlOrNull()?.toString() ?: finalUrl
+        val host = finalUrl.toHttpUrlOrNull()?.host?.lowercase() ?: cleanUrl.lowercase()
+        val scheme = finalUrl.toHttpUrlOrNull()?.scheme ?: "https"
+        val originHeader = "$scheme://$host"
+        val refererHeader = "$originHeader/"
 
         // CookieJar con las cookies de sesión iniciales
-        val cookieJar = SessionCookieJar(cookieString, host)
+        val cookieJar = SessionCookieJar(cookieString, host, onCookiesUpdated)
 
         val interceptor = Interceptor { chain ->
-            // Leer el CSRF más reciente del jar (puede haber rotado tras un POST previo)
-            val csrfToken = cookieJar.currentCsrfToken()
-
-            val requestBuilder = chain.request().newBuilder()
+            val request = chain.request()
+            val requestBuilder = request.newBuilder()
+                .addHeader("Origin", originHeader)
                 .addHeader("Referer", refererHeader)
                 .addHeader("User-Agent", userAgent)
 
-            val acceptHeader = chain.request().header("Accept")
+            val acceptHeader = request.header("Accept")
             if (acceptHeader?.contains("text/html") != true) {
                 requestBuilder.addHeader("X-Requested-With", "XMLHttpRequest")
             }
@@ -176,28 +193,30 @@ object NetworkClient {
                 requestBuilder.addHeader("Accept", "application/activity+json, application/json")
             }
 
+            // Leer el CSRF más reciente del jar (puede haber rotado tras un POST previo)
+            val csrfToken = cookieJar.currentCsrfToken()
             if (csrfToken != null) {
                 requestBuilder.addHeader("X-CSRFToken", csrfToken)
             }
 
             var response = chain.proceed(requestBuilder.build())
 
-            // Anubis: cuando su cookie de paso caduca, la instancia responde a todo con un
-            // 307 hacia el reto. Seguirlo devolvería la página "no eres un bot" como si fuese
-            // la respuesta pedida. En vez de eso se resuelve el reto y se repite la petición
-            // una sola vez; si no se consigue, se deja pasar el 307 y falla como antes.
+            // Anubis: cuando su cookie de paso caduca, la instancia responde con 307 hacia el reto
+            // o 403. Se resuelve el reto y se repite la petición.
             if (AnubisClearance.isChallenge(response)) {
                 val fresh = AnubisClearance.refreshBlocking(finalUrl, cookieJar.asCookieString())
                 if (fresh != null) {
+                    cookieJar.merge(fresh)
                     response.close()
-                    response = chain.proceed(requestBuilder.build())
+                    val newCsrf = cookieJar.currentCsrfToken()
+                    val retryRequest = requestBuilder
+                        .apply { if (newCsrf != null) removeHeader("X-CSRFToken").addHeader("X-CSRFToken", newCsrf) }
+                        .build()
+                    response = chain.proceed(retryRequest)
                 }
             }
 
             // Handle 307 and 308 redirects manually, since followRedirects(false) is set globally.
-            // These status codes MUST preserve the request method and body (unlike 301/302).
-            // This prevents "307 Temporary Redirect" errors when HTTP->HTTPS upgrades happen 
-            // or when reverse proxies enforce canonical URLs.
             var followCount = 0
             while ((response.code == 307 || response.code == 308) && followCount < 3) {
                 val location = response.header("Location") ?: break
@@ -222,7 +241,7 @@ object NetworkClient {
             .build()
 
         lastOkHttpClient = okHttpClient
-        lastInstanceHost = host.lowercase()
+        lastInstanceHost = host
 
         val gson = com.google.gson.GsonBuilder()
             .setLenient()

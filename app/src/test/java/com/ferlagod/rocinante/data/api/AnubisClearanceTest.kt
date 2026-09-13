@@ -78,6 +78,30 @@ class AnubisClearanceTest {
     }
 
     @Test
+    fun `un 403 de anubis se reconoce como reto`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://comelibros.club/login").build())
+            .protocol(Protocol.HTTP_2)
+            .code(403)
+            .message("Forbidden")
+            .header("Server", "anubis/1.26.2")
+            .body("".toResponseBody(null))
+        assertTrue(AnubisClearance.isChallenge(builder.build()))
+    }
+
+    @Test
+    fun `un 403 que no es de anubis no se reconoce como reto`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://bookwyrm.it/login").build())
+            .protocol(Protocol.HTTP_2)
+            .code(403)
+            .message("Forbidden")
+            .header("Server", "nginx")
+            .body("".toResponseBody(null))
+        assertFalse(AnubisClearance.isChallenge(builder.build()))
+    }
+
+    @Test
     fun `normaliza la instancia a la clave del almacén de cookies`() {
         assertEquals("https://bookwyrm.social/", AnubisClearance.baseUrlOf("bookwyrm.social"))
         assertEquals("https://bookwyrm.social/", AnubisClearance.baseUrlOf("https://bookwyrm.social"))

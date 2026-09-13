@@ -52,6 +52,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.EmojiEvents
 
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -358,10 +361,17 @@ fun HomeScreen(
                         instanceUrl = instanceUrl,
                         onItemClicked = { item -> 
                             if (item.type == NotificationType.FOLLOW || item.type == NotificationType.FOLLOW_REQUEST) {
+                                val permalink = item.permalink.orEmpty()
+                                val handleExtracted = if (permalink.contains("/user/")) {
+                                    val slug = permalink.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/")
+                                    if (slug.isNotEmpty() && !slug.startsWith("http")) {
+                                        if (slug.startsWith("@")) slug else "@$slug"
+                                    } else ""
+                                } else ""
                                 selectedNotificationUser = com.ferlagod.rocinante.data.model.SuggestedUser(
-                                    profileUrl = item.permalink ?: "",
+                                    profileUrl = permalink,
                                     name = item.actorName,
-                                    handle = "",
+                                    handle = handleExtracted,
                                     avatarUrl = item.actorAvatarUrl ?: "",
                                     isFollowRequest = item.type == NotificationType.FOLLOW_REQUEST
                                 )
@@ -624,18 +634,96 @@ fun SuggestedUserDialog(
     var isFollowedByMe by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(suggestedUser.profileUrl) {
+    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+    val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+
+    LaunchedEffect(suggestedUser) {
         isLoading = true
         try {
-            val jsonUrl = if (suggestedUser.profileUrl.endsWith(".json")) suggestedUser.profileUrl else "${suggestedUser.profileUrl}.json"
-            fullProfile = api.getFullUserProfile(jsonUrl)
-            
-            val localUrl = if (suggestedUser.profileUrl.startsWith("http")) suggestedUser.profileUrl else instanceUrl.trimEnd('/') + suggestedUser.profileUrl
-            val htmlResponse = api.getRawHtmlResponse(localUrl)
-            if (htmlResponse.isSuccessful) {
-                val html = htmlResponse.body()?.string() ?: ""
-                isFollowedByMe = html.contains("/unfollow\"") || html.contains("/unfollow'")
+            var profile: BookWyrmProfile? = null
+            val profileUrl = suggestedUser.profileUrl.trim()
+
+            // 1. Si profileUrl es válida, intentar resolver JSON
+            if (profileUrl.isNotEmpty()) {
+                val jsonUrl = if (profileUrl.endsWith(".json")) profileUrl else "$profileUrl.json"
+                try {
+                    profile = api.getFullUserProfile(jsonUrl)
+                } catch (_: Exception) {
+                    try {
+                        val resp = api.getRawJsonResponse(jsonUrl)
+                        if (resp.isSuccessful) {
+                            val raw = resp.body()?.string()
+                            if (raw != null && raw.trimStart().startsWith("{")) {
+                                val gson = com.google.gson.GsonBuilder()
+                                    .registerTypeAdapter(
+                                        com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
+                                        com.ferlagod.rocinante.data.model.ProfileIconDeserializer()
+                                    )
+                                    .setLenient()
+                                    .create()
+                                profile = gson.fromJson(raw, BookWyrmProfile::class.java)
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }
             }
+
+            // 2. Si no se obtuvo perfil y tenemos handle, intentar con endpoint local federado
+            if (profile == null && suggestedUser.handle.isNotBlank()) {
+                val handleClean = suggestedUser.handle.removePrefix("@")
+                val localFederatedUrl = "${baseUrl}user/$handleClean.json"
+                try {
+                    profile = api.getFullUserProfile(localFederatedUrl)
+                } catch (_: Exception) {}
+            }
+
+            // 3. Fallback: raspado OpenGraph HTML
+            if (profile == null && profileUrl.isNotEmpty()) {
+                try {
+                    val localUrl = if (profileUrl.startsWith("http")) profileUrl else baseUrl + profileUrl.trimStart('/')
+                    val htmlResponse = api.getRawHtmlResponse(localUrl)
+                    if (htmlResponse.isSuccessful) {
+                        val html = htmlResponse.body()?.string() ?: ""
+                        val doc = org.jsoup.Jsoup.parse(html)
+                        val title = doc.selectFirst("meta[property=og:title]")?.attr("content")
+                        val description = doc.selectFirst("meta[property=og:description]")?.attr("content")
+                            ?: doc.selectFirst("meta[name=description]")?.attr("content")
+                        val image = doc.selectFirst("meta[property=og:image]")?.attr("content")
+                        val nameExtracted = title?.substringBefore(" (@") ?: doc.title() ?: suggestedUser.name
+                        profile = BookWyrmProfile(
+                            id = profileUrl,
+                            type = "Person",
+                            name = nameExtracted.trim(),
+                            summary = description?.trim(),
+                            outbox = null,
+                            inbox = null,
+                            icon = image?.takeIf { it.isNotBlank() }?.let { com.ferlagod.rocinante.data.model.ProfileIcon(it) },
+                            preferredUsername = suggestedUser.handle.removePrefix("@").substringBefore("@"),
+                            followers = null,
+                            following = null
+                        )
+                    }
+                } catch (_: Exception) {}
+            }
+
+            fullProfile = profile
+
+            // Verificar si ya le seguimos a través de la página del usuario
+            try {
+                val targetPath = if (profileUrl.isNotEmpty()) {
+                    if (profileUrl.startsWith("http")) profileUrl else baseUrl + profileUrl.trimStart('/')
+                } else if (suggestedUser.handle.isNotEmpty()) {
+                    "${baseUrl}user/${suggestedUser.handle.removePrefix("@")}"
+                } else null
+
+                if (targetPath != null) {
+                    val htmlResp = api.getRawHtmlResponse(targetPath)
+                    if (htmlResp.isSuccessful) {
+                        val html = htmlResp.body()?.string() ?: ""
+                        isFollowedByMe = html.contains("/unfollow\"") || html.contains("/unfollow'") || html.contains("name=\"unfollow\"")
+                    }
+                }
+            } catch (_: Exception) {}
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
@@ -643,6 +731,32 @@ fun SuggestedUserDialog(
             isLoading = false
         }
     }
+
+    val handleToUse = when {
+        suggestedUser.handle.isNotBlank() -> suggestedUser.handle
+        fullProfile?.preferredUsername != null -> {
+            val host = try { java.net.URI(fullProfile?.id ?: baseUrl).host } catch (_: Exception) { "" }
+            val myHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { "" }
+            if (host.isNotBlank() && !host.equals(myHost, ignoreCase = true)) "@${fullProfile?.preferredUsername}@$host"
+            else "@${fullProfile?.preferredUsername}"
+        }
+        suggestedUser.profileUrl.isNotBlank() -> {
+            val slug = suggestedUser.profileUrl.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/")
+            if (slug.isNotBlank() && !slug.startsWith("http")) {
+                if (slug.startsWith("@")) slug else "@$slug"
+            } else "@${suggestedUser.name}"
+        }
+        else -> "@${suggestedUser.name}"
+    }
+
+    val nameToDisplay = fullProfile?.name?.takeIf { it.isNotBlank() }
+        ?: suggestedUser.name.takeIf { it.isNotBlank() }
+        ?: handleToUse
+
+    val avatarToUse = fullProfile?.icon?.url?.takeIf { it.isNotBlank() }
+        ?: suggestedUser.avatarUrl.takeIf { it.isNotBlank() }
+
+    val handleToFollow = handleToUse.removePrefix("@")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -655,13 +769,11 @@ fun SuggestedUserDialog(
                     CircularProgressIndicator()
                 }
             } else {
-                val profile = fullProfile
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val avatarToUse = profile?.icon?.url ?: suggestedUser.avatarUrl
                     if (!avatarToUse.isNullOrEmpty()) {
                         coil.compose.SubcomposeAsyncImage(
                             model = avatarToUse,
@@ -703,17 +815,12 @@ fun SuggestedUserDialog(
                     }
                     
                     Text(
-                        text = profile?.name ?: suggestedUser.name,
+                        text = nameToDisplay,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     
-                    val handleToUse = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                        val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                        val host = try { java.net.URL(profile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
-                        "@${profile?.preferredUsername}@$host"
-                    }
                     Text(
                         text = handleToUse,
                         style = MaterialTheme.typography.bodyMedium,
@@ -721,7 +828,7 @@ fun SuggestedUserDialog(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
 
-                    val bio = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(profile?.summary ?: "")
+                    val bio = com.ferlagod.rocinante.utils.HtmlUtils.stripHtml(fullProfile?.summary ?: "")
                     if (bio.isNotBlank()) {
                         Text(
                             text = bio,
@@ -742,12 +849,7 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
-                                    "@${fullProfile?.preferredUsername}@$host"
-                                }
-                                val response = api.acceptFollowRequest(handleToFollow.removePrefix("@"))
+                                val response = api.acceptFollowRequest(handleToFollow)
                                 if (response.isSuccessful || response.code() == 302) {
                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                     onFollowSuccess()
@@ -776,12 +878,7 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
-                                    "@${fullProfile?.preferredUsername}@$host"
-                                }
-                                val response = api.unfollowUser(handleToFollow.removePrefix("@"))
+                                val response = api.unfollowUser(handleToFollow)
                                 if (response.isSuccessful || response.code() == 302) {
                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = false
@@ -811,12 +908,7 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
-                                    val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                                    val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
-                                    "@${fullProfile?.preferredUsername}@$host"
-                                }
-                                val response = api.followUser(handleToFollow.removePrefix("@"))
+                                val response = api.followUser(handleToFollow)
                                 if (response.isSuccessful || response.code() == 302) {
                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = true
@@ -1012,7 +1104,10 @@ fun ActivityTab(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(items = timeline) { item ->
+                    items(
+                        items = timeline,
+                        key = { it.id.ifBlank { it.objectId }.ifBlank { "${it.actorName}_${it.published}_${it.type}_${it.bookUrl.orEmpty()}" } }
+                    ) { item ->
                         val isLiked = likedStatusIds.contains(item.objectId)
                         ActivityItemCard(
                             item = item, 
@@ -1204,12 +1299,17 @@ private fun ActivityItemCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Body: Content & Book cover
+            val hasTextContent = item.content.isNotBlank() &&
+                !item.content.equals(stringResource(R.string.text_no_content), ignoreCase = true) &&
+                !item.content.equals("Sin contenido", ignoreCase = true) &&
+                !item.content.equals("No content", ignoreCase = true)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                if (item.content.isNotBlank()) {
+                if (hasTextContent) {
                     Text(
                         text = item.content,
                         style = MaterialTheme.typography.bodyMedium,
@@ -1217,25 +1317,40 @@ private fun ActivityItemCard(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                } else if (!item.bookCoverUrl.isNullOrEmpty()) {
+                } else if (!item.bookCoverUrl.isNullOrEmpty() || !item.bookUrl.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                if (!item.bookCoverUrl.isNullOrEmpty()) {
-                    coil.compose.AsyncImage(
-                        model = item.bookCoverUrl,
-                        contentDescription = stringResource(R.string.book_cover_desc),
+                if (!item.bookCoverUrl.isNullOrEmpty() || !item.bookUrl.isNullOrEmpty()) {
+                    Box(
                         modifier = Modifier
                             .width(64.dp)
                             .height(96.dp)
                             .clip(MaterialTheme.shapes.small)
-                            .clickable {
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable(enabled = !item.bookUrl.isNullOrEmpty()) {
                                 item.bookUrl?.let { url ->
                                     onBookClick(url, item.bookCoverUrl)
                                 }
                             },
-                        contentScale = ContentScale.Crop
-                    )
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!item.bookCoverUrl.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = item.bookCoverUrl,
+                                contentDescription = stringResource(R.string.book_cover_desc),
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = stringResource(R.string.book_cover_desc),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -1327,14 +1442,28 @@ private fun ActivityItemCard(
  */
 @Composable
 private fun getActivityContext(type: String): Pair<String, androidx.compose.ui.graphics.vector.ImageVector> {
-    return when (type) {
-        "Review" -> Pair(stringResource(R.string.activity_type_review), Icons.Default.Star)
-        "Rating" -> Pair(stringResource(R.string.activity_type_rating), Icons.Default.Star)
-        "Announce" -> Pair(stringResource(R.string.activity_type_announce), Icons.Default.Share)
-        "Note", "Comment" -> Pair(stringResource(R.string.activity_type_comment), Icons.Default.Edit)
-        "Quotation" -> Pair(stringResource(R.string.activity_type_cita), Icons.AutoMirrored.Filled.Reply)
-        "Add" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
-        "Create" -> Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
+    val normalizedType = type.trim().lowercase()
+    return when {
+        normalizedType.contains("review") || normalizedType.contains("reseñ") ->
+            Pair(stringResource(R.string.activity_type_review), Icons.Default.Star)
+        normalizedType.contains("started reading") || normalizedType.contains("started-reading") || normalizedType.contains("started_reading") || normalizedType.contains("empezó a leer") || normalizedType.contains("empezo a leer") ->
+            Pair(stringResource(R.string.activity_started_reading), Icons.AutoMirrored.Filled.MenuBook)
+        normalizedType.contains("finished reading") || normalizedType.contains("finished-reading") || normalizedType.contains("finished_reading") || normalizedType.contains("terminó de leer") || normalizedType.contains("termino de leer") ->
+            Pair(stringResource(R.string.activity_finished_reading), Icons.Default.CheckCircle)
+        normalizedType.contains("wants to read") || normalizedType.contains("wants-to-read") || normalizedType.contains("wants_to_read") || normalizedType.contains("quiere leer") ->
+            Pair(stringResource(R.string.activity_wants_to_read), Icons.Default.BookmarkBorder)
+        normalizedType.contains("stopped reading") || normalizedType.contains("stopped-reading") || normalizedType.contains("stopped_reading") || normalizedType.contains("dejó de leer") || normalizedType.contains("dejo de leer") ->
+            Pair(stringResource(R.string.activity_stopped_reading), Icons.Default.PauseCircleOutline)
+        normalizedType.contains("rating") || normalizedType.contains("puntu") || normalizedType.contains("rated") ->
+            Pair(stringResource(R.string.activity_rated), Icons.Default.Star)
+        normalizedType.contains("announce") || normalizedType.contains("boost") ->
+            Pair(stringResource(R.string.activity_type_announce), Icons.Default.Share)
+        normalizedType.contains("note") || normalizedType.contains("comment") || normalizedType.contains("coment") ->
+            Pair(stringResource(R.string.activity_type_comment), Icons.Default.Edit)
+        normalizedType.contains("quotation") || normalizedType.contains("cita") ->
+            Pair(stringResource(R.string.activity_type_cita), Icons.AutoMirrored.Filled.Reply)
+        normalizedType.contains("add") || normalizedType.contains("añad") || normalizedType.contains("anad") || normalizedType.contains("create") ->
+            Pair(stringResource(R.string.activity_type_add), Icons.Default.Add)
         else -> Pair(type, Icons.Default.Edit)
     }
 }

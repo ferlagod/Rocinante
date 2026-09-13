@@ -19,7 +19,11 @@
  */
 package com.ferlagod.rocinante.data.model
 
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import java.lang.reflect.Type
 
 /**
  * Representa el perfil público y la información básica de un actor/usuario
@@ -50,6 +54,45 @@ data class BookWyrmProfile(
 data class ProfileIcon(
     val url: String?
 )
+
+/**
+ * Deserializador flexible para campos de icono en ActivityPub.
+ * Soporta representaciones de objeto `{"url": "..."}`, string plano `"https://..."` o arrays.
+ */
+class ProfileIconDeserializer : JsonDeserializer<ProfileIcon> {
+    override fun deserialize(
+        json: JsonElement?,
+        typeOfT: Type?,
+        context: JsonDeserializationContext?
+    ): ProfileIcon? {
+        if (json == null || json.isJsonNull) return null
+        return when {
+            json.isJsonObject -> {
+                val obj = json.asJsonObject
+                val url = obj.get("url")?.asString 
+                    ?: obj.get("href")?.asString
+                ProfileIcon(url = url)
+            }
+            json.isJsonPrimitive -> {
+                ProfileIcon(url = json.asString)
+            }
+            json.isJsonArray -> {
+                val first = json.asJsonArray.firstOrNull()
+                when {
+                    first == null -> null
+                    first.isJsonObject -> {
+                        val url = first.asJsonObject.get("url")?.asString
+                            ?: first.asJsonObject.get("href")?.asString
+                        ProfileIcon(url = url)
+                    }
+                    first.isJsonPrimitive -> ProfileIcon(url = first.asString)
+                    else -> null
+                }
+            }
+            else -> null
+        }
+    }
+}
 
 /**
  * Representa el progreso del reto de lectura anual extraído del HTML de BookWyrm.

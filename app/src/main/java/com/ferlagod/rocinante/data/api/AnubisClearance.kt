@@ -91,15 +91,24 @@ object AnubisClearance {
     /**
      * ¿Este intercambio es el reto de Anubis en lugar de lo que se había pedido?
      *
-     * Cubre los dos casos: la redirección hacia el reto, y haber acabado ya dentro de él
-     * porque el cliente siguió la redirección por su cuenta.
+     * Cubre todos los casos: la redirección hacia el reto (307), haber acabado dentro de él
+     * porque el cliente siguió la redirección, o un error 403 originado por Anubis.
      */
     fun isChallenge(response: Response): Boolean =
-        isChallengeRedirect(response) || response.request.url.encodedPath.startsWith(CHALLENGE_PATH)
+        isChallengeRedirect(response) || 
+        response.request.url.encodedPath.startsWith(CHALLENGE_PATH) ||
+        (response.code == 403 && isAnubisResponse(response))
 
     /** ¿Es una redirección que lleva al reto de Anubis? */
     fun isChallengeRedirect(response: Response): Boolean =
         response.isRedirect && response.header("Location")?.contains(CHALLENGE_PATH) == true
+
+    /** ¿Indican las cabeceras de la respuesta que proviene de Anubis? */
+    fun isAnubisResponse(response: Response): Boolean {
+        val server = response.header("Server") ?: ""
+        val location = response.header("Location") ?: ""
+        return server.contains("anubis", ignoreCase = true) || location.contains(CHALLENGE_PATH)
+    }
 
     /**
      * Versión bloqueante para usar desde un interceptor de OkHttp, que no es suspend.

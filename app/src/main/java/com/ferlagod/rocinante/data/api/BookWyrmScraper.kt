@@ -37,6 +37,9 @@ object BookWyrmScraper {
     /** Etiqueta de logcat para diagnosticar el borrado de notificaciones. */
     private const val TAG_CLEAR = "RocinanteNotif"
 
+    /** Caché en memoria de portadas asociadas a URLs de libros para agilizar su renderizado. */
+    val bookCoverCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     /**
      * Versión del formato de [com.ferlagod.rocinante.data.model.BookEnrichment].
      * Súbela al empezar a extraer campos nuevos de la página del libro: las entradas
@@ -1262,7 +1265,12 @@ object BookWyrmScraper {
             }
         }
 
-        allItems.distinctBy { it.id }
+        allItems.distinctBy { 
+            val key = it.id.takeIf { id -> id.isNotBlank() && !id.startsWith("scraped-") }
+                ?: it.objectId.takeIf { oid -> oid.isNotBlank() && !oid.startsWith("scraped-") }
+                ?: "${it.actorName}_${it.published}_${it.type}_${it.bookUrl.orEmpty()}_${it.content.take(30)}"
+            key
+        }
     }
 
     suspend fun fetchHtmlWithRedirects(
@@ -1294,13 +1302,13 @@ object BookWyrmScraper {
         val items = mutableListOf<com.ferlagod.rocinante.data.model.TimelineUiItem>()
         val cleanBase = baseUrl.trimEnd('/')
 
-        var elements = document.select("#feed > .block, .column.is-two-thirds > .block")
+        var elements = document.select("#feed > .block:has(.status-info, [itemprop=author], .media, time), .column.is-two-thirds > .block:has(.status-info, [itemprop=author], .media, time)")
         
         if (elements.isEmpty()) {
             val statusElements = document.select(
-                "[data-date], .block[data-id], .is-flex.is-align-items-stretch"
+                "[data-date], .block[data-id], .is-flex.is-align-items-stretch:has([itemprop=author], time)"
             )
-            elements = if (statusElements.isEmpty()) document.select(".block:has(time):has(img)") else statusElements
+            elements = if (statusElements.isEmpty()) document.select(".block:has(time):has([itemprop=author], img)") else statusElements
         }
 
         for (element in elements) {
@@ -1416,20 +1424,25 @@ object BookWyrmScraper {
                     cleanContent
                 }
 
-                val coverImg = element.selectFirst("img[src*=covers]")
-                    ?: element.selectFirst("img[src*=images/covers]")
-                    ?: element.selectFirst("img[alt*=cover]")
-                    ?: element.selectFirst(".book-cover img")
-                    ?: element.selectFirst(".cover-container img")
-                    ?: element.selectFirst("img.book-preview-image")
-                    ?: element.selectFirst("[itemprop=image] img")
-                    ?: element.selectFirst("a[href*='/book/'] img")
-                val coverSrc = coverImg?.attr("src")?.ifEmpty { coverImg.attr("data-src") } ?: ""
-                val bookCoverUrl = resolveUrl(coverSrc, cleanBase).takeIf { it.isNotEmpty() }
-
-                val bookLink = element.selectFirst("a[href*='/book/']")
+                val coverImg = element.selectFirst(".media-right img")
+                    ?: element.selectFirst(".book-cover img, .cover img, .cover-container img, figure.image img")
+                    ?: element.selectFirst("img[src*='/covers/'], img[src*='images/covers'], img[src*='/images/'], img[src*='/media/']")
+                    ?: element.selectFirst("img[alt*='cover' i], img[alt*='portada' i]")
+                    ?: element.selectFirst("img.book-preview-image, [itemprop=image] img, .is-cover img, img.is-cover")
+                    ?: element.selectFirst("a[href*='/book/'] img, a[href*='/edition/'] img, a[href*='/work/'] img")
+                val coverSrc = coverImg?.attr("src")?.ifEmpty { coverImg.attr("data-src") }?.ifEmpty { coverImg.attr("data-original") } ?: ""
+                
+                val bookLink = element.selectFirst("a[href*='/book/'], a[href*='/edition/'], a[href*='/work/']")
                 val bookUrl = bookLink?.attr("href")?.let { href ->
                     resolveUrl(href, cleanBase)
+                }
+
+                var bookCoverUrl = resolveUrl(coverSrc, cleanBase).takeIf { it.isNotEmpty() }
+                if (bookCoverUrl == null && bookUrl != null) {
+                    bookCoverUrl = bookCoverCache[bookUrl] ?: bookCoverCache[canonicalBookUrl(bookUrl)]
+                } else if (bookCoverUrl != null && bookUrl != null) {
+                    bookCoverCache[bookUrl] = bookCoverUrl
+                    bookCoverCache[canonicalBookUrl(bookUrl)] = bookCoverUrl
                 }
 
                 var localId: String? = null
@@ -1492,8 +1505,10 @@ object BookWyrmScraper {
                     isBoostedByMe = isBoostedByMe
                 )
                 
-                // Ítem vacío (sin autor, sin texto y sin portada): no aporta nada, se descarta.
-                if (item.actorName.isBlank() && item.content.isBlank() && item.bookCoverUrl.isNullOrEmpty()) {
+                // Ítem vacío (sin autor y sin texto y sin libro): no aporta nada, se descarta.
+                val isMeaningless = (item.actorName.isBlank() && item.actorAvatarUrl.isNullOrEmpty()) || 
+                    (item.content.isBlank() && item.bookUrl.isNullOrEmpty() && item.bookCoverUrl.isNullOrEmpty())
+                if (isMeaningless) {
                     continue
                 }
                 
@@ -1698,28 +1713,30 @@ object BookWyrmScraper {
                 
                 val contentHtml = element.select(".content").firstOrNull()?.html() ?: element.text()
                 
-                val avatarImg = element.select("img").firstOrNull()
+                val avatarImg = element.select(".avatar img, img").firstOrNull()
                 var avatarUrl = avatarImg?.attr("src") ?: ""
                 if (avatarUrl.isNotEmpty() && !avatarUrl.startsWith("http")) {
                     avatarUrl = "$baseUrl${avatarUrl.trimStart('/')}"
                 }
                 
-                val actorName = element.select("strong").firstOrNull()?.text()?.takeIf { it.isNotBlank() }
+                val actorName = element.select("strong").firstOrNull { it.text().isNotBlank() }?.text()
+                    ?: element.select(".avatar img").firstOrNull()?.attr("alt")?.takeIf { it.isNotBlank() }
+                    ?: element.select("a[href*='/user/']").firstOrNull { it.text().isNotBlank() }?.text()
                     ?: element.select("a").firstOrNull { it.text().isNotBlank() }?.text() 
                     ?: "Unknown"
                     
                 val timeElement = element.select("time").firstOrNull()
                 val date = timeElement?.text() ?: ""
-                
+
+                // 1. Enlace a la publicación (para replies, boosts, menciones, favoritos)
                 var permalink = element.select("a.time, .status-link").firstOrNull()?.attr("href")?.let {
                     if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
                 }
                 
-                if (permalink == null) {
-                    val profileHref = element.select("a[href^=/user/]").firstOrNull { it.text().isNotBlank() }?.attr("href")
-                    if (profileHref != null) {
-                        permalink = if (profileHref.startsWith("http")) profileHref else "$baseUrl${profileHref.trimStart('/')}"
-                    }
+                // 2. Enlace al perfil de usuario (para follow, follow_request o si no hay enlace a publicación)
+                val userHref = element.select(".avatar a, a[href*='/user/'], a[href*='/users/']").firstOrNull()?.attr("href")
+                val userProfileUrl = userHref?.let {
+                    if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
                 }
                 
                 val fullText = element.text().lowercase()
@@ -1732,6 +1749,11 @@ object BookWyrmScraper {
                     fullText.contains("boost") || fullText.contains("compartió") -> NotificationType.BOOST
                     fullText.contains("follow") || fullText.contains("siguió") || fullText.contains("sigue") || fullText.contains("segue") -> NotificationType.FOLLOW
                     else -> NotificationType.UNKNOWN
+                }
+
+                // Para notificaciones de seguimiento, el permalink principal es el perfil del usuario
+                if (type == NotificationType.FOLLOW || type == NotificationType.FOLLOW_REQUEST || permalink == null) {
+                    permalink = userProfileUrl ?: permalink
                 }
                 
                 // BookWyrm sometimes splits a notification into the header ("User boosted...") and the embedded post ("<article>...").
