@@ -720,7 +720,16 @@ fun SuggestedUserDialog(
                     val htmlResp = api.getRawHtmlResponse(targetPath)
                     if (htmlResp.isSuccessful) {
                         val html = htmlResp.body()?.string() ?: ""
-                        isFollowedByMe = html.contains("/unfollow\"") || html.contains("/unfollow'") || html.contains("name=\"unfollow\"")
+                        val doc = org.jsoup.Jsoup.parse(html)
+                        val hasVisibleUnfollow = doc.select("form[action*='/unfollow']:not(.is-hidden)").isNotEmpty()
+                        val hasVisibleFollow = doc.select("form[action*='/follow']:not([action*='/unfollow']):not(.is-hidden)").isNotEmpty()
+                        isFollowedByMe = if (hasVisibleUnfollow) {
+                            true
+                        } else if (hasVisibleFollow) {
+                            false
+                        } else {
+                            doc.select("form[action*='/unfollow']").any { !it.hasClass("is-hidden") }
+                        }
                     }
                 }
             } catch (_: Exception) {}
