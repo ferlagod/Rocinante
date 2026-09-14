@@ -209,10 +209,11 @@ object AppModule {
                 }
             }
 
-            // Handle 307 and 308 redirects manually
+            // Handle 307 and 308 redirects manually, avoiding challenge paths
             var followCount = 0
             while ((response.code == 307 || response.code == 308) && followCount < 3) {
                 val location = response.header("Location") ?: break
+                if (location.contains(AnubisClearance.CHALLENGE_PATH)) break
                 val newUrl = response.request.url.resolve(location) ?: break
                 
                 val newRequest = response.request.newBuilder().url(newUrl).build()

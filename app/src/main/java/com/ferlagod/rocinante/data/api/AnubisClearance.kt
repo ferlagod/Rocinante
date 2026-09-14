@@ -59,10 +59,10 @@ import okhttp3.Response
 object AnubisClearance {
 
     /** Todo lo que Anubis sirve cuelga de esta ruta. */
-    private const val CHALLENGE_PATH = "/.within.website/"
+    const val CHALLENGE_PATH = "/.within.website/"
 
     /** Cookie de paso que emite Anubis al superar el reto. */
-    private const val COOKIE_NAME = "techaro.lol-anubis-auth"
+    const val COOKIE_NAME = "techaro.lol-anubis-auth"
 
     /** Margen para resolver la prueba de trabajo; en un móvil suele bastar con unos segundos. */
     private const val TIMEOUT_MS = 30_000L
@@ -107,7 +107,10 @@ object AnubisClearance {
     fun isAnubisResponse(response: Response): Boolean {
         val server = response.header("Server") ?: ""
         val location = response.header("Location") ?: ""
-        return server.contains("anubis", ignoreCase = true) || location.contains(CHALLENGE_PATH)
+        val setCookie = response.headers("Set-Cookie").joinToString("; ")
+        return server.contains("anubis", ignoreCase = true) || 
+               location.contains(CHALLENGE_PATH) ||
+               setCookie.contains("techaro.lol-anubis")
     }
 
     /**
@@ -217,9 +220,9 @@ object AnubisClearance {
         if (cookies.isNullOrBlank()) return null
         return cookies.split(";")
             .map { it.trim() }
-            .filter { it.startsWith("techaro.lol-anubis") }
-            .map { it.substringAfter('=') }
-            .firstOrNull { it.isNotBlank() }
+            .firstOrNull { it.startsWith("$COOKIE_NAME=") }
+            ?.substringAfter('=')
+            ?.takeIf { it.isNotBlank() }
     }
 
     /** Normaliza la instancia a "https://host/", que es la clave del almacén de cookies. */

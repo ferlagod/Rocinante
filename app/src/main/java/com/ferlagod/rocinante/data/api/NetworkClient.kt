@@ -46,14 +46,26 @@ class SessionCookieJar(
     private val cookieMap: MutableMap<String, String> = mutableMapOf()
 
     init {
-        // Parsear el string "name=value; name2=value2" inicial
-        initialCookieString.split(";")
+        parseCookies(initialCookieString)
+    }
+
+    private fun parseCookies(raw: String) {
+        val reserved = setOf("path", "domain", "expires", "max-age", "secure", "httponly", "samesite", "priority")
+        raw.split(";")
             .map { it.trim() }
             .filter { it.contains("=") }
             .forEach { part ->
                 val idx = part.indexOf('=')
                 if (idx > 0) {
-                    cookieMap[part.substring(0, idx).trim()] = part.substring(idx + 1).trim()
+                    val key = part.substring(0, idx).trim()
+                    val value = part.substring(idx + 1).trim()
+                    if (key.isNotEmpty() && !reserved.contains(key.lowercase())) {
+                        if (value.isEmpty()) {
+                            cookieMap.remove(key)
+                        } else {
+                            cookieMap[key] = value
+                        }
+                    }
                 }
             }
     }
@@ -76,15 +88,7 @@ class SessionCookieJar(
      * No borra las que no vengan en la cadena, porque el WebView puede no exponerlas todas.
      */
     fun merge(cookieString: String) {
-        cookieString.split(";")
-            .map { it.trim() }
-            .filter { it.contains("=") }
-            .forEach { part ->
-                val idx = part.indexOf('=')
-                if (idx > 0) {
-                    cookieMap[part.substring(0, idx).trim()] = part.substring(idx + 1).trim()
-                }
-            }
+        parseCookies(cookieString)
         onCookiesUpdated?.invoke(asCookieString())
     }
 
@@ -98,7 +102,11 @@ class SessionCookieJar(
         
         // Actualizar el mapa con los nuevos valores enviados por el servidor
         cookies.forEach { cookie ->
-            cookieMap[cookie.name] = cookie.value
+            if (cookie.value.isEmpty()) {
+                cookieMap.remove(cookie.name)
+            } else {
+                cookieMap[cookie.name] = cookie.value
+            }
         }
         onCookiesUpdated?.invoke(asCookieString())
     }
@@ -107,12 +115,16 @@ class SessionCookieJar(
         // Solo enviar cookies si la petición se dirige al host principal
         if (!matchesHost(url.host)) return emptyList()
         
-        return cookieMap.map { (name, value) ->
-            Cookie.Builder()
-                .name(name)
-                .value(value)
-                .domain(url.host)
-                .build()
+        return cookieMap.mapNotNull { (name, value) ->
+            try {
+                Cookie.Builder()
+                    .name(name)
+                    .value(value)
+                    .domain(url.host)
+                    .build()
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 }
@@ -216,10 +228,11 @@ object NetworkClient {
                 }
             }
 
-            // Handle 307 and 308 redirects manually, since followRedirects(false) is set globally.
+            // Handle 307 and 308 redirects manually, avoiding challenge paths
             var followCount = 0
             while ((response.code == 307 || response.code == 308) && followCount < 3) {
                 val location = response.header("Location") ?: break
+                if (location.contains(AnubisClearance.CHALLENGE_PATH)) break
                 val newUrl = response.request.url.resolve(location) ?: break
                 
                 val newRequest = response.request.newBuilder().url(newUrl).build()

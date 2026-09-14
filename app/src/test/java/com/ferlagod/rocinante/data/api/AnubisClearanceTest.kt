@@ -73,8 +73,10 @@ class AnubisClearanceTest {
     }
 
     @Test
-    fun `no confunde una cookie cuyo nombre acaba igual`() {
-        assertNull(AnubisClearance.tokenOf("otra-techaro.lol-anubis-auth=valor"))
+    fun `no confunde la cookie de verificacion de anubis con la de autorizacion`() {
+        assertNull(AnubisClearance.tokenOf("techaro.lol-anubis-cookie-verification=01a09fe8-d8fb; sessionid=xyz"))
+        val mixed = "techaro.lol-anubis-cookie-verification=01a09fe8-d8fb; techaro.lol-anubis-auth=token_valido; sessionid=xyz"
+        assertEquals("token_valido", AnubisClearance.tokenOf(mixed))
     }
 
     @Test
@@ -85,6 +87,19 @@ class AnubisClearanceTest {
             .code(403)
             .message("Forbidden")
             .header("Server", "anubis/1.26.2")
+            .body("".toResponseBody(null))
+        assertTrue(AnubisClearance.isChallenge(builder.build()))
+    }
+
+    @Test
+    fun `un 403 con set-cookie de anubis se reconoce como reto aunque el server sea nginx`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://comelibros.club/login").build())
+            .protocol(Protocol.HTTP_2)
+            .code(403)
+            .message("Forbidden")
+            .header("Server", "nginx")
+            .header("Set-Cookie", "techaro.lol-anubis-cookie-verification=01a09; Path=/; Expires=Mon, 14 Sep 2026")
             .body("".toResponseBody(null))
         assertTrue(AnubisClearance.isChallenge(builder.build()))
     }

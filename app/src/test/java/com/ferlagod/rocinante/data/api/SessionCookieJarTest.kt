@@ -3,6 +3,7 @@ package com.ferlagod.rocinante.data.api
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -58,5 +59,20 @@ class SessionCookieJarTest {
         assertTrue(result.contains("sessionid=keep_me"))
         assertTrue(result.contains("techaro.lol-anubis-auth=cleared_anubis"))
         assertEquals("new_csrf", jar.currentCsrfToken())
+    }
+
+    @Test
+    fun `ignora atributos de cookie como Path y Expires y borra valores vacios`() {
+        val jar = SessionCookieJar("sessionid=keep_me; to_delete=old_val", "comelibros.club")
+        jar.merge("to_delete=; Path=/; Expires=Mon, 14 Sep 2026 12:32:13 GMT; SameSite=None; new_cookie=val123")
+
+        val cookies = jar.loadForRequest("https://comelibros.club/feed".toHttpUrl())
+        val names = cookies.map { it.name }
+        assertTrue(names.contains("sessionid"))
+        assertTrue(names.contains("new_cookie"))
+        assertFalse(names.contains("to_delete"))
+        assertFalse(names.contains("Path"))
+        assertFalse(names.contains("Expires"))
+        assertFalse(names.contains("SameSite"))
     }
 }
