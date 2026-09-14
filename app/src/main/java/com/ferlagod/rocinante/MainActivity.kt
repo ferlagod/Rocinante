@@ -186,6 +186,17 @@ fun RocinanteApp() {
 
     val sessionViewModel: SessionViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 
+    LaunchedEffect(Unit) {
+        com.ferlagod.rocinante.utils.NetworkErrors.sessionExpiredEvent.collect {
+            sessionViewModel.logout()
+            android.webkit.CookieManager.getInstance().removeAllCookies(null)
+            android.webkit.CookieManager.getInstance().flush()
+            navController.navigate("login") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     val sessionUiState by sessionViewModel.uiState.collectAsStateWithLifecycle()
 
     if (sessionUiState.isCheckingSession) {

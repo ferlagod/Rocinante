@@ -93,9 +93,23 @@ object NetworkErrors {
         else -> NetworkErrorKind.OTHER
     }
 
+    private val _sessionExpiredEvent = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
+    
+    /** 
+     * Flujo que emite un evento cada vez que se detecta que la sesión ha caducado.
+     * Permite a la aplicación reaccionar automáticamente, por ejemplo, cerrando la sesión.
+     */
+    val sessionExpiredEvent: kotlinx.coroutines.flow.SharedFlow<Unit> = _sessionExpiredEvent
+
     /** Clasifica una respuesta HTTP que no ha ido bien. */
     fun classify(httpCode: Int): NetworkErrorKind = when {
-        httpCode == 401 || httpCode == 403 -> NetworkErrorKind.SESSION_EXPIRED
+        httpCode == 401 || httpCode == 403 -> {
+            _sessionExpiredEvent.tryEmit(Unit)
+            NetworkErrorKind.SESSION_EXPIRED
+        }
         httpCode == 404 -> NetworkErrorKind.NOT_FOUND
         httpCode == 429 -> NetworkErrorKind.RATE_LIMITED
         httpCode in 500..599 -> NetworkErrorKind.SERVER_DOWN
