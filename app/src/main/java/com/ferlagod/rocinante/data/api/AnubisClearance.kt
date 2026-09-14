@@ -140,7 +140,7 @@ object AnubisClearance {
             return propagate(current)
         }
 
-        val solved = solveChallenge(base, staleToken) ?: return null
+        val solved = solveChallenge(base, staleToken, staleCookie) ?: return null
         propagate(solved)
     }
 
@@ -153,13 +153,18 @@ object AnubisClearance {
      * Anubis emite la cookie.
      */
     @SuppressLint("SetJavaScriptEnabled")
-    private suspend fun solveChallenge(base: String, staleToken: String?): String? {
+    private suspend fun solveChallenge(base: String, staleToken: String?, staleCookie: String?): String? {
         val context = appContext ?: return null
         val cookieManager = CookieManager.getInstance()
         var webView: WebView? = null
         try {
             withContext(Dispatchers.Main) {
                 cookieManager.setAcceptCookie(true)
+                if (staleCookie != null) {
+                    staleCookie.split(";").map { it.trim() }.forEach {
+                        cookieManager.setCookie(base, it)
+                    }
+                }
                 webView = WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
