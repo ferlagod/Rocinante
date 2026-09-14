@@ -189,21 +189,33 @@ fun FollowListSheet(
                                 onRowClick = { selectedActorUrl = user.actorUrl },
                                 onFollowClick = {
                                     if (user.isFollowedByMe) {
-                                        viewModel.unfollow(user.actorUrl, user.handle)
-                                        onFollowToggled(false)
-                                        Toast.makeText(
-                                            context,
-                                            unfollowSuccessMsg,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        viewModel.unfollow(user.actorUrl, user.handle) { success, error ->
+                                            if (success) {
+                                                onFollowToggled(false)
+                                                Toast.makeText(
+                                                    context,
+                                                    unfollowSuccessMsg,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                val msg = context.getString(R.string.profile_server_error, error ?: "error")
+                                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
                                     } else {
-                                        viewModel.follow(user.actorUrl, user.handle)
-                                        onFollowToggled(true)
-                                        Toast.makeText(
-                                            context,
-                                            followSuccessMsg,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        viewModel.follow(user.actorUrl, user.handle) { success, error ->
+                                            if (success) {
+                                                onFollowToggled(true)
+                                                Toast.makeText(
+                                                    context,
+                                                    followSuccessMsg,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                val msg = context.getString(R.string.profile_server_error, error ?: "error")
+                                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
                                     }
                                 }
                             )
@@ -301,8 +313,15 @@ fun FollowListSheet(
                 if (user.isFollowedByMe) {
                     OutlinedButton(
                         onClick = {
-                            viewModel.unfollow(user.actorUrl, user.handle)
-                            onFollowToggled(false)
+                            viewModel.unfollow(user.actorUrl, user.handle) { success, error ->
+                                if (success) {
+                                    onFollowToggled(false)
+                                    Toast.makeText(context, unfollowSuccessMsg, Toast.LENGTH_SHORT).show()
+                                } else {
+                                    val msg = context.getString(R.string.profile_server_error, error ?: "error")
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         },
                         enabled = !isPending
                     ) {
@@ -315,8 +334,15 @@ fun FollowListSheet(
                 } else {
                     Button(
                         onClick = {
-                            viewModel.follow(user.actorUrl, user.handle)
-                            onFollowToggled(true)
+                            viewModel.follow(user.actorUrl, user.handle) { success, error ->
+                                if (success) {
+                                    onFollowToggled(true)
+                                    Toast.makeText(context, followSuccessMsg, Toast.LENGTH_SHORT).show()
+                                } else {
+                                    val msg = context.getString(R.string.profile_server_error, error ?: "error")
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         },
                         enabled = !isPending
                     ) {

@@ -306,7 +306,30 @@ fun NotificationItemCard(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (item.actorAvatarUrl != null) {
+            if (item.relatedUsers.size > 1) {
+                Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
+                    item.relatedUsers.take(3).forEach { user ->
+                        if (user.avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = user.avatarUrl,
+                                contentDescription = user.name,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                            }
+                        }
+                    }
+                }
+            } else if (item.actorAvatarUrl != null) {
                 AsyncImage(
                     model = item.actorAvatarUrl,
                     contentDescription = item.actorName,

@@ -131,6 +131,7 @@ fun HomeScreen(
     // su página: la ficha lo enseña mientras relee, en vez de salir a medias.
     var dialogBookEnrichment by remember { mutableStateOf<com.ferlagod.rocinante.data.model.BookEnrichment?>(null) }
     var selectedNotificationUser by remember { mutableStateOf<com.ferlagod.rocinante.data.model.SuggestedUser?>(null) }
+    var selectedNotificationGroupUsers by remember { mutableStateOf<List<com.ferlagod.rocinante.data.model.SuggestedUser>?>(null) }
     var selectedNotificationDetail by remember { mutableStateOf<com.ferlagod.rocinante.data.model.NotificationUiItem?>(null) }
 
     val api = remember(instanceUrl, cookie) {
@@ -145,6 +146,7 @@ fun HomeScreen(
     var backToShelvesKey by remember { mutableStateOf(0) }
 
     val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val followingViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_FOLLOWING")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(instanceUrl, username, cookie) {
@@ -361,20 +363,47 @@ fun HomeScreen(
                         instanceUrl = instanceUrl,
                         onItemClicked = { item -> 
                             if (item.type == NotificationType.FOLLOW || item.type == NotificationType.FOLLOW_REQUEST) {
-                                val permalink = item.permalink.orEmpty()
-                                val handleExtracted = if (permalink.contains("/user/")) {
-                                    val slug = permalink.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/")
-                                    if (slug.isNotEmpty() && !slug.startsWith("http")) {
-                                        if (slug.startsWith("@")) slug else "@$slug"
-                                    } else ""
-                                } else ""
-                                selectedNotificationUser = com.ferlagod.rocinante.data.model.SuggestedUser(
-                                    profileUrl = permalink,
-                                    name = item.actorName,
-                                    handle = handleExtracted,
-                                    avatarUrl = item.actorAvatarUrl ?: "",
-                                    isFollowRequest = item.type == NotificationType.FOLLOW_REQUEST
-                                )
+                                if (item.relatedUsers.size > 1) {
+                                    selectedNotificationGroupUsers = item.relatedUsers
+                                } else if (item.relatedUsers.size == 1) {
+                                    selectedNotificationUser = item.relatedUsers.first()
+                                } else {
+                                    val permalink = item.permalink.orEmpty().trim()
+                                    var handleExtracted = ""
+                                    if (permalink.isNotEmpty()) {
+                                        val cleanUrl = permalink.removeSuffix(".json").removeSuffix("/")
+                                        val userSlug = when {
+                                            cleanUrl.contains("/users/") -> cleanUrl.substringAfterLast("/users/")
+                                            cleanUrl.contains("/user/") -> cleanUrl.substringAfterLast("/user/")
+                                            cleanUrl.contains("/@") -> cleanUrl.substringAfterLast("/@")
+                                            else -> ""
+                                        }
+                                        if (userSlug.isNotEmpty() && !userSlug.startsWith("http") && userSlug != "followers" && userSlug != "following") {
+                                            val permalinkUri = try { java.net.URI(permalink) } catch (_: Exception) { null }
+                                            val myUri = try { java.net.URI(if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl") } catch (_: Exception) { null }
+                                            val isRemote = permalinkUri?.host != null && myUri?.host != null && !permalinkUri.host.equals(myUri.host, ignoreCase = true)
+
+                                            handleExtracted = if (userSlug.contains("@")) {
+                                                if (userSlug.startsWith("@")) userSlug else "@$userSlug"
+                                            } else if (isRemote && permalinkUri?.host != null) {
+                                                "@$userSlug@${permalinkUri.host}"
+                                            } else {
+                                                "@$userSlug"
+                                            }
+                                        }
+                                    }
+                                    if (handleExtracted.isEmpty() && item.actorName.isNotBlank() && !item.actorName.contains(" ")) {
+                                        handleExtracted = if (item.actorName.startsWith("@")) item.actorName else "@${item.actorName}"
+                                    }
+                                    selectedNotificationUser = com.ferlagod.rocinante.data.model.SuggestedUser(
+                                        profileUrl = permalink,
+                                        name = item.actorName,
+                                        handle = handleExtracted,
+                                        avatarUrl = item.actorAvatarUrl ?: "",
+                                        isFollowRequest = item.type == NotificationType.FOLLOW_REQUEST,
+                                        formUserId = item.formUserId
+                                    )
+                                }
                             } else {
                                 selectedNotificationDetail = item
                             }
@@ -588,7 +617,24 @@ fun HomeScreen(
                 api = api,
                 instanceUrl = instanceUrl,
                 onDismiss = { selectedNotificationUser = null },
-                onFollowSuccess = { selectedNotificationUser = null }
+                onFollowSuccess = { 
+                    selectedNotificationUser = null
+                    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+                    val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+                    val cleanUser = username.removePrefix("@").trim()
+                    followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING, forceRefresh = true)
+                }
+            )
+        }
+
+        selectedNotificationGroupUsers?.let { users ->
+            GroupedUsersDialog(
+                users = users,
+                onDismiss = { selectedNotificationGroupUsers = null },
+                onSelectUser = { user ->
+                    selectedNotificationGroupUsers = null
+                    selectedNotificationUser = user
+                }
             )
         }
 
@@ -749,17 +795,30 @@ fun SuggestedUserDialog(
     }
 
     val handleToUse = when {
-        suggestedUser.handle.isNotBlank() -> suggestedUser.handle
+        suggestedUser.handle.isNotBlank() -> {
+            val h = suggestedUser.handle
+            val host = try { java.net.URI(fullProfile?.id?.takeIf { it.isNotBlank() } ?: suggestedUser.profileUrl).host } catch (_: Exception) { "" }
+            val myHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { "" }
+            if (!host.isNullOrBlank() && !myHost.isNullOrBlank() && !host.equals(myHost, ignoreCase = true) && !h.removePrefix("@").contains("@")) {
+                "@${h.removePrefix("@")}@$host"
+            } else {
+                if (h.startsWith("@")) h else "@$h"
+            }
+        }
         fullProfile?.preferredUsername != null -> {
             val host = try { java.net.URI(fullProfile?.id ?: baseUrl).host } catch (_: Exception) { "" }
             val myHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { "" }
-            if (host.isNotBlank() && !host.equals(myHost, ignoreCase = true)) "@${fullProfile?.preferredUsername}@$host"
-            else "@${fullProfile?.preferredUsername}"
+            if (!host.isNullOrBlank() && !myHost.isNullOrBlank() && !host.equals(myHost, ignoreCase = true)) "@${fullProfile?.preferredUsername?.removePrefix("@")}@$host"
+            else "@${fullProfile?.preferredUsername?.removePrefix("@")}"
         }
         suggestedUser.profileUrl.isNotBlank() -> {
             val slug = suggestedUser.profileUrl.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/")
+            val host = try { java.net.URI(suggestedUser.profileUrl).host } catch (_: Exception) { "" }
+            val myHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { "" }
             if (slug.isNotBlank() && !slug.startsWith("http")) {
-                if (slug.startsWith("@")) slug else "@$slug"
+                if (!host.isNullOrBlank() && !myHost.isNullOrBlank() && !host.equals(myHost, ignoreCase = true) && !slug.contains("@")) {
+                    "@${slug.removePrefix("@")}@$host"
+                } else if (slug.startsWith("@")) slug else "@$slug"
             } else "@${suggestedUser.name}"
         }
         else -> "@${suggestedUser.name}"
@@ -777,7 +836,12 @@ fun SuggestedUserDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.profile_who_to_follow), fontWeight = FontWeight.Bold)
+            val titleRes = if (suggestedUser.isFollowRequest || suggestedUser.summary != "suggestion") {
+                R.string.user_profile_title
+            } else {
+                R.string.profile_who_to_follow
+            }
+            Text(stringResource(titleRes), fontWeight = FontWeight.Bold)
         },
         text = {
             if (isLoading) {
@@ -865,12 +929,30 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val response = api.acceptFollowRequest(handleToFollow)
-                                if (response.isSuccessful || response.code() == 302) {
+                                val formId = suggestedUser.formUserId
+                                val cleanHandle = handleToFollow.removePrefix("@")
+                                val actorId = fullProfile?.id ?: suggestedUser.profileUrl
+                                
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+
+                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
+                                if (!formId.isNullOrBlank()) {
+                                    try { response = api.acceptFollowRequest(formId) } catch (_: Exception) {}
+                                }
+                                if (!isSuccess(response) && cleanHandle.isNotBlank()) {
+                                    try { response = api.acceptFollowRequest(cleanHandle) } catch (_: Exception) {}
+                                }
+                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != formId) {
+                                    try { response = api.acceptFollowRequest(actorId) } catch (_: Exception) {}
+                                }
+
+                                if (isSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                     onFollowSuccess()
                                 } else {
-                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                    val code = response?.code()?.toString() ?: "error"
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -894,13 +976,30 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val response = api.unfollowUser(handleToFollow)
-                                if (response.isSuccessful || response.code() == 302) {
+                                val cleanHandle = handleToFollow.removePrefix("@")
+                                val actorId = fullProfile?.id ?: suggestedUser.profileUrl
+
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+
+                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
+                                try { response = api.unfollowUser(cleanHandle) } catch (_: Exception) {}
+
+                                if (!isSuccess(response) && handleToUse.startsWith("@")) {
+                                    try { response = api.unfollowUser(handleToUse) } catch (_: Exception) {}
+                                }
+
+                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != handleToUse) {
+                                    try { response = api.unfollowUser(actorId) } catch (_: Exception) {}
+                                }
+
+                                if (isSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = false
                                     onFollowSuccess()
                                 } else {
-                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                    val code = response?.code()?.toString() ?: "error"
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -924,13 +1023,39 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val response = api.followUser(handleToFollow)
-                                if (response.isSuccessful || response.code() == 302) {
+                                val cleanHandle = handleToFollow.removePrefix("@")
+                                val actorId = fullProfile?.id ?: suggestedUser.profileUrl
+
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+
+                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
+                                try { response = api.followUser(cleanHandle) } catch (_: Exception) {}
+
+                                // Si es remoto y falló, forzar descubrimiento webfinger en la instancia local y reintentar
+                                if (!isSuccess(response) && cleanHandle.contains("@")) {
+                                    try {
+                                        val searchUrl = "${baseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
+                                        api.getRawHtmlResponse(searchUrl)
+                                        response = api.followUser(cleanHandle)
+                                    } catch (_: Exception) {}
+                                }
+
+                                if (!isSuccess(response) && handleToUse.startsWith("@")) {
+                                    try { response = api.followUser(handleToUse) } catch (_: Exception) {}
+                                }
+
+                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != handleToUse) {
+                                    try { response = api.followUser(actorId) } catch (_: Exception) {}
+                                }
+
+                                if (isSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = true
                                     onFollowSuccess()
                                 } else {
-                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                    val code = response?.code()?.toString() ?: "error"
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -957,17 +1082,36 @@ fun SuggestedUserDialog(
                         coroutineScope.launch {
                             isFollowingAction = true
                             try {
-                                val handleToFollow = if (suggestedUser.handle.isNotEmpty()) suggestedUser.handle else {
+                                val formId = suggestedUser.formUserId
+                                val cleanHandle = if (suggestedUser.handle.isNotEmpty()) {
+                                    suggestedUser.handle.removePrefix("@")
+                                } else {
                                     val cleanInstanceUrl = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
                                     val host = try { java.net.URL(fullProfile?.id ?: cleanInstanceUrl).host } catch (e: Exception) { java.net.URL(cleanInstanceUrl).host }
-                                    "@${fullProfile?.preferredUsername}@$host"
+                                    "${fullProfile?.preferredUsername}@$host"
                                 }
-                                val response = api.deleteFollowRequest(handleToFollow.removePrefix("@"))
-                                if (response.isSuccessful || response.code() == 302) {
-                                    Toast.makeText(context, context.getString(R.string.post_btn_cancel), Toast.LENGTH_SHORT).show()
+                                val actorId = fullProfile?.id ?: suggestedUser.profileUrl
+
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+
+                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
+                                if (!formId.isNullOrBlank()) {
+                                    try { response = api.deleteFollowRequest(formId) } catch (_: Exception) {}
+                                }
+                                if (!isSuccess(response) && cleanHandle.isNotBlank()) {
+                                    try { response = api.deleteFollowRequest(cleanHandle) } catch (_: Exception) {}
+                                }
+                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != formId) {
+                                    try { response = api.deleteFollowRequest(actorId) } catch (_: Exception) {}
+                                }
+
+                                if (isSuccess(response)) {
+                                    Toast.makeText(context, context.getString(R.string.follow_request_reject), Toast.LENGTH_SHORT).show()
                                     onFollowSuccess()
                                 } else {
-                                    Toast.makeText(context, context.getString(R.string.profile_server_error, response.code().toString()), Toast.LENGTH_LONG).show()
+                                    val code = response?.code()?.toString() ?: "error"
+                                    Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -985,6 +1129,102 @@ fun SuggestedUserDialog(
                 TextButton(onClick = onDismiss, enabled = !isFollowingAction) {
                     Text(stringResource(R.string.post_btn_cancel))
                 }
+            }
+        }
+    )
+}
+
+@Composable
+fun GroupedUsersDialog(
+    users: List<com.ferlagod.rocinante.data.model.SuggestedUser>,
+    onDismiss: () -> Unit,
+    onSelectUser: (com.ferlagod.rocinante.data.model.SuggestedUser) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.user_profile_title),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                users.forEach { user ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectUser(user) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (user.avatarUrl.isNotBlank()) {
+                            coil.compose.SubcomposeAsyncImage(
+                                model = user.avatarUrl,
+                                contentDescription = user.name,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = user.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = user.handle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+
+                        androidx.compose.material3.TextButton(
+                            onClick = { onSelectUser(user) }
+                        ) {
+                            Text(stringResource(R.string.follow_btn_follow))
+                        }
+                    }
+                    if (user != users.last()) {
+                        androidx.compose.material3.HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.post_btn_cancel))
             }
         }
     )

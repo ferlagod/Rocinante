@@ -1733,32 +1733,135 @@ object BookWyrmScraper {
                 val timeElement = element.select("time").firstOrNull()
                 val date = timeElement?.text() ?: ""
 
+                val followRequestForm = element.select("form[action*='accept-follow-request'], form[action*='delete-follow-request'], form[action*='follow-request']").firstOrNull()
+                val hasFollowRequestForm = followRequestForm != null || element.hasClass("follow-request")
+                val formUserId = followRequestForm?.select("input[name='user']")?.firstOrNull()?.attr("value")?.takeIf { it.isNotBlank() }
+
+                val fullText = element.text().lowercase()
+                val isFollowRequestText = fullText.contains("requested to follow") ||
+                    fullText.contains("solicit") ||
+                    fullText.contains("petición de seguimiento") ||
+                    fullText.contains("petició de seguiment") ||
+                    fullText.contains("demande") ||
+                    fullText.contains("anfrage") ||
+                    fullText.contains("richiesta") ||
+                    fullText.contains("pediu para") ||
+                    fullText.contains("wil je volgen") ||
+                    fullText.contains("chce cię") ||
+                    fullText.contains("chce sledovat") ||
+                    fullText.contains("хоче стежити") ||
+                    fullText.contains("haluaa seurata") ||
+                    fullText.contains("vill följa") ||
+                    fullText.contains("vil følge")
+
+                val isFollowText = fullText.contains("follow") ||
+                    fullText.contains("siguió") ||
+                    fullText.contains("sigue") ||
+                    fullText.contains("seguirte") ||
+                    fullText.contains("seguinte") ||
+                    fullText.contains("segui-te") ||
+                    fullText.contains("segue") ||
+                    fullText.contains("suivre") ||
+                    fullText.contains("suit") ||
+                    fullText.contains("folgt") ||
+                    fullText.contains("seguirti") ||
+                    fullText.contains("volgt") ||
+                    fullText.contains("obserwować") ||
+                    fullText.contains("obserwuje") ||
+                    fullText.contains("sledovat") ||
+                    fullText.contains("sleduje") ||
+                    fullText.contains("стежити") ||
+                    fullText.contains("підписався") ||
+                    fullText.contains("seurata") ||
+                    fullText.contains("seuraa") ||
+                    fullText.contains("följa") ||
+                    fullText.contains("följer") ||
+                    fullText.contains("følge") ||
+                    fullText.contains("følger")
+
+                val type = when {
+                    hasFollowRequestForm || isFollowRequestText -> NotificationType.FOLLOW_REQUEST
+                    fullText.contains("replied") || fullText.contains("respondió") || fullText.contains("respondeu") || fullText.contains("répondu") || fullText.contains("geantwortet") -> NotificationType.REPLY
+                    fullText.contains("mention") || fullText.contains("mencionó") || fullText.contains("mencionou") || fullText.contains("mentionné") || fullText.contains("erwähnt") -> NotificationType.MENTION
+                    fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") || fullText.contains("aimé") || fullText.contains("gefällt") -> NotificationType.FAVORITE
+                    fullText.contains("boost") || fullText.contains("compartió") || fullText.contains("partilhou") || fullText.contains("partagé") || fullText.contains("geteilt") || fullText.contains("reblog") -> NotificationType.BOOST
+                    isFollowText -> NotificationType.FOLLOW
+                    else -> NotificationType.UNKNOWN
+                }
+
                 // 1. Enlace a la publicación (para replies, boosts, menciones, favoritos)
                 var permalink = element.select("a.time, .status-link").firstOrNull()?.attr("href")?.let {
                     if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
                 }
-                
-                // 2. Enlace al perfil de usuario (para follow, follow_request o si no hay enlace a publicación)
-                val userHref = element.select(".avatar a, a[href*='/user/'], a[href*='/users/']").firstOrNull()?.attr("href")
-                val userProfileUrl = userHref?.let {
-                    if (it.startsWith("http")) it else "$baseUrl${it.trimStart('/')}"
+
+                // Extraer todos los usuarios vinculados a esta notificación (soporta notificaciones agrupadas "User 1 and User 2 followed you")
+                val relatedUsers = mutableListOf<com.ferlagod.rocinante.data.model.SuggestedUser>()
+                val userAnchors = element.select("a[href*='/user/'], a[href*='/users/'], a[href*='/@']")
+                    .filter { anchor ->
+                        val href = anchor.attr("href").removeSuffix("/").lowercase()
+                        !anchor.hasClass("icon") &&
+                        !href.endsWith("/followers") &&
+                        !href.endsWith("/following") &&
+                        !href.endsWith("/books") &&
+                        !href.endsWith("/shelves") &&
+                        !href.endsWith("/reading-status") &&
+                        !href.contains("/notifications") &&
+                        !href.endsWith("/group") &&
+                        !href.contains("/groups/")
+                    }
+
+                for (anchor in userAnchors) {
+                    val href = anchor.attr("href").trim()
+                    val fullProfileUrl = if (href.startsWith("http")) href else "$baseUrl${href.trimStart('/')}"
+                    if (relatedUsers.none { it.profileUrl == fullProfileUrl }) {
+                        val avatarImg = anchor.selectFirst("img.avatar, img")
+                            ?: element.select("a[href='$href'] img").firstOrNull()
+                        var userAvatar = avatarImg?.attr("src") ?: ""
+                        if (userAvatar.isNotEmpty() && !userAvatar.startsWith("http")) {
+                            userAvatar = "$baseUrl${userAvatar.trimStart('/')}"
+                        }
+
+                        val name = anchor.text().trim().takeIf { it.isNotBlank() }
+                            ?: avatarImg?.attr("alt")?.trim()?.takeIf { it.isNotBlank() }
+                            ?: ""
+
+                        val slug = fullProfileUrl.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/@")
+                        val permalinkUri = try { java.net.URI(fullProfileUrl) } catch (_: Exception) { null }
+                        val myUri = try { java.net.URI(baseUrl) } catch (_: Exception) { null }
+                        val isRemote = permalinkUri?.host != null && myUri?.host != null && !permalinkUri.host.equals(myUri.host, ignoreCase = true)
+
+                        val handle = when {
+                            slug.contains("@") -> if (slug.startsWith("@")) slug else "@$slug"
+                            isRemote && permalinkUri?.host != null -> "@$slug@${permalinkUri.host}"
+                            slug.isNotEmpty() && !slug.startsWith("http") -> "@$slug"
+                            else -> name.takeIf { it.isNotEmpty() && !it.contains(" ") }?.let { if (it.startsWith("@")) it else "@$it" } ?: ""
+                        }
+
+                        relatedUsers.add(
+                            com.ferlagod.rocinante.data.model.SuggestedUser(
+                                name = name.ifEmpty { slug },
+                                handle = handle,
+                                avatarUrl = userAvatar,
+                                profileUrl = fullProfileUrl,
+                                isFollowRequest = type == NotificationType.FOLLOW_REQUEST,
+                                formUserId = formUserId
+                            )
+                        )
+                    }
                 }
-                
-                val fullText = element.text().lowercase()
-                val hasFollowRequestForm = element.select("form[action*=/accept-follow-request]").isNotEmpty()
-                val type = when {
-                    hasFollowRequestForm -> NotificationType.FOLLOW_REQUEST
-                    fullText.contains("replied") || fullText.contains("respondió") -> NotificationType.REPLY
-                    fullText.contains("mention") || fullText.contains("mencionó") -> NotificationType.MENTION
-                    fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") -> NotificationType.FAVORITE
-                    fullText.contains("boost") || fullText.contains("compartió") -> NotificationType.BOOST
-                    fullText.contains("follow") || fullText.contains("siguió") || fullText.contains("sigue") || fullText.contains("segue") -> NotificationType.FOLLOW
-                    else -> NotificationType.UNKNOWN
+
+                val finalAvatarUrl = relatedUsers.firstOrNull { it.avatarUrl.isNotBlank() }?.avatarUrl
+                    ?: avatarUrl.ifEmpty { null }
+
+                val finalActorName = when {
+                    relatedUsers.size > 1 -> relatedUsers.joinToString(" & ") { it.name }
+                    relatedUsers.size == 1 -> relatedUsers.first().name.ifEmpty { actorName }
+                    else -> actorName
                 }
 
                 // Para notificaciones de seguimiento, el permalink principal es el perfil del usuario
                 if (type == NotificationType.FOLLOW || type == NotificationType.FOLLOW_REQUEST || permalink == null) {
-                    permalink = userProfileUrl ?: permalink
+                    permalink = relatedUsers.firstOrNull()?.profileUrl ?: permalink
                 }
                 
                 // BookWyrm sometimes splits a notification into the header ("User boosted...") and the embedded post ("<article>...").
@@ -1777,11 +1880,13 @@ object BookWyrmScraper {
                         id = id.ifEmpty { java.util.UUID.randomUUID().toString() },
                         isUnread = isUnread,
                         type = type,
-                        actorName = actorName,
-                        actorAvatarUrl = avatarUrl.ifEmpty { null },
+                        actorName = finalActorName,
+                        actorAvatarUrl = finalAvatarUrl,
                         date = date,
                         content = contentHtml,
-                        permalink = permalink
+                        permalink = permalink,
+                        formUserId = formUserId,
+                        relatedUsers = relatedUsers
                     )
                 )
             }

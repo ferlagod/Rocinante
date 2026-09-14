@@ -94,6 +94,8 @@ class FollowListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FollowListUiState())
     val uiState: StateFlow<FollowListUiState> = _uiState.asStateFlow()
 
+    private var activeBaseUrl: String = ""
+
     private val gson = com.google.gson.GsonBuilder()
         .registerTypeAdapter(
             com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
@@ -109,6 +111,7 @@ class FollowListViewModel @Inject constructor(
      * 2. Si no hay datos o forceRefresh es true, realiza la petición en segundo plano
      */
     fun load(baseUrl: String, username: String, direction: FollowListDirection, forceRefresh: Boolean = false) {
+        activeBaseUrl = baseUrl
         if (!forceRefresh && _uiState.value.users.isNotEmpty()) {
             return // Usar caché en memoria (el ViewModel sobrevive en HomeScreen)
         }
@@ -213,9 +216,14 @@ class FollowListViewModel @Inject constructor(
      *
      * @param actorUrl Identificador único del usuario (URL del actor).
      * @param handle Identificador visual/arroba del usuario para mostrar carga en la UI.
+     * @param onResult Callback opcional ejecutado al finalizar la petición con el resultado (éxito/error).
      */
-    fun follow(actorUrl: String, handle: String) {
-        toggleFollow(actorUrl, handle, follow = true)
+    fun follow(
+        actorUrl: String,
+        handle: String,
+        onResult: ((Boolean, String?) -> Unit)? = null
+    ) {
+        toggleFollow(actorUrl, handle, follow = true, onResult = onResult)
     }
 
     /**
@@ -223,12 +231,22 @@ class FollowListViewModel @Inject constructor(
      *
      * @param actorUrl Identificador único del usuario (URL del actor).
      * @param handle Identificador visual/arroba del usuario para mostrar carga en la UI.
+     * @param onResult Callback opcional ejecutado al finalizar la petición con el resultado (éxito/error).
      */
-    fun unfollow(actorUrl: String, handle: String) {
-        toggleFollow(actorUrl, handle, follow = false)
+    fun unfollow(
+        actorUrl: String,
+        handle: String,
+        onResult: ((Boolean, String?) -> Unit)? = null
+    ) {
+        toggleFollow(actorUrl, handle, follow = false, onResult = onResult)
     }
 
-    private fun toggleFollow(actorUrl: String, handle: String, follow: Boolean) {
+    private fun toggleFollow(
+        actorUrl: String,
+        handle: String,
+        follow: Boolean,
+        onResult: ((Boolean, String?) -> Unit)? = null
+    ) {
         val updatedUsers = _uiState.value.users.map { user ->
             if (user.actorUrl == actorUrl || user.handle == handle) user.copy(isFollowedByMe = follow) else user
         }
@@ -247,31 +265,66 @@ class FollowListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            var success = false
+            var errorMessage: String? = null
             try {
                 val cleanHandle = handle.removePrefix("@")
-                var response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
-                
-                val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
-                val isSuccess = (response.isSuccessful || (response.code() in 300..399 && !isRedirectToLogin))
+                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
+                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
 
-                if (!isSuccess && actorUrl.isNotBlank() && actorUrl != cleanHandle) {
-                    // Fallback con actorUrl
-                    response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
+                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
+
+                // 1. Probar con cleanHandle (ej. "usuario" o "usuario@instancia.com")
+                if (cleanHandle.isNotBlank()) {
+                    try {
+                        response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
+                    } catch (_: Exception) {}
                 }
 
-                val finalRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
-                val finalSuccess = (response.isSuccessful || (response.code() in 300..399 && !finalRedirectToLogin))
+                // 2. Si es remoto y falló (404 porque la BD local aún no conoce al usuario remoto),
+                // invocar búsqueda webfinger en la instancia local para importar el usuario y reintentar
+                if (!isSuccess(response) && cleanHandle.contains("@") && follow) {
+                    try {
+                        val searchUrl = if (activeBaseUrl.isNotBlank()) {
+                            "${activeBaseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
+                        } else {
+                            "search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
+                        }
+                        api.getRawHtmlResponse(searchUrl)
+                        response = api.followUser(cleanHandle)
+                    } catch (_: Exception) {}
+                }
 
-                if (!finalSuccess) {
+                // 3. Si no tuvo éxito, probar con handle con @ (ej. "@usuario@instancia.com")
+                if (!isSuccess(response) && handle.startsWith("@")) {
+                    try {
+                        response = if (follow) api.followUser(handle) else api.unfollowUser(handle)
+                    } catch (_: Exception) {}
+                }
+
+                // 4. Si no tuvo éxito, probar con actorUrl (URL completa del actor ActivityPub)
+                if (!isSuccess(response) && actorUrl.isNotBlank() && actorUrl != cleanHandle && actorUrl != handle) {
+                    try {
+                        response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
+                    } catch (_: Exception) {}
+                }
+
+                success = isSuccess(response)
+                if (!success) {
+                    errorMessage = response?.code()?.toString()
                     revertFollowState(actorUrl, handle, !follow)
                 } else {
                     cache.saveList(FollowListDirection.FOLLOWING.name, _uiState.value.users)
                     cache.saveList(FollowListDirection.FOLLOWERS.name, _uiState.value.users)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                success = false
+                errorMessage = e.message
                 revertFollowState(actorUrl, handle, !follow)
             } finally {
                 _uiState.update { it.copy(pendingHandles = it.pendingHandles - handle) }
+                onResult?.invoke(success, errorMessage)
             }
         }
     }

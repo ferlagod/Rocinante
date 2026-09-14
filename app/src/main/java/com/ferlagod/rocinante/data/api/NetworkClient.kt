@@ -22,6 +22,7 @@ package com.ferlagod.rocinante.data.api
 
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
@@ -251,6 +252,26 @@ object NetworkClient {
             val csrfToken = cookieJar.currentCsrfToken()
             if (csrfToken != null) {
                 requestBuilder.addHeader("X-CSRFToken", csrfToken)
+
+                val originalBody = request.body
+                if (originalBody is FormBody) {
+                    val newFormBody = FormBody.Builder()
+                    var hasCsrf = false
+                    for (i in 0 until originalBody.size) {
+                        val name = originalBody.name(i)
+                        val value = originalBody.value(i)
+                        if (name == "csrfmiddlewaretoken") {
+                            newFormBody.add(name, if (value.isBlank()) csrfToken else value)
+                            hasCsrf = true
+                        } else {
+                            newFormBody.add(name, value)
+                        }
+                    }
+                    if (!hasCsrf) {
+                        newFormBody.add("csrfmiddlewaretoken", csrfToken)
+                    }
+                    requestBuilder.method(request.method, newFormBody.build())
+                }
             }
 
             var response = chain.proceed(requestBuilder.build())

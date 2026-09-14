@@ -40,7 +40,9 @@ data class NotificationUiItem(
     val actorAvatarUrl: String?,
     val date: String,
     val content: String,
-    val permalink: String?
+    val permalink: String?,
+    val formUserId: String? = null,
+    val relatedUsers: List<SuggestedUser> = emptyList()
 )
 
 /**
