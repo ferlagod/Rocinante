@@ -68,7 +68,13 @@ object BookPageLoader {
 
         try {
             val detailsUrl = resolveDetailsUrl()
-            val fresh = api.getBookDetails(detailsUrl)
+            val fresh = try {
+                api.getBookDetails(detailsUrl)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                BookWyrmScraper.scrapeBookDetails(api, baseBookUrl) ?: throw e
+            }
             onDetails(fresh, false)
             cache.saveBookDetails(cacheKey, fresh)
             fresh.cover?.url?.let { cUrl ->

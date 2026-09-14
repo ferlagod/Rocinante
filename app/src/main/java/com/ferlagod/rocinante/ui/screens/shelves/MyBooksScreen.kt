@@ -902,8 +902,18 @@ fun ShelfNativeDetailScreen(
             // pero las propias del usuario solo por esta.
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/books/${shelf.slug}.json?page=$currentPage"
 
-            val response = api.getShelfData(shelfJsonUrl)
-            val fetchedItems = response.orderedItems ?: emptyList()
+            val fetchedItems = try {
+                val response = api.getShelfData(shelfJsonUrl)
+                response.orderedItems ?: emptyList()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/${shelf.slug}?page=$currentPage"
+                val scraped = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl)
+                if (scraped.isEmpty() && currentPage == 1 && books.isEmpty()) {
+                    throw e
+                }
+                scraped
+            }
 
             if (currentPage == 1) {
                 incoming = fetchedItems

@@ -105,6 +105,19 @@ class AnubisClearanceTest {
     }
 
     @Test
+    fun `un 200 con set-cookie de verificacion de anubis se reconoce como reto`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://comelibros.club/login").build())
+            .protocol(Protocol.HTTP_2)
+            .code(200)
+            .message("OK")
+            .header("Server", "nginx")
+            .header("Set-Cookie", "techaro.lol-anubis-cookie-verification=01a09; Path=/; Expires=Mon, 14 Sep 2026")
+            .body("".toResponseBody(null))
+        assertTrue(AnubisClearance.isChallenge(builder.build()))
+    }
+
+    @Test
     fun `un 403 que no es de anubis no se reconoce como reto`() {
         val builder = Response.Builder()
             .request(Request.Builder().url("https://bookwyrm.it/login").build())

@@ -235,15 +235,12 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
             }
         }
     } else {
-            val loginUrl = if (instanceUrl.startsWith("http")) {
-                "$instanceUrl/login"
-            } else {
-                "https://$instanceUrl/login"
-            }
+            val cleanInstance = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+            val loginUrl = "$cleanInstance/login"
 
             BookWyrmLoginWebView(
                 loginUrl = loginUrl,
-                instanceUrl = instanceUrl,
+                instanceUrl = cleanInstance,
                 username = username,
                 onLoginSuccess = onLoginSuccess
             )
@@ -292,9 +289,10 @@ fun BookWyrmLoginWebView(
                     override fun onPageFinished(view: WebView, url: String) {
                         super.onPageFinished(view, url)
 
-                        val cookies = CookieManager.getInstance()
-                            .getCookie(url)
-                            .orEmpty()
+                        val cookieManager = CookieManager.getInstance()
+                        val c1 = cookieManager.getCookie(url).orEmpty()
+                        val c2 = cookieManager.getCookie(instanceUrl).orEmpty()
+                        val cookies = if (c1.isNotBlank() && c2.isNotBlank() && c1 != c2) "$c1; $c2" else c1.ifBlank { c2 }
 
                         val hasSession = cookies.contains("sessionid=")
                         val isStillLoginPage = url.contains("/login") || 

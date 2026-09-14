@@ -94,14 +94,43 @@ object AnubisClearance {
      * Cubre todos los casos: la redirección hacia el reto (307), haber acabado dentro de él
      * porque el cliente siguió la redirección, o un error 403 originado por Anubis.
      */
+    /**
+     * ¿Este intercambio es el reto de Anubis en lugar de lo que se había pedido?
+     *
+     * Cubre todos los casos: la redirección hacia el reto (307/308), haber acabado dentro de él
+     * porque el cliente siguió la redirección, un 200 con Set-Cookie del reto, o un error 403 originado por Anubis.
+     */
     fun isChallenge(response: Response): Boolean =
         isChallengeRedirect(response) || 
         response.request.url.encodedPath.startsWith(CHALLENGE_PATH) ||
-        (response.code == 403 && isAnubisResponse(response))
+        isAnubisChallengeResponse(response)
 
     /** ¿Es una redirección que lleva al reto de Anubis? */
     fun isChallengeRedirect(response: Response): Boolean =
         response.isRedirect && response.header("Location")?.contains(CHALLENGE_PATH) == true
+
+    /** ¿Indica la respuesta que es un reto activo de Anubis? */
+    fun isAnubisChallengeResponse(response: Response): Boolean {
+        val server = response.header("Server") ?: ""
+        val location = response.header("Location") ?: ""
+        val setCookie = response.headers("Set-Cookie").joinToString("; ")
+        val isAnubis = server.contains("anubis", ignoreCase = true) || 
+               location.contains(CHALLENGE_PATH) ||
+               setCookie.contains("techaro.lol-anubis")
+
+        if (response.code == 403 && isAnubis) return true
+
+        // Reto servido con HTTP 200: Anubis borra la cookie de auth o envía verificación
+        if (response.code == 200 && (setCookie.contains("techaro.lol-anubis-cookie-verification") || setCookie.contains("techaro.lol-anubis-auth=;"))) {
+            return true
+        }
+
+        if (response.code == 200 && isAnubis && response.body?.contentType()?.subtype?.contains("html") == true && response.request.header("Accept")?.contains("json") == true) {
+            return true
+        }
+
+        return false
+    }
 
     /** ¿Indican las cabeceras de la respuesta que proviene de Anubis? */
     fun isAnubisResponse(response: Response): Boolean {
@@ -164,6 +193,7 @@ object AnubisClearance {
                     staleCookie.split(";").map { it.trim() }.forEach {
                         cookieManager.setCookie(base, it)
                     }
+                    cookieManager.flush()
                 }
                 webView = WebView(context).apply {
                     settings.javaScriptEnabled = true
@@ -203,6 +233,15 @@ object AnubisClearance {
      */
     private suspend fun propagate(cookies: String): String {
         NetworkClient.replaceCookies(cookies)
+        sessionStorage?.let { storage ->
+            storage.currentSession?.let { sess ->
+                if (sess.cookie != cookies) {
+                    try {
+                        storage.saveSession(sess.copy(cookie = cookies))
+                    } catch (_: Exception) {}
+                }
+            }
+        }
         return cookies
     }
 

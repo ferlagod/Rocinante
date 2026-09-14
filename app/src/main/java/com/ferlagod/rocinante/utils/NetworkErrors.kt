@@ -66,7 +66,15 @@ object NetworkErrors {
 
     /** Clasifica la excepción que ha tumbado la petición. */
     fun classify(error: Throwable): NetworkErrorKind = when {
-        error is retrofit2.HttpException -> classify(error.code())
+        error is retrofit2.HttpException -> {
+            val code = error.code()
+            if (code == 401 || code == 403) {
+                try {
+                    android.util.Log.e("RocinanteDebug", "HTTP $code from URL: ${error.response()?.raw()?.request?.url}")
+                } catch (_: Throwable) {}
+            }
+            classify(code)
+        }
 
         // Sin salida a la red: el nombre no resuelve o no se llega al puerto.
         error is java.net.UnknownHostException -> NetworkErrorKind.OFFLINE
@@ -106,8 +114,16 @@ object NetworkErrors {
 
     /** Clasifica una respuesta HTTP que no ha ido bien. */
     fun classify(httpCode: Int): NetworkErrorKind = when {
-        httpCode == 401 || httpCode == 403 -> {
+        httpCode == 401 -> {
+            try {
+                android.util.Log.e("RocinanteDebug", "Session expired triggered by HTTP 401")
+            } catch (_: Throwable) {}
             _sessionExpiredEvent.tryEmit(Unit)
+            NetworkErrorKind.SESSION_EXPIRED
+        }
+        httpCode == 403 -> {
+            // Un 403 puede deberse a firmas ActivityPub requeridas (Secure Mode) o permisos,
+            // no necesariamente a una sesión expirada. Se clasifica para UI pero no expulsa la sesión.
             NetworkErrorKind.SESSION_EXPIRED
         }
         httpCode == 404 -> NetworkErrorKind.NOT_FOUND

@@ -42,50 +42,78 @@ class UserRepository(
     suspend fun loadProfile(username: String): BookWyrmProfile = withContext(Dispatchers.IO) {
         val cleanUsername = username.removePrefix("@").substringBefore("@").trim()
 
-        // 1. Descarga del perfil base
-        val profile = api.getUserProfile(cleanUsername)
+        // 1. Descarga del perfil base (intento JSON con fallback a scraping HTML para instancias con Secure Mode)
+        val profile = try {
+            api.getUserProfile(cleanUsername)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            val instanceHost = com.ferlagod.rocinante.data.api.NetworkClient.lastInstanceHost ?: "bookwyrm.social"
+            val htmlProfile = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeUserProfile(api, cleanUsername, instanceHost)
+            htmlProfile ?: throw e
+        }
 
         // 2. Corrutinas para descargar contadores en paralelo asegurando el formato JSON
         coroutineScope {
-            val followersDeferred = profile.followers?.let { url ->
-                async {
-                    try {
-                        api.getCollectionData(url).totalItems
-                    } catch (_: Exception) { null }
+            val followersDeferred = if (profile.followersCountLocal == null && profile.followers != null) {
+                profile.followers?.let { url ->
+                    async {
+                        try {
+                            api.getCollectionData(url).totalItems
+                        } catch (_: Exception) { null }
+                    }
                 }
-            }
+            } else null
 
-            val followingDeferred = profile.following?.let { url ->
+            val followingDeferred = if (profile.followingCountLocal == null && profile.following != null) {
+                profile.following?.let { url ->
+                    async {
+                        try {
+                            api.getCollectionData(url).totalItems
+                        } catch (_: Exception) { null }
+                    }
+                }
+            } else null
+            
+            val readingGoalDeferred = if (profile.readingGoal == null) {
                 async {
                     try {
-                        api.getCollectionData(url).totalItems
+                        val profileUrl = profile.id ?: return@async null
+                        // BookWyrm JSON id is usually the profile URL. If it ends with .json, strip it.
+                        val htmlUrl = profileUrl.removeSuffix(".json")
+                        val htmlResponse = api.getRawHtmlResponse(htmlUrl)
+                        val htmlString = htmlResponse.body()?.string() ?: return@async null
+                        val doc = org.jsoup.Jsoup.parse(htmlString)
+                        val progressElement = doc.selectFirst("progress")
+                        if (progressElement != null) {
+                            val value = progressElement.attr("value").toIntOrNull()
+                            val max = progressElement.attr("max").toIntOrNull()
+                            if (value != null && max != null) {
+                                com.ferlagod.rocinante.data.model.ReadingGoal(max = max, value = value)
+                            } else null
+                        } else null
                     } catch (_: Exception) { null }
                 }
-            }
-            
-            val readingGoalDeferred = async {
-                try {
-                    val profileUrl = profile.id ?: return@async null
-                    // BookWyrm JSON id is usually the profile URL. If it ends with .json, strip it.
-                    val htmlUrl = profileUrl.removeSuffix(".json")
-                    val htmlResponse = api.getRawHtmlResponse(htmlUrl)
-                    val htmlString = htmlResponse.body()?.string() ?: return@async null
-                    val doc = org.jsoup.Jsoup.parse(htmlString)
-                    val progressElement = doc.selectFirst("progress")
-                    if (progressElement != null) {
-                        val value = progressElement.attr("value").toIntOrNull()
-                        val max = progressElement.attr("max").toIntOrNull()
-                        if (value != null && max != null) {
-                            com.ferlagod.rocinante.data.model.ReadingGoal(max = max, value = value)
-                        } else null
-                    } else null
-                } catch (_: Exception) { null }
-            }
+            } else null
 
             // 3. Asignación de resultados reales
-            profile.followersCountLocal = followersDeferred?.await()
-            profile.followingCountLocal = followingDeferred?.await()
-            val fetchedGoal = readingGoalDeferred.await()
+            val fCount = followersDeferred?.await()
+            val fgCount = followingDeferred?.await()
+            if (fCount != null) profile.followersCountLocal = fCount
+            if (fgCount != null) profile.followingCountLocal = fgCount
+
+            // Fallback a HTML si los contadores o la descripción no se pudieron obtener del JSON
+            if (profile.followersCountLocal == null || profile.followingCountLocal == null || profile.summary.isNullOrBlank() || profile.summary == "None") {
+                try {
+                    val instanceHost = com.ferlagod.rocinante.data.api.NetworkClient.lastInstanceHost ?: "bookwyrm.social"
+                    val scraped = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeUserProfile(api, cleanUsername, instanceHost)
+                    if (scraped != null) {
+                        if (profile.followersCountLocal == null) profile.followersCountLocal = scraped.followersCountLocal
+                        if (profile.followingCountLocal == null) profile.followingCountLocal = scraped.followingCountLocal
+                    }
+                } catch (_: Exception) {}
+            }
+
+            val fetchedGoal = readingGoalDeferred?.await() ?: profile.readingGoal
             val cachedGoal = profile.id?.let { profileCache[it]?.readingGoal }
             if (cachedGoal != null && fetchedGoal != null && cachedGoal.value > fetchedGoal.value) {
                 profile.readingGoal = cachedGoal

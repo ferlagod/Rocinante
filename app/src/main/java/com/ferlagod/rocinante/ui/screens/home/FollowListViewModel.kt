@@ -369,7 +369,64 @@ class FollowListViewModel @Inject constructor(
                 break
             }
         }
-        return allUrls
+
+        if (allUrls.isEmpty()) {
+            val htmlUrl = initialUrl.substringBefore("?").removeSuffix(".json")
+            try {
+                val resp = api.getRawHtmlResponse(htmlUrl)
+                if (resp.isSuccessful) {
+                    val html = resp.body()?.string().orEmpty()
+                    val doc = org.jsoup.Jsoup.parse(html)
+                    val base = try {
+                        val uri = java.net.URI(initialUrl)
+                        "${uri.scheme}://${uri.host}"
+                    } catch (_: Exception) { "" }
+
+                    val targetUsername = initialUrl.substringAfter("/user/").substringBefore("/").substringBefore(".").trim()
+
+                    val userBlocks = doc.select(".columns:has(a[href*=/user/]), tr.user-preview, tr:has(a[href*=/user/]), .user-preview, div.media:has(a[href*=/user/]), li:has(a[href*=/user/])")
+                    for (block in userBlocks) {
+                        // Ignorar la tarjeta superior del perfil propio
+                        if (block.selectFirst(".preserve-whitespace") != null || block.selectFirst("a[href*=/followers]") != null) continue
+
+                        val userLink = block.selectFirst("a[href*=/user/]") ?: continue
+                        val href = userLink.attr("href").trim()
+                        if (href.isNotEmpty()) {
+                            val fullUrl = if (href.startsWith("http")) href else if (base.isNotEmpty()) "$base/${href.trimStart('/')}" else href
+                            val cleanUserUrl = fullUrl.substringBefore("?").removeSuffix("/")
+                            val path = try { java.net.URI(cleanUserUrl).path?.trim('/') } catch (_: Exception) { null }
+                            val segments = path?.split('/') ?: emptyList()
+                            if (segments.size == 2 && segments[0] == "user" && segments[1] != targetUsername) {
+                                allUrls.add(cleanUserUrl)
+
+                                val name = userLink.text().trim()
+                                val avatarSrc = block.selectFirst("img.avatar, img")?.attr("src")
+                                val avatarUrl = avatarSrc?.takeIf { it.isNotBlank() }?.let {
+                                    if (it.startsWith("http")) it else if (base.isNotEmpty()) "$base/${it.trimStart('/')}" else it
+                                }
+
+                                val parsedProfile = BookWyrmProfile(
+                                    id = cleanUserUrl,
+                                    type = "Person",
+                                    name = name.ifBlank { cleanUserUrl.substringAfterLast("/") },
+                                    summary = null,
+                                    outbox = null,
+                                    inbox = null,
+                                    icon = avatarUrl?.let { com.ferlagod.rocinante.data.model.ProfileIcon(it) },
+                                    preferredUsername = cleanUserUrl.substringAfterLast("/"),
+                                    followers = null,
+                                    following = null
+                                )
+                                userRepository.profileCache[cleanUserUrl] = parsedProfile
+                                userRepository.profileCache[normalizeActorUrl(cleanUserUrl)] = parsedProfile
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        return allUrls.distinct()
     }
 
     /**

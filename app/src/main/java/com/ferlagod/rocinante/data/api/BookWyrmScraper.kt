@@ -21,11 +21,14 @@ package com.ferlagod.rocinante.data.api
 
 import com.ferlagod.rocinante.data.model.ActivityPubActivity
 import com.ferlagod.rocinante.data.model.ActivityPubObject
+import com.ferlagod.rocinante.data.model.BookWyrmBookDetails
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.NotificationType
 import com.ferlagod.rocinante.data.model.NotificationUiItem
+import com.ferlagod.rocinante.data.model.ShelfBookCover
 import com.ferlagod.rocinante.data.model.SuggestedUser
 import com.ferlagod.rocinante.utils.BookWyrmUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -1848,6 +1851,224 @@ object BookWyrmScraper {
             android.util.Log.e(TAG_CLEAR, "clearNotifications falló", e)
             ClearResult(false, e.message ?: e.javaClass.simpleName)
         }
+    }
+
+    /**
+     * Extrae el perfil completo de un usuario raspando el HTML de /user/<username>.
+     * Utilizado como fallback en instancias con Secure Mode / Authorized Fetch (como comelibros.club)
+     * donde los endpoints ActivityPub .json requieren firma HTTP RSA.
+     */
+    suspend fun scrapeUserProfile(api: BookWyrmApi, username: String, instanceUrl: String): BookWyrmProfile? = withContext(Dispatchers.IO) {
+        val cleanUser = username.removePrefix("@").substringBefore("@").trim()
+        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+        val profileUrl = "$cleanBase/user/$cleanUser"
+        
+        try {
+            val response = api.getRawHtmlResponse(profileUrl)
+            if (!response.isSuccessful) return@withContext null
+            val html = response.body()?.string() ?: return@withContext null
+            scrapeUserProfileFromHtml(html, cleanUser, "$cleanBase/")
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    fun scrapeUserProfileFromHtml(html: String, username: String, baseUrl: String): BookWyrmProfile {
+        val doc = org.jsoup.Jsoup.parse(html)
+        val cleanBase = baseUrl.trimEnd('/')
+        
+        // 1. Nombre visible
+        val nameEl = doc.selectFirst("div.media.block .media-content p:first-child, .profile-card h1, h1.title, .title")
+        val extractedName = nameEl?.text()?.trim()?.takeIf { it.isNotBlank() && it != "User Profile" && it != "Perfil de usuario" }
+            ?: doc.selectFirst("meta[property=og:title]")?.attr("content")?.substringBefore(" (")?.substringBefore(" - ")?.trim()
+            ?: username
+
+        // 2. Avatar
+        val avatarEl = doc.selectFirst("img.avatar, .avatar img, .profile-card img, img[alt*='avatar']")
+        val avatarRaw = avatarEl?.attr("src")?.takeIf { it.isNotBlank() }
+            ?: doc.selectFirst("meta[property=og:image]")?.attr("content")?.takeIf { it.isNotBlank() }
+        val avatarUrl = if (avatarRaw != null && !avatarRaw.startsWith("http")) {
+            "$cleanBase/${avatarRaw.trimStart('/')}"
+        } else avatarRaw
+
+        // 3. Bio / Resumen
+        val bioEl = doc.selectFirst(".preserve-whitespace, .user-summary, .bio, .summary, .user-bio, [data-user-bio], div.box.has-background-tertiary")
+        val summary = bioEl?.text()?.trim()?.takeIf { it.isNotBlank() }
+            ?: doc.selectFirst("meta[property=og:description]")?.attr("content")?.trim()?.takeIf { it.isNotBlank() && !it.equals("None", ignoreCase = true) }
+
+        // 4. Contadores de seguidores y seguidos
+        var followersCount: Int? = null
+        var followingCount: Int? = null
+        doc.select("a[href*=/followers], a[href*=/following]").forEach { a ->
+            val href = a.attr("href")
+            val text = a.text()
+            val count = "\\b(\\d+)\\b".toRegex().find(text)?.groupValues?.get(1)?.toIntOrNull()
+            if (href.contains("/followers")) {
+                if (followersCount == null || (count != null && count > 0)) followersCount = count ?: 0
+            }
+            if (href.contains("/following")) {
+                if (followingCount == null || (count != null && count > 0)) followingCount = count ?: 0
+            }
+        }
+
+        // 5. Reto de lectura anual
+        val progressEl = doc.selectFirst("progress")
+        val readingGoal = if (progressEl != null) {
+            val v = progressEl.attr("value").toIntOrNull()
+            val m = progressEl.attr("max").toIntOrNull()
+            if (v != null && m != null) {
+                com.ferlagod.rocinante.data.model.ReadingGoal(max = m, value = v)
+            } else null
+        } else null
+
+        val actorId = "$cleanBase/user/$username"
+
+        return BookWyrmProfile(
+            id = actorId,
+            type = "Person",
+            name = extractedName,
+            summary = summary,
+            outbox = "$actorId/outbox",
+            inbox = "$actorId/inbox",
+            icon = avatarUrl?.let { com.ferlagod.rocinante.data.model.ProfileIcon(it) },
+            preferredUsername = username,
+            followers = "$actorId/followers",
+            following = "$actorId/following",
+            followersCountLocal = followersCount,
+            followingCountLocal = followingCount,
+            readingGoal = readingGoal
+        )
+    }
+
+    /**
+     * Raspa los libros de una estantería desde su página HTML.
+     * Sirve de fallback cuando /books/<slug>.json devuelve 403 (Secure Mode de ActivityPub).
+     */
+    suspend fun scrapeShelfPage(api: BookWyrmApi, shelfHtmlUrl: String, baseUrl: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getRawHtmlResponse(shelfHtmlUrl)
+            if (!response.isSuccessful) return@withContext emptyList()
+            val html = response.body()?.string() ?: return@withContext emptyList()
+            scrapeShelfPageFromHtml(html, baseUrl)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            emptyList()
+        }
+    }
+
+    fun scrapeShelfPageFromHtml(html: String, baseUrl: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem> {
+        val doc = org.jsoup.Jsoup.parse(html)
+        val cleanBase = baseUrl.trimEnd('/')
+        val items = mutableListOf<com.ferlagod.rocinante.data.model.ShelfBookItem>()
+
+        val rows = doc.select("tr.book-preview, .book-preview, .book-row, li:has(a[href*=/book/]), tr:has(a[href*=/book/])")
+        for (row in rows) {
+            val bookLink = row.selectFirst("a[href*=/book/]") ?: continue
+            val href = bookLink.attr("href")
+            val rawId = href.substringAfter("/book/").substringBefore("/")
+            if (rawId.isBlank()) continue
+            val bookId = "$cleanBase/book/$rawId"
+
+            // Título
+            val titleEl = row.selectFirst("h3 a, .title a, a[href*=/book/] em, a[href*=/book/] strong, a[href*=/book/]")
+            var title = titleEl?.text()?.trim().orEmpty()
+            if (title.isBlank()) {
+                val em = row.selectFirst("em")
+                title = em?.text()?.trim() ?: href.substringAfterLast("/s/").replace("-", " ").replaceFirstChar { it.uppercase() }
+            }
+
+            // Portada
+            val img = row.selectFirst("img.book-cover, img.cover, picture img, img")
+            val coverRaw = img?.attr("src")
+            val coverUrl = if (coverRaw != null && !coverRaw.startsWith("http")) {
+                "$cleanBase/${coverRaw.trimStart('/')}"
+            } else coverRaw
+
+            // Autor
+            val authorEl = row.selectFirst("a[href*=/author/]")
+            val authorUrl = authorEl?.attr("href")?.let {
+                if (it.startsWith("http")) it else "$cleanBase/${it.trimStart('/')}"
+            }
+
+            // Páginas
+            val rowText = row.text()
+            val pagesMatch = "\\b(\\d+)\\s*(?:pages|páginas|paginas|pagine|seiten)\\b".toRegex(RegexOption.IGNORE_CASE).find(rowText)
+            val pages = pagesMatch?.groupValues?.get(1)?.toIntOrNull()
+
+            items.add(
+                com.ferlagod.rocinante.data.model.ShelfBookItem(
+                    id = bookId,
+                    title = title,
+                    sortTitle = title,
+                    cover = coverUrl?.let { com.ferlagod.rocinante.data.model.ShelfBookCover(it) },
+                    pages = pages,
+                    authors = if (authorUrl != null) listOf(authorUrl) else null
+                )
+            )
+        }
+        return items.distinctBy { it.id }
+    }
+
+    /**
+     * Raspa la ficha básica de un libro desde su página HTML como fallback cuando el endpoint
+     * ActivityPub .json devuelve 403 Forbidden ("Invalid signature") o falla.
+     */
+    suspend fun scrapeBookDetails(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): BookWyrmBookDetails? = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = resolveLocalBookUrl(api, bookUrl) ?: bookUrl
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            val html = fetchBookPage(api, localUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+            scrapeBookDetailsFromHtml(html, localUrl, baseUrl)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun scrapeBookDetailsFromHtml(html: String, bookUrl: String, baseUrl: String): BookWyrmBookDetails {
+        val doc = org.jsoup.Jsoup.parse(html)
+        val title = doc.selectFirst("h1")?.text()?.trim()
+            ?: doc.selectFirst("meta[property=og:title]")?.attr("content")?.trim()
+            ?: doc.title().substringBefore(" | ").substringBefore(" - ").trim()
+        val subtitle = doc.selectFirst(".subtitle")?.text()?.trim()
+            ?: doc.selectFirst("[itemprop=alternativeHeadline]")?.text()?.trim()
+        val description = doc.selectFirst(".book-description")?.text()?.trim()
+            ?: doc.selectFirst("[itemprop=description]")?.text()?.trim()
+            ?: doc.selectFirst("meta[property=og:description]")?.attr("content")?.trim()
+        val publishedDate = doc.selectFirst("[itemprop=datePublished]")?.text()?.trim()
+            ?: doc.selectFirst("meta[name=DC.Date]")?.attr("content")?.trim()
+        val pages = doc.selectFirst("[itemprop=numberOfPages]")?.text()?.filter { it.isDigit() }?.toIntOrNull()
+        val coverSrc = doc.selectFirst("img.cover")?.attr("src")
+            ?: doc.selectFirst("[itemprop=image]")?.attr("src")
+            ?: doc.selectFirst("meta[property=og:image]")?.attr("content")
+        val cover = coverSrc?.takeIf { it.isNotBlank() }?.let {
+            val cleanBase = baseUrl.trimEnd('/')
+            val fullUrl = if (it.startsWith("http")) it else if (it.startsWith("/")) "$cleanBase$it" else "$cleanBase/$it"
+            ShelfBookCover(url = fullUrl)
+        }
+        val authors = doc.select("a.author").mapNotNull { a ->
+            val href = a.attr("href").trim()
+            if (href.isNotEmpty()) {
+                val cleanBase = baseUrl.trimEnd('/')
+                if (href.startsWith("http")) href else if (href.startsWith("/")) "$cleanBase$href" else "$cleanBase/$href"
+            } else null
+        }.distinct().takeIf { it.isNotEmpty() }
+
+        return BookWyrmBookDetails(
+            title = title,
+            subtitle = subtitle,
+            description = description,
+            publishedDate = publishedDate,
+            pages = pages,
+            cover = cover,
+            authors = authors
+        )
     }
 }
 

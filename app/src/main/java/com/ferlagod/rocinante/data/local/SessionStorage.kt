@@ -89,12 +89,12 @@ class SessionStorage(private val context: Context) {
      * @param session Datos de la sesión a guardar.
      */
     suspend fun saveSession(session: SessionData) {
+        currentSession = session
         context.dataStore.edit { prefs ->
             prefs[KEY_INSTANCE_URL] = session.instanceUrl
             prefs[KEY_USERNAME] = session.username
             prefs[KEY_COOKIE] = session.cookie
         }
-        currentSession = session
     }
 
     /**
