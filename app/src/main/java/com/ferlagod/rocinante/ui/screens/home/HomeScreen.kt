@@ -721,14 +721,21 @@ fun SuggestedUserDialog(
                     if (htmlResp.isSuccessful) {
                         val html = htmlResp.body()?.string() ?: ""
                         val doc = org.jsoup.Jsoup.parse(html)
-                        val hasVisibleUnfollow = doc.select("form[action*='/unfollow']:not(.is-hidden)").isNotEmpty()
-                        val hasVisibleFollow = doc.select("form[action*='/follow']:not([action*='/unfollow']):not(.is-hidden)").isNotEmpty()
+                        val unfollowForms = doc.select("form[action*='/unfollow']")
+                        val followForms = doc.select("form[action*='/follow']:not([action*='/unfollow'])")
+                        val isHidden = { form: org.jsoup.nodes.Element -> 
+                            form.hasClass("is-hidden") || form.attr("style").replace(" ", "").contains("display:none") 
+                        }
+                        
+                        val hasVisibleUnfollow = unfollowForms.any { !isHidden(it) }
+                        val hasVisibleFollow = followForms.any { !isHidden(it) }
+                        
                         isFollowedByMe = if (hasVisibleUnfollow) {
                             true
                         } else if (hasVisibleFollow) {
                             false
                         } else {
-                            doc.select("form[action*='/unfollow']").any { !it.hasClass("is-hidden") }
+                            unfollowForms.any { !isHidden(it) }
                         }
                     }
                 }

@@ -87,6 +87,7 @@ class SessionViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             sessionStorage.clearSession()
+            com.ferlagod.rocinante.data.api.NetworkClient.clearCookies()
         }
     }
 }

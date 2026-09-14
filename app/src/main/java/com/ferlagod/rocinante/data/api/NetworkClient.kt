@@ -38,12 +38,22 @@ import java.util.concurrent.TimeUnit
  */
 class SessionCookieJar(
     initialCookieString: String,
-    private val host: String,
+    private val hostProvider: () -> String,
     private val onCookiesUpdated: ((String) -> Unit)? = null
 ) : CookieJar {
 
-    // Mapa mutable nombre → valor; se actualiza con cada respuesta
-    private val cookieMap: MutableMap<String, String> = mutableMapOf()
+    constructor(
+        initialCookieString: String,
+        host: String,
+        onCookiesUpdated: ((String) -> Unit)? = null
+    ) : this(initialCookieString, { host }, onCookiesUpdated)
+
+    // Mapa thread-safe nombre → valor; se actualiza con cada respuesta
+    private val cookieMap: java.util.concurrent.ConcurrentHashMap<String, String> =
+        java.util.concurrent.ConcurrentHashMap()
+
+    @Volatile
+    private var lastHost: String? = null
 
     init {
         parseCookies(initialCookieString)
@@ -74,14 +84,38 @@ class SessionCookieJar(
         h.lowercase().trim().removePrefix("http://").removePrefix("https://").substringBefore("/").removePrefix("www.")
 
     private fun matchesHost(requestHost: String): Boolean {
-        val r = requestHost.lowercase().trim()
-        val h = cleanDomain(host)
-        if (h.isEmpty()) return true
+        val r = cleanDomain(requestHost)
+        val currentHost = hostProvider()
+        val h = cleanDomain(currentHost)
+        if (h.isEmpty() || h == "bookwyrm.social") return true
         return r == h || r.endsWith(".$h") || h.endsWith(".$r") || r.contains(h)
     }
 
     /** Devuelve el valor actual del csrftoken (puede haber rotado). */
     fun currentCsrfToken(): String? = cookieMap["csrftoken"]
+
+    /**
+     * Sincroniza las cookies y el host activo. Si la instancia cambió,
+     * limpia las cookies de la instancia previa para evitar cruces.
+     */
+    fun syncSession(currentHost: String, cookieString: String) {
+        val cleanH = cleanDomain(currentHost)
+        if (lastHost != null && cleanH.isNotEmpty() && cleanH != "bookwyrm.social" && !lastHost.equals(cleanH, ignoreCase = true)) {
+            cookieMap.clear()
+        }
+        if (cleanH.isNotEmpty() && cleanH != "bookwyrm.social") {
+            lastHost = cleanH
+        }
+        if (cookieString.isNotBlank()) {
+            parseCookies(cookieString)
+        }
+    }
+
+    /** Limpia todas las cookies y el host registrado. */
+    fun clear() {
+        cookieMap.clear()
+        lastHost = null
+    }
 
     /**
      * Mezcla una cadena "nombre=valor; ..." recién obtenida del WebView o renovada.
@@ -100,15 +134,18 @@ class SessionCookieJar(
         if (!matchesHost(url.host)) return
         if (cookies.isEmpty()) return
         
-        // Actualizar el mapa con los nuevos valores enviados por el servidor
+        var changed = false
         cookies.forEach { cookie ->
             if (cookie.value.isEmpty()) {
-                cookieMap.remove(cookie.name)
+                if (cookieMap.remove(cookie.name) != null) changed = true
             } else {
-                cookieMap[cookie.name] = cookie.value
+                val prev = cookieMap.put(cookie.name, cookie.value)
+                if (prev != cookie.value) changed = true
             }
         }
-        onCookiesUpdated?.invoke(asCookieString())
+        if (changed) {
+            onCookiesUpdated?.invoke(asCookieString())
+        }
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
@@ -172,6 +209,11 @@ object NetworkClient {
      */
     fun replaceCookies(cookieString: String) {
         (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.merge(cookieString)
+    }
+
+    /** Limpia las cookies en memoria del cliente activo. */
+    fun clearCookies() {
+        (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.clear()
     }
 
     fun createAuthenticatedApi(

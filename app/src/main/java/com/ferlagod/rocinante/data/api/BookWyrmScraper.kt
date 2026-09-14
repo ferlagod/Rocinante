@@ -436,7 +436,7 @@ object BookWyrmScraper {
             // ya se está leyendo.
             val nextStep = doc.selectFirst("[data-shelve-button-book]")
                 ?.select("[data-shelf-identifier]")
-                ?.firstOrNull { !it.hasClass("is-hidden") }
+                ?.firstOrNull { !it.hasClass("is-hidden") && !it.attr("style").replace(" ", "").contains("display:none") }
                 ?.attr("data-shelf-identifier")?.trim()
             val shelfSlug = when (nextStep) {
                 "reading" -> "to-read"
@@ -1460,12 +1460,14 @@ object BookWyrmScraper {
                     }
                 }
                 
-                val unfavForm = element.selectFirst("form[name=unfavorite]:not(.is-hidden), form[action*=/unfavorite/]:not(.is-hidden)")
+                val isHidden = { form: org.jsoup.nodes.Element -> form.hasClass("is-hidden") || form.attr("style").replace(" ", "").contains("display:none") }
+                
+                val unfavForm = element.select("form[name=unfavorite], form[action*=/unfavorite/]").firstOrNull { !isHidden(it) }
                 if (unfavForm != null) {
                     isLikedByMe = true
                 }
 
-                val unboostForm = element.selectFirst("form[name=unboost]:not(.is-hidden), form[action*=/unboost/]:not(.is-hidden)")
+                val unboostForm = element.select("form[name=unboost], form[action*=/unboost/]").firstOrNull { !isHidden(it) }
                 if (unboostForm != null) {
                     isBoostedByMe = true
                 }

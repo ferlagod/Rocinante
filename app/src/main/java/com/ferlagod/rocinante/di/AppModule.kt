@@ -112,14 +112,16 @@ object AppModule {
         // que no puede recibir inyección: el contexto para el WebView y la sesión que guardar.
         AnubisClearance.init(context, sessionStorage)
 
-        val currentSession = sessionStorage.currentSession
-        val initialCookies = currentSession?.cookie.orEmpty()
-        val initialHost = currentSession?.let {
-            val clean = if (it.instanceUrl.startsWith("http")) it.instanceUrl else "https://${it.instanceUrl}"
-            clean.toHttpUrlOrNull()?.host?.lowercase() ?: clean.lowercase()
-        } ?: "bookwyrm.social"
+        val hostProvider: () -> String = {
+            val sess = sessionStorage.currentSession
+            sess?.let {
+                val clean = if (it.instanceUrl.startsWith("http")) it.instanceUrl else "https://${it.instanceUrl}"
+                clean.toHttpUrlOrNull()?.host?.lowercase() ?: clean.lowercase()
+            } ?: NetworkClient.lastInstanceHost ?: "bookwyrm.social"
+        }
 
-        val cookieJar = com.ferlagod.rocinante.data.api.SessionCookieJar(initialCookies, initialHost) { newCookies ->
+        val initialCookies = sessionStorage.currentSession?.cookie.orEmpty()
+        val cookieJar = com.ferlagod.rocinante.data.api.SessionCookieJar(initialCookies, hostProvider) { newCookies ->
             val sess = sessionStorage.currentSession
             if (sess != null && sess.cookie != newCookies) {
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
@@ -145,6 +147,7 @@ object AppModule {
                 finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
                 val hostUrl = finalUrl.toHttpUrlOrNull()
                 val host = hostUrl?.host?.lowercase() ?: cleanUrl.lowercase()
+                NetworkClient.lastInstanceHost = host
                 val scheme = hostUrl?.scheme ?: "https"
                 val origin = "$scheme://$host"
                 val referer = "$origin/"
@@ -178,10 +181,8 @@ object AppModule {
                     requestBuilder.addHeader("Accept", "application/activity+json, application/json")
                 }
 
-                // Sincronizar cookies si el tarro aún no las tiene
-                if (cookieJar.asCookieString().isBlank() && session.cookie.isNotBlank()) {
-                    cookieJar.merge(session.cookie)
-                }
+                // Sincronizar cookies y host con la sesión activa
+                cookieJar.syncSession(host, session.cookie)
 
                 if (isToInstance) {
                     val csrf = cookieJar.currentCsrfToken()
@@ -285,7 +286,7 @@ object AppModule {
             .build()
 
         NetworkClient.lastOkHttpClient = okHttpClient
-        NetworkClient.lastInstanceHost = initialHost
+        NetworkClient.lastInstanceHost = hostProvider()
 
         val gson = com.google.gson.GsonBuilder()
             .registerTypeAdapter(

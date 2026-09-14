@@ -198,16 +198,6 @@ object AnubisClearance {
      */
     private suspend fun propagate(cookies: String): String {
         NetworkClient.replaceCookies(cookies)
-        val storage = sessionStorage
-        val session = storage?.currentSession
-        if (storage != null && session != null && session.cookie != cookies) {
-            try {
-                storage.saveSession(session.copy(cookie = cookies))
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
-                // Si no se puede persistir, al menos la sesión en memoria ya está al día.
-            }
-        }
         return cookies
     }
 
