@@ -9,19 +9,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-URL = os.environ.get("BW_INSTANCE_URL")
-USERNAME = os.environ.get("BW_USERNAME")
-PASSWORD = os.environ.get("BW_PASSWORD")
+def get_instances():
+    instances = []
+    # Buscar instancias específicas como BW_BOOKWYRM_URL, BW_COMELIBROS_URL, etc.
+    for key, val in os.environ.items():
+        if key.startswith("BW_") and key.endswith("_URL") and key != "BW_INSTANCE_URL":
+            prefix = key[:-4]
+            name = prefix[3:]
+            user = os.environ.get(f"{prefix}_USERNAME")
+            pwd = os.environ.get(f"{prefix}_PASSWORD")
+            if val and user and pwd:
+                instances.append((name, val.rstrip('/'), user, pwd))
+    
+    # Si no se encontraron pares específicos, usar las variables por defecto
+    if not instances:
+        url = os.environ.get("BW_INSTANCE_URL")
+        user = os.environ.get("BW_USERNAME")
+        pwd = os.environ.get("BW_PASSWORD")
+        if url and user and pwd:
+            instances.append(("DEFAULT", url.rstrip('/'), user, pwd))
+            
+    return instances
 
-if not URL or not USERNAME or not PASSWORD:
-    print("Faltan variables de entorno (BW_INSTANCE_URL, BW_USERNAME, BW_PASSWORD).")
-    sys.exit(1)
-
-URL = URL.rstrip('/')
-
-def login(session):
-    print(f"[*] Intentando login en {URL} con usuario {USERNAME}...")
-    r = session.get(URL + "/login")
+def login(session, url, username, password):
+    print(f"[*] Intentando login en {url} con usuario {username}...")
+    try:
+        r = session.get(url + "/login")
+    except Exception as e:
+        print(f"[!] Error al conectar con {url}: {e}")
+        return False
+        
     if r.status_code != 200:
         print(f"[!] Error al cargar la página de login (Status: {r.status_code})")
         return False
@@ -34,11 +51,11 @@ def login(session):
     
     csrf = csrf_input['value']
     
-    r_post = session.post(URL + "/login/", data={
+    r_post = session.post(url + "/login/", data={
         'csrfmiddlewaretoken': csrf,
-        'localname': USERNAME,
-        'password': PASSWORD
-    }, headers={'Referer': URL + "/login/"})
+        'localname': username,
+        'password': password
+    }, headers={'Referer': url + "/login/"})
     
     # Comprobar si hay un botón de "Log Out" o similar en la respuesta, o si redirigió
     if "logout" in r_post.text.lower() or "log out" in r_post.text.lower() or 'id="logout"' in r_post.text:
@@ -48,9 +65,9 @@ def login(session):
         print("[!] Falló el login. Revisa las credenciales.")
         return False
 
-def check_feed_selectors(session):
-    print("\n[*] Comprobando selectores del Feed (Home)...")
-    r = session.get(URL + "/")
+def check_feed_selectors(session, url):
+    print(f"\n[*] Comprobando selectores del Feed (Home) en {url}...")
+    r = session.get(url + "/")
     soup = BeautifulSoup(r.text, 'html.parser')
     
     # Selectores para encontrar los bloques (status cards)
@@ -93,18 +110,18 @@ def check_feed_selectors(session):
         if book_link:
             book_url = book_link['href']
             if not book_url.startswith("http"):
-                book_url = URL + book_url
+                book_url = url + book_url
             print(f"[+] Enlace a libro encontrado: {book_url}")
             return True, book_url
             
     print("[-] No se encontró ningún enlace a un libro en el feed. Buscando un libro de prueba...")
-    r_search = session.get(URL + "/search?q=harry")
+    r_search = session.get(url + "/search?q=harry")
     soup_search = BeautifulSoup(r_search.text, 'html.parser')
     book_link = soup_search.select_one("a[href*='/book/']")
     if book_link:
         book_url = book_link['href']
         if not book_url.startswith("http"):
-            book_url = URL + book_url
+            book_url = url + book_url
         print(f"[+] Libro encontrado a través de búsqueda: {book_url}")
         return True, book_url
     
@@ -132,8 +149,8 @@ def check_book_page(session, book_url):
     else:
         print("[-] No se encontró formulario de progreso. Es normal si el libro no está en tu estantería activa.")
 
-def check_user_profile(session):
-    profile_url = f"{URL}/user/{USERNAME}"
+def check_user_profile(session, url, username):
+    profile_url = f"{url}/user/{username}"
     print(f"\n[*] Comprobando regex de User ID en el perfil / estantería: {profile_url}...")
     
     # En la app se busca en profileUrl/books/to-read
@@ -150,20 +167,31 @@ def check_user_profile(session):
         print("[!] No se encontró el User ID en la estantería. La regex de BookWyrmRepository.getUserId() podría estar rota.")
 
 def run_tests():
-    s = requests.Session()
-    s.headers.update({'User-Agent': 'Mozilla/5.0 (Rocinante Scraper Monitor)'})
-    
-    if not login(s):
+    instances = get_instances()
+    if not instances:
+        print("Faltan variables de entorno para instancias de BookWyrm en .env.")
         sys.exit(1)
         
-    success, book_url = check_feed_selectors(s)
+    print(f"=== Se encontraron {len(instances)} instancia(s) configurada(s) ===")
     
-    if book_url:
-        check_book_page(s, book_url)
+    for name, url, username, password in instances:
+        print(f"\n{'='*50}\n Probando instancia: {name} ({url})\n{'='*50}")
+        s = requests.Session()
+        s.headers.update({'User-Agent': 'Mozilla/5.0 (Rocinante Scraper Monitor)'})
         
-    check_user_profile(s)
-    
-    print("\n[=] Pruebas finalizadas.")
+        if not login(s, url, username, password):
+            print(f"[!] Saltando pruebas para {name} debido a error en login.")
+            continue
+            
+        success, book_url = check_feed_selectors(s, url)
+        
+        if book_url:
+            check_book_page(s, book_url)
+            
+        check_user_profile(s, url, username)
+        
+    print("\n[=] Todas las pruebas han finalizado.")
 
 if __name__ == "__main__":
     run_tests()
+

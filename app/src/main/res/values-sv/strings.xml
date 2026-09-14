@@ -593,4 +593,5 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"RÄTTELSER\n• Åtgärdade ett problem där inloggningsskärmen stängdes i förtid när tvåfaktorsautentisering (2FA) var aktiverad."</string>
     <string name="changelog_text_v1_3_0">"• Anslutning och kompatibilitet: Förbättrad stabilitet med BookWyrm-servrar (0.8+ och med Anubis), åtgärdar 403-fel och bildinläsning.\n• Prestanda och smidighet: Blixtsnabb bildinläsning med ny minnes-/diskcache och mjukare rullning i listor.\n• Aktivitet och följare: Omslag syns direkt i inlägg, översatta lästexter och åtgärdad följstatus."</string>
+    <string name="changelog_text_v1_3_1">"• Sessionskorrigering: Åtgärdat ett problem på vissa instanser (som comelibros.club) där meddelandet om utgången session visades upprepade gånger.\n• Ökad stabilitet: Förbättrad automatisk förnyelse av behörigheter och cookiehantering på skyddade servrar."</string>
 </resources>

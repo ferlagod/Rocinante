@@ -593,4 +593,5 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"CORRECTIES\n• Een probleem opgelost waarbij het inlogscherm voortijdig sloot wanneer tweestapsverificatie (2FA) was ingeschakeld."</string>
     <string name="changelog_text_v1_3_0">"• Verbinding en compatibiliteit: Verbeterde stabiliteit met BookWyrm-servers (0.8+ en Anubis-beveiligd), oplossen van 403-fouten en het laden van afbeeldingen.\n• Prestaties en soepelheid: Ultrasnel laden van afbeeldingen met nieuwe geheugen-/schijfcache en soepeler scrollen in lijsten.\n• Activiteit en volgen: Boekomslagen direct zichtbaar in berichten, vertaalde leesteksten en gecorrigeerde volgstatus."</string>
+    <string name="changelog_text_v1_3_1">"• Sessieherstel: Probleem opgelost op sommige instanties (zoals comelibros.club) waarbij herhaaldelijk het bericht verscheen dat de sessie was verlopen.\n• Betere stabiliteit: Verbeterde automatische verlenging van autorisaties en cookiebeheer op beveiligde servers."</string>
 </resources>

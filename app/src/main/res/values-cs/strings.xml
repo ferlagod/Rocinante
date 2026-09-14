@@ -624,4 +624,5 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
 • Follow requests: Fixed an unexpected crash that occurred when accessing follow requests.</string>
     <string name="changelog_text_v1_2_9">"OPRAVY\n• Opraven problém, kdy se přihlašovací obrazovka předčasně zavírala, když bylo povoleno dvoufázové ověření (2FA)."</string>
     <string name="changelog_text_v1_3_0">"• Připojení a kompatibilita: Lepší stabilita se servery BookWyrm (0.8+ a chráněnými Anubis), oprava chyb 403 a načítání obrázků.\n• Výkon a plynulost: Mimořádně rychlé načítání obrázků s novou mezipamětí v paměti/disku a plynulejší posouvání v seznamech.\n• Aktivita a sledování: Okamžité zobrazení obálek v příspěvcích, přeložené čtenářské texty a opravený stav sledování."</string>
+    <string name="changelog_text_v1_3_1">"• Oprava relace: Vyřešen problém na některých instancích (jako comelibros.club), kde se opakovaně zobrazovala zpráva o vypršení platnosti relace.\n• Vyšší stabilita: Vylepšeno automatické obnovování oprávnění a správa cookies na chráněných serverech."</string>
 </resources>

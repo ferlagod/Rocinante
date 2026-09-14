@@ -81,3 +81,5 @@ login.py
 # Archivos temporales de releases locales
 app/release/baselineProfiles/*/app-release.dm
 app/release/output-metadata.json
+.env.example
+scripts/bookwyrm_scraper_monitor.py
