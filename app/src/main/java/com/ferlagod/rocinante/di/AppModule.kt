@@ -190,6 +190,26 @@ object AppModule {
                         ?: "csrftoken=([^;]+)".toRegex().find(session.cookie)?.groupValues?.get(1)
                     if (!csrf.isNullOrBlank()) {
                         requestBuilder.addHeader("X-CSRFToken", csrf)
+
+                        val originalBody = request.body
+                        if (originalBody is okhttp3.FormBody) {
+                            val newFormBody = okhttp3.FormBody.Builder()
+                            var hasCsrf = false
+                            for (i in 0 until originalBody.size) {
+                                val name = originalBody.name(i)
+                                val value = originalBody.value(i)
+                                if (name == "csrfmiddlewaretoken") {
+                                    newFormBody.add(name, if (value.isBlank()) csrf else value)
+                                    hasCsrf = true
+                                } else {
+                                    newFormBody.add(name, value)
+                                }
+                            }
+                            if (!hasCsrf) {
+                                newFormBody.add("csrfmiddlewaretoken", csrf)
+                            }
+                            requestBuilder.method(request.method, newFormBody.build())
+                        }
                     }
                 }
             }
@@ -203,10 +223,30 @@ object AppModule {
                     cookieJar.merge(fresh)
                     response.close()
                     val csrf = cookieJar.currentCsrfToken()
-                    val retryRequest = requestBuilder
-                        .apply { if (csrf != null) removeHeader("X-CSRFToken").addHeader("X-CSRFToken", csrf) }
-                        .build()
-                    response = chain.proceed(retryRequest)
+                    val retryRequestBuilder = requestBuilder
+                    if (csrf != null) {
+                        retryRequestBuilder.removeHeader("X-CSRFToken").addHeader("X-CSRFToken", csrf)
+                        val originalBody = request.body
+                        if (originalBody is okhttp3.FormBody) {
+                            val newFormBody = okhttp3.FormBody.Builder()
+                            var hasCsrf = false
+                            for (i in 0 until originalBody.size) {
+                                val name = originalBody.name(i)
+                                val value = originalBody.value(i)
+                                if (name == "csrfmiddlewaretoken") {
+                                    newFormBody.add(name, if (value.isBlank()) csrf else value)
+                                    hasCsrf = true
+                                } else {
+                                    newFormBody.add(name, value)
+                                }
+                            }
+                            if (!hasCsrf) {
+                                newFormBody.add("csrfmiddlewaretoken", csrf)
+                            }
+                            retryRequestBuilder.method(request.method, newFormBody.build())
+                        }
+                    }
+                    response = chain.proceed(retryRequestBuilder.build())
                 }
             }
 

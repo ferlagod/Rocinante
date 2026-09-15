@@ -313,7 +313,10 @@ class FollowListViewModel @Inject constructor(
                 if (cleanHandle.isNotBlank()) {
                     try {
                         response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
-                    } catch (_: Exception) {}
+                        android.util.Log.d("FollowListVM", "toggleFollow step 1 cleanHandle ($cleanHandle) result: ${response?.code()}")
+                    } catch (e: Exception) {
+                        android.util.Log.w("FollowListVM", "toggleFollow step 1 exception: ${e.message}")
+                    }
                 }
 
                 // 2. Si es remoto y falló (404 porque la BD local aún no conoce al usuario remoto),
@@ -327,7 +330,10 @@ class FollowListViewModel @Inject constructor(
                         }
                         api.getRawHtmlResponse(searchUrl)
                         response = api.followUser(cleanHandle)
-                    } catch (_: Exception) {}
+                        android.util.Log.d("FollowListVM", "toggleFollow step 2 webfinger retry ($cleanHandle) result: ${response?.code()}")
+                    } catch (e: Exception) {
+                        android.util.Log.w("FollowListVM", "toggleFollow step 2 exception: ${e.message}")
+                    }
                 }
 
                 // 3. Probar con username@host derivado de URL si era remoto y cleanHandle no lo tenía
@@ -344,7 +350,10 @@ class FollowListViewModel @Inject constructor(
                                 api.getRawHtmlResponse(searchUrl)
                             }
                             response = if (follow) api.followUser(remoteHandle) else api.unfollowUser(remoteHandle)
-                        } catch (_: Exception) {}
+                            android.util.Log.d("FollowListVM", "toggleFollow step 3 remoteHandle ($remoteHandle) result: ${response?.code()}")
+                        } catch (e: Exception) {
+                            android.util.Log.w("FollowListVM", "toggleFollow step 3 exception: ${e.message}")
+                        }
                     }
                 }
 
@@ -352,14 +361,30 @@ class FollowListViewModel @Inject constructor(
                 if (!isSuccess(response) && slugFromUrl.isNotBlank() && slugFromUrl != cleanHandle) {
                     try {
                         response = if (follow) api.followUser(slugFromUrl) else api.unfollowUser(slugFromUrl)
-                    } catch (_: Exception) {}
+                        android.util.Log.d("FollowListVM", "toggleFollow step 4 slugFromUrl ($slugFromUrl) result: ${response?.code()}")
+                    } catch (e: Exception) {
+                        android.util.Log.w("FollowListVM", "toggleFollow step 4 exception: ${e.message}")
+                    }
                 }
 
                 // 5. Probar con handle con @
                 if (!isSuccess(response) && handle.startsWith("@")) {
                     try {
                         response = if (follow) api.followUser(handle) else api.unfollowUser(handle)
-                    } catch (_: Exception) {}
+                        android.util.Log.d("FollowListVM", "toggleFollow step 5 handle ($handle) result: ${response?.code()}")
+                    } catch (e: Exception) {
+                        android.util.Log.w("FollowListVM", "toggleFollow step 5 exception: ${e.message}")
+                    }
+                }
+
+                // 6. Probar con actorUrl si todo lo demás falló
+                if (!isSuccess(response) && actorUrl.isNotBlank() && actorUrl != cleanHandle && actorUrl != handle) {
+                    try {
+                        response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
+                        android.util.Log.d("FollowListVM", "toggleFollow step 6 actorUrl ($actorUrl) result: ${response?.code()}")
+                    } catch (e: Exception) {
+                        android.util.Log.w("FollowListVM", "toggleFollow step 6 exception: ${e.message}")
+                    }
                 }
 
                 success = isSuccess(response)
