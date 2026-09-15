@@ -20,6 +20,7 @@
     <string name="follow_btn_follow">Seuraa</string>
     <string name="follow_btn_unfollow">Seurataan</string>
     <string name="follow_success">Seurattu!</string>
+    <string name="follow_request_sent">Seuraamispyyntö lähetetty</string>
     <string name="unfollow_success">Seuraaminen lopetettu</string>
     <string name="follow_request_accept">Hyväksy</string>
     <string name="follow_request_reject">Hylkää</string>

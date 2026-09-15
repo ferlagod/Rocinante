@@ -83,3 +83,6 @@ app/release/baselineProfiles/*/app-release.dm
 app/release/output-metadata.json
 .env.example
 scripts/bookwyrm_scraper_monitor.py
+check_form.py
+*.py
+get_html.py

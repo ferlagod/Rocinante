@@ -131,9 +131,13 @@ class FollowListViewModelTest {
 
     @Test
     fun testFollowingMatchingLogic() {
+        val myBaseUrl = "https://bookwyrm.it/"
+        val myHost = URI(myBaseUrl).host?.lowercase()
+
         val myFollowingUrls = listOf(
             "https://bookwyrm.it/user/alice",
-            "https://bookwyrm.it/user/bob@mastodon.social"
+            "https://bookwyrm.it/user/bob@mastodon.social",
+            "https://bookwyrm.social/user/kimeragupta"
         )
 
         val followingIds = mutableSetOf<String>()
@@ -143,38 +147,51 @@ class FollowListViewModelTest {
             val norm = normalizeActorUrl(url)
             if (norm.isNotBlank()) {
                 followingIds.add(norm)
-                val slug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
-                if (slug.isNotBlank()) {
-                    followingHandles.add(slug)
-                    followingHandles.add("@$slug")
+                val host = try { URI(norm).host?.lowercase() } catch (_: Exception) { null }
+                val rawSlug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+                if (rawSlug.isNotBlank()) {
+                    if (rawSlug.contains("@")) {
+                        followingHandles.add(rawSlug)
+                        followingHandles.add("@$rawSlug")
+                    } else if (host != null && myHost != null && host.equals(myHost, ignoreCase = true)) {
+                        followingHandles.add(rawSlug)
+                        followingHandles.add("@$rawSlug")
+                        followingHandles.add("$rawSlug@$host")
+                        followingHandles.add("@$rawSlug@$host")
+                    } else if (host != null) {
+                        followingHandles.add("$rawSlug@$host")
+                        followingHandles.add("@$rawSlug@$host")
+                    }
                 }
             }
         }
 
+        fun checkIsFollowed(actorId: String, handle: String): Boolean {
+            val cleanHandle = handle.removePrefix("@").trim().lowercase()
+            val actorNorm = normalizeActorUrl(actorId)
+            val actorHost = try { URI(actorNorm).host?.lowercase() } catch (_: Exception) { null }
+            val actorSlug = actorNorm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+            val isLocalUser = (actorHost != null && myHost != null && actorHost.equals(myHost, ignoreCase = true)) || !cleanHandle.contains("@")
+
+            return actorNorm in followingIds ||
+                   cleanHandle in followingHandles ||
+                   (actorHost != null && "$actorSlug@$actorHost" in followingHandles) ||
+                   (isLocalUser && actorSlug in followingHandles)
+        }
+
         // Caso 1: Alice (local en followers)
-        val aliceActorId = "https://bookwyrm.it/user/alice"
-        val aliceHandle = "@alice"
-        val aliceNorm = normalizeActorUrl(aliceActorId)
-        val aliceSlug = aliceNorm.substringAfterLast("/user/").removePrefix("@").lowercase()
-        val aliceFollowed = aliceNorm in followingIds || aliceHandle.removePrefix("@").lowercase() in followingHandles || aliceSlug in followingHandles
-        assertTrue("Alice debe detectarse como seguida", aliceFollowed)
+        assertTrue("Alice debe detectarse como seguida", checkIsFollowed("https://bookwyrm.it/user/alice", "@alice"))
 
         // Caso 2: Bob (remote actor URL en followers vs local federated URL en following)
-        val bobActorId = "https://mastodon.social/users/bob"
-        val bobHandle = "@bob@mastodon.social"
-        val bobNorm = normalizeActorUrl(bobActorId)
-        val bobCleanHandle = bobHandle.removePrefix("@").lowercase()
-        val bobSlug = bobNorm.substringAfterLast("/users/").removePrefix("@").lowercase()
-        val bobFollowed = bobNorm in followingIds || bobCleanHandle in followingHandles || bobSlug in followingHandles
-        assertTrue("Bob debe detectarse como seguido por handle/slug cruzado", bobFollowed)
+        assertTrue("Bob debe detectarse como seguido por handle/slug cruzado", checkIsFollowed("https://mastodon.social/users/bob", "@bob@mastodon.social"))
 
         // Caso 3: Charlie (no seguido)
-        val charlieActorId = "https://bookwyrm.it/user/charlie"
-        val charlieHandle = "@charlie"
-        val charlieNorm = normalizeActorUrl(charlieActorId)
-        val charlieCleanHandle = charlieHandle.removePrefix("@").lowercase()
-        val charlieSlug = charlieNorm.substringAfterLast("/user/").removePrefix("@").lowercase()
-        val charlieFollowed = charlieNorm in followingIds || charlieCleanHandle in followingHandles || charlieSlug in followingHandles
-        assertFalse("Charlie no debe detectarse como seguido", charlieFollowed)
+        assertFalse("Charlie no debe detectarse como seguido", checkIsFollowed("https://bookwyrm.it/user/charlie", "@charlie"))
+
+        // Caso 4: KimeraGupta en comelibros.club NO debe detectarse como seguido aunque se siga a KimeraGupta en bookwyrm.social
+        assertFalse("KimeraGupta de otra instancia no debe detectarse como seguido", checkIsFollowed("https://comelibros.club/user/kimeragupta", "@kimeragupta@comelibros.club"))
+
+        // Caso 5: KimeraGupta en bookwyrm.social SÍ debe detectarse como seguido
+        assertTrue("KimeraGupta de bookwyrm.social debe detectarse como seguido", checkIsFollowed("https://bookwyrm.social/user/kimeragupta", "@kimeragupta@bookwyrm.social"))
     }
 }

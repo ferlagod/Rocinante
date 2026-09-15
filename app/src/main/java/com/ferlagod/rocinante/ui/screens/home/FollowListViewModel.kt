@@ -187,18 +187,28 @@ class FollowListViewModel @Inject constructor(
                     followingIds.addAll(_uiState.value.myFollowingIds)
                     followingIds.addAll(userRepository.optimisticFollowingIds)
 
+                    val myHost = try { java.net.URI(baseUrl).host?.lowercase() } catch (_: Exception) { null }
+
                     myFollowingUrls.forEach { url ->
                         val norm = normalizeActorUrl(url)
                         if (norm.isNotBlank()) {
                             followingIds.add(norm)
-                            val slug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
                             val host = try { java.net.URI(norm).host?.lowercase() } catch (_: Exception) { null }
-                            if (slug.isNotBlank()) {
-                                followingHandles.add(slug)
-                                followingHandles.add("@$slug")
-                                if (host != null) {
-                                    followingHandles.add("$slug@$host")
-                                    followingHandles.add("@$slug@$host")
+                            val rawSlug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+                            if (rawSlug.isNotBlank()) {
+                                if (rawSlug.contains("@")) {
+                                    followingHandles.add(rawSlug)
+                                    followingHandles.add("@$rawSlug")
+                                } else if (host != null && myHost != null && host.equals(myHost, ignoreCase = true)) {
+                                    // Usuario local: puede coincidir por slug simple o por slug@host local
+                                    followingHandles.add(rawSlug)
+                                    followingHandles.add("@$rawSlug")
+                                    followingHandles.add("$rawSlug@$host")
+                                    followingHandles.add("@$rawSlug@$host")
+                                } else if (host != null) {
+                                    // Usuario remoto: obligatorio que incluya el host para no colisionar con otros servidores
+                                    followingHandles.add("$rawSlug@$host")
+                                    followingHandles.add("@$rawSlug@$host")
                                 }
                             }
                         }
@@ -212,14 +222,21 @@ class FollowListViewModel @Inject constructor(
                         val cleanHandle = handle.removePrefix("@").trim().lowercase()
                         val actorNorm = normalizeActorUrl(actorId)
                         val origNorm = normalizeActorUrl(originalActorUrl)
+                        val actorHost = try { java.net.URI(actorNorm).host?.lowercase() } catch (_: Exception) { null }
+                        val origHost = try { java.net.URI(origNorm).host?.lowercase() } catch (_: Exception) { null }
                         val actorSlug = actorNorm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
                         val origSlug = origNorm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+
+                        val isLocalUser = (actorHost != null && myHost != null && actorHost.equals(myHost, ignoreCase = true)) ||
+                                          (origHost != null && myHost != null && origHost.equals(myHost, ignoreCase = true)) ||
+                                          !cleanHandle.contains("@")
 
                         val isFollowed = actorNorm in followingIds ||
                                          origNorm in followingIds ||
                                          cleanHandle in followingHandles ||
-                                         actorSlug in followingHandles ||
-                                         origSlug in followingHandles
+                                         (actorHost != null && "$actorSlug@$actorHost" in followingHandles) ||
+                                         (origHost != null && "$origSlug@$origHost" in followingHandles) ||
+                                         (isLocalUser && (actorSlug in followingHandles || origSlug in followingHandles))
 
                         FollowUserItem(
                             actorUrl = actorId,

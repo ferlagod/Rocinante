@@ -282,6 +282,7 @@
     <string name="follow_btn_follow">Obserwuj</string>
     <string name="follow_btn_unfollow">Obserwujesz</string>
     <string name="follow_success">Zaobserwowano!</string>
+    <string name="follow_request_sent">Wysłano prośbę o obserwację</string>
     <string name="unfollow_success">Przestano obserwować</string>
     <string name="follow_request_accept">Akceptuj</string>
     <string name="follow_request_reject">Odrzuć</string>

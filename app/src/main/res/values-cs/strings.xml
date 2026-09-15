@@ -282,6 +282,7 @@
     <string name="follow_btn_follow">Sledovat</string>
     <string name="follow_btn_unfollow">Sledujete</string>
     <string name="follow_success">Sledováno!</string>
+    <string name="follow_request_sent">Žádost o sledování odeslána</string>
     <string name="unfollow_success">Zrušeno sledování</string>
     <string name="follow_request_accept">Přijmout</string>
     <string name="follow_request_reject">Odmítnout</string>

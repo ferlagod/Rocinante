@@ -272,6 +272,7 @@
     <string name="follow_btn_follow">Följ</string>
     <string name="follow_btn_unfollow">Följer</string>
     <string name="follow_success">Följs!</string>
+    <string name="follow_request_sent">Följförfrågan skickad</string>
     <string name="unfollow_success">Avföljd</string>
     <string name="follow_request_accept">Acceptera</string>
     <string name="follow_request_reject">Avvisa</string>

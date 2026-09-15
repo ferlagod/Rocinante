@@ -24,6 +24,7 @@
     <string name="follow_btn_follow">Følg</string>
     <string name="follow_btn_unfollow">Følger</string>
     <string name="follow_success">Følger nu!</string>
+    <string name="follow_request_sent">Følgeanmodning sendt</string>
     <string name="unfollow_success">Følger ikke længere</string>
     <string name="follow_request_accept">Accepter</string>
     <string name="follow_request_reject">Afvis</string>

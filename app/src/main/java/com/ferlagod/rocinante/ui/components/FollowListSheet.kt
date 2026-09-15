@@ -131,6 +131,14 @@ fun FollowListSheet(
 
     val unfollowSuccessMsg = stringResource(R.string.unfollow_success)
     val followSuccessMsg = stringResource(R.string.follow_success)
+    val followRequestSentMsg = stringResource(R.string.follow_request_sent)
+
+    fun isRemoteUser(user: FollowUserItem): Boolean {
+        if (user.handle.count { it == '@' } >= 2) return true
+        val actorHost = try { java.net.URI(user.actorUrl).host?.lowercase() } catch (_: Exception) { null }
+        val myHost = try { java.net.URI(baseUrl).host?.lowercase() } catch (_: Exception) { null }
+        return actorHost != null && myHost != null && !actorHost.equals(myHost, ignoreCase = true)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -206,9 +214,10 @@ fun FollowListSheet(
                                         viewModel.follow(user.actorUrl, user.handle) { success, error ->
                                             if (success) {
                                                 onFollowToggled(true)
+                                                val msg = if (isRemoteUser(user)) followRequestSentMsg else followSuccessMsg
                                                 Toast.makeText(
                                                     context,
-                                                    followSuccessMsg,
+                                                    msg,
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
@@ -337,7 +346,8 @@ fun FollowListSheet(
                             viewModel.follow(user.actorUrl, user.handle) { success, error ->
                                 if (success) {
                                     onFollowToggled(true)
-                                    Toast.makeText(context, followSuccessMsg, Toast.LENGTH_SHORT).show()
+                                    val msg = if (isRemoteUser(user)) followRequestSentMsg else followSuccessMsg
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                 } else {
                                     val msg = context.getString(R.string.profile_server_error, error ?: "error")
                                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()

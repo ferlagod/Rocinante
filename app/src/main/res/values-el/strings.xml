@@ -272,6 +272,7 @@
     <string name="follow_btn_follow">Ακολουθήστε</string>
     <string name="follow_btn_unfollow">Ακολουθείτε</string>
     <string name="follow_success">Ακολουθήσατε!</string>
+    <string name="follow_request_sent">Το αίτημα παρακολούθησης στάλθηκε</string>
     <string name="unfollow_success">Σταματήσατε να ακολουθείτε</string>
     <string name="follow_request_accept">Αποδοχή</string>
     <string name="follow_request_reject">Απόρριψη</string>

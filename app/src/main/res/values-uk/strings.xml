@@ -282,6 +282,7 @@
     <string name="follow_btn_follow">Читати</string>
     <string name="follow_btn_unfollow">Читаєте</string>
     <string name="follow_success">Відстежується!</string>
+    <string name="follow_request_sent">Запит на підписку надіслано</string>
     <string name="unfollow_success">Відписано</string>
     <string name="follow_request_accept">Прийняти</string>
     <string name="follow_request_reject">Відхилити</string>

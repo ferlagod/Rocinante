@@ -22,6 +22,7 @@
     <string name="follow_btn_follow">Seguir</string>
     <string name="follow_btn_unfollow">Seguindo</string>
     <string name="follow_success">Seguíchela!</string>
+    <string name="follow_request_sent">Solicitude de seguimento enviada</string>
     <string name="unfollow_success">Deixaches de seguila</string>
     <string name="follow_request_accept">Aceptar</string>
     <string name="follow_request_reject">Rexeitar</string>
