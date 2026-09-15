@@ -85,7 +85,9 @@ data class FollowUserItem(
     val handle: String,
     val summary: String?,
     val avatarUrl: String?,
-    val isFollowedByMe: Boolean
+    val isFollowedByMe: Boolean,
+    val isFollowRequest: Boolean = false,
+    val formUserId: String? = null
 )
 
 

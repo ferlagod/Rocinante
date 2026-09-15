@@ -42,6 +42,7 @@ data class BookWyrmProfile(
     // Se cambia de Int a String para capturar las URLs federadas de las colecciones
     val followers: String?,
     val following: String?,
+    val manuallyApprovesFollowers: Boolean? = null,
     // Campos locales para la interfaz gráfica (no vienen del JSON de perfil)
     var followersCountLocal: Int? = null,
     var followingCountLocal: Int? = null,

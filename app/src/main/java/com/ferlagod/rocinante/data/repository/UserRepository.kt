@@ -30,7 +30,11 @@ import kotlinx.coroutines.withContext
 class UserRepository(
     private val api: BookWyrmApi,
     val profileCache: java.util.concurrent.ConcurrentHashMap<String, BookWyrmProfile> =
-        java.util.concurrent.ConcurrentHashMap()
+        java.util.concurrent.ConcurrentHashMap(),
+
+    val optimisticFollowingIds: java.util.concurrent.ConcurrentHashMap.KeySetView<String, Boolean> =
+        java.util.concurrent.ConcurrentHashMap.newKeySet()
+
 ) {
     /**
      * Carga el perfil completo de un usuario de BookWyrm, incluyendo sus contadores de seguidores

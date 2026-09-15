@@ -157,12 +157,20 @@ class FollowListViewModel @Inject constructor(
                     }
 
                     val myFollowingUrls = myFollowingDeferred.await()
-                    val targetActorUrls = targetListDeferred.await()
-                        .take(MAX_PROFILES_TO_FETCH)
+                    val rawTargetActorUrls = targetListDeferred.await()
+
+                    val targetActorUrls = mutableListOf<String>()
+                    if (direction == FollowListDirection.FOLLOWING) {
+                        val optimisticUrls = userRepository.optimisticFollowingIds.filter { it !in rawTargetActorUrls }
+                        targetActorUrls.addAll(optimisticUrls)
+                    }
+                    targetActorUrls.addAll(rawTargetActorUrls)
+                    
+                    val limitedTargetActorUrls = targetActorUrls.take(MAX_PROFILES_TO_FETCH)
 
                     // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar saturación)
                     val profiles = mutableListOf<Pair<String, BookWyrmProfile>>()
-                    targetActorUrls.chunked(20).forEach { chunk ->
+                    limitedTargetActorUrls.chunked(20).forEach { chunk ->
                         val chunkProfiles = chunk.map { actorUrl ->
                             async { 
                                 actorUrl to resolveProfile(actorUrl, baseUrl)
@@ -177,6 +185,7 @@ class FollowListViewModel @Inject constructor(
 
                     // Mantener seguidos que fueron marcados durante la sesión actual
                     followingIds.addAll(_uiState.value.myFollowingIds)
+                    followingIds.addAll(userRepository.optimisticFollowingIds)
 
                     myFollowingUrls.forEach { url ->
                         val norm = normalizeActorUrl(url)
@@ -291,8 +300,12 @@ class FollowListViewModel @Inject constructor(
         }
         val actorNorm = normalizeActorUrl(actorUrl)
         val updatedFollowing = if (follow) {
+            userRepository.optimisticFollowingIds.add(actorUrl)
+            userRepository.optimisticFollowingIds.add(actorNorm)
             _uiState.value.myFollowingIds + actorNorm
         } else {
+            userRepository.optimisticFollowingIds.remove(actorUrl)
+            userRepository.optimisticFollowingIds.remove(actorNorm)
             _uiState.value.myFollowingIds - actorNorm
         }
 
@@ -417,14 +430,23 @@ class FollowListViewModel @Inject constructor(
     }
 
     private fun revertFollowState(actorUrl: String, handle: String, revertedValue: Boolean) {
+        val actorNorm = normalizeActorUrl(actorUrl)
+        if (revertedValue) {
+            userRepository.optimisticFollowingIds.add(actorUrl)
+            userRepository.optimisticFollowingIds.add(actorNorm)
+        } else {
+            userRepository.optimisticFollowingIds.remove(actorUrl)
+            userRepository.optimisticFollowingIds.remove(actorNorm)
+        }
+
         _uiState.update { state ->
             val revertedUsers = state.users.map { user ->
                 if (user.actorUrl == actorUrl || user.handle == handle) user.copy(isFollowedByMe = revertedValue) else user
             }
             val revertedFollowing = if (revertedValue) {
-                state.myFollowingIds + normalizeActorUrl(actorUrl)
+                state.myFollowingIds + actorNorm
             } else {
-                state.myFollowingIds - normalizeActorUrl(actorUrl)
+                state.myFollowingIds - actorNorm
             }
             state.copy(
                 users = revertedUsers,
