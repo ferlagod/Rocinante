@@ -175,17 +175,27 @@ class FollowListViewModel @Inject constructor(
                     val followingIds = mutableSetOf<String>()
                     val followingHandles = mutableSetOf<String>()
 
+                    // Mantener seguidos que fueron marcados durante la sesión actual
+                    followingIds.addAll(_uiState.value.myFollowingIds)
+
                     myFollowingUrls.forEach { url ->
                         val norm = normalizeActorUrl(url)
                         if (norm.isNotBlank()) {
                             followingIds.add(norm)
                             val slug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+                            val host = try { java.net.URI(norm).host?.lowercase() } catch (_: Exception) { null }
                             if (slug.isNotBlank()) {
                                 followingHandles.add(slug)
                                 followingHandles.add("@$slug")
+                                if (host != null) {
+                                    followingHandles.add("$slug@$host")
+                                    followingHandles.add("@$slug@$host")
+                                }
                             }
                         }
                     }
+
+                    android.util.Log.d("FollowListVM", "Direction $direction: found ${followingIds.size} following IDs, ${followingHandles.size} following handles")
 
                     val items = profiles.map { (originalActorUrl, profile) ->
                         val actorId = profile.id?.takeIf { it.isNotBlank() } ?: originalActorUrl
@@ -452,9 +462,8 @@ class FollowListViewModel @Inject constructor(
                 @Suppress("DEPRECATION")
                 var root = JsonParser().parse(raw).asJsonObject
                 
-                // Fallback para instancias antiguas (BookWyrm 0.8) que devuelven el perfil del usuario (Person)
-                // en lugar de la colección al consultar followers.json o following.json
-                if (!root.has("orderedItems") && root.get("type")?.asString == "Person") {
+                // 1. Fallback para instancias antiguas (BookWyrm 0.8) que devuelven Person
+                if (!root.has("orderedItems") && !root.has("items") && root.get("type")?.asString == "Person") {
                     val fallbackUrl = if (initialUrl.contains("/following")) {
                         root.get("following")?.asString
                     } else {
@@ -470,7 +479,23 @@ class FollowListViewModel @Inject constructor(
                     }
                 }
 
-                val items: JsonArray = root.getAsJsonArray("orderedItems") ?: break
+                // 2. Si root es una colección (OrderedCollection / Collection) y no tiene items directamente,
+                // pero contiene el enlace a "first", navegar hacia la primera página
+                if (!root.has("orderedItems") && !root.has("items") && root.has("first")) {
+                    val first = root.get("first")
+                    if (first != null && first.isJsonPrimitive) {
+                        currentUrl = first.asString
+                        pagesFetched++
+                        continue
+                    } else if (first != null && first.isJsonObject) {
+                        root = first.asJsonObject
+                    }
+                }
+
+                val items: JsonArray? = root.getAsJsonArray("orderedItems") ?: root.getAsJsonArray("items")
+                if (items == null) {
+                    break
+                }
 
                 items.mapNotNull { element ->
                     when {
@@ -493,7 +518,11 @@ class FollowListViewModel @Inject constructor(
                     }
                 }.let { allUrls.addAll(it) }
 
-                currentUrl = root.get("next")?.asString
+                val nextElement = root.get("next")
+                currentUrl = if (nextElement != null && nextElement.isJsonPrimitive) {
+                    nextElement.asString
+                } else null
+
                 pagesFetched++
             } catch (_: Exception) {
                 break
