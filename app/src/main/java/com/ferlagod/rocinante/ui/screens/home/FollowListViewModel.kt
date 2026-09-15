@@ -95,6 +95,7 @@ class FollowListViewModel @Inject constructor(
     val uiState: StateFlow<FollowListUiState> = _uiState.asStateFlow()
 
     private var activeBaseUrl: String = ""
+    private var currentDirection: FollowListDirection = FollowListDirection.FOLLOWING
 
     private val gson = com.google.gson.GsonBuilder()
         .registerTypeAdapter(
@@ -112,6 +113,7 @@ class FollowListViewModel @Inject constructor(
      */
     fun load(baseUrl: String, username: String, direction: FollowListDirection, forceRefresh: Boolean = false) {
         activeBaseUrl = baseUrl
+        currentDirection = direction
         if (!forceRefresh && _uiState.value.users.isNotEmpty()) {
             return // Usar caché en memoria (el ViewModel sobrevive en HomeScreen)
         }
@@ -159,29 +161,56 @@ class FollowListViewModel @Inject constructor(
                         .take(MAX_PROFILES_TO_FETCH)
 
                     // 2. Cargar perfiles en paralelo con timeout individual (en lotes para evitar saturación)
-                    val profiles = mutableListOf<BookWyrmProfile>()
+                    val profiles = mutableListOf<Pair<String, BookWyrmProfile>>()
                     targetActorUrls.chunked(20).forEach { chunk ->
                         val chunkProfiles = chunk.map { actorUrl ->
                             async { 
-                                resolveProfile(actorUrl, baseUrl)
+                                actorUrl to resolveProfile(actorUrl, baseUrl)
                             }
                         }.map { it.await() }
                         profiles.addAll(chunkProfiles)
                     }
 
-                    // 3. Construir items
-                    val followingIds = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
-                    val items = profiles.map { profile ->
-                        val actorId = profile.id.orEmpty()
+                    // 3. Construir conjunto de seguidos para matching exacto y flexible
+                    val followingIds = mutableSetOf<String>()
+                    val followingHandles = mutableSetOf<String>()
+
+                    myFollowingUrls.forEach { url ->
+                        val norm = normalizeActorUrl(url)
+                        if (norm.isNotBlank()) {
+                            followingIds.add(norm)
+                            val slug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+                            if (slug.isNotBlank()) {
+                                followingHandles.add(slug)
+                                followingHandles.add("@$slug")
+                            }
+                        }
+                    }
+
+                    val items = profiles.map { (originalActorUrl, profile) ->
+                        val actorId = profile.id?.takeIf { it.isNotBlank() } ?: originalActorUrl
+                        val handle = buildHandle(profile, baseUrl, originalActorUrl)
+                        val cleanHandle = handle.removePrefix("@").trim().lowercase()
+                        val actorNorm = normalizeActorUrl(actorId)
+                        val origNorm = normalizeActorUrl(originalActorUrl)
+                        val actorSlug = actorNorm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+                        val origSlug = origNorm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim().lowercase()
+
+                        val isFollowed = actorNorm in followingIds ||
+                                         origNorm in followingIds ||
+                                         cleanHandle in followingHandles ||
+                                         actorSlug in followingHandles ||
+                                         origSlug in followingHandles
+
                         FollowUserItem(
                             actorUrl = actorId,
                             name = profile.name?.takeIf { it.isNotBlank() }
                                 ?: profile.preferredUsername
                                 ?: actorId.substringAfterLast("/"),
-                            handle = buildHandle(profile, baseUrl, actorId),
+                            handle = handle,
                             summary = profile.summary,
                             avatarUrl = profile.icon?.url,
-                            isFollowedByMe = normalizeActorUrl(actorId) in followingIds
+                            isFollowedByMe = if (direction == FollowListDirection.FOLLOWING) true else isFollowed
                         )
                     }
 
@@ -250,10 +279,11 @@ class FollowListViewModel @Inject constructor(
         val updatedUsers = _uiState.value.users.map { user ->
             if (user.actorUrl == actorUrl || user.handle == handle) user.copy(isFollowedByMe = follow) else user
         }
+        val actorNorm = normalizeActorUrl(actorUrl)
         val updatedFollowing = if (follow) {
-            _uiState.value.myFollowingIds + normalizeActorUrl(actorUrl)
+            _uiState.value.myFollowingIds + actorNorm
         } else {
-            _uiState.value.myFollowingIds - normalizeActorUrl(actorUrl)
+            _uiState.value.myFollowingIds - actorNorm
         }
 
         _uiState.update { state ->
@@ -268,7 +298,12 @@ class FollowListViewModel @Inject constructor(
             var success = false
             var errorMessage: String? = null
             try {
-                val cleanHandle = handle.removePrefix("@")
+                val cleanHandle = handle.removePrefix("@").trim()
+                val slugFromUrl = actorUrl.removeSuffix("/").removeSuffix(".json").substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim()
+                val hostFromUrl = try { java.net.URI(actorUrl).host?.lowercase() } catch (_: Exception) { null }
+                val myHost = try { java.net.URI(activeBaseUrl).host?.lowercase() } catch (_: Exception) { null }
+                val isRemoteFromUrl = hostFromUrl != null && myHost != null && !hostFromUrl.equals(myHost, ignoreCase = true)
+
                 val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
                 val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
 
@@ -295,17 +330,35 @@ class FollowListViewModel @Inject constructor(
                     } catch (_: Exception) {}
                 }
 
-                // 3. Si no tuvo éxito, probar con handle con @ (ej. "@usuario@instancia.com")
-                if (!isSuccess(response) && handle.startsWith("@")) {
+                // 3. Probar con username@host derivado de URL si era remoto y cleanHandle no lo tenía
+                if (!isSuccess(response) && isRemoteFromUrl && slugFromUrl.isNotBlank()) {
+                    val remoteHandle = "$slugFromUrl@$hostFromUrl"
+                    if (remoteHandle != cleanHandle) {
+                        try {
+                            if (follow) {
+                                val searchUrl = if (activeBaseUrl.isNotBlank()) {
+                                    "${activeBaseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(remoteHandle, "UTF-8")}&type=user"
+                                } else {
+                                    "search?q=${java.net.URLEncoder.encode(remoteHandle, "UTF-8")}&type=user"
+                                }
+                                api.getRawHtmlResponse(searchUrl)
+                            }
+                            response = if (follow) api.followUser(remoteHandle) else api.unfollowUser(remoteHandle)
+                        } catch (_: Exception) {}
+                    }
+                }
+
+                // 4. Si es local o falló remoto, probar con solo el username puro
+                if (!isSuccess(response) && slugFromUrl.isNotBlank() && slugFromUrl != cleanHandle) {
                     try {
-                        response = if (follow) api.followUser(handle) else api.unfollowUser(handle)
+                        response = if (follow) api.followUser(slugFromUrl) else api.unfollowUser(slugFromUrl)
                     } catch (_: Exception) {}
                 }
 
-                // 4. Si no tuvo éxito, probar con actorUrl (URL completa del actor ActivityPub)
-                if (!isSuccess(response) && actorUrl.isNotBlank() && actorUrl != cleanHandle && actorUrl != handle) {
+                // 5. Probar con handle con @
+                if (!isSuccess(response) && handle.startsWith("@")) {
                     try {
-                        response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
+                        response = if (follow) api.followUser(handle) else api.unfollowUser(handle)
                     } catch (_: Exception) {}
                 }
 
@@ -314,8 +367,7 @@ class FollowListViewModel @Inject constructor(
                     errorMessage = response?.code()?.toString()
                     revertFollowState(actorUrl, handle, !follow)
                 } else {
-                    cache.saveList(FollowListDirection.FOLLOWING.name, _uiState.value.users)
-                    cache.saveList(FollowListDirection.FOLLOWERS.name, _uiState.value.users)
+                    cache.saveList(currentDirection.name, _uiState.value.users)
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -568,21 +620,46 @@ class FollowListViewModel @Inject constructor(
         return null
     }
 
-    private fun buildHandle(profile: BookWyrmProfile, myBaseUrl: String, actorUrl: String = ""): String {
-        val preferredUsername = profile.preferredUsername?.takeIf { it.isNotBlank() }
-            ?: profile.name?.takeIf { it.isNotBlank() }
-            ?: actorUrl.substringAfterLast("/").takeIf { it.isNotBlank() }
-            ?: ""
+    private fun extractUsername(profile: BookWyrmProfile, actorUrl: String = ""): String {
+        val preferred = profile.preferredUsername?.takeIf { it.isNotBlank() }
+        if (preferred != null) {
+            return preferred.removePrefix("@").substringBefore("@").trim()
+        }
+        val url = profile.id?.takeIf { it.isNotBlank() } ?: actorUrl
+        val path = try { java.net.URI(url).path.orEmpty() } catch (_: Exception) { url }
+        val cleanPath = path.removeSuffix("/").removeSuffix(".json")
+        val segment = cleanPath.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").trim()
+        if (segment.isNotBlank() && !segment.startsWith("http")) {
+            return segment.removePrefix("@").substringBefore("@").trim()
+        }
+        val nameFallback = profile.name?.takeIf { it.isNotBlank() && !it.contains(" ") }
+        if (nameFallback != null) {
+            return nameFallback.removePrefix("@").substringBefore("@").trim()
+        }
+        return actorUrl.removeSuffix("/").substringAfterLast("/").removePrefix("@").substringBefore("@").trim()
+    }
 
+    private fun buildHandle(profile: BookWyrmProfile, myBaseUrl: String, actorUrl: String = ""): String {
+        val username = extractUsername(profile, actorUrl)
         val myHost = try { java.net.URI(myBaseUrl).host ?: "" } catch (_: Exception) { "" }
         val actorHost = try {
             java.net.URI(profile.id ?: actorUrl).host ?: ""
         } catch (_: Exception) { "" }
 
-        return if (actorHost.isNotEmpty() && !actorHost.equals(myHost, ignoreCase = true)) {
-            "@${preferredUsername.removePrefix("@")}@$actorHost"
+        val domain = if (actorHost.isNotEmpty() && !actorHost.equals(myHost, ignoreCase = true)) {
+            actorHost
         } else {
-            "@${preferredUsername.removePrefix("@")}"
+            val pref = profile.preferredUsername.orEmpty()
+            if (pref.contains("@")) {
+                val dom = pref.removePrefix("@").substringAfter("@", "").trim()
+                if (dom.isNotEmpty() && !dom.equals(myHost, ignoreCase = true)) dom else null
+            } else null
+        }
+
+        return if (!domain.isNullOrBlank()) {
+            "@$username@$domain"
+        } else {
+            "@$username"
         }
     }
 

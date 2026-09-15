@@ -2089,6 +2089,8 @@ fun ProfileTab(
                 
                 if (dir == FollowListDirection.FOLLOWERS) {
                     followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING, forceRefresh = true)
+                } else {
+                    followersViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWERS, forceRefresh = true)
                 }
             }
         )
