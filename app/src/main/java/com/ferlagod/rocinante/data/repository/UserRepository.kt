@@ -140,9 +140,14 @@ class UserRepository(
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val shelfUrl = "$profileUrl/books/to-read"
-                val response = api.getRawHtmlResponse(shelfUrl)
-                if (response.isSuccessful) {
-                    val html = response.body()?.string() ?: ""
+                val baseUrl = try {
+                    val uri = java.net.URI(profileUrl)
+                    "${uri.scheme}://${uri.host}/"
+                } catch (_: Exception) {
+                    "https://bookwyrm.social/"
+                }
+                val html = com.ferlagod.rocinante.data.api.BookWyrmScraper.fetchHtmlWithRedirects(api, shelfUrl, baseUrl)
+                if (html.isNotEmpty()) {
                     val userMatch = "name=[\"']user[\"'][^>]*?value=[\"'](\\d+)[\"']|value=[\"'](\\d+)[\"'][^>]*?name=[\"']user[\"']".toRegex(RegexOption.IGNORE_CASE).find(html)
                     userMatch?.let { it.groups[1]?.value ?: it.groups[2]?.value }
                 } else null

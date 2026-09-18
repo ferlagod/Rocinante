@@ -123,10 +123,11 @@ object FavouriteShelf {
             .trimEnd('/')
         val user = username.removePrefix("@").substringBefore("@").trim()
         for (page in 1..20) {
-            val response = runCatching {
-                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page")
-            }.getOrNull() ?: return false
-            val items = response.orderedItems.orEmpty()
+            val items = runCatching {
+                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page").orderedItems.orEmpty()
+            }.getOrElse {
+                BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier?page=$page", "$base/").orEmpty()
+            }
             if (items.isEmpty()) return false
             if (items.any { it.id != null && BookWyrmScraper.canonicalBookUrl(it.id) == wanted }) {
                 return true
@@ -151,10 +152,11 @@ object FavouriteShelf {
         val user = username.removePrefix("@").substringBefore("@").trim()
         val ids = mutableSetOf<String>()
         for (page in 1..20) {
-            val response = runCatching {
-                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page")
-            }.getOrNull() ?: break
-            val items = response.orderedItems.orEmpty()
+            val items = runCatching {
+                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page").orderedItems.orEmpty()
+            }.getOrElse {
+                BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier?page=$page", "$base/").orEmpty()
+            }
             if (items.isEmpty()) break
             items.mapNotNull { it.id }.forEach { ids += BookWyrmScraper.canonicalBookUrl(it) }
         }
@@ -177,7 +179,9 @@ object FavouriteShelf {
         val user = username.removePrefix("@").substringBefore("@").trim()
         return runCatching {
             api.getShelfData("$base/user/$user/books/$identifier.json").totalItems
-        }.getOrNull()
+        }.getOrElse {
+            BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier", "$base/")?.size
+        }
     }
 
     /**

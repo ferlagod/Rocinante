@@ -1290,7 +1290,13 @@ object BookWyrmScraper {
                 val location = response.headers()["Location"]
                 if (location != null) {
                     currentUrl = if (location.startsWith("http")) location else {
-                        baseUrl.trimEnd('/') + location
+                        val base = try {
+                            val uri = java.net.URI(currentUrl)
+                            "${uri.scheme}://${uri.host}"
+                        } catch (_: Exception) {
+                            baseUrl.trimEnd('/')
+                        }
+                        "$base/${location.trimStart('/')}"
                     }
                 } else break
             } else break
@@ -1969,9 +1975,8 @@ object BookWyrmScraper {
         val profileUrl = "$cleanBase/user/$cleanUser"
         
         try {
-            val response = api.getRawHtmlResponse(profileUrl)
-            if (!response.isSuccessful) return@withContext null
-            val html = response.body()?.string() ?: return@withContext null
+            val html = fetchHtmlWithRedirects(api, profileUrl, "$cleanBase/")
+            if (html.isEmpty()) return@withContext null
             scrapeUserProfileFromHtml(html, cleanUser, "$cleanBase/")
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
@@ -2049,16 +2054,16 @@ object BookWyrmScraper {
     /**
      * Raspa los libros de una estantería desde su página HTML.
      * Sirve de fallback cuando /books/<slug>.json devuelve 403 (Secure Mode de ActivityPub).
+     * Devuelve null si la petición falló completamente, o una lista (posiblemente vacía si la estantería no tiene libros) si tuvo éxito.
      */
-    suspend fun scrapeShelfPage(api: BookWyrmApi, shelfHtmlUrl: String, baseUrl: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem> = withContext(Dispatchers.IO) {
+    suspend fun scrapeShelfPage(api: BookWyrmApi, shelfHtmlUrl: String, baseUrl: String): List<com.ferlagod.rocinante.data.model.ShelfBookItem>? = withContext(Dispatchers.IO) {
         try {
-            val response = api.getRawHtmlResponse(shelfHtmlUrl)
-            if (!response.isSuccessful) return@withContext emptyList()
-            val html = response.body()?.string() ?: return@withContext emptyList()
+            val html = fetchHtmlWithRedirects(api, shelfHtmlUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
             scrapeShelfPageFromHtml(html, baseUrl)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            emptyList()
+            null
         }
     }
 
@@ -2076,7 +2081,8 @@ object BookWyrmScraper {
             val bookId = "$cleanBase/book/$rawId"
 
             // Título
-            val titleEl = row.selectFirst("h3 a, .title a, a[href*=/book/] em, a[href*=/book/] strong, a[href*=/book/]")
+            val titleEl = row.selectFirst("td[data-title=Title] a, td[data-title=Títol] a, td[data-title=Título] a, td[data-title*='itle'] a, td[data-title*='ítol'] a, td[data-title*='ítulo'] a, h3 a, .title a, a[href*=/book/] em, a[href*=/book/] strong")
+                ?: row.select("a[href*=/book/]").firstOrNull { it.text().isNotBlank() }
             var title = titleEl?.text()?.trim().orEmpty()
             if (title.isBlank()) {
                 val em = row.selectFirst("em")

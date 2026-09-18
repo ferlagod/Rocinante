@@ -71,8 +71,14 @@ class ReadingReminderWorker(
                     val cleanUser = session.username.removePrefix("@").substringBefore("@").trim()
                     val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
                     
-                    val response = api.getShelfData(shelfJsonUrl)
-                    val books = response.orderedItems ?: emptyList()
+                    val response = try {
+                        api.getShelfData(shelfJsonUrl).orderedItems ?: emptyList()
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                        val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/reading?page=1"
+                        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
+                    }
+                    val books = response
                     
                     if (books.isNotEmpty()) {
                         bookTitle = books.random().title

@@ -156,4 +156,23 @@ class BookWyrmScraperFallbackTest {
         assertEquals("https://comelibros.club/media/covers/soledad.jpg", details.cover?.url)
         assertEquals(listOf("https://comelibros.club/author/gabriel-garcia-marquez"), details.authors)
     }
+    @Test
+    fun `scrapeShelfPageFromHtml extrae estanteria real de unmes`() {
+        val file = java.io.File("/Users/ferlagod/.gemini/antigravity-ide/brain/b60d72f6-dd31-402a-b6bd-f441354ed8a3/scratch/unmes_reading.html")
+        if (!file.exists()) return
+        val html = file.readText()
+        val items = BookWyrmScraper.scrapeShelfPageFromHtml(html, "https://comelibros.club")
+        println("SCRAPED READING ITEMS COUNT: ${items.size}")
+        items.forEach { println("ITEM: id=${it.id}, title=${it.title}, author=${it.authors}") }
+        assertEquals(1, items.size)
+        assertEquals("https://comelibros.club/book/200124", items[0].id)
+
+        val toReadFile = java.io.File("/Users/ferlagod/.gemini/antigravity-ide/brain/b60d72f6-dd31-402a-b6bd-f441354ed8a3/scratch/unmes_toread.html")
+        if (toReadFile.exists()) {
+            val toReadItems = BookWyrmScraper.scrapeShelfPageFromHtml(toReadFile.readText(), "https://comelibros.club")
+            println("SCRAPED TO-READ ITEMS COUNT: ${toReadItems.size}")
+            toReadItems.take(5).forEach { println("TO-READ: id=${it.id}, title=${it.title}, author=${it.authors}") }
+            assertEquals(12, toReadItems.size)
+        }
+    }
 }

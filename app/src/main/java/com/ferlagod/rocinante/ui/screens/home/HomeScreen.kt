@@ -2159,8 +2159,14 @@ fun ProfileTab(
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val cleanUser = username.removePrefix("@").substringBefore("@").trim()
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/reading.json?page=1"
-            val response = api.getShelfData(shelfJsonUrl)
-            val fetchedItems = response.orderedItems ?: emptyList()
+            val fetchedItems = try {
+                val response = api.getShelfData(shelfJsonUrl)
+                response.orderedItems ?: emptyList()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/reading?page=1"
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
+            }
             readingBooks = fetchedItems
             dataCache.saveShelfBooks("reading", fetchedItems)
         } catch (_: Exception) {
@@ -2171,8 +2177,14 @@ fun ProfileTab(
             val cleanUser = username.removePrefix("@").substringBefore("@").trim()
             // Solo la primera página: aquí basta con las portadas más recientes para la fila.
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/to-read.json?page=1"
-            val response = api.getShelfData(shelfJsonUrl)
-            val fetchedItems = response.orderedItems ?: emptyList()
+            val fetchedItems = try {
+                val response = api.getShelfData(shelfJsonUrl)
+                response.orderedItems ?: emptyList()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/to-read?page=1"
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
+            }
             if (fetchedItems.isNotEmpty()) {
                 toReadBooks = fetchedItems
                 // "Por leer" puede ser una estantería larga y la pantalla de estanterías guarda
@@ -2189,8 +2201,14 @@ fun ProfileTab(
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val cleanUser = username.removePrefix("@").substringBefore("@").trim()
             val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/read.json?page=1"
-            val response = api.getShelfData(shelfJsonUrl)
-            val fetchedItems = response.orderedItems ?: emptyList()
+            val fetchedItems = try {
+                val response = api.getShelfData(shelfJsonUrl)
+                response.orderedItems ?: emptyList()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/read?page=1"
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
+            }
             if (fetchedItems.isNotEmpty()) {
                 // Solo se siembra la caché si está vacía para que las estadísticas puedan mostrarse.
                 if (dataCache.loadShelfBooks("read").isNullOrEmpty()) {

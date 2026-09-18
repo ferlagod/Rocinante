@@ -909,10 +909,10 @@ fun ShelfNativeDetailScreen(
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/${shelf.slug}?page=$currentPage"
                 val scraped = com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl)
-                if (scraped.isEmpty() && currentPage == 1 && books.isEmpty()) {
+                if (scraped == null && currentPage == 1 && books.isEmpty()) {
                     throw e
                 }
-                scraped
+                scraped ?: emptyList()
             }
 
             if (currentPage == 1) {
