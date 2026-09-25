@@ -25,6 +25,8 @@ import com.ferlagod.rocinante.data.model.BookWyrmBookDetails
 import com.ferlagod.rocinante.data.model.BookWyrmProfile
 import com.ferlagod.rocinante.data.model.NotificationType
 import com.ferlagod.rocinante.data.model.NotificationUiItem
+import com.ferlagod.rocinante.data.model.AnnouncementDisplayType
+import com.ferlagod.rocinante.data.model.ServerAnnouncementUiItem
 import com.ferlagod.rocinante.data.model.ShelfBookCover
 import com.ferlagod.rocinante.data.model.SuggestedUser
 import com.ferlagod.rocinante.utils.BookWyrmUtils
@@ -1706,17 +1708,96 @@ object BookWyrmScraper {
         }
     }
 
-    suspend fun scrapeNotifications(api: BookWyrmApi, instanceUrl: String): List<NotificationUiItem> = withContext(Dispatchers.IO) {
+    /**
+     * Resultado estructurado del scraping de la vista de notificaciones, incluyendo notificaciones
+     * personales de usuario y avisos globales del servidor emitidos por la administración.
+     */
+    data class ScrapedNotificationsResult(
+        val notifications: List<NotificationUiItem>,
+        val serverAnnouncements: List<ServerAnnouncementUiItem>
+    )
+
+    /**
+     * Parsea los avisos o anuncios globales del servidor presentes en el layout HTML de BookWyrm.
+     */
+    fun parseServerAnnouncements(document: org.jsoup.nodes.Document, baseUrl: String): List<ServerAnnouncementUiItem> {
+        val announcements = mutableListOf<ServerAnnouncementUiItem>()
+        val elements = document.select("aside[data-hide^=hide_announcement_], aside.notification:has(a[data-id^=hide_announcement_])")
+        for (element in elements) {
+            val dataHide = element.attr("data-hide")
+            val dismissLink = element.select("a[data-id^=hide_announcement_]").firstOrNull()
+            val dataId = dismissLink?.attr("data-id") ?: ""
+            val id = when {
+                dataHide.startsWith("hide_announcement_") -> dataHide.removePrefix("hide_announcement_")
+                dataId.startsWith("hide_announcement_") -> dataId.removePrefix("hide_announcement_")
+                else -> java.util.UUID.randomUUID().toString()
+            }
+
+            val summaryEl = element.select("summary").firstOrNull()
+            val eventDate = summaryEl?.select("strong")?.firstOrNull()?.text()?.trim()?.trimEnd(':')
+
+            val preview = if (summaryEl != null) {
+                val cloned = summaryEl.clone()
+                cloned.select("strong, .details-close, span[aria-hidden]").remove()
+                cloned.text().trim()
+            } else {
+                element.text().trim()
+            }
+
+            val contentBox = element.select(".box, div[id^=announcement_]").firstOrNull()
+            val contentHtml = contentBox?.html()?.trim()?.takeIf { it.isNotEmpty() }
+            val contentText = contentBox?.text()?.trim()?.takeIf { it.isNotEmpty() }
+
+            val classNames = element.classNames()
+            val displayType = when {
+                classNames.any { it.contains("danger") } -> AnnouncementDisplayType.DANGER
+                classNames.any { it.contains("warning") } -> AnnouncementDisplayType.WARNING
+                classNames.any { it.contains("success") } -> AnnouncementDisplayType.SUCCESS
+                classNames.any { it.contains("link") } -> AnnouncementDisplayType.INFO
+                classNames.any { it.contains("primary") } -> AnnouncementDisplayType.PRIMARY
+                else -> AnnouncementDisplayType.INFO
+            }
+
+            val userLink = element.select(".help a[href*='/user/'], a[href*='/user/']").firstOrNull()
+            val postedByName = userLink?.text()?.trim()
+            var postedByUrl = userLink?.attr("href")?.trim() ?: ""
+            if (postedByUrl.isNotEmpty() && !postedByUrl.startsWith("http")) {
+                val cleanBase = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+                postedByUrl = "$cleanBase${postedByUrl.trimStart('/')}"
+            }
+
+            if (preview.isNotBlank() || !contentHtml.isNullOrBlank()) {
+                announcements.add(
+                    ServerAnnouncementUiItem(
+                        id = id,
+                        preview = preview.ifBlank { "Aviso del servidor" },
+                        contentText = contentText,
+                        contentHtml = contentHtml,
+                        eventDate = eventDate,
+                        displayType = displayType,
+                        postedByName = postedByName,
+                        postedByUrl = postedByUrl.takeIf { it.isNotEmpty() }
+                    )
+                )
+            }
+        }
+        return announcements
+    }
+
+    suspend fun scrapeNotificationsResult(api: BookWyrmApi, instanceUrl: String): ScrapedNotificationsResult = withContext(Dispatchers.IO) {
         val notifications = mutableListOf<NotificationUiItem>()
+        val announcements = mutableListOf<ServerAnnouncementUiItem>()
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
             val notifUrl = "${baseUrl}notifications"
             
             val html = fetchHtmlWithRedirects(api, notifUrl, baseUrl)
-            if (html.isEmpty()) return@withContext emptyList()
+            if (html.isEmpty()) return@withContext ScrapedNotificationsResult(emptyList(), emptyList())
             
             val document = org.jsoup.Jsoup.parse(html)
+            announcements.addAll(parseServerAnnouncements(document, baseUrl))
+
             val elements = document.select("div.notification:not(.live-message)")
             for (element in elements) {
                 val id = element.attr("id").ifEmpty { java.util.UUID.randomUUID().toString() }
@@ -1896,13 +1977,16 @@ object BookWyrmScraper {
                     )
                 )
             }
-            notifications
+            ScrapedNotificationsResult(notifications, announcements)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             e.printStackTrace()
-            emptyList()
+            ScrapedNotificationsResult(emptyList(), emptyList())
         }
     }
+
+    suspend fun scrapeNotifications(api: BookWyrmApi, instanceUrl: String): List<NotificationUiItem> =
+        scrapeNotificationsResult(api, instanceUrl).notifications
 
     /**
      * Resultado de [clearNotifications]. [detail] indica el motivo del fallo (código HTTP o

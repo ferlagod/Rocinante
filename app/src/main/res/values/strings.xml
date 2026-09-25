@@ -640,4 +640,9 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_2_9">"FIXES\n• Fixed an issue where the login webview closed prematurely when Two-Factor Authentication (2FA) was enabled."</string>
     <string name="changelog_text_v1_3_0">"• Connection &amp; Compatibility: Improved stability with BookWyrm servers (0.8+ and Anubis-protected), fixing 403 errors and image loading.\n• Performance &amp; Fluidity: Ultra-fast image loading with new memory/disk cache and smoother scrolling in lists.\n• Activity &amp; Following: Instant book covers in posts, localized reading texts, and fixed follow/unfollow status."</string>
     <string name="changelog_text_v1_3_1">"• Session fix: Fixed an issue on some instances (such as comelibros.club) where a session expired message appeared repeatedly.\n• Connection stability: Improved automatic authorization renewal and cookie handling on protected servers."</string>
+    <string name="server_announcement_title">Server notice</string>
+    <string name="server_announcement_posted_by">Posted by %1$s</string>
+    <string name="server_announcement_dismiss">Dismiss notice</string>
+    <string name="server_announcement_show_more">Show more</string>
+    <string name="server_announcement_show_less">Show less</string>
 </resources>

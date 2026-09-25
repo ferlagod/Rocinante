@@ -646,4 +646,9 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="changelog_text_v1_2_9">"CORRECCIONES\n• Se ha solucionado un problema por el cual la pantalla de inicio de sesión se cerraba prematuramente al tener activada la Autenticación de Dos Factores (2FA)."</string>
     <string name="changelog_text_v1_3_0">"• Conexión y compatibilidad: Mayor estabilidad con servidores BookWyrm (0.8+ y con Anubis), solucionando errores 403 y carga de imágenes.\n• Rendimiento y fluidez: Carga de imágenes ultrarrápida con nueva caché en memoria/disco y navegación más suave en listas.\n• Actividad y seguimiento: Portadas visibles al instante en publicaciones, textos de lectura traducidos y estado de seguimiento corregido."</string>
     <string name="changelog_text_v1_3_1">"• Corrección de sesión: Solucionado el problema en algunas instancias (como comelibros.club) donde aparecía constantemente el mensaje de sesión caducada.\n• Mayor estabilidad: Mejorada la renovación automática de permisos y la gestión de cookies en servidores protegidos."</string>
+    <string name="server_announcement_title">Aviso del servidor</string>
+    <string name="server_announcement_posted_by">Publicado por %1$s</string>
+    <string name="server_announcement_dismiss">Descartar aviso</string>
+    <string name="server_announcement_show_more">Ver más</string>
+    <string name="server_announcement_show_less">Ver menos</string>
 </resources>

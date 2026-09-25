@@ -25,6 +25,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -114,6 +115,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_OWN_SHELF_LAYOUT = stringPreferencesKey("own_shelf_layout")
         private val KEY_ALLOW_CREATE_SHELVES = booleanPreferencesKey("allow_create_shelves")
         private val KEY_SHELF_SORT_MODE = stringPreferencesKey("shelf_sort_mode")
+        private val KEY_DISMISSED_ANNOUNCEMENTS = stringSetPreferencesKey("dismissed_announcements")
     }
 
     /**
@@ -278,6 +280,31 @@ class SettingsPreferences(private val context: Context) {
     suspend fun setNewsSeenVersion(version: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_NEWS_SEEN_VERSION] = version
+        }
+    }
+
+    /**
+     * Flujo con los identificadores de avisos del servidor descartados por el usuario.
+     */
+    val dismissedAnnouncementsFlow: Flow<Set<String>> = context.settingsDataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { prefs ->
+            prefs[KEY_DISMISSED_ANNOUNCEMENTS] ?: emptySet()
+        }
+
+    /**
+     * Registra un aviso del servidor como descartado por el usuario.
+     */
+    suspend fun dismissAnnouncement(announcementId: String) {
+        context.settingsDataStore.edit { prefs ->
+            val current = prefs[KEY_DISMISSED_ANNOUNCEMENTS] ?: emptySet()
+            prefs[KEY_DISMISSED_ANNOUNCEMENTS] = current + announcementId
         }
     }
 }

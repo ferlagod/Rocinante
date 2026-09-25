@@ -26,12 +26,17 @@ import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.local.SessionStorage
+import com.ferlagod.rocinante.data.local.SettingsPreferences
 import com.ferlagod.rocinante.data.model.NotificationUiItem
+import com.ferlagod.rocinante.data.model.ServerAnnouncementUiItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -44,13 +49,10 @@ sealed class NotificationsState {
     data class Error(val message: String) : NotificationsState()
 }
 
-
-
-
 /**
  * ViewModel encargado de gestionar la lógica de presentación de la pestaña de notificaciones.
  * Extrae y mantiene el estado de las notificaciones desde la web de la instancia, proporcionando
- * opciones para refrescar y actualizar el contenido.
+ * opciones para refrescar y actualizar el contenido, así como anuncios generales del servidor.
  *
  * @param api Cliente autenticado de BookWyrm.
  * @param sessionStorage Almacenamiento local para obtener la URL de la instancia.
@@ -62,6 +64,8 @@ class NotificationsViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    private val settingsPreferences = SettingsPreferences(context)
+
     private val instanceUrl: String
         get() = sessionStorage.currentSession?.instanceUrl ?: ""
 
@@ -71,20 +75,37 @@ class NotificationsViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _rawAnnouncements = MutableStateFlow<List<ServerAnnouncementUiItem>>(emptyList())
+
+    /**
+     * Avisos del servidor activos no descartados por el usuario.
+     */
+    val announcements: StateFlow<List<ServerAnnouncementUiItem>> = combine(
+        _rawAnnouncements,
+        settingsPreferences.dismissedAnnouncementsFlow
+    ) { allAnnouncements, dismissedIds ->
+        allAnnouncements.filterNot { it.id in dismissedIds }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     init {
         loadNotifications()
     }
 
     /**
-     * Carga inicial o recarga forzada de las notificaciones.
+     * Carga inicial o recarga forzada de las notificaciones y avisos del servidor.
      * Cambia el estado a [NotificationsState.Loading] antes de recuperar los datos.
      */
     fun loadNotifications() {
         viewModelScope.launch {
             _state.value = NotificationsState.Loading
             try {
-                val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
-                _state.value = NotificationsState.Success(items)
+                val result = BookWyrmScraper.scrapeNotificationsResult(api, instanceUrl)
+                _state.value = NotificationsState.Success(result.notifications)
+                _rawAnnouncements.value = result.serverAnnouncements
             } catch (e: Exception) {
                 _state.value = NotificationsState.Error(e.message ?: context.getString(R.string.error_unknown))
             }
@@ -99,13 +120,23 @@ class NotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                val items = BookWyrmScraper.scrapeNotifications(api, instanceUrl)
-                _state.value = NotificationsState.Success(items)
+                val result = BookWyrmScraper.scrapeNotificationsResult(api, instanceUrl)
+                _state.value = NotificationsState.Success(result.notifications)
+                _rawAnnouncements.value = result.serverAnnouncements
             } catch (e: Exception) {
                 // Ignore error on refresh or show snackbar
             } finally {
                 _isRefreshing.value = false
             }
+        }
+    }
+
+    /**
+     * Descarta un aviso del servidor para no volver a mostrarlo en la interfaz.
+     */
+    fun dismissAnnouncement(announcementId: String) {
+        viewModelScope.launch {
+            settingsPreferences.dismissAnnouncement(announcementId)
         }
     }
 

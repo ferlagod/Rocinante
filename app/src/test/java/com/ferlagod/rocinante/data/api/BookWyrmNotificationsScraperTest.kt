@@ -9,10 +9,12 @@
  */
 package com.ferlagod.rocinante.data.api
 
+import com.ferlagod.rocinante.data.model.AnnouncementDisplayType
 import com.ferlagod.rocinante.data.model.NotificationType
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import retrofit2.Response
 import java.lang.reflect.Proxy
@@ -210,5 +212,83 @@ class BookWyrmNotificationsScraperTest {
         assertEquals("Bob", item.relatedUsers[1].name)
         assertEquals("https://bookwyrm.social/user/bob@fediverse.org", item.relatedUsers[1].profileUrl)
         assertEquals("@bob@fediverse.org", item.relatedUsers[1].handle)
+    }
+
+    @Test
+    fun `test scrape server announcement with warning type, event date and content`() = runBlocking {
+        val html = """
+            <!DOCTYPE html>
+            <html>
+            <body>
+                <aside class="notification mb-1 p-3 is-hidden transition-y has-background-warning-light" data-hide="hide_announcement_42">
+                    <details>
+                        <summary>
+                            <strong>Hoy:</strong>
+                            Mantenimiento programado de la base de datos esta noche.
+                            <span class="details-close mt-4 mr-4 icon icon-x is-small" aria-hidden></span>
+                        </summary>
+                        <div class="mb-2 mt-2" id="announcement_uuid123">
+                            <div class="box is-shadowless mb-0">
+                                <p>El servidor estará inactivo aproximadamente 15 minutos.</p>
+                            </div>
+                        </div>
+                    </details>
+                    <div class="is-flex mt-0 help">
+                        <p>Publicado por <a href="/user/admin">Administrador</a></p>
+                        <span class="mr-2 ml-2" aria-hidden="true">&middot;</span>
+                        <a class="set-display" data-id="hide_announcement_42" data-value="true">Dismiss message</a>
+                    </div>
+                </aside>
+                <div class="notification unread" id="notif-1">
+                    <div class="content"><strong><a href="/user/alice">alice</a></strong> mentioned you</div>
+                </div>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val fakeApi = createFakeApi(html)
+        val result = BookWyrmScraper.scrapeNotificationsResult(fakeApi, "https://comelibros.club")
+
+        assertEquals(1, result.notifications.size)
+        assertEquals(1, result.serverAnnouncements.size)
+
+        val announcement = result.serverAnnouncements[0]
+        assertEquals("42", announcement.id)
+        assertEquals("Mantenimiento programado de la base de datos esta noche.", announcement.preview)
+        assertEquals("Hoy", announcement.eventDate)
+        assertEquals(AnnouncementDisplayType.WARNING, announcement.displayType)
+        assertEquals("El servidor estará inactivo aproximadamente 15 minutos.", announcement.contentText)
+        assertEquals("Administrador", announcement.postedByName)
+        assertEquals("https://comelibros.club/user/admin", announcement.postedByUrl)
+    }
+
+    @Test
+    fun `test scrape server announcement with danger type and fallback ID`() = runBlocking {
+        val html = """
+            <!DOCTYPE html>
+            <html>
+            <body>
+                <aside class="notification mb-1 p-3 has-background-danger-light" data-hide="hide_announcement_99">
+                    <details>
+                        <summary>
+                            Caída inminente del servicio por corte eléctrico.
+                        </summary>
+                    </details>
+                </aside>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val fakeApi = createFakeApi(html)
+        val result = BookWyrmScraper.scrapeNotificationsResult(fakeApi, "https://bookwyrm.it")
+
+        assertEquals(0, result.notifications.size)
+        assertEquals(1, result.serverAnnouncements.size)
+
+        val announcement = result.serverAnnouncements[0]
+        assertEquals("99", announcement.id)
+        assertEquals("Caída inminente del servicio por corte eléctrico.", announcement.preview)
+        assertEquals(null, announcement.eventDate)
+        assertEquals(AnnouncementDisplayType.DANGER, announcement.displayType)
     }
 }

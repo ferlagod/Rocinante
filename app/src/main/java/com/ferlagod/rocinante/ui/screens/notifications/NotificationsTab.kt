@@ -95,6 +95,8 @@ fun NotificationsTab(
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
+    val announcements by viewModel.announcements.collectAsState()
+
     val context = LocalContext.current
     var isClearing by remember { mutableStateOf(false) }
 
@@ -171,6 +173,12 @@ fun NotificationsTab(
                 AppNewsCard(
                     onOpen = { showChangelog = true },
                     onDismiss = { markNewsSeen() }
+                )
+            }
+            announcements.forEach { announcement ->
+                com.ferlagod.rocinante.ui.components.ServerAnnouncementCard(
+                    announcement = announcement,
+                    onDismiss = { viewModel.dismissAnnouncement(announcement.id) }
                 )
             }
             when (val s = state) {
