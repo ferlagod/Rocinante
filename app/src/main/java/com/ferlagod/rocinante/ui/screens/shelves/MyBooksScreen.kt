@@ -42,16 +42,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
@@ -94,6 +102,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -101,7 +110,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
@@ -256,6 +267,40 @@ private enum class ShelfSortMode {
         }
 
         /** Lo guardado, con esta estantería puesta al día. */
+        fun withShelfName(raw: String?, slug: String, modeName: String): String {
+            val mode = entries.firstOrNull { it.name == modeName } ?: return raw.orEmpty()
+            return encodeAll(decodeAll(raw) + (slug to mode))
+        }
+    }
+}
+
+/**
+ * Modo de presentación de los libros en una estantería: lista detallada o cuadrícula de portadas.
+ *
+ * En estanterías nutridas (como «Leídos»), un muro de portadas permite ojear la colección de
+ * forma ágil y reconocer libros por su cubierta. En cambio, en «Leyendo» suele ser más útil la
+ * lista con páginas, fechas y cálculo de días restantes.
+ *
+ * Cada estantería conserva en disco su propio modo preferido, para no forzar la misma vista
+ * en todas las secciones.
+ */
+private enum class ShelfDisplayMode {
+    LIST, GRID;
+
+    companion object {
+        fun decodeAll(raw: String?): Map<String, ShelfDisplayMode> =
+            raw.orEmpty().split(",").mapNotNull { entry ->
+                val (slug, name) = entry.split("=").takeIf { it.size == 2 } ?: return@mapNotNull null
+                val mode = entries.firstOrNull { it.name == name.trim() } ?: return@mapNotNull null
+                slug.trim().takeIf { it.isNotEmpty() }?.let { it to mode }
+            }.toMap()
+
+        fun encodeAll(modes: Map<String, ShelfDisplayMode>): String =
+            modes.entries.joinToString(",") { "${it.key}=${it.value.name}" }
+
+        fun forShelf(raw: String?, slug: String): ShelfDisplayMode =
+            decodeAll(raw)[slug] ?: LIST
+
         fun withShelfName(raw: String?, slug: String, modeName: String): String {
             val mode = entries.firstOrNull { it.name == modeName } ?: return raw.orEmpty()
             return encodeAll(decodeAll(raw) + (slug to mode))
@@ -626,6 +671,14 @@ fun MyBooksScreen(
                         )
                     }
                 },
+                storedDisplayModes = settingsState.shelfDisplayMode,
+                onDisplayModeChanged = { slug, modeName ->
+                    layoutScope.launch {
+                        settingsPreferences.setShelfDisplayMode(
+                            ShelfDisplayMode.withShelfName(settingsState.shelfDisplayMode, slug, modeName)
+                        )
+                    }
+                },
                 backEnabled = isActive
             )
         }
@@ -671,6 +724,9 @@ fun ShelfNativeDetailScreen(
     // Se manda el nombre y no el tipo: la enumeración es privada de este fichero, y sacarla
     // de aquí solo para pasar un valor la volvería parte de la interfaz sin motivo.
     onSortModeChanged: (String, String) -> Unit = { _, _ -> },
+    // El modo de vista guardado (lista o cuadrícula de portadas) para cada estantería.
+    storedDisplayModes: String = "",
+    onDisplayModeChanged: (String, String) -> Unit = { _, _ -> },
     // Se invoca en cuanto esta pantalla se ha quedado con el autor o el recorte que le
     // mandaban, para que quien lo mandó lo olvide.
     onTargetTaken: () -> Unit = {},
@@ -710,6 +766,14 @@ fun ShelfNativeDetailScreen(
             sortRestored = true
         }
     }
+    var displayMode by remember(shelf.slug) { mutableStateOf(ShelfDisplayMode.LIST) }
+    var displayRestored by remember(shelf.slug) { mutableStateOf(false) }
+    LaunchedEffect(shelf.slug, storedDisplayModes) {
+        if (!displayRestored && storedDisplayModes.isNotEmpty()) {
+            displayMode = ShelfDisplayMode.forShelf(storedDisplayModes, shelf.slug)
+            displayRestored = true
+        }
+    }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     // Collator con nivel PRIMARY: ignora mayúsculas/acentos pero respeta el orden
     // alfabético del idioma (p. ej. æ/ø/å en danés se colocan correctamente).
@@ -743,8 +807,9 @@ fun ShelfNativeDetailScreen(
 
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // Estado de la lista, necesario para poder desplazarse hasta un libro concreto.
+    // Estado de la lista y la cuadrícula, necesario para poder desplazarse hasta un libro concreto.
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
     // Por dónde iba la lista, guardado como **el libro** que estaba arriba y no como el número
     // de fila. El número no aguanta: los libros llegan primero de la caché y luego de la red,
@@ -1194,7 +1259,7 @@ fun ShelfNativeDetailScreen(
 
     // Salto al libro que se ha pulsado en la búsqueda: se desplaza hasta él y se resalta
     // un momento para que se vea dónde ha caído dentro de la estantería.
-    LaunchedEffect(highlightBookId, displayedBooks, isLoading, hasMorePages) {
+    LaunchedEffect(highlightBookId, displayedBooks, isLoading, hasMorePages, displayMode) {
         val targetId = highlightBookId ?: return@LaunchedEffect
         val index = displayedBooks.indexOfFirst { it.id == targetId }
         if (index < 0) {
@@ -1212,11 +1277,19 @@ fun ShelfNativeDetailScreen(
         // queda quieto mientras la lista crece bajo él. Animarlos también hacía que la pantalla
         // subiese y bajase buscando el libro hasta que terminaba la paginación.
         if (scrolledToTarget != targetId) {
-            listState.animateScrollToItem(position)
+            if (displayMode == ShelfDisplayMode.GRID) {
+                gridState.animateScrollToItem(position)
+            } else {
+                listState.animateScrollToItem(position)
+            }
             scrolledToTarget = targetId
             highlightedBookId = targetId
         } else {
-            listState.scrollToItem(position)
+            if (displayMode == ShelfDisplayMode.GRID) {
+                gridState.scrollToItem(position)
+            } else {
+                listState.scrollToItem(position)
+            }
         }
 
         if (!isLoading && !hasMorePages) onHighlightConsumed()
@@ -1229,7 +1302,7 @@ fun ShelfNativeDetailScreen(
     // De vuelta al sitio. Se espera a que el libro que estaba arriba esté de verdad en la
     // lista: mientras no haya llegado su página no se toca nada, en vez de saltar a lo que
     // haya y darlo por bueno.
-    LaunchedEffect(visibleBooks, leadingRows, highlightBookId) {
+    LaunchedEffect(visibleBooks, leadingRows, highlightBookId, displayMode) {
         if (scrollRestored) return@LaunchedEffect
         // Viniendo de un libro concreto —de la búsqueda o del perfil— ese salto es lo que se
         // ha pedido, y reponer la posición de antes se lo llevaría por delante.
@@ -1244,20 +1317,36 @@ fun ShelfNativeDetailScreen(
         }
         val index = visibleBooks.indexOfFirst { it.id == wanted }
         if (index < 0) return@LaunchedEffect
-        listState.scrollToItem(index + leadingRows, savedScrollOffset)
+        val targetPos = index + leadingRows
+        if (displayMode == ShelfDisplayMode.GRID) {
+            gridState.scrollToItem(targetPos, savedScrollOffset)
+        } else {
+            listState.scrollToItem(targetPos, savedScrollOffset)
+        }
         scrollRestored = true
     }
 
     // Y mientras se lee, apuntar dónde se va. El efecto se rehace cuando cambian los libros o
     // las filas de encima, que es justo cuando la cuenta de filas dejaría de valer.
-    LaunchedEffect(visibleBooks, leadingRows, scrollRestored) {
+    LaunchedEffect(visibleBooks, leadingRows, scrollRestored, displayMode) {
         if (!scrollRestored) return@LaunchedEffect
-        androidx.compose.runtime.snapshotFlow {
-            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-        }.collect { (row, offset) ->
-            visibleBooks.getOrNull(row - leadingRows)?.id?.let {
-                savedTopBookId = it
-                savedScrollOffset = offset
+        if (displayMode == ShelfDisplayMode.GRID) {
+            androidx.compose.runtime.snapshotFlow {
+                gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+            }.collect { (row, offset) ->
+                visibleBooks.getOrNull(row - leadingRows)?.id?.let {
+                    savedTopBookId = it
+                    savedScrollOffset = offset
+                }
+            }
+        } else {
+            androidx.compose.runtime.snapshotFlow {
+                listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+            }.collect { (row, offset) ->
+                visibleBooks.getOrNull(row - leadingRows)?.id?.let {
+                    savedTopBookId = it
+                    savedScrollOffset = offset
+                }
             }
         }
     }
@@ -1392,6 +1481,26 @@ fun ShelfNativeDetailScreen(
                     )
                 }
             }
+            // Alternar entre vista de lista y cuadrícula de portadas: disponible siempre que
+            // se muestren libros (en la estantería, dentro de una serie o dentro de un autor).
+            if (!showSeriesList && (!showAuthorList || openAuthorKey != null)) {
+                IconButton(onClick = {
+                    val newMode = if (displayMode == ShelfDisplayMode.LIST) ShelfDisplayMode.GRID else ShelfDisplayMode.LIST
+                    displayMode = newMode
+                    onDisplayModeChanged(shelf.slug, newMode.name)
+                }) {
+                    Icon(
+                        imageVector = if (displayMode == ShelfDisplayMode.LIST) {
+                            Icons.Filled.GridView
+                        } else {
+                            Icons.AutoMirrored.Filled.ViewList
+                        },
+                        contentDescription = stringResource(
+                            if (displayMode == ShelfDisplayMode.LIST) R.string.shelf_view_grid else R.string.shelf_view_list
+                        )
+                    )
+                }
+            }
             Box {
                 // En la lista de autores no hay nada que ordenar; dentro de un autor sí, y es la
                 // misma ordenación de la estantería. Dentro de una serie no, porque allí el
@@ -1485,6 +1594,76 @@ fun ShelfNativeDetailScreen(
             }
         }
 
+        val onBookClick: (ShelfBookItem) -> Unit = { book ->
+            if (!isLoadingDetails) {
+                val bookUrl = book.id
+                if (!bookUrl.isNullOrEmpty()) {
+                    if (settingsState.openLinksExternally) {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(bookUrl))
+                        context.startActivity(intent)
+                    } else {
+                        activeBookUrl = bookUrl
+                        fallbackCoverUrl = book.cover?.url ?: ""
+                        isLoadingDetails = true
+                        errorMessage = null
+                        detailsRequestId++
+                        val requestId = detailsRequestId
+                        coroutineScope.launch {
+                            try {
+                                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
+                                    api = api,
+                                    cache = dataCache,
+                                    cacheKey = bookUrl,
+                                    resolveDetailsUrl = { BookWyrmUtils.ensureJsonUrl(bookUrl) },
+                                    onDetails = { details, fromCache ->
+                                        if (detailsRequestId != requestId) return@load
+                                        selectedBookDetails = details
+                                        isLoadingDetails = false
+                                        if (fromCache) selectedBookReviews = emptyList()
+                                    },
+                                    onReviews = { reviews ->
+                                        if (detailsRequestId == requestId) selectedBookReviews = reviews
+                                    },
+                                    onFailure = { e, hadCache ->
+                                        if (!hadCache && detailsRequestId == requestId) {
+                                            errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                                        }
+                                    }
+                                )
+                            } finally {
+                                isLoadingDetails = false
+                            }
+
+                            val ownProgress = !isEnriching
+                            if (ownProgress) {
+                                isEnriching = true
+                                enrichDone = 0
+                                enrichTotal = 1
+                            }
+                            try {
+                                BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
+                                    enrichment = enrichment.toMutableMap()
+                                        .apply { put(bookUrl, enriched) }
+                                    enrichLock.withLock {
+                                        val stored = dataCache.loadEnrichment()
+                                        stored[bookUrl] = enriched
+                                        dataCache.saveEnrichment(stored)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
+                            } finally {
+                                if (ownProgress) {
+                                    enrichDone = 1
+                                    isEnriching = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Un tropiezo puntual (la instancia va lenta, un libro que no abre) no debe llevarse
         // por delante la estantería que ya está en pantalla: el aviso se pone encima y los
         // libros siguen ahí. Solo cuando no hay nada que enseñar ocupa la pantalla entera.
@@ -1513,72 +1692,95 @@ fun ShelfNativeDetailScreen(
                 )
             }
         } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (isLoadingDetails) {
-                    item {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-                    }
-                }
+            val isShowingBookList = !(showAuthorList && openAuthorKey == null) && !(showSeriesList && openSeriesUrl == null)
 
-                if (shelf.slug == "reading") {
-                    item {
-                        OutlinedCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp),
-                            colors = CardDefaults.outlinedCardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp, MaterialTheme.colorScheme.secondaryContainer
+            if (isShowingBookList && displayMode == ShelfDisplayMode.GRID) {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 100.dp),
+                    state = gridState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (isLoadingDetails) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                        }
+                    }
+
+                    if (shelf.slug == "reading") {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            ReadingReminderCard(
+                                reminderEnabled = settingsState.reminderEnabled,
+                                reminderHour = settingsState.reminderHour,
+                                reminderMinute = settingsState.reminderMinute,
+                                onModifyTime = { showTimePicker = true },
+                                onNavigateToSettings = onNavigateToSettings
                             )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Default.Notifications,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        }
+                    }
+
+                    items(
+                        count = visibleBooks.size,
+                        key = { index -> visibleBooks[index].id ?: index }
+                    ) { index ->
+                        val book = visibleBooks[index]
+                        val isHighlighted = book.id != null && book.id == highlightedBookId
+                        val isFavourite = book.id != null &&
+                            BookWyrmScraper.canonicalBookUrl(book.id) in favouriteIds
+                        val enrich = book.id?.let { enrichment[it] }
+                        val readingFraction = book.id?.let { fractionByBook[it] }
+
+                        ShelfBookGridCard(
+                            book = book,
+                            enrich = enrich,
+                            isFavourite = isFavourite,
+                            isHighlighted = isHighlighted,
+                            readingFraction = readingFraction,
+                            onClick = { onBookClick(book) }
+                        )
+                    }
+
+                    if (openAuthorKey != null) {
+                        openAuthorInfo?.let { author ->
+                            item(key = "author-info", span = { GridItemSpan(maxLineSpan) }) {
+                                com.ferlagod.rocinante.ui.components.AuthorInfoBlock(author) { url ->
+                                    context.startActivity(
+                                        android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse(url)
+                                        )
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = stringResource(R.string.reminder_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                if (settingsState.reminderEnabled) {
-                                    Text(
-                                        text = stringResource(R.string.reminder_active_at, String.format("%02d:%02d", settingsState.reminderHour, settingsState.reminderMinute)),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Button(onClick = { showTimePicker = true }) {
-                                        Text(stringResource(R.string.reminder_modify_time))
-                                    }
-                                } else {
-                                    Text(
-                                        text = stringResource(R.string.reminder_inactive_desc),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    OutlinedButton(onClick = onNavigateToSettings) {
-                                        Text(stringResource(R.string.reminder_go_to_settings))
-                                    }
                                 }
                             }
                         }
                     }
                 }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (isLoadingDetails) {
+                        item {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                        }
+                    }
+
+                    if (shelf.slug == "reading") {
+                        item {
+                            ReadingReminderCard(
+                                reminderEnabled = settingsState.reminderEnabled,
+                                reminderHour = settingsState.reminderHour,
+                                reminderMinute = settingsState.reminderMinute,
+                                onModifyTime = { showTimePicker = true },
+                                onNavigateToSettings = onNavigateToSettings
+                            )
+                        }
+                    }
 
                 if (showAuthorList && openAuthorKey == null) {
                     if (authorGroups.isEmpty()) {
@@ -1683,94 +1885,7 @@ fun ShelfNativeDetailScreen(
                         } else CardDefaults.cardColors(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                if (isLoadingDetails) return@clickable
-                                val bookUrl = book.id
-                                if (!bookUrl.isNullOrEmpty()) {
-                                    if (settingsState.openLinksExternally) {
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(bookUrl))
-                                        context.startActivity(intent)
-                                    } else {
-                                        activeBookUrl = bookUrl
-                                        fallbackCoverUrl = book.cover?.url ?: ""
-                                        isLoadingDetails = true
-                                        // El aviso del intento anterior se va al volver a
-                                        // probar; si no, se queda ahí aunque ya funcione.
-                                        errorMessage = null
-                                        // Cada apertura lleva su número: lo que llegue tarde de
-                                        // la red solo se pinta si sigue siendo este libro y la
-                                        // ficha no se ha cerrado mientras tanto.
-                                        detailsRequestId++
-                                        val requestId = detailsRequestId
-                                        coroutineScope.launch {
-                                            try {
-                                                com.ferlagod.rocinante.data.repository.BookPageLoader.load(
-                                                    api = api,
-                                                    cache = dataCache,
-                                                    cacheKey = bookUrl,
-                                                    resolveDetailsUrl = { BookWyrmUtils.ensureJsonUrl(bookUrl) },
-                                                    onDetails = { details, fromCache ->
-                                                        if (detailsRequestId != requestId) return@load
-                                                        selectedBookDetails = details
-                                                        // Con la ficha ya en pantalla (venga de
-                                                        // donde venga) se apaga la espera, para
-                                                        // poder abrir otro libro sin esperar al
-                                                        // refresco que sigue por detrás.
-                                                        isLoadingDetails = false
-                                                        if (fromCache) selectedBookReviews = emptyList()
-                                                    },
-                                                    onReviews = { reviews ->
-                                                        if (detailsRequestId == requestId) selectedBookReviews = reviews
-                                                    },
-                                                    onFailure = { e, hadCache ->
-                                                        // Con la ficha ya abierta desde la caché no
-                                                        // se avisa de nada: hay algo que leer y el
-                                                        // refresco llegará la próxima vez.
-                                                        if (!hadCache && detailsRequestId == requestId) {
-                                                            errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
-                                                        }
-                                                    }
-                                                )
-                                            } finally {
-                                                isLoadingDetails = false
-                                            }
-
-                                            // Oportunista: refrescamos los datos enriquecidos de este libro con la
-                                            // barra de progreso etiquetada (1/1), para que se vea qué está pasando.
-                                            // La barra 1/1 solo si no hay un recorrido en
-                                            // marcha, para no pisarle la suya; el refresco de
-                                            // este libro se hace igualmente.
-                                            val ownProgress = !isEnriching
-                                            if (ownProgress) {
-                                                isEnriching = true
-                                                enrichDone = 0
-                                                enrichTotal = 1
-                                            }
-                                            try {
-                                                BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
-                                                    enrichment = enrichment.toMutableMap()
-                                                        .apply { put(bookUrl, enriched) }
-                                                    // Solo este libro: volcar el mapa entero
-                                                    // borraría lo que el recorrido acabara de
-                                                    // guardar mientras tanto.
-                                                    enrichLock.withLock {
-                                                        val stored = dataCache.loadEnrichment()
-                                                        stored[bookUrl] = enriched
-                                                        dataCache.saveEnrichment(stored)
-                                                    }
-                                                }
-                                            } catch (e: Exception) {
-                                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                            } finally {
-                                                if (ownProgress) {
-                                                    enrichDone = 1
-                                                    isEnriching = false
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            .clickable { onBookClick(book) }
                     ) {
                         // Los días que faltan, si se han podido calcular. Se mira aquí arriba
                         // porque de ello depende cuánto aire lleva la fila por abajo: con la
@@ -2011,6 +2126,7 @@ fun ShelfNativeDetailScreen(
             }
         }
     }
+}
 
     selectedBookDetails?.let { details ->
         com.ferlagod.rocinante.ui.components.BookDetailsDialog(
@@ -2122,6 +2238,266 @@ fun ReminderTimeDialog(
             }
         }
     )
+}
+
+/**
+ * Tarjeta de recordatorio diario de lectura para la estantería «Leyendo».
+ *
+ * Muestra el estado del aviso configurado (hora y minuto) y permite modificarlo o ir a
+ * ajustes. Se muestra a ancho completo tanto en la lista habitual como en la cuadrícula.
+ *
+ * @param reminderEnabled Si el recordatorio diario está activo.
+ * @param reminderHour Hora del día programada (0-23).
+ * @param reminderMinute Minuto del recordatorio (0-59).
+ * @param onModifyTime Acción para abrir el selector horario.
+ * @param onNavigateToSettings Acción para ir a la pantalla de ajustes de la app.
+ */
+@Composable
+private fun ReadingReminderCard(
+    reminderEnabled: Boolean,
+    reminderHour: Int,
+    reminderMinute: Int,
+    onModifyTime: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp, MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.reminder_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            if (reminderEnabled) {
+                Text(
+                    text = stringResource(
+                        R.string.reminder_active_at,
+                        String.format("%02d:%02d", reminderHour, reminderMinute)
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(onClick = onModifyTime) {
+                    Text(stringResource(R.string.reminder_modify_time))
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.reminder_inactive_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(onClick = onNavigateToSettings) {
+                    Text(stringResource(R.string.reminder_go_to_settings))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Portada de libro para la cuadrícula de la estantería.
+ *
+ * Mantiene la proporción clásica de libro físico (2:3) y da prioridad visual a la cubierta:
+ * - Si no hay imagen en el servidor, dibuja una cubierta simulada con degradado, icono y texto.
+ * - Los favoritos llevan el corazón rojo en la esquina superior derecha, con sombra oscura para
+ *   no perder contraste sobre portadas claras.
+ * - Si el libro tiene valoración en estrellas, se enseña una pequeña pastilla translúcida con la nota
+ *   abajo a la izquierda.
+ * - En libros que se están leyendo, una fina barra en la base indica la fracción completada.
+ *
+ * @param book Metadatos básicos del libro devueltos por la instancia.
+ * @param enrich Datos enriquecidos de la obra (autor, puntuación personal, etc.).
+ * @param isFavourite Si el libro pertenece a la estantería marcada como favoritos.
+ * @param isHighlighted Si el libro debe mostrarse con borde resaltado (p. ej. tras una búsqueda).
+ * @param readingFraction Fracción leída (0.0 a 1.0) para libros en «Leyendo», o null.
+ * @param onClick Acción al pulsar sobre el libro (abrir su ficha o navegador).
+ */
+@Composable
+private fun ShelfBookGridCard(
+    book: ShelfBookItem,
+    enrich: com.ferlagod.rocinante.data.model.BookEnrichment?,
+    isFavourite: Boolean,
+    isHighlighted: Boolean,
+    readingFraction: Double?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rating = enrich?.rating
+    val coverUrl = book.cover?.url
+
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        border = if (isHighlighted) {
+            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        },
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+            pressedElevation = 4.dp
+        ),
+        colors = if (isHighlighted) {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        } else {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(2f / 3f)
+            .clickable(onClick = onClick)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (!coverUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = book.title ?: stringResource(R.string.book_cover_desc),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                // Portada sustituta tipo encuadernación cuando no hay imagen disponible
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        )
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .size(24.dp)
+                    )
+                    Text(
+                        text = book.title ?: stringResource(R.string.book_no_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    val author = enrich?.authorName?.takeIf { it.isNotBlank() }
+                    if (author != null) {
+                        Text(
+                            text = author,
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(1.dp))
+                    }
+                }
+            }
+
+            // Indicador de favorito en la esquina superior derecha
+            if (isFavourite) {
+                Icon(
+                    imageVector = Icons.Filled.Favorite,
+                    contentDescription = stringResource(R.string.shelf_favourites_desc),
+                    tint = Color.Black.copy(alpha = 0.4f),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 6.dp, end = 5.dp)
+                        .size(18.dp)
+                )
+                Icon(
+                    imageVector = Icons.Filled.Favorite,
+                    contentDescription = null,
+                    tint = Color(0xFFE53935),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 5.dp, end = 5.dp)
+                        .size(18.dp)
+                )
+            }
+
+            // Insignia de valoración (rating) en la esquina inferior izquierda
+            if (rating != null && rating > 0f) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 5.dp, bottom = if (readingFraction != null && readingFraction > 0.0) 8.dp else 5.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB300),
+                            modifier = Modifier.size(10.dp)
+                        )
+                        val ratingText = if (rating % 1.0 == 0.0) rating.toInt().toString() else rating.toString()
+                        Text(
+                            text = ratingText,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // Barra de progreso de lectura (para libros en curso)
+            if (readingFraction != null && readingFraction > 0.0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(Color.Black.copy(alpha = 0.45f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(readingFraction.toFloat().coerceIn(0f, 1f))
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**

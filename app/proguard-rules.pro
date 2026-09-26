@@ -38,3 +38,8 @@
 # Fix for AndroidX WorkManager Room database crash (R8 full mode strips the reflection-instantiated _Impl)
 -keep class androidx.work.impl.WorkDatabase { *; }
 -keep class androidx.work.impl.WorkDatabase_Impl { *; }
+
+# Keep ZXing Barcode Scanner classes and resources
+-keep class com.journeyapps.barcodescanner.** { *; }
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**

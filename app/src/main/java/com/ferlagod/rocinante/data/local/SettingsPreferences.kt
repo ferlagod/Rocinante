@@ -90,7 +90,12 @@ data class SettingsData(
      * Es una sola para todas: quien ordena por fecha lo hace porque así quiere mirar sus
      * libros, no solo los de una estantería.
      */
-    val shelfSortMode: String = ""
+    val shelfSortMode: String = "",
+    /**
+     * El modo de vista de cada estantería (lista o cuadrícula de portadas), codificado como
+     * «read=GRID,reading=LIST».
+     */
+    val shelfDisplayMode: String = ""
 )
 
 /**
@@ -115,6 +120,7 @@ class SettingsPreferences(private val context: Context) {
         private val KEY_OWN_SHELF_LAYOUT = stringPreferencesKey("own_shelf_layout")
         private val KEY_ALLOW_CREATE_SHELVES = booleanPreferencesKey("allow_create_shelves")
         private val KEY_SHELF_SORT_MODE = stringPreferencesKey("shelf_sort_mode")
+        private val KEY_SHELF_DISPLAY_MODE = stringPreferencesKey("shelf_display_mode")
         private val KEY_DISMISSED_ANNOUNCEMENTS = stringSetPreferencesKey("dismissed_announcements")
     }
 
@@ -150,6 +156,7 @@ class SettingsPreferences(private val context: Context) {
             val ownShelfLayout = prefs[KEY_OWN_SHELF_LAYOUT] ?: ""
             val allowCreateShelves = prefs[KEY_ALLOW_CREATE_SHELVES] ?: true
             val shelfSortMode = prefs[KEY_SHELF_SORT_MODE] ?: ""
+            val shelfDisplayMode = prefs[KEY_SHELF_DISPLAY_MODE] ?: ""
 
             SettingsData(
                 themeMode,
@@ -165,7 +172,8 @@ class SettingsPreferences(private val context: Context) {
                 favouriteShelf,
                 ownShelfLayout,
                 allowCreateShelves,
-                shelfSortMode
+                shelfSortMode,
+                shelfDisplayMode
             )
         }
 
@@ -252,6 +260,13 @@ class SettingsPreferences(private val context: Context) {
     suspend fun setShelfSortMode(mode: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[KEY_SHELF_SORT_MODE] = mode
+        }
+    }
+
+    /** Recuerda el modo de vista (lista o cuadrícula de portadas) de las estanterías. */
+    suspend fun setShelfDisplayMode(mode: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[KEY_SHELF_DISPLAY_MODE] = mode
         }
     }
 
