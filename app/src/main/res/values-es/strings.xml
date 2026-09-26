@@ -653,4 +653,5 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="server_announcement_dismiss">Descartar aviso</string>
     <string name="server_announcement_show_more">Ver más</string>
     <string name="server_announcement_show_less">Ver menos</string>
+    <string name="changelog_text_v1_3_4">"• Vista en cuadrícula de portadas: Ahora puedes alternar entre la vista de lista y una cuadrícula de portadas en tus estanterías (como «Leídos») para ver más libros a la vez. Cada estantería recuerda tu preferencia de visualización.\n• Avisos del servidor: Soporte para comunicados y anuncios globales emitidos por los administradores de la instancia en la pestaña de notificaciones.\n• Corrección en búsquedas e instancias: Solucionado el fallo al abrir libros en instancias como ramblingreaders.org que provocaba un mensaje erróneo de sin conexión.\n• Rendimiento y optimización: Reducción de recursos del paquete para menor tamaño y consumo eficiente de memoria."</string>
 </resources>

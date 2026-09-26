@@ -647,4 +647,5 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="server_announcement_dismiss">Dismiss notice</string>
     <string name="server_announcement_show_more">Show more</string>
     <string name="server_announcement_show_less">Show less</string>
+    <string name="changelog_text_v1_3_4">"• Cover grid view: You can now toggle between list and cover grid view in your bookshelves (such as «Read») to browse books faster. Each shelf remembers your preferred display mode.\n• Server announcements: Support for global notices and announcements posted by instance administrators in the notifications tab.\n• Search &amp; instance fixes: Fixed an issue when opening books on instances such as ramblingreaders.org that caused a false «No connection» error.\n• Performance &amp; optimization: Resource shrinking enabled for smaller download size and reduced memory usage."</string>
 </resources>
