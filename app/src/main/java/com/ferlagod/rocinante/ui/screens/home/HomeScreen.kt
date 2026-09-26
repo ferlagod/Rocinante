@@ -591,8 +591,12 @@ fun HomeScreen(
                                 cacheKey = bookUrl,
                                 resolveDetailsUrl = {
                                     val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                    val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                    "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                    if (localUrl.contains("/book/")) {
+                                        val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                        "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                    } else {
+                                        com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(localUrl)
+                                    }
                                 },
                                 onDetails = { details, fromCache ->
                                     dialogBookDetails = details
@@ -1389,8 +1393,12 @@ fun ActivityTab(
                                             cacheKey = bookUrl,
                                             resolveDetailsUrl = {
                                                 val localUrl = com.ferlagod.rocinante.data.api.BookWyrmScraper.resolveLocalBookUrl(api, bookUrl) ?: bookUrl
-                                                val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
-                                                "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                                if (localUrl.contains("/book/")) {
+                                                    val bookId = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(localUrl)
+                                                    "${localUrl.substringBefore("/book/")}/book/$bookId.json"
+                                                } else {
+                                                    com.ferlagod.rocinante.utils.BookWyrmUtils.ensureJsonUrl(localUrl)
+                                                }
                                             },
                                             onDetails = { details, fromCache ->
                                                 selectedBookDetails = details

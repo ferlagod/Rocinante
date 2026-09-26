@@ -243,12 +243,24 @@ fun SearchScreen(
         isLoadingDetails = true
         coroutineScope.launch {
             try {
-                activeBookKey = bookUrl
+                val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+                val fullBookUrl = if (bookUrl.startsWith("http")) {
+                    bookUrl
+                } else {
+                    "$cleanBase/book/${bookUrl.removePrefix("/book/").trimStart('/')}"
+                }
+                activeBookKey = fullBookUrl
                 selectedBookEnrichment = dataCache.loadEnrichment()[
-                    BookWyrmScraper.canonicalBookUrl(bookUrl)
+                    BookWyrmScraper.canonicalBookUrl(fullBookUrl)
                 ]
-                val detailsUrl = BookWyrmUtils.ensureJsonUrl(bookUrl)
-                selectedBookDetails = resolvedApi.getBookDetails(detailsUrl)
+                val detailsUrl = BookWyrmUtils.ensureJsonUrl(fullBookUrl)
+                selectedBookDetails = try {
+                    resolvedApi.getBookDetails(detailsUrl)
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                    BookWyrmScraper.scrapeBookDetails(resolvedApi, baseBookUrl) ?: throw e
+                }
                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                 selectedBookReviews = try {
                     BookWyrmScraper.scrapeBookReviews(resolvedApi, baseBookUrl)
@@ -486,8 +498,9 @@ fun SearchScreen(
                                 if (isLoadingDetails) return@clickable
                                 val bookKey = book.key
                                 if (!bookKey.isNullOrEmpty()) {
+                                    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
                                     if (settingsState.openLinksExternally) {
-                                        val url = if (bookKey.startsWith("http")) bookKey else "https://$instanceUrl/book/$bookKey"
+                                        val url = if (bookKey.startsWith("http")) bookKey else "$cleanBase/book/$bookKey"
                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                         context.startActivity(intent)
                                     } else {
@@ -497,9 +510,13 @@ fun SearchScreen(
                                                 var finalBookKey = bookKey
                                                 if (book.isRemote && !book.remoteId.isNullOrEmpty()) {
                                                     val localUrl = BookWyrmScraper.resolveLocalBookUrl(resolvedApi, book.remoteId)
-                                                    if (localUrl != null) {
-                                                        val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
-                                                        if (potentialKey.isNotBlank()) finalBookKey = potentialKey
+                                                    if (!localUrl.isNullOrEmpty()) {
+                                                        if (localUrl.contains("/book/")) {
+                                                            val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
+                                                            if (potentialKey.isNotBlank()) finalBookKey = potentialKey
+                                                        } else if (localUrl.startsWith("http")) {
+                                                            finalBookKey = localUrl
+                                                        }
                                                     }
                                                 }
                                                 
@@ -513,9 +530,15 @@ fun SearchScreen(
                                                 val detailsUrl = if (finalBookKey.startsWith("http")) {
                                                     BookWyrmUtils.ensureJsonUrl(finalBookKey)
                                                 } else {
-                                                    BookWyrmUtils.ensureJsonUrl("https://$instanceUrl/book/$finalBookKey")
+                                                    BookWyrmUtils.ensureJsonUrl("$cleanBase/book/$finalBookKey")
                                                 }
-                                                selectedBookDetails = resolvedApi.getBookDetails(detailsUrl)
+                                                selectedBookDetails = try {
+                                                    resolvedApi.getBookDetails(detailsUrl)
+                                                } catch (e: Exception) {
+                                                    if (e is kotlinx.coroutines.CancellationException) throw e
+                                                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                    BookWyrmScraper.scrapeBookDetails(resolvedApi, baseBookUrl) ?: throw e
+                                                }
 
                                                 val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
                                                 try {
