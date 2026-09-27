@@ -33,6 +33,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Response
 
 /**
@@ -109,6 +110,20 @@ object AnubisClearance {
     fun isChallengeRedirect(response: Response): Boolean =
         response.isRedirect && response.header("Location")?.contains(CHALLENGE_PATH) == true
 
+    /**
+     * Comprueba si el nombre de una cookie corresponde a la cookie de autorización de Anubis
+     * (tanto en su formato clásico como con sufijo hash por reglas/instancia, ej: techaro.lol-anubis-auth-347ddb4a).
+     * Excluye expresamente las cookies de verificación preliminar (cookie-verification).
+     */
+    fun isAuthCookieName(name: String): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.contains("cookie-verification", ignoreCase = true)) return false
+        val lower = trimmed.lowercase()
+        return lower == COOKIE_NAME.lowercase() ||
+               lower.startsWith("${COOKIE_NAME.lowercase()}-") ||
+               (lower.contains("anubis") && lower.contains("auth"))
+    }
+
     /** ¿Indica la respuesta que es un reto activo de Anubis? */
     fun isAnubisChallengeResponse(response: Response): Boolean {
         val server = response.header("Server") ?: ""
@@ -116,12 +131,15 @@ object AnubisClearance {
         val setCookie = response.headers("Set-Cookie").joinToString("; ")
         val isAnubis = server.contains("anubis", ignoreCase = true) || 
                location.contains(CHALLENGE_PATH) ||
-               setCookie.contains("techaro.lol-anubis")
+               setCookie.contains("anubis", ignoreCase = true)
 
         if (response.code == 403 && isAnubis) return true
 
         // Reto servido con HTTP 200: Anubis borra la cookie de auth o envía verificación
-        if (response.code == 200 && (setCookie.contains("techaro.lol-anubis-cookie-verification") || setCookie.contains("techaro.lol-anubis-auth=;"))) {
+        val clearsAuthCookie = setCookie.contains("anubis-auth", ignoreCase = true) && 
+            (setCookie.contains("=;") || setCookie.contains("Max-Age=0", ignoreCase = true) || setCookie.contains("Expires=", ignoreCase = true))
+        val hasVerificationCookie = setCookie.contains("anubis-cookie-verification", ignoreCase = true)
+        if (response.code == 200 && (hasVerificationCookie || clearsAuthCookie)) {
             return true
         }
 
@@ -139,7 +157,7 @@ object AnubisClearance {
         val setCookie = response.headers("Set-Cookie").joinToString("; ")
         return server.contains("anubis", ignoreCase = true) || 
                location.contains(CHALLENGE_PATH) ||
-               setCookie.contains("techaro.lol-anubis")
+               setCookie.contains("anubis", ignoreCase = true)
     }
 
     /**
@@ -163,9 +181,10 @@ object AnubisClearance {
         val base = baseUrlOf(instanceUrl) ?: return null
         val staleToken = tokenOf(staleCookie)
 
-        // Mientras esperábamos el turno, otra petición puede haber renovado ya.
+        // Mientras esperábamos el turno, otra petición puede haber renovado ya el token.
         val current = cookiesFor(base)
-        if (current != null && tokenOf(current) != null && tokenOf(current) != staleToken) {
+        val currentToken = tokenOf(current)
+        if (current != null && currentToken != null && staleToken != null && currentToken != staleToken) {
             return propagate(current)
         }
 
@@ -193,8 +212,20 @@ object AnubisClearance {
                     staleCookie.split(";").map { it.trim() }.forEach {
                         cookieManager.setCookie(base, it)
                     }
-                    cookieManager.flush()
                 }
+                // Limpiar cualquier cookie de autorización previa de Anubis en CookieManager
+                // para evitar que se interprete un token viejo como resuelto antes de que el WebView actúe
+                val existing = cookieManager.getCookie(base)
+                if (!existing.isNullOrBlank()) {
+                    existing.split(";").map { it.trim() }.forEach { part ->
+                        val name = part.substringBefore('=').trim()
+                        if (isAuthCookieName(name)) {
+                            cookieManager.setCookie(base, "$name=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/")
+                        }
+                    }
+                }
+                cookieManager.flush()
+
                 webView = WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -208,7 +239,7 @@ object AnubisClearance {
                     delay(POLL_MS)
                     val cookies = cookiesFor(base)
                     val token = tokenOf(cookies)
-                    if (token != null && token != staleToken) {
+                    if (token != null && (staleToken == null || token != staleToken)) {
                         withContext(Dispatchers.Main) { cookieManager.flush() }
                         return@withTimeoutOrNull cookies
                     }
@@ -254,15 +285,25 @@ object AnubisClearance {
         if (cookies.isNullOrBlank()) return null
         return cookies.split(";")
             .map { it.trim() }
-            .firstOrNull { it.startsWith("$COOKIE_NAME=") }
-            ?.substringAfter('=')
-            ?.takeIf { it.isNotBlank() }
+            .filter { part ->
+                val name = part.substringBefore('=').trim()
+                isAuthCookieName(name)
+            }
+            .mapNotNull { part ->
+                val value = part.substringAfter('=', "").trim()
+                value.takeIf { it.isNotBlank() }
+            }
+            .firstOrNull()
     }
 
     /** Normaliza la instancia a "https://host/", que es la clave del almacén de cookies. */
     internal fun baseUrlOf(instanceUrl: String?): String? {
         if (instanceUrl.isNullOrBlank()) return null
-        val withScheme = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-        return if (withScheme.endsWith("/")) withScheme else "$withScheme/"
+        val trimmed = instanceUrl.trim()
+        val withScheme = if (trimmed.startsWith("http")) trimmed else "https://$trimmed"
+        val parsed = withScheme.toHttpUrlOrNull()
+        return if (parsed != null) "${parsed.scheme}://${parsed.host}/" else {
+            if (withScheme.endsWith("/")) withScheme else "$withScheme/"
+        }
     }
 }

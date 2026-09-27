@@ -80,6 +80,27 @@ class AnubisClearanceTest {
     }
 
     @Test
+    fun `reconoce y extrae cookies de autorizacion con hash como las de kirja casa`() {
+        val kirjaCookies = "csrftoken=L9xWfw3aiFOs; techaro.lol-anubis-cookie-verification-347ddb4a=01a0e2fe-5b59; techaro.lol-anubis-auth-347ddb4a=jwt_kirja_token; sessionid=xyz"
+        assertEquals("jwt_kirja_token", AnubisClearance.tokenOf(kirjaCookies))
+        assertTrue(AnubisClearance.isAuthCookieName("techaro.lol-anubis-auth-347ddb4a"))
+        assertFalse(AnubisClearance.isAuthCookieName("techaro.lol-anubis-cookie-verification-347ddb4a"))
+    }
+
+    @Test
+    fun `un 200 donde anubis borra la cookie de auth con hash se reconoce como reto`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://kirja.casa/.within.website/?redir=/").build())
+            .protocol(Protocol.HTTP_2)
+            .code(200)
+            .message("OK")
+            .header("Server", "nginx/1.30.1")
+            .header("Set-Cookie", "techaro.lol-anubis-auth-347ddb4a=; Path=/; Expires=Sun, 27 Sep 2026; Max-Age=0")
+            .body("".toResponseBody(null))
+        assertTrue(AnubisClearance.isChallenge(builder.build()))
+    }
+
+    @Test
     fun `un 403 de anubis se reconoce como reto`() {
         val builder = Response.Builder()
             .request(Request.Builder().url("https://comelibros.club/login").build())
