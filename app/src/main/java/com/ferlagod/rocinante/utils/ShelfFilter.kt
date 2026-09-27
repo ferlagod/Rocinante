@@ -37,6 +37,9 @@ sealed interface ShelfFilter {
     /** Libros terminados en un año concreto. Una relectura cuenta en el año en que terminó. */
     data class Year(val year: Int) : ShelfFilter
 
+    /** Libros terminados en un mes concreto de un año. */
+    data class Month(val year: Int, val month: Int) : ShelfFilter
+
     /** Libros con esa nota exacta, en la escala de media estrella de BookWyrm. */
     data class Rating(val stars: Double) : ShelfFilter
 
@@ -87,6 +90,20 @@ object ShelfFiltering {
     fun matches(book: ShelfBookItem, enrichment: BookEnrichment?, filter: ShelfFilter): Boolean =
         when (filter) {
             is ShelfFilter.Year -> filter.year in finishedYears(enrichment)
+
+            is ShelfFilter.Month -> {
+                val readthroughs = enrichment?.readthroughs
+                val dates = if (!readthroughs.isNullOrEmpty()) {
+                    readthroughs.mapNotNull { it.finished }
+                } else {
+                    listOfNotNull(enrichment?.finished)
+                }
+                dates.any { dateStr ->
+                    val clean = dateStr.take(10)
+                    val date = runCatching { java.time.LocalDate.parse(clean) }.getOrNull()
+                    date != null && date.year == filter.year && date.monthValue == filter.month
+                }
+            }
 
             is ShelfFilter.Rating -> enrichment?.rating == filter.stars
 

@@ -65,7 +65,13 @@ data class ReadingStats(
     val totalBooks: Int,
     val booksThisYear: Int,
     val totalPages: Int,
+    val pagesThisYear: Int = 0,
+    val avgPagesPerBook: Double? = null,
+    val avgPagesPerBookThisYear: Double? = null,
+    val uniqueBooksCount: Int = totalBooks,
+    val rereadsCount: Int = 0,
     val booksPerYear: List<YearCount>,
+    val booksPerMonthThisYear: List<MonthCount> = emptyList(),
     val booksWithoutFinishDate: Int,
     val booksWithoutPages: Int,
     val topAuthors: List<AuthorCount>,
@@ -79,12 +85,17 @@ data class ReadingStats(
     val booksWithReadingDays: Int,
     val fastestRead: ReadSpan?,
     val slowestRead: ReadSpan?,
+    val longestBook: BookPagesSpan? = null,
+    val shortestBook: BookPagesSpan? = null,
     val languageDistribution: List<LanguageCount>,
     val booksWithoutLanguage: Int,
     val formatDistribution: List<FormatCount>,
-    val booksWithoutFormat: Int
+    val booksWithoutFormat: Int,
+    val filterYear: Int? = null
 ) {
     data class YearCount(val year: Int, val count: Int)
+
+    data class MonthCount(val month: Int, val count: Int)
 
     data class AuthorCount(val name: String, val count: Int)
 
@@ -102,10 +113,18 @@ data class ReadingStats(
      */
     data class ReadSpan(val book: ShelfBookItem, val days: Int)
 
+    /**
+     * Un libro con su número de páginas para los extremos de longitud (más largo / más corto).
+     */
+    data class BookPagesSpan(val book: ShelfBookItem, val pages: Int)
+
     data class FormatCount(val format: String, val count: Int)
 
     /** Un solo año no es una serie temporal: no merece gráfico, solo los totales. */
     val hasChartData: Boolean get() = booksPerYear.size >= 2
+
+    /** Datos mensuales disponibles para el año consultado. */
+    val hasMonthlyData: Boolean get() = booksPerMonthThisYear.any { it.count > 0 }
 
     /** Con un único autor el gráfico no compara nada. */
     val hasAuthorData: Boolean get() = topAuthors.size >= 2
@@ -115,6 +134,12 @@ data class ReadingStats(
 
     /** Sin libros con las dos fechas no se puede medir cuánto se tarda en leer. */
     val hasReadingDays: Boolean get() = booksWithReadingDays > 0
+
+    /** Hay libros de distintas longitudes para mostrar extremos de páginas. */
+    val hasPageExtremes: Boolean get() = longestBook != null && shortestBook != null && longestBook.pages != shortestBook.pages
+
+    /** Hay lecturas extremas de tiempo o de páginas. */
+    val hasExtremes: Boolean get() = (fastestRead != null && slowestRead != null) || hasPageExtremes
 
     val hasLanguageData: Boolean get() = languageDistribution.isNotEmpty()
 
@@ -178,13 +203,28 @@ object ReadingStatsCalculator {
      * @param enrichment caché de enriquecimiento indexada por id de libro: de ahí salen la
      *   valoración y la fecha de fin. Un libro sin valoración no entra.
      * @param limit cuántos devolver como mucho.
+     * @param filterYear año concreto por el que filtrar, o null para todo el historial.
      */
     fun topRated(
         books: List<ShelfBookItem>,
         enrichment: Map<String, BookEnrichment>,
-        limit: Int = 5
+        limit: Int = 5,
+        filterYear: Int? = null
     ): List<TopRatedBook> {
-        val rated = books.mapNotNull { book ->
+        val candidateBooks = if (filterYear != null) {
+            books.filter { book ->
+                val data = book.id?.let { enrichment[it] } ?: return@filter false
+                val rts = data.readthroughs
+                if (!rts.isNullOrEmpty()) {
+                    rts.any { parseIsoDate(it.finished)?.year == filterYear }
+                } else {
+                    parseIsoDate(data.finished)?.year == filterYear
+                }
+            }
+        } else {
+            books
+        }
+        val rated = candidateBooks.mapNotNull { book ->
             val data = book.id?.let { enrichment[it] } ?: return@mapNotNull null
             val rating = data.rating ?: return@mapNotNull null
             TopRatedBook(book, rating, data.finished?.takeIf { it.isNotBlank() })
@@ -209,49 +249,140 @@ object ReadingStatsCalculator {
      *   fecha de fin en ISO ("2025-01-01"), que es el único formato fiable (el texto visible
      *   de BookWyrm está localizado y no se debe parsear).
      * @param currentYear año en curso; se pasa como parámetro para poder probar la función.
+     * @param filterYear año por el que filtrar todas las estadísticas, o null para el historial completo.
      */
     fun compute(
         books: List<ShelfBookItem>,
         enrichment: Map<String, BookEnrichment>,
-        currentYear: Int
+        currentYear: Int,
+        filterYear: Int? = null
     ): ReadingStats {
-        var totalReads = 0
-        var totalPages = 0
-        var booksWithoutPages = 0
+        val targetYear = filterYear ?: currentYear
 
-        val years = books.flatMap { book ->
+        // Recuento histórico completo de años para el gráfico de barras por años
+        val allYears = books.flatMap { book ->
             val enriched = book.id?.let { enrichment[it] }
             val readthroughs = enriched?.readthroughs
-            
-            val count = if (!readthroughs.isNullOrEmpty()) readthroughs.size else 1
-            totalReads += count
-            
-            val pages = book.pages ?: 0
-            totalPages += pages * count
-            if (pages <= 0) booksWithoutPages += count
-            
             if (!readthroughs.isNullOrEmpty()) {
                 readthroughs.mapNotNull { rt ->
-                    rt.finished?.take(4)?.toIntOrNull()?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
+                    parseIsoDate(rt.finished)?.year?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
                 }
             } else {
-                val finished = enriched?.finished
-                val y = finished?.take(4)?.toIntOrNull()?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
+                val y = parseIsoDate(enriched?.finished)?.year?.takeIf { it in MIN_PLAUSIBLE_YEAR..currentYear }
                 if (y != null) listOf(y) else emptyList()
             }
         }
-
-        val counts = years.groupingBy { it }.eachCount()
-        val perYear = if (counts.isEmpty()) {
+        val allCounts = allYears.groupingBy { it }.eachCount()
+        val perYear = if (allCounts.isEmpty()) {
             emptyList()
         } else {
-            // Se rellenan los huecos para que el eje horizontal sea continuo.
-            (counts.keys.min()..counts.keys.max()).map { year ->
-                ReadingStats.YearCount(year, counts[year] ?: 0)
+            (allCounts.keys.min()..allCounts.keys.max()).map { year ->
+                ReadingStats.YearCount(year, allCounts[year] ?: 0)
             }
         }
 
-        val authorNames = books.mapNotNull { book ->
+        // Si se filtra por año, determinamos qué libros y qué readthroughs corresponden a ese año
+        data class BookWithReadCount(val book: ShelfBookItem, val readsInPeriod: Int, val finishedDates: List<String>)
+        val booksWithPeriodReads: List<BookWithReadCount> = books.mapNotNull { book ->
+            val enriched = book.id?.let { enrichment[it] }
+            val readthroughs = enriched?.readthroughs
+            if (filterYear == null) {
+                val count = if (!readthroughs.isNullOrEmpty()) readthroughs.size else 1
+                val dates = if (!readthroughs.isNullOrEmpty()) {
+                    readthroughs.mapNotNull { it.finished }
+                } else {
+                    listOfNotNull(enriched?.finished)
+                }
+                BookWithReadCount(book, count, dates)
+            } else {
+                if (!readthroughs.isNullOrEmpty()) {
+                    val matching = readthroughs.filter { parseIsoDate(it.finished)?.year == filterYear }
+                    if (matching.isEmpty()) null
+                    else BookWithReadCount(book, matching.size, matching.mapNotNull { it.finished })
+                } else {
+                    val finishedDate = enriched?.finished
+                    if (parseIsoDate(finishedDate)?.year == filterYear) {
+                        BookWithReadCount(book, 1, listOfNotNull(finishedDate))
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+
+        val activeBooks = booksWithPeriodReads.map { it.book }
+        val totalReads = booksWithPeriodReads.sumOf { it.readsInPeriod }
+        val uniqueBooksCount = activeBooks.size
+        val rereadsCount = (totalReads - uniqueBooksCount).coerceAtLeast(0)
+
+        // Páginas totales y del período
+        var totalPages = 0
+        var pagesThisYear = 0
+        var booksWithoutPages = 0
+        var totalBooksWithPages = 0
+        var booksThisYearWithPages = 0
+
+        booksWithPeriodReads.forEach { item ->
+            val book = item.book
+            val isAudiobook = book.physicalFormat?.equals("AudiobookFormat", ignoreCase = true) == true
+            val pages = book.pages ?: 0
+            if (pages > 0) {
+                totalPages += pages * item.readsInPeriod
+                totalBooksWithPages += item.readsInPeriod
+            } else if (!isAudiobook) {
+                booksWithoutPages += item.readsInPeriod
+            }
+        }
+
+        // Páginas del año en curso (o año filtrado)
+        books.forEach { book ->
+            val enriched = book.id?.let { enrichment[it] }
+            val readthroughs = enriched?.readthroughs
+            val pages = book.pages ?: 0
+            val readsInTargetYear = if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.count { parseIsoDate(it.finished)?.year == targetYear }
+            } else {
+                if (parseIsoDate(enriched?.finished)?.year == targetYear) 1 else 0
+            }
+            if (readsInTargetYear > 0 && pages > 0) {
+                pagesThisYear += pages * readsInTargetYear
+                booksThisYearWithPages += readsInTargetYear
+            }
+        }
+
+        val avgPagesPerBook = if (totalBooksWithPages > 0) totalPages.toDouble() / totalBooksWithPages else null
+        val avgPagesPerBookThisYear = if (booksThisYearWithPages > 0) pagesThisYear.toDouble() / booksThisYearWithPages else null
+
+        // Desglose mensual para el año consultado (1..12)
+        val finishedMonths = mutableMapOf<Int, Int>()
+        books.forEach { book ->
+            val enriched = book.id?.let { enrichment[it] }
+            val readthroughs = enriched?.readthroughs
+            val dates = if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.mapNotNull { it.finished }
+            } else {
+                listOfNotNull(enriched?.finished)
+            }
+            dates.forEach { dateStr ->
+                val date = parseIsoDate(dateStr)
+                if (date != null && date.year == targetYear) {
+                    finishedMonths[date.monthValue] = (finishedMonths[date.monthValue] ?: 0) + 1
+                }
+            }
+        }
+        val booksPerMonthThisYear = (1..12).map { month ->
+            ReadingStats.MonthCount(month, finishedMonths[month] ?: 0)
+        }
+
+        // Libros sin fecha de fin (o con fecha no plausible / futura)
+        val booksWithoutFinishDate = if (filterYear == null) {
+            (totalReads - allYears.size).coerceAtLeast(0)
+        } else {
+            0
+        }
+
+        // Autores más leídos
+        val authorNames = activeBooks.mapNotNull { book ->
             book.id?.let { enrichment[it]?.authorName }?.takeIf { it.isNotBlank() }
         }
         val authorCounts = authorNames
@@ -263,12 +394,11 @@ object ReadingStatsCalculator {
             .take(TOP_AUTHORS)
             .map { ReadingStats.AuthorCount(it.key, it.value) }
 
-        val ratings = books.mapNotNull { book ->
+        // Valoraciones
+        val ratings = activeBooks.mapNotNull { book ->
             book.id?.let { enrichment[it]?.rating }?.takeIf { it in 0.5..5.0 }
         }
         val ratingCounts = ratings.groupingBy { it }.eachCount()
-        // Las cinco estrellas enteras salen siempre, aunque estén a cero: así se ve la forma
-        // del reparto. Las medias solo si se han usado, para no llenar el gráfico de huecos.
         val ratingValues = ((1..5).map { it.toDouble() } + ratings.filter { it % 1.0 != 0.0 })
             .distinct()
             .sortedDescending()
@@ -276,13 +406,18 @@ object ReadingStatsCalculator {
             ReadingStats.RatingBucket(it, ratingCounts[it] ?: 0)
         }
 
-        // Días de lectura: solo los tramos (readthroughs) que traen las dos fechas. 
-        // Se descartan los tramos negativos (fechas invertidas al teclearlas), que falsearían la media.
-        val spans = books.flatMap { book ->
+        // Tiempos de lectura (spans)
+        val spans = booksWithPeriodReads.flatMap { item ->
+            val book = item.book
             val enriched = book.id?.let { enrichment[it] } ?: return@flatMap emptyList()
             val readthroughs = enriched.readthroughs
             if (!readthroughs.isNullOrEmpty()) {
-                readthroughs.mapNotNull { rt ->
+                val rts = if (filterYear != null) {
+                    readthroughs.filter { parseIsoDate(it.finished)?.year == filterYear }
+                } else {
+                    readthroughs
+                }
+                rts.mapNotNull { rt ->
                     val start = parseIsoDate(rt.started) ?: return@mapNotNull null
                     val finish = parseIsoDate(rt.finished) ?: return@mapNotNull null
                     val days = java.time.temporal.ChronoUnit.DAYS.between(start, finish)
@@ -295,23 +430,25 @@ object ReadingStatsCalculator {
                 if (days < 0) emptyList() else listOf(days to finish.year)
             }
         }
-        val spansThisYear = spans.filter { it.second == currentYear }
+        val spansThisYear = spans.filter { it.second == targetYear }
 
-        // La lectura más corta y la más larga. Cuenta cada lectura y no cada libro: un libro
-        // releído son dos lecturas, y la media de arriba las cuenta así también. Los días van
-        // contando los dos extremos, como en la estantería, para que un mismo libro no diga
-        // «3 días» en un sitio y «2» en otro.
-        val spansByBook = books.flatMap { book ->
+        // Lectura más rápida y más lenta
+        val spansByBook = booksWithPeriodReads.flatMap { item ->
+            val book = item.book
             val enriched = book.id?.let { enrichment[it] } ?: return@flatMap emptyList()
             val readthroughs = enriched.readthroughs
             val durations = if (!readthroughs.isNullOrEmpty()) {
-                readthroughs.mapNotNull { readingDays(it.started, it.finished) }
+                val rts = if (filterYear != null) {
+                    readthroughs.filter { parseIsoDate(it.finished)?.year == filterYear }
+                } else {
+                    readthroughs
+                }
+                rts.mapNotNull { readingDays(it.started, it.finished) }
             } else {
                 listOfNotNull(readingDays(enriched.started, enriched.finished))
             }
             durations.map { ReadingStats.ReadSpan(book, it) }
         }
-        // Empates deshechos por título, para que la tarjeta no baile entre aperturas.
         val byDuration = compareBy<ReadingStats.ReadSpan>({ it.days }, { it.book.title ?: "" })
         val fastestRead = spansByBook.minWithOrNull(byDuration)
         val slowestRead = spansByBook.maxWithOrNull(
@@ -319,19 +456,24 @@ object ReadingStatsCalculator {
                 .thenByDescending { it.book.title ?: "" }
         )
 
-        // Idiomas: se agrupan por BANDERA, no por el texto. BookWyrm guarda el idioma tal y
-        // como venga en la edición, así que una misma estantería mezcla "Danish" y "Dansk";
-        // agrupar por el texto los contaría como dos idiomas distintos. Como etiqueta se usa
-        // la grafía más repetida. Los idiomas sin bandera se agrupan por su texto en minúsculas.
+        // Extremos de longitud (libro más largo y más corto con páginas conocidas)
+        val validPageBooks = activeBooks.filter { (it.pages ?: 0) > 0 }
+        val longestBook = validPageBooks.maxWithOrNull(
+            compareBy<ShelfBookItem>({ it.pages ?: 0 }, { it.title ?: "" })
+        )?.let { ReadingStats.BookPagesSpan(it, it.pages ?: 0) }
+        val shortestBook = validPageBooks.minWithOrNull(
+            compareBy<ShelfBookItem>({ it.pages ?: 0 }, { it.title ?: "" })
+        )?.let { ReadingStats.BookPagesSpan(it, it.pages ?: 0) }
+
+        // Idiomas
         val languageSpellings = mutableMapOf<String, MutableList<String>>()
         var booksWithLanguage = 0
-        books.forEach { book ->
+        activeBooks.forEach { book ->
             val languages = book.languages.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
             if (languages.isEmpty()) return@forEach
             booksWithLanguage++
             languages
                 .map { it to (LanguageFlags.flagFor(it) ?: it.lowercase()) }
-                // Un libro solo cuenta una vez por idioma, aunque liste "Danish" y "Dansk".
                 .distinctBy { (_, key) -> key }
                 .forEach { (spelling, key) ->
                     languageSpellings.getOrPut(key) { mutableListOf() }.add(spelling)
@@ -345,34 +487,44 @@ object ReadingStatsCalculator {
             }
             .sortedWith(compareByDescending<ReadingStats.LanguageCount> { it.count }.thenBy { it.label })
 
-        val formats = books.mapNotNull { it.physicalFormat?.trim()?.takeIf { f -> f.isNotEmpty() } }
+        // Formatos
+        val formats = activeBooks.mapNotNull { it.physicalFormat?.trim()?.takeIf { f -> f.isNotEmpty() } }
         val formatDistribution = formats.groupingBy { it }.eachCount().entries
             .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
             .map { ReadingStats.FormatCount(it.key, it.value) }
 
         return ReadingStats(
             totalBooks = totalReads,
-            booksThisYear = counts[currentYear] ?: 0,
+            booksThisYear = allCounts[targetYear] ?: 0,
             totalPages = totalPages,
+            pagesThisYear = pagesThisYear,
+            avgPagesPerBook = avgPagesPerBook,
+            avgPagesPerBookThisYear = avgPagesPerBookThisYear,
+            uniqueBooksCount = uniqueBooksCount,
+            rereadsCount = rereadsCount,
             booksPerYear = perYear,
-            booksWithoutFinishDate = totalReads - years.size,
+            booksPerMonthThisYear = booksPerMonthThisYear,
+            booksWithoutFinishDate = booksWithoutFinishDate,
             booksWithoutPages = booksWithoutPages,
             topAuthors = topAuthors,
-            booksWithoutAuthor = books.size - authorNames.size,
+            booksWithoutAuthor = activeBooks.size - authorNames.size,
             averageRating = ratings.average().takeIf { ratings.isNotEmpty() },
             ratedBooks = ratings.size,
             ratingDistribution = distribution,
-            booksWithoutRating = books.size - ratings.size,
+            booksWithoutRating = activeBooks.size - ratings.size,
             avgReadingDaysThisYear = spansThisYear.map { it.first }.average()
                 .takeIf { spansThisYear.isNotEmpty() },
             avgReadingDaysAllTime = spans.map { it.first }.average().takeIf { spans.isNotEmpty() },
             booksWithReadingDays = spans.size,
             fastestRead = fastestRead,
             slowestRead = slowestRead,
+            longestBook = longestBook,
+            shortestBook = shortestBook,
             languageDistribution = languageDistribution,
-            booksWithoutLanguage = books.size - booksWithLanguage,
+            booksWithoutLanguage = activeBooks.size - booksWithLanguage,
             formatDistribution = formatDistribution,
-            booksWithoutFormat = books.size - formats.size
+            booksWithoutFormat = activeBooks.size - formats.size,
+            filterYear = filterYear
         )
     }
 }

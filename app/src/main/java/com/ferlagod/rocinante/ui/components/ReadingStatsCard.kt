@@ -19,10 +19,14 @@
  */
 package com.ferlagod.rocinante.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,38 +36,46 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.Icon
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.utils.ReadingStats
@@ -72,28 +84,72 @@ import kotlin.math.roundToInt
 
 /**
  * Tarjeta de estadísticas de lectura del perfil: tres cifras destacadas (total de libros,
- * libros de este año y páginas acumuladas) y un gráfico de barras de libros por año.
- *
- * Todo procede de datos ya cacheados, así que la tarjeta no dispara ninguna petición.
- * Si la estantería "Leídos" aún no se ha abierto nunca, quien la usa no debe mostrarla.
+ * libros de este año y páginas acumuladas), desglose de lecturas/relecturas, resumen de páginas,
+ * y gráficos alternables entre histórico anual y meses del año.
  */
 @Composable
 fun ReadingStatsCard(
     stats: ReadingStats,
     currentYear: Int,
     modifier: Modifier = Modifier,
-    // Qué hacer con los libros a los que les faltan las páginas. Sin esto la advertencia se
-    // queda en advertencia, que es como estaba.
     onFixMissingPages: (() -> Unit)? = null,
-    // Qué hacer con los libros a los que les falta la fecha de fin, que son los que no salen
-    // en la gráfica por años.
     onFixMissingDates: (() -> Unit)? = null,
-    // Qué hacer al tocar el año de la gráfica, para ir a ver los libros de ese año.
-    onYearClick: ((Int) -> Unit)? = null
+    onYearClick: ((Int) -> Unit)? = null,
+    onMonthClick: ((year: Int, month: Int) -> Unit)? = null,
+    showReadingPace: Boolean = false,
+    selectedYear: Int? = null,
+    availableYears: List<Int> = emptyList(),
+    onSelectYear: ((Int?) -> Unit)? = null,
+    onShareClick: (() -> Unit)? = null
 ) {
     val numberFormat = remember { NumberFormat.getIntegerInstance() }
+    val displayYear = stats.filterYear ?: currentYear
+    var chartViewByMonths by remember { mutableStateOf(false) }
 
     OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        // Cabecera con selector temporal y botón de compartir
+        if (availableYears.isNotEmpty() || onShareClick != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterChip(
+                        selected = selectedYear == null,
+                        onClick = { onSelectYear?.invoke(null) },
+                        label = { Text(stringResource(R.string.profile_stats_filter_all_time)) }
+                    )
+                    availableYears.take(6).forEach { year ->
+                        FilterChip(
+                            selected = selectedYear == year,
+                            onClick = { onSelectYear?.invoke(if (selectedYear == year) null else year) },
+                            label = { Text(year.toString()) }
+                        )
+                    }
+                }
+                if (onShareClick != null) {
+                    IconButton(onClick = onShareClick) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.profile_stats_share_summary),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+            HorizontalDivider()
+        }
+
+        // Celdas principales de estadísticas
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -104,35 +160,153 @@ fun ReadingStatsCard(
             StatCell(
                 value = numberFormat.format(stats.totalBooks),
                 label = stringResource(R.string.profile_stats_books),
+                subValue = if (stats.rereadsCount > 0) {
+                    stringResource(R.string.profile_stats_reads_breakdown, stats.uniqueBooksCount, stats.rereadsCount)
+                } else null,
                 modifier = Modifier.weight(1f)
             )
             VerticalDivider(modifier = Modifier.height(36.dp))
             StatCell(
                 value = numberFormat.format(stats.booksThisYear),
-                label = stringResource(R.string.profile_stats_this_year),
+                label = if (stats.filterYear != null) {
+                    stringResource(R.string.profile_stats_filter_year, stats.filterYear)
+                } else {
+                    stringResource(R.string.profile_stats_this_year)
+                },
+                subValue = if (stats.pagesThisYear > 0) {
+                    "${numberFormat.format(stats.pagesThisYear)} págs."
+                } else null,
                 modifier = Modifier.weight(1f)
             )
             VerticalDivider(modifier = Modifier.height(36.dp))
             StatCell(
                 value = numberFormat.format(stats.totalPages),
                 label = stringResource(R.string.profile_stats_pages),
+                subValue = stats.avgPagesPerBook?.let {
+                    stringResource(R.string.profile_stats_pages_per_book, it.roundToInt())
+                },
                 modifier = Modifier.weight(1f)
             )
         }
 
-        if (stats.hasChartData) {
+        // Resumen detallado: «12 libros este año · 3.840 págs. · media de 320 págs./libro»
+        if (stats.booksThisYear > 0 && stats.pagesThisYear > 0 && stats.avgPagesPerBookThisYear != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(
+                        R.string.profile_stats_summary_this_year,
+                        stats.booksThisYear,
+                        numberFormat.format(stats.pagesThisYear),
+                        stats.avgPagesPerBookThisYear.roundToInt()
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Ritmo de lectura independiente del reto anual
+        if (showReadingPace && stats.hasReadingDays) {
             HorizontalDivider()
-            BooksPerYearChart(
-                data = stats.booksPerYear,
-                currentYear = currentYear,
-                numberFormat = numberFormat,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                onYearClick = onYearClick
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatCell(
+                    value = stats.avgReadingDaysThisYear?.let { numberFormat.format(it.roundToInt()) } ?: "–",
+                    label = stringResource(R.string.profile_stats_days_this_year),
+                    modifier = Modifier.weight(1f)
+                )
+                VerticalDivider(modifier = Modifier.height(36.dp))
+                StatCell(
+                    value = stats.avgReadingDaysAllTime?.let { numberFormat.format(it.roundToInt()) } ?: "–",
+                    label = stringResource(R.string.profile_stats_days_total),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            val canFixDates = onFixMissingDates != null && stats.booksWithReadingDays < stats.totalBooks
+            Text(
+                text = stringResource(
+                    R.string.profile_stats_days_basis,
+                    stats.booksWithReadingDays,
+                    stats.totalBooks
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (canFixDates) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    .then(if (canFixDates) Modifier.clickable { onFixMissingDates?.invoke() } else Modifier)
             )
         }
 
-        // Los datos que faltan se dicen, no se disimulan: si no, las cifras aparentan ser
-        // totales cuando en realidad solo suman los libros que traían el dato.
+        // Gráficos de lectura: Por años vs Meses
+        if (stats.hasChartData || stats.hasMonthlyData) {
+            HorizontalDivider()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (chartViewByMonths) {
+                        stringResource(R.string.profile_stats_view_months, displayYear)
+                    } else {
+                        stringResource(R.string.profile_stats_per_year)
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(
+                        selected = !chartViewByMonths,
+                        onClick = { chartViewByMonths = false },
+                        label = { Text(stringResource(R.string.profile_stats_view_years)) }
+                    )
+                    FilterChip(
+                        selected = chartViewByMonths,
+                        onClick = { chartViewByMonths = true },
+                        label = { Text(stringResource(R.string.profile_stats_view_months, displayYear)) }
+                    )
+                }
+            }
+
+            if (chartViewByMonths) {
+                BooksPerMonthChart(
+                    data = stats.booksPerMonthThisYear,
+                    year = displayYear,
+                    numberFormat = numberFormat,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    onMonthClick = onMonthClick
+                )
+            } else {
+                BooksPerYearChart(
+                    data = stats.booksPerYear,
+                    currentYear = currentYear,
+                    numberFormat = numberFormat,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    onYearClick = onYearClick
+                )
+            }
+        }
+
+        // Advertencias sobre datos que faltan
         if (stats.booksWithoutFinishDate > 0 || stats.booksWithoutPages > 0) {
             Column(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
@@ -384,10 +558,8 @@ fun RatingsCard(
     if (!stats.hasRatingData) return
 
     val numberFormat = remember { NumberFormat.getInstance() }
-    // La media se redondea a media estrella, que es lo mínimo que se puede puntuar en
-    // BookWyrm: un 4,28 no corresponde a ninguna valoración que se pueda dar.
     val averageText = stats.averageRating
-        ?.let { numberFormat.format(Math.round(it * 2) / 2.0) } ?: ""
+        ?.let { String.format(java.util.Locale.getDefault(), "%.1f", it) } ?: ""
     val maxCount = stats.ratingDistribution.maxOf { it.count }.coerceAtLeast(1)
     val barColor = MaterialTheme.colorScheme.primary
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -657,6 +829,12 @@ private fun HorizontalBarRow(
     onClick: (() -> Unit)? = null,
     label: @Composable () -> Unit
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (count > 0 && maxCount > 0) (count / maxCount.toFloat()).coerceIn(0f, 1f) else 0f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "BarProgress"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -677,10 +855,10 @@ private fun HorizontalBarRow(
                 .clip(RoundedCornerShape(6.dp))
                 .background(trackColor)
         ) {
-            if (count > 0) {
+            if (animatedProgress > 0f) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(count / maxCount.toFloat())
+                        .fillMaxWidth(animatedProgress)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(6.dp))
                         .background(barColor)
@@ -698,7 +876,12 @@ private fun HorizontalBarRow(
 }
 
 @Composable
-private fun StatCell(value: String, label: String, modifier: Modifier = Modifier) {
+private fun StatCell(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    subValue: String? = null
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -715,6 +898,16 @@ private fun StatCell(value: String, label: String, modifier: Modifier = Modifier
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        if (!subValue.isNullOrBlank()) {
+            Text(
+                text = subValue,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -736,10 +929,16 @@ private fun BooksPerYearChart(
     val mutedBarColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
     val axisColor = MaterialTheme.colorScheme.outlineVariant
 
-    val maxCount = data.maxOf { it.count }.coerceAtLeast(1)
+    val maxCount = data.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
     val peakYear = data.maxByOrNull { it.count }?.year
     // Con muchos años no caben todas las etiquetas: se muestra una de cada N y siempre la última.
     val labelStep = ((data.size + 7) / 8).coerceAtLeast(1)
+
+    val animProgress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "YearChartAnim"
+    )
 
     val chartDescription = stringResource(
         R.string.profile_stats_chart_desc,
@@ -747,12 +946,6 @@ private fun BooksPerYearChart(
     )
 
     Column(modifier = modifier.semantics { contentDescription = chartDescription }) {
-        Text(
-            text = stringResource(R.string.profile_stats_per_year),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
         Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
             data.forEach { entry ->
                 val showValue = entry.count > 0 && (entry.year == currentYear || entry.year == peakYear)
@@ -770,9 +963,6 @@ private fun BooksPerYearChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(88.dp)
-                // El gráfico es un lienzo, así que el toque hay que traducirlo a barra: se
-                // divide el ancho entre los años, igual que al dibujarlas. Los años a cero no
-                // llevan a ningún sitio; tocarlos dejaría una lista vacía sin explicación.
                 .then(
                     if (onYearClick != null && data.isNotEmpty()) {
                         Modifier.pointerInput(data) {
@@ -794,7 +984,7 @@ private fun BooksPerYearChart(
 
             data.forEachIndexed { index, entry ->
                 if (entry.count <= 0) return@forEachIndexed
-                val barHeight = (size.height * entry.count / maxCount).coerceAtLeast(minVisibleHeight)
+                val barHeight = ((size.height * entry.count / maxCount) * animProgress).coerceAtLeast(minVisibleHeight)
                 val left = index * slotWidth + gap / 2f
                 // Solo se redondea el extremo del dato; el pie queda anclado al eje.
                 val path = Path().apply {
@@ -827,6 +1017,126 @@ private fun BooksPerYearChart(
                 val show = index % labelStep == 0 || index == data.lastIndex
                 Text(
                     text = if (show) entry.year.toString() else "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Gráfico de barras de los 12 meses del año consultado: destaca el mes pico de lecturas
+ * y permite pulsar un mes para abrir los libros terminados en él.
+ */
+@Composable
+private fun BooksPerMonthChart(
+    data: List<ReadingStats.MonthCount>,
+    year: Int,
+    numberFormat: NumberFormat,
+    modifier: Modifier = Modifier,
+    onMonthClick: ((year: Int, month: Int) -> Unit)? = null
+) {
+    val barColor = MaterialTheme.colorScheme.primary
+    val mutedBarColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+    val axisColor = MaterialTheme.colorScheme.outlineVariant
+
+    val maxCount = data.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
+    val peakMonth = data.maxByOrNull { it.count }?.month
+
+    val animProgress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "MonthChartAnim"
+    )
+
+    val monthNames = remember {
+        (1..12).map { m ->
+            java.time.Month.of(m).getDisplayName(
+                java.time.format.TextStyle.SHORT,
+                java.util.Locale.getDefault()
+            ).take(3).replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    val chartDescription = stringResource(
+        R.string.profile_stats_month_chart_desc,
+        year,
+        data.joinToString(", ") { "${monthNames.getOrElse(it.month - 1) { _ -> it.month.toString() }}: ${it.count}" }
+    )
+
+    Column(modifier = modifier.semantics { contentDescription = chartDescription }) {
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            data.forEach { entry ->
+                val showValue = entry.count > 0 && entry.month == peakMonth
+                Text(
+                    text = if (showValue) numberFormat.format(entry.count) else "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(88.dp)
+                .then(
+                    if (onMonthClick != null && data.isNotEmpty()) {
+                        Modifier.pointerInput(data, year) {
+                            detectTapGestures { offset ->
+                                val slot = size.width.toFloat() / data.size
+                                val index = (offset.x / slot).toInt().coerceIn(0, data.size - 1)
+                                val entry = data[index]
+                                if (entry.count > 0) onMonthClick(year, entry.month)
+                            }
+                        }
+                    } else Modifier
+                )
+        ) {
+            val slotWidth = size.width / data.size
+            val gap = 2.dp.toPx()
+            val barWidth = (slotWidth - gap).coerceAtLeast(1f)
+            val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+            val minVisibleHeight = 3.dp.toPx()
+
+            data.forEachIndexed { index, entry ->
+                if (entry.count <= 0) return@forEachIndexed
+                val barHeight = ((size.height * entry.count / maxCount) * animProgress).coerceAtLeast(minVisibleHeight)
+                val left = index * slotWidth + gap / 2f
+                val path = Path().apply {
+                    addRoundRect(
+                        RoundRect(
+                            rect = Rect(
+                                offset = Offset(left, size.height - barHeight),
+                                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
+                            ),
+                            topLeft = radius,
+                            topRight = radius,
+                            bottomRight = CornerRadius.Zero,
+                            bottomLeft = CornerRadius.Zero
+                        )
+                    )
+                }
+                drawPath(path, color = if (entry.month == peakMonth) barColor else mutedBarColor)
+            }
+
+            drawLine(
+                color = axisColor,
+                start = Offset(0f, size.height),
+                end = Offset(size.width, size.height),
+                strokeWidth = 1.dp.toPx()
+            )
+        }
+
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            data.forEachIndexed { index, entry ->
+                Text(
+                    text = monthNames.getOrElse(index) { entry.month.toString() },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

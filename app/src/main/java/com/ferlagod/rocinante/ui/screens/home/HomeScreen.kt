@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Notifications
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalUriHandler
 import com.ferlagod.rocinante.ui.screens.notifications.NotificationsTab
 import com.ferlagod.rocinante.ui.screens.notifications.NotificationDetailDialog
@@ -1826,7 +1827,10 @@ fun ProfileTab(
         mutableStateOf<Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>>(emptyMap())
     }
 
-    LaunchedEffect(refreshTrigger) {
+    var selectedStatsYear by remember { mutableStateOf<Int?>(null) }
+    var showYearInReviewDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(refreshTrigger, selectedStatsYear) {
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
         readBooks = readShelf
         val enrichmentData = dataCache.loadEnrichment()
@@ -1837,12 +1841,14 @@ fun ProfileTab(
             com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
                 books = readShelf,
                 enrichment = enrichmentData,
-                currentYear = currentYear
+                currentYear = currentYear,
+                filterYear = selectedStatsYear
             )
         }
         topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
             books = readShelf,
-            enrichment = enrichmentData
+            enrichment = enrichmentData,
+            filterYear = selectedStatsYear
         )
     }
 
@@ -2014,6 +2020,69 @@ fun ProfileTab(
                 }
             },
             onDismiss = { showMissingFormat = false }
+        )
+    }
+
+    val availableStatsYears = remember(readBooks, enrichment) {
+        val years = readBooks.flatMap { book ->
+            val enriched = book.id?.let { enrichment[it] }
+            val readthroughs = enriched?.readthroughs
+            if (!readthroughs.isNullOrEmpty()) {
+                readthroughs.mapNotNull { rt -> rt.finished?.take(4)?.toIntOrNull() }
+            } else {
+                listOfNotNull(enriched?.finished?.take(4)?.toIntOrNull())
+            }
+        }.filter { it in 1900..currentYear }.distinct().sortedDescending()
+        if (years.isEmpty() || currentYear !in years) {
+            (listOf(currentYear) + years).distinct().sortedDescending()
+        } else {
+            years
+        }
+    }
+
+    if (showYearInReviewDialog && readingStats != null) {
+        val yearLabel = selectedStatsYear?.toString() ?: currentYear.toString()
+        YearInReviewDialog(
+            stats = readingStats!!,
+            yearLabel = yearLabel,
+            onDismiss = { showYearInReviewDialog = false },
+            onShareExternal = { shareText ->
+                showYearInReviewDialog = false
+                val sendIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                    type = "text/plain"
+                }
+                context.startActivity(Intent.createChooser(sendIntent, null))
+            },
+            onPostToBookWyrm = { shareText ->
+                showYearInReviewDialog = false
+                coroutineScope.launch {
+                    try {
+                        val profileUrl = profile?.id
+                        val shelfUrl = if (profileUrl != null) "$profileUrl/books/to-read" else "${instanceUrl.trimEnd('/')}/"
+                        val htmlResponse = api.getRawHtmlResponse(shelfUrl)
+                        if (htmlResponse.isSuccessful) {
+                            val html = htmlResponse.body()?.string() ?: ""
+                            val userMatch = "name=[\"']user[\"'][^>]*?value=[\"'](\\d+)[\"']|value=[\"'](\\d+)[\"'][^>]*?name=[\"']user[\"']".toRegex(RegexOption.IGNORE_CASE).find(html)
+                            val fallbackMatch = "data-user-id=[\"'](\\d+)[\"']".toRegex(RegexOption.IGNORE_CASE).find(html)
+                            val userId = userMatch?.let { it.groups[1]?.value ?: it.groups[2]?.value } ?: fallbackMatch?.groups?.get(1)?.value
+                            if (userId != null) {
+                                val csrfToken = cookieJar?.currentCsrfToken() ?: ""
+                                val response = api.createStatus(userId = userId, content = shareText, csrfToken = csrfToken)
+                                if (response.isSuccessful || response.code() == 302) {
+                                    Toast.makeText(context, context.getString(R.string.post_success), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                        Toast.makeText(context, e.localizedMessage ?: "Error", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         )
     }
 
@@ -2348,7 +2417,15 @@ fun ProfileTab(
                                 onFixMissingDates = { showMissingDates = true },
                                 onYearClick = {
                                     onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Year(it))
-                                }
+                                },
+                                onMonthClick = { y, m ->
+                                    onOpenFilter(com.ferlagod.rocinante.utils.ShelfFilter.Month(y, m))
+                                },
+                                showReadingPace = profile?.readingGoal == null,
+                                selectedYear = selectedStatsYear,
+                                availableYears = availableStatsYears,
+                                onSelectYear = { selectedStatsYear = it },
+                                onShareClick = { showYearInReviewDialog = true }
                             )
                         }
                     }
@@ -2493,12 +2570,13 @@ fun ProfileTab(
                 }
                 com.ferlagod.rocinante.utils.ProfileSection.READING_EXTREMES -> {
                     readingStats?.let { stats ->
-                        // Sin ninguna lectura con las dos fechas no hay tarjeta que enseñar.
-                        if (stats.fastestRead != null && stats.slowestRead != null) {
+                        if (stats.hasExtremes) {
                             item {
                                 ProfileReadingExtremesCard(
                                     fastest = stats.fastestRead,
                                     slowest = stats.slowestRead,
+                                    longest = stats.longestBook,
+                                    shortest = stats.shortestBook,
                                     onBookClick = openBook
                                 )
                             }
@@ -2917,18 +2995,61 @@ fun ActivityDetailsDialog(
  * que en las filas de portadas del perfil.
  */
 /**
- * La lectura más rápida y la más lenta, en días enteros.
- *
- * Solo cuentan las que tienen fecha de inicio **y** de fin: sin las dos no hay nada que medir,
- * y BookWyrm deja la de inicio vacía a menudo, así que la tarjeta dice sobre cuántas lecturas
- * habla en vez de dar a entender que habla de toda la estantería.
+ * La lectura más rápida, la más lenta, y los extremos de longitud (libro más largo y más corto).
  */
 @Composable
 private fun ProfileReadingExtremesCard(
-    fastest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan,
-    slowest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan,
+    fastest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan?,
+    slowest: com.ferlagod.rocinante.utils.ReadingStats.ReadSpan?,
+    longest: com.ferlagod.rocinante.utils.ReadingStats.BookPagesSpan? = null,
+    shortest: com.ferlagod.rocinante.utils.ReadingStats.BookPagesSpan? = null,
     onBookClick: (com.ferlagod.rocinante.data.model.ShelfBookItem) -> Unit
 ) {
+    data class ExtremeRowItem(
+        val label: String,
+        val book: com.ferlagod.rocinante.data.model.ShelfBookItem,
+        val valueText: String
+    )
+    val numberFormat = remember { java.text.NumberFormat.getIntegerInstance() }
+    val items = buildList {
+        if (fastest != null) {
+            add(
+                ExtremeRowItem(
+                    label = stringResource(R.string.profile_reading_fastest),
+                    book = fastest.book,
+                    valueText = pluralStringResource(R.plurals.reading_days, fastest.days, fastest.days)
+                )
+            )
+        }
+        if (slowest != null) {
+            add(
+                ExtremeRowItem(
+                    label = stringResource(R.string.profile_reading_slowest),
+                    book = slowest.book,
+                    valueText = pluralStringResource(R.plurals.reading_days, slowest.days, slowest.days)
+                )
+            )
+        }
+        if (longest != null && shortest != null && longest.pages != shortest.pages) {
+            add(
+                ExtremeRowItem(
+                    label = stringResource(R.string.profile_reading_longest),
+                    book = longest.book,
+                    valueText = "${numberFormat.format(longest.pages)} págs."
+                )
+            )
+            add(
+                ExtremeRowItem(
+                    label = stringResource(R.string.profile_reading_shortest),
+                    book = shortest.book,
+                    valueText = "${numberFormat.format(shortest.pages)} págs."
+                )
+            )
+        }
+    }
+
+    if (items.isEmpty()) return
+
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
@@ -2937,30 +3058,25 @@ private fun ProfileReadingExtremesCard(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(12.dp))
-            listOf(
-                stringResource(R.string.profile_reading_fastest) to fastest,
-                stringResource(R.string.profile_reading_slowest) to slowest
-            ).forEachIndexed { index, (label, span) ->
+            items.forEachIndexed { index, item ->
                 if (index > 0) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onBookClick(span.book) },
+                        .clickable { onBookClick(item.book) },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // La portada, del mismo tamaño que en «Mejor valorados»: se reconoce el
-                    // libro antes de leer el título.
                     val coverModifier = Modifier
                         .width(40.dp)
                         .height(60.dp)
                         .clip(MaterialTheme.shapes.small)
-                    val coverUrl = span.book.cover?.url
+                    val coverUrl = item.book.cover?.url
                     if (!coverUrl.isNullOrEmpty()) {
                         AsyncImage(
                             model = coverUrl,
-                            contentDescription = span.book.title
+                            contentDescription = item.book.title
                                 ?: stringResource(R.string.book_cover_desc),
                             modifier = coverModifier,
                             contentScale = ContentScale.Crop
@@ -2973,7 +3089,7 @@ private fun ProfileReadingExtremesCard(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                contentDescription = span.book.title
+                                contentDescription = item.book.title
                                     ?: stringResource(R.string.book_cover_desc),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2982,12 +3098,12 @@ private fun ProfileReadingExtremesCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = label,
+                            text = item.label,
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = span.book.title ?: stringResource(R.string.book_no_title),
+                            text = item.book.title ?: stringResource(R.string.book_no_title),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 2,
@@ -2996,9 +3112,7 @@ private fun ProfileReadingExtremesCard(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = pluralStringResource(
-                            R.plurals.reading_days, span.days, span.days
-                        ),
+                        text = item.valueText,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -3006,6 +3120,132 @@ private fun ProfileReadingExtremesCard(
             }
         }
     }
+}
+
+/**
+ * Diálogo para revisar y compartir los hitos del año o historial (Year in Review)
+ * con publicación directa a BookWyrm o al selector de compartir del sistema.
+ */
+@Composable
+private fun YearInReviewDialog(
+    stats: com.ferlagod.rocinante.utils.ReadingStats,
+    yearLabel: String,
+    onDismiss: () -> Unit,
+    onShareExternal: (String) -> Unit,
+    onPostToBookWyrm: (String) -> Unit
+) {
+    val numberFormat = remember { java.text.NumberFormat.getIntegerInstance() }
+    val topAuthorText = stats.topAuthors.firstOrNull()?.let {
+        stringResource(R.string.profile_stats_share_top_author, it.name, it.count)
+    } ?: ""
+    val topRatedText = stats.fastestRead?.let {
+        stringResource(
+            R.string.profile_stats_share_top_rated,
+            it.book.title ?: "",
+            String.format(java.util.Locale.getDefault(), "%.1f", stats.averageRating ?: 5.0)
+        )
+    } ?: ""
+    val avgDaysText = stats.avgReadingDaysThisYear?.let { numberFormat.format(it.roundToInt()) } ?: "–"
+    val avgPages = stats.avgPagesPerBookThisYear?.roundToInt() ?: stats.avgPagesPerBook?.roundToInt() ?: 0
+
+    val booksCount = if (stats.filterYear != null) stats.totalBooks else stats.booksThisYear
+    val pagesCount = if (stats.filterYear != null) stats.totalPages else stats.pagesThisYear
+
+    val shareText = stringResource(
+        R.string.profile_stats_share_content,
+        yearLabel,
+        booksCount,
+        numberFormat.format(pagesCount),
+        avgDaysText,
+        avgPages,
+        topAuthorText,
+        topRatedText
+    )
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.profile_stats_share_title, yearLabel),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "📚 $booksCount ${stringResource(R.string.profile_stats_books).lowercase()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "📄 ${numberFormat.format(pagesCount)} págs.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        if (avgPages > 0) {
+                            Text(
+                                text = "📏 ~${avgPages} págs./libro  ·  ⏱️ ${avgDaysText} días/libro",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (stats.topAuthors.isNotEmpty()) {
+                            val author = stats.topAuthors.first()
+                            Text(
+                                text = "✍️ Autor/a top: ${author.name} (${author.count})",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                        if (stats.longestBook != null) {
+                            Text(
+                                text = "📖 Más largo: ${stats.longestBook.book.title} (${stats.longestBook.pages} págs.)",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.Button(
+                onClick = { onPostToBookWyrm(shareText) }
+            ) {
+                Text(stringResource(R.string.profile_stats_share_post_bookwyrm))
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                androidx.compose.material3.TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+                androidx.compose.material3.FilledTonalButton(
+                    onClick = { onShareExternal(shareText) }
+                ) {
+                    Text(stringResource(R.string.profile_stats_share_external))
+                }
+            }
+        }
+    )
 }
 
 @Composable

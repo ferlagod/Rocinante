@@ -1443,6 +1443,13 @@ fun ShelfNativeDetailScreen(
             val filterTitle = activeFilter?.let { f ->
                 when (f) {
                     is com.ferlagod.rocinante.utils.ShelfFilter.Year -> f.year.toString()
+                    is com.ferlagod.rocinante.utils.ShelfFilter.Month -> {
+                        val monthName = java.time.Month.of(f.month).getDisplayName(
+                            java.time.format.TextStyle.SHORT,
+                            java.util.Locale.getDefault()
+                        ).replaceFirstChar { it.uppercase() }
+                        "$monthName ${f.year}"
+                    }
                     is com.ferlagod.rocinante.utils.ShelfFilter.Rating ->
                         stringResource(R.string.shelf_filter_rating, formatStars(f.stars))
                     is com.ferlagod.rocinante.utils.ShelfFilter.Language -> f.label

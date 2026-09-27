@@ -338,4 +338,124 @@ class ReadingStatsTest {
         assertEquals(listOf(ReadingStats.YearCount(2026, 2)), stats.booksPerYear)
         assertFalse(stats.hasChartData)
     }
+
+    @Test
+    fun `calcula paginas del ano actual y promedio por libro`() {
+        val books = listOf(
+            book("a", pages = 200),
+            book("b", pages = 400),
+            book("c", pages = 100)
+        )
+        val enrichment = mapOf(
+            finished("a", "2025-12-15"),
+            finished("b", "2026-02-10"),
+            finished("c", "2026-03-20")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(700, stats.totalPages)
+        assertEquals(500, stats.pagesThisYear)
+        assertEquals(250.0, stats.avgPagesPerBookThisYear ?: 0.0, 0.01)
+        assertEquals(233.33, stats.avgPagesPerBook ?: 0.0, 0.01)
+    }
+
+    @Test
+    fun `desglosa libros unicos y relecturas`() {
+        val books = listOf(book("a", pages = 100), book("b", pages = 200))
+        val enrichment = mapOf(
+            "a" to BookEnrichment(
+                bookId = "a",
+                readthroughs = listOf(
+                    com.ferlagod.rocinante.data.model.ReadthroughDates("1", "2024-01-01", "2024-01-10"),
+                    com.ferlagod.rocinante.data.model.ReadthroughDates("2", "2026-05-01", "2026-05-05")
+                )
+            ),
+            finished("b", "2026-06-01")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(3, stats.totalBooks)
+        assertEquals(2, stats.uniqueBooksCount)
+        assertEquals(1, stats.rereadsCount)
+    }
+
+    @Test
+    fun `los audiolibros no cuentan como libros sin paginas`() {
+        val books = listOf(
+            book("audio", pages = null, physicalFormat = "AudiobookFormat"),
+            book("papel_sin_paginas", pages = null, physicalFormat = "Paperback"),
+            book("normal", pages = 300, physicalFormat = "Hardcover")
+        )
+        val enrichment = mapOf(
+            finished("audio", "2026-01-01"),
+            finished("papel_sin_paginas", "2026-02-01"),
+            finished("normal", "2026-03-01")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        // Solo "papel_sin_paginas" debe contar como sin páginas
+        assertEquals(1, stats.booksWithoutPages)
+    }
+
+    @Test
+    fun `calcula libro mas largo y mas corto`() {
+        val books = listOf(
+            book("corto", pages = 120),
+            book("medio", pages = 350),
+            book("largo", pages = 900)
+        )
+        val enrichment = mapOf(
+            finished("corto", "2026-01-01"),
+            finished("medio", "2026-02-01"),
+            finished("largo", "2026-03-01")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals("largo", stats.longestBook?.book?.id)
+        assertEquals(900, stats.longestBook?.pages)
+        assertEquals("corto", stats.shortestBook?.book?.id)
+        assertEquals(120, stats.shortestBook?.pages)
+        assertTrue(stats.hasPageExtremes)
+    }
+
+    @Test
+    fun `calcula desglose mensual de 12 meses`() {
+        val books = listOf(book("ene"), book("mar1"), book("mar2"))
+        val enrichment = mapOf(
+            finished("ene", "2026-01-15"),
+            finished("mar1", "2026-03-02"),
+            finished("mar2", "2026-03-25")
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(12, stats.booksPerMonthThisYear.size)
+        assertEquals(1, stats.booksPerMonthThisYear.first { it.month == 1 }.count)
+        assertEquals(0, stats.booksPerMonthThisYear.first { it.month == 2 }.count)
+        assertEquals(2, stats.booksPerMonthThisYear.first { it.month == 3 }.count)
+        assertTrue(stats.hasMonthlyData)
+    }
+
+    @Test
+    fun `filtro por ano concreto calcula autores y libros solo de ese ano`() {
+        val books = listOf(book("libro2025"), book("libro2026"))
+        val enrichment = mapOf(
+            "libro2025" to BookEnrichment(bookId = "libro2025", authorName = "Autor Pasado", finished = "2025-05-01", rating = 4.0),
+            "libro2026" to BookEnrichment(bookId = "libro2026", authorName = "Autor Presente", finished = "2026-02-01", rating = 5.0)
+        )
+
+        val stats2025 = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026, filterYear = 2025)
+
+        assertEquals(1, stats2025.totalBooks)
+        assertEquals(1, stats2025.topAuthors.size)
+        assertEquals("Autor Pasado", stats2025.topAuthors.first().name)
+
+        val top2025 = ReadingStatsCalculator.topRated(books, enrichment, filterYear = 2025)
+        assertEquals(1, top2025.size)
+        assertEquals("libro2025", top2025.first().book.id)
+    }
 }
