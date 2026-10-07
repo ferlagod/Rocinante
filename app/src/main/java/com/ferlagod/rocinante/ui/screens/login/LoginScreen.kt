@@ -95,6 +95,7 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .padding(horizontal = 28.dp)
                     .alpha(alpha),
                 verticalArrangement = Arrangement.Center,
@@ -332,6 +333,10 @@ fun BookWyrmLoginWebView(
                 loadUrl(loginUrl)
             }
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
     )
 }
