@@ -307,6 +307,8 @@ data class BookEnrichment(
     val started: String? = null,
     // Idioma legible del libro (p. ej. "Danish"), leído de la página HTML del libro.
     val language: String? = null,
+    // Número de páginas extraído de la ficha HTML si faltaba en el .json de la estantería.
+    val pages: Int? = null,
     // Datos del formulario oculto «unshelve» de la página del libro, necesarios para quitarlo
     // de su estantería. BookWyrm solo lo renderiza si el libro está en alguna estantería del
     // usuario, así que valen además para saber si se puede ofrecer esa acción.

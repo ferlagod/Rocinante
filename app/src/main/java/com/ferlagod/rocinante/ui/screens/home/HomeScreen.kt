@@ -2274,25 +2274,31 @@ fun ProfileTab(
         } catch (_: Exception) {
         }
         try {
-            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-            val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-            val cleanUser = username.removePrefix("@").substringBefore("@").trim()
-            val shelfJsonUrl = "${baseUrl}user/$cleanUser/shelf/read.json?page=1"
-            val fetchedItems = try {
-                val response = api.getShelfData(shelfJsonUrl)
-                response.orderedItems ?: emptyList()
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
-                val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/read?page=1"
-                com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
-            }
-            if (fetchedItems.isNotEmpty()) {
-                // Solo se siembra la caché si está vacía para que las estadísticas puedan mostrarse.
-                if (dataCache.loadShelfBooks("read").isNullOrEmpty()) {
-                    dataCache.saveShelfBooks("read", fetchedItems)
-                    refreshTrigger++ // Recalcular las estadísticas con los nuevos datos
+            com.ferlagod.rocinante.data.repository.ReadingStatsRepository.syncReadStats(
+                api = api,
+                dataCache = dataCache,
+                instanceUrl = instanceUrl,
+                username = username,
+                onProgress = { updatedBooks, updatedEnrichment ->
+                    readBooks = updatedBooks
+                    enrichment = updatedEnrichment
+                    readingStats = if (updatedBooks.isEmpty()) {
+                        null
+                    } else {
+                        com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
+                            books = updatedBooks,
+                            enrichment = updatedEnrichment,
+                            currentYear = currentYear,
+                            filterYear = selectedStatsYear
+                        )
+                    }
+                    topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
+                        books = updatedBooks,
+                        enrichment = updatedEnrichment,
+                        filterYear = selectedStatsYear
+                    )
                 }
-            }
+            )
         } catch (_: Exception) {
         }
         try {

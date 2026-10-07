@@ -425,6 +425,10 @@ object BookWyrmScraper {
             val language = doc.selectFirst("meta[itemprop=inLanguage]")
                 ?.attr("content")?.trim()?.ifEmpty { null }
 
+            // Número de páginas (microdatos schema.org o meta)
+            val pages = doc.selectFirst("[itemprop=numberOfPages]")?.text()?.filter { it.isDigit() }?.toIntOrNull()
+                ?: doc.selectFirst("meta[property=books:page_count]")?.attr("content")?.toIntOrNull()
+
             // Formulario oculto para quitar el libro de su estantería. Solo se renderiza
             // cuando el libro está en una, así que su ausencia deja ambos campos a null.
             val unshelveForm = doc.selectFirst("form[name^=unshelve-]")
@@ -498,6 +502,7 @@ object BookWyrmScraper {
                 finished = finished,
                 started = started,
                 language = language,
+                pages = pages,
                 shelfBookId = shelfBookId,
                 shelfId = shelfId,
                 seriesName = seriesName,

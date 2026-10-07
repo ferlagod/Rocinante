@@ -162,10 +162,33 @@ object ReadingStatsCalculator {
      * un solo autor, que es el error menos grave: agrupar de más nunca inventa a alguien
      * que no existe, mientras que separar de más produce autores fantasma.
      */
-    /** "2025-01-01" (o "2025-01-01T…") → fecha; null si BookWyrm no la trae o es ilegible. */
-    private fun parseIsoDate(value: String?): java.time.LocalDate? {
+    /** "2025-01-01" (o "2025-01-01T…", "2025-01", "2025") → fecha; null si BookWyrm no la trae o es ilegible. */
+    fun parseIsoDate(value: String?): java.time.LocalDate? {
         if (value.isNullOrBlank()) return null
-        return runCatching { java.time.LocalDate.parse(value.take(10)) }.getOrNull()
+        val trimmed = value.trim()
+        if (trimmed.length >= 10) {
+            val parsed = runCatching { java.time.LocalDate.parse(trimmed.take(10)) }.getOrNull()
+            if (parsed != null) return parsed
+        }
+        if (trimmed.length == 7 && trimmed[4] == '-') {
+            val y = trimmed.take(4).toIntOrNull()
+            val m = trimmed.substring(5, 7).toIntOrNull()
+            if (y != null && m != null && m in 1..12) {
+                return runCatching { java.time.LocalDate.of(y, m, 1) }.getOrNull()
+            }
+        }
+        if (trimmed.length == 4) {
+            val y = trimmed.toIntOrNull()
+            if (y != null && y in 1900..2100) {
+                return java.time.LocalDate.of(y, 1, 1)
+            }
+        }
+        return null
+    }
+
+    /** Páginas declaradas en la estantería o extraídas del enriquecimiento HTML del libro. */
+    fun effectivePages(book: ShelfBookItem, enrichment: Map<String, BookEnrichment>): Int? {
+        return book.pages ?: book.id?.let { enrichment[it]?.pages }
     }
 
     /**
@@ -325,7 +348,7 @@ object ReadingStatsCalculator {
         booksWithPeriodReads.forEach { item ->
             val book = item.book
             val isAudiobook = book.physicalFormat?.equals("AudiobookFormat", ignoreCase = true) == true
-            val pages = book.pages ?: 0
+            val pages = effectivePages(book, enrichment) ?: 0
             if (pages > 0) {
                 totalPages += pages * item.readsInPeriod
                 totalBooksWithPages += item.readsInPeriod
@@ -338,7 +361,7 @@ object ReadingStatsCalculator {
         books.forEach { book ->
             val enriched = book.id?.let { enrichment[it] }
             val readthroughs = enriched?.readthroughs
-            val pages = book.pages ?: 0
+            val pages = effectivePages(book, enrichment) ?: 0
             val readsInTargetYear = if (!readthroughs.isNullOrEmpty()) {
                 readthroughs.count { parseIsoDate(it.finished)?.year == targetYear }
             } else {
@@ -457,13 +480,13 @@ object ReadingStatsCalculator {
         )
 
         // Extremos de longitud (libro más largo y más corto con páginas conocidas)
-        val validPageBooks = activeBooks.filter { (it.pages ?: 0) > 0 }
+        val validPageBooks = activeBooks.filter { (effectivePages(it, enrichment) ?: 0) > 0 }
         val longestBook = validPageBooks.maxWithOrNull(
-            compareBy<ShelfBookItem>({ it.pages ?: 0 }, { it.title ?: "" })
-        )?.let { ReadingStats.BookPagesSpan(it, it.pages ?: 0) }
+            compareBy<ShelfBookItem>({ effectivePages(it, enrichment) ?: 0 }, { it.title ?: "" })
+        )?.let { ReadingStats.BookPagesSpan(it, effectivePages(it, enrichment) ?: 0) }
         val shortestBook = validPageBooks.minWithOrNull(
-            compareBy<ShelfBookItem>({ it.pages ?: 0 }, { it.title ?: "" })
-        )?.let { ReadingStats.BookPagesSpan(it, it.pages ?: 0) }
+            compareBy<ShelfBookItem>({ effectivePages(it, enrichment) ?: 0 }, { it.title ?: "" })
+        )?.let { ReadingStats.BookPagesSpan(it, effectivePages(it, enrichment) ?: 0) }
 
         // Idiomas
         val languageSpellings = mutableMapOf<String, MutableList<String>>()

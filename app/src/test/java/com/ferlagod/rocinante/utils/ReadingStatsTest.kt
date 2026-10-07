@@ -458,4 +458,32 @@ class ReadingStatsTest {
         assertEquals(1, top2025.size)
         assertEquals("libro2025", top2025.first().book.id)
     }
+
+    @Test
+    fun `parseIsoDate maneja anos y meses aislados`() {
+        assertEquals(java.time.LocalDate.of(2026, 1, 1), ReadingStatsCalculator.parseIsoDate("2026"))
+        assertEquals(java.time.LocalDate.of(2026, 5, 1), ReadingStatsCalculator.parseIsoDate("2026-05"))
+        assertEquals(java.time.LocalDate.of(2026, 5, 12), ReadingStatsCalculator.parseIsoDate("2026-05-12"))
+        assertEquals(java.time.LocalDate.of(2026, 5, 12), ReadingStatsCalculator.parseIsoDate("2026-05-12T14:30:00Z"))
+    }
+
+    @Test
+    fun `usa paginas de enrichment si el libro no las traia`() {
+        val books = listOf(book("sin_paginas", pages = null))
+        val enrichment = mapOf(
+            "sin_paginas" to BookEnrichment(
+                bookId = "sin_paginas",
+                finished = "2026-03-01",
+                pages = 345
+            )
+        )
+
+        val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
+
+        assertEquals(345, stats.totalPages)
+        assertEquals(345, stats.pagesThisYear)
+        assertEquals(0, stats.booksWithoutPages)
+        assertEquals(345, stats.longestBook?.pages)
+    }
 }
+
