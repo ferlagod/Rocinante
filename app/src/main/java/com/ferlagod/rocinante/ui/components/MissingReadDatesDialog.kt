@@ -153,6 +153,7 @@ fun MissingReadDatesDialog(
                 // formulario devuelto con errores: ahí solo vale la redirección.
                 val ok = response.code() == 302 || (latest != null && response.isSuccessful)
                 if (ok) {
+                    BookWyrmScraper.invalidateBookPage()
                     done[id] = true
                     onSaved(id, start, finish)
                 } else {

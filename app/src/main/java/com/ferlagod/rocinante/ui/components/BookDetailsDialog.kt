@@ -861,6 +861,7 @@ fun BookDetailsDialog(
                 }
 
                 if (response.isSuccessful || response.code() == 302) {
+                    BookWyrmScraper.invalidateBookPage()
                     Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
                     // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
                     if (slug == "read") setupStore.clear(activeBookKey)
@@ -962,6 +963,7 @@ fun BookDetailsDialog(
                         csrfToken = contextData.csrfToken
                     )
                     if (response.isSuccessful || response.code() == 302) {
+                        BookWyrmScraper.invalidateBookPage()
                         Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
                         // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
                         setupStore.clear(activeBookKey)
@@ -3930,6 +3932,7 @@ private fun ReadDatesDialog(
                 // ahí solo vale la redirección.
                 val saved = response.code() == 302 || (editingId != null && response.isSuccessful)
                 if (saved) {
+                    BookWyrmScraper.invalidateBookPage()
                     toast(context.getString(R.string.book_read_dates_saved))
                     onSaved()
                     onDismiss()
