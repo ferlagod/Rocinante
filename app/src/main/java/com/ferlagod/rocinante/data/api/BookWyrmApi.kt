@@ -192,7 +192,7 @@ interface BookWyrmApi {
     suspend fun updateReadingStatus(
         @Path("status") status: String,   // "want", "start", "finish", "stop"
         @Path("bookId") bookId: String,
-        @Field("post_status") postStatus: Boolean = true,
+        @Field("post-status") postStatus: String = "on",
         @Field("privacy") privacy: String = "public",
         // Las fechas que manda el formulario de la web, ya rellenas con el día de hoy. Sin
         // ellas BookWyrm da de alta la lectura **sin fecha**, y luego no hay de dónde sacar

@@ -822,6 +822,18 @@ fun BookDetailsDialog(
                     // estantería cualquiera: yendo por aquí lo saca él solo de «Leyendo».
                     "stopped-reading" to "stop"
                 )[slug]
+                // Si se termina de leer (finish), conservamos la fecha de inicio que ya tuviera
+                // la lectura activa para que BookWyrm no la sobreescriba con null borrándola.
+                val existingStartDate = if (mappedStatus == "finish") {
+                    val activeRtId = BookWyrmScraper.extractReadthroughId(html)
+                    val parsedDates = BookWyrmScraper.parseReadDates(html)
+                    if (!activeRtId.isNullOrBlank()) {
+                        parsedDates.readthroughs.firstOrNull { it.id == activeRtId }?.startDate
+                    } else {
+                        parsedDates.readthroughs.lastOrNull { it.finishDate == null }?.startDate
+                    }
+                } else null
+
                 // La fecha del día, la misma que el formulario de la web trae ya rellena. Sin
                 // mandarla, BookWyrm da de alta la lectura **sin fechas**, y luego no hay de
                 // dónde sacar ni cuándo se empezó ni cuándo se terminó: hay que escribirlas a
@@ -831,7 +843,7 @@ fun BookDetailsDialog(
                     api.updateReadingStatus(
                         status = mappedStatus,
                         bookId = editionId,
-                        startDate = today.takeIf { mappedStatus == "start" },
+                        startDate = if (mappedStatus == "start") today else existingStartDate,
                         finishDate = today.takeIf { mappedStatus == "finish" },
                         stoppedDate = today.takeIf { mappedStatus == "stop" }
                     )

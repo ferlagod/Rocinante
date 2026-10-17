@@ -114,4 +114,39 @@ class ReadDatesParsingTest {
         assertNull(parsed.userId)
         assertTrue(parsed.readthroughs.isEmpty())
     }
+
+    @Test
+    fun `extractReadthroughId obtiene el id del formulario reading-progress`() {
+        val html = """
+            <html><body>
+            <form name="reading-progress-123" action="/reading-status/update/42/" method="POST">
+                <input type="hidden" name="id" value="55">
+                <input type="hidden" name="progress" value="120">
+            </form>
+            </body></html>
+        """.trimIndent()
+
+        val id = BookWyrmScraper.extractReadthroughId(html)
+        assertEquals("55", id)
+    }
+
+    @Test
+    fun `la fecha de inicio del readthrough activo se preserva y no se confunde con add-modal`() {
+        val activeModal = readthroughModals("55", "2026-02-14", "")
+        val html = """
+            <html><body>
+            $addModal
+            $activeModal
+            <form name="reading-progress-123" action="/reading-status/update/42/" method="POST">
+                <input type="hidden" name="id" value="55">
+            </form>
+            </body></html>
+        """.trimIndent()
+
+        val activeId = BookWyrmScraper.extractReadthroughId(html)
+        assertEquals("55", activeId)
+        val parsed = BookWyrmScraper.parseReadDates(html)
+        val activeStartDate = parsed.readthroughs.firstOrNull { it.id == activeId }?.startDate
+        assertEquals("2026-02-14", activeStartDate)
+    }
 }

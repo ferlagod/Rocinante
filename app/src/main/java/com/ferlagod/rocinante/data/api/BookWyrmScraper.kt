@@ -281,7 +281,7 @@ object BookWyrmScraper {
      * Busca el `<form name="reading-progress-...">` y dentro de él, el input
      * `<input name="id" value="(\d+)">` en cualquier orden de atributos.
      */
-    private fun extractReadthroughId(html: String): String? {
+    internal fun extractReadthroughId(html: String): String? {
         // Localizar el bloque del formulario de progreso
         val formRegex = """<form[^>]*name=["']reading-progress-[\s\S]*?</form>""".toRegex()
         val formBlock = formRegex.find(html)?.value ?: return null
@@ -303,7 +303,9 @@ object BookWyrmScraper {
                 val localBookId = BookWyrmUtils.extractBookId(localUrl)
                 val readthroughId = extractReadthroughId(html)
                 val userId = extractHiddenFieldValue(html, "user")
-                val startDate = extractHiddenFieldValue(html, "start_date")?.takeIf { it.isNotBlank() }
+                val startDate = if (!readthroughId.isNullOrBlank()) {
+                    parseReadDates(html).readthroughs.firstOrNull { it.id == readthroughId }?.startDate
+                } else null
                 val formBookId = extractEditionId(html) ?: localBookId
 
                 if (readthroughId != null && userId != null) {
