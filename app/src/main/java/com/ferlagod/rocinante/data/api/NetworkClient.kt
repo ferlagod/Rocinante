@@ -311,9 +311,10 @@ object NetworkClient {
             .cookieJar(cookieJar)   // OkHttp gestiona las cookies automáticamente
             .addInterceptor(interceptor)
             .followRedirects(false) // No seguir redirects automáticamente: capturar 302
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .callTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
+            .callTimeout(180, TimeUnit.SECONDS)
             .build()
 
         lastOkHttpClient = okHttpClient

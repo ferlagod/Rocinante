@@ -1037,35 +1037,58 @@ object BookWyrmScraper {
                 } catch (_: Exception) {}
             }
 
+            // Campos del formulario. Los campos enteros opcionales (pages, published_date)
+            // se omiten cuando están vacíos para evitar que Django reciba "" en un IntegerField/DateField
+            // y devuelva un 500/502 al no poder convertirlo.
+            val trimmedPages = pages.trim().filter { it.isDigit() }
+            val trimmedDate = publishedDate.trim()
+            val cleanIsbn = isbn13.replace("-", "").replace(" ", "").trim()
+
             // Si hay portada se envía MultipartBody; si no, FormBody estándar
             val initialRequestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
                 val mediaType = (coverMimeType.ifBlank { "image/jpeg" }).toMediaTypeOrNull()
-                okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                val builder = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
                     .addFormDataPart("csrfmiddlewaretoken", csrfToken)
                     .addFormDataPart("title", title.trim())
                     .addFormDataPart("subtitle", subtitle.trim())
                     .addFormDataPart("add_author", authorName.trim())
-                    .addFormDataPart("isbn_13", isbn13.trim())
-                    .addFormDataPart("pages", pages.trim())
-                    .addFormDataPart("published_date", publishedDate.trim())
                     .addFormDataPart("description", description.trim())
                     .addFormDataPart("languages", languages.trim())
                     .addFormDataPart("physical_format", physicalFormat.trim())
                     .addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
-                    .build()
+                if (cleanIsbn.length == 10) {
+                    builder.addFormDataPart("isbn_10", cleanIsbn)
+                } else if (cleanIsbn.isNotEmpty()) {
+                    builder.addFormDataPart("isbn_13", cleanIsbn)
+                }
+                if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
+                    builder.addFormDataPart("pages", trimmedPages)
+                }
+                if (trimmedDate.isNotEmpty()) {
+                    builder.addFormDataPart("published_date", trimmedDate)
+                }
+                builder.build()
             } else {
-                okhttp3.FormBody.Builder()
+                val builder = okhttp3.FormBody.Builder()
                     .add("csrfmiddlewaretoken", csrfToken)
                     .add("title", title.trim())
                     .add("subtitle", subtitle.trim())
                     .add("add_author", authorName.trim())
-                    .add("isbn_13", isbn13.trim())
-                    .add("pages", pages.trim())
-                    .add("published_date", publishedDate.trim())
                     .add("description", description.trim())
                     .add("languages", languages.trim())
                     .add("physical_format", physicalFormat.trim())
-                    .build()
+                if (cleanIsbn.length == 10) {
+                    builder.add("isbn_10", cleanIsbn)
+                } else if (cleanIsbn.isNotEmpty()) {
+                    builder.add("isbn_13", cleanIsbn)
+                }
+                if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
+                    builder.add("pages", trimmedPages)
+                }
+                if (trimmedDate.isNotEmpty()) {
+                    builder.add("published_date", trimmedDate)
+                }
+                builder.build()
             }
 
             val response = api.postForm(createUrl, initialRequestBody)
@@ -1091,11 +1114,9 @@ object BookWyrmScraper {
             }
 
             // Comprobar errores de validación específicos en los campos
-            val fieldErrors = doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
-                .map { it.text().trim() }
-                .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
+            val fieldErrors = extractFormErrors(doc)
             if (fieldErrors.isNotEmpty()) {
-                return@withContext CreateBookResult.Error(fieldErrors.distinct().joinToString("\n"))
+                return@withContext CreateBookResult.Error(fieldErrors.joinToString("\n"))
             }
 
             // Localizar el formulario en la página (en confirm_mode la acción es create-book-confirm)
@@ -1201,24 +1222,76 @@ object BookWyrmScraper {
     suspend fun confirmCreateBookAuthor(
         api: BookWyrmApi,
         form: BookEditForm,
-        option: AuthorOption
+        option: AuthorOption,
+        coverBytes: ByteArray? = null,
+        coverMimeType: String? = null
     ): CreateBookResult = withContext(Dispatchers.IO) {
         try {
             val fields = form.fields.toMutableList()
             // Reemplazar o añadir el campo de autor elegido
-            fields.removeAll { it.first == option.field }
+            fields.removeAll { it.first.startsWith("author_match-") }
             fields.add(option.field to option.value)
+
+            // Si se eligió un autor existente o ISNI, quitar add_author para que
+            // BookWyrm no intente crear un autor nuevo simultáneamente
+            if (option.kind != AuthorOption.Kind.NEW) {
+                fields.removeAll { it.first == "add_author" }
+            }
 
             // Asegurar que parent_work="0" (nueva obra) esté seleccionado
             if (fields.none { it.first == "parent_work" }) {
                 fields.add("parent_work" to "0")
             }
 
-            sendConfirmCreateBook(api, form.actionUrl, fields, null, null)
+            // Asegurar que author-match-count esté presente para que BookWyrm procese la selección
+            if (fields.none { it.first == "author-match-count" }) {
+                fields.add("author-match-count" to "1")
+            }
+
+            // Asegurar que series_match esté presente si hay campo de series
+            if (fields.any { it.first == "series" } && fields.none { it.first == "series_match" }) {
+                fields.add("series_match" to "0")
+            }
+
+            // Limpiar campos enteros, fechas e ISBN vacíos que podrían causar 502/500
+            // en Django al recibir "" en un IntegerField/DateField o fallar validación de ISBN.
+            fields.removeAll { (name, value) ->
+                (name == "pages" && (value.isBlank() || value.filter { it.isDigit() }.toLongOrNull()?.let { it <= 0 } != false)) ||
+                (name == "published_date" && value.isBlank()) ||
+                (name == "isbn_10" && value.isBlank()) ||
+                (name == "isbn_13" && value.isBlank())
+            }
+
+            // Si el servidor BookWyrm ya guardó la portada en su caché de sesión (file_resubmit),
+            // no es necesario volver a subir los bytes del archivo en multipart.
+            val effectiveCover = if (fields.any { it.first.contains("cover-clearable_file_input_cache-key") }) {
+                null
+            } else {
+                coverBytes
+            }
+
+            sendConfirmCreateBook(api, form.actionUrl, fields, effectiveCover, coverMimeType)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             CreateBookResult.Error(e.message ?: "Unknown error")
         }
+    }
+
+    /**
+     * Extrae mensajes de error visibles del formulario BookWyrm, ignorando plantillas y elementos
+     * ocultos como `#status-error-message` que existen de forma fija en layout.html.
+     */
+    private fun extractFormErrors(doc: org.jsoup.nodes.Document): List<String> {
+        return doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
+            .filter { el ->
+                !el.hasClass("is-hidden") &&
+                el.id() != "status-error-message" &&
+                el.closest("#live-messages") == null &&
+                el.parents().none { it.hasClass("is-hidden") }
+            }
+            .map { it.text().trim() }
+            .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
+            .distinct()
     }
 
     /**
@@ -1231,68 +1304,106 @@ object BookWyrmScraper {
         coverBytes: ByteArray?,
         coverMimeType: String?
     ): CreateBookResult = withContext(Dispatchers.IO) {
-        try {
-            val csrfToken = NetworkClient.currentCsrfToken().orEmpty()
+        // BookWyrm ConfirmEditBook puede tardar mucho cuando seleccionas un autor existente:
+        // hace llamadas síncronas a isni.oclc.org, procesa la imagen con Pillow y escribe en DB.
+        // Por eso reintentamos una vez si el primer intento da SocketTimeoutException.
+        val maxAttempts = 2
+        var lastException: Exception? = null
 
-            val requestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
-                val mediaType = (coverMimeType ?: "image/jpeg").toMediaTypeOrNull()
-                val multipart = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
-                var hasCsrf = false
-                for ((name, value) in fields) {
-                    if (name == "csrfmiddlewaretoken") {
-                        multipart.addFormDataPart(name, csrfToken.ifEmpty { value })
-                        hasCsrf = true
-                    } else {
-                        multipart.addFormDataPart(name, value)
-                    }
-                }
-                if (!hasCsrf && csrfToken.isNotEmpty()) {
-                    multipart.addFormDataPart("csrfmiddlewaretoken", csrfToken)
-                }
-                multipart.addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
-                multipart.build()
-            } else {
-                val formBody = okhttp3.FormBody.Builder()
-                var hasCsrf = false
-                for ((name, value) in fields) {
-                    if (name == "csrfmiddlewaretoken") {
-                        formBody.add(name, csrfToken.ifEmpty { value })
-                        hasCsrf = true
-                    } else {
-                        formBody.add(name, value)
-                    }
-                }
-                if (!hasCsrf && csrfToken.isNotEmpty()) {
-                    formBody.add("csrfmiddlewaretoken", csrfToken)
-                }
-                formBody.build()
-            }
+        for (attempt in 1..maxAttempts) {
+            try {
+                val csrfToken = NetworkClient.currentCsrfToken().orEmpty()
 
-            val response = api.postForm(actionUrl, requestBody)
-            if (response.code() in 301..303) {
-                val location = response.headers()["Location"].orEmpty()
-                val fullUrl = if (location.startsWith("http")) {
-                    location
+                val requestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
+                    val mediaType = (coverMimeType ?: "image/jpeg").toMediaTypeOrNull()
+                    val multipart = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                    var hasCsrf = false
+                    for ((name, value) in fields) {
+                        if (name == "csrfmiddlewaretoken") {
+                            multipart.addFormDataPart(name, csrfToken.ifEmpty { value })
+                            hasCsrf = true
+                        } else {
+                            multipart.addFormDataPart(name, value)
+                        }
+                    }
+                    if (!hasCsrf && csrfToken.isNotEmpty()) {
+                        multipart.addFormDataPart("csrfmiddlewaretoken", csrfToken)
+                    }
+                    multipart.addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
+                    multipart.build()
                 } else {
-                    val base = java.net.URL(actionUrl)
-                    "${base.protocol}://${base.host}/${location.trimStart('/')}"
+                    val formBody = okhttp3.FormBody.Builder()
+                    var hasCsrf = false
+                    for ((name, value) in fields) {
+                        if (name == "csrfmiddlewaretoken") {
+                            formBody.add(name, csrfToken.ifEmpty { value })
+                            hasCsrf = true
+                        } else {
+                            formBody.add(name, value)
+                        }
+                    }
+                    if (!hasCsrf && csrfToken.isNotEmpty()) {
+                        formBody.add("csrfmiddlewaretoken", csrfToken)
+                    }
+                    formBody.build()
                 }
-                val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
-                return@withContext CreateBookResult.Created(fullUrl, bookId)
+
+                val response = api.postForm(actionUrl, requestBody)
+                if (response.code() in 301..303) {
+                    val location = response.headers()["Location"].orEmpty()
+                    val fullUrl = if (location.startsWith("http")) {
+                        location
+                    } else {
+                        val base = java.net.URL(actionUrl)
+                        "${base.protocol}://${base.host}/${location.trimStart('/')}"
+                    }
+                    val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
+                    return@withContext CreateBookResult.Created(fullUrl, bookId)
+                }
+
+                // Un 502/504 puede ser timeout del proxy inverso (nginx) esperando a BookWyrm
+                // mientras éste consulta ISNI. Reintentar una vez.
+                if (response.code() in setOf(502, 504) && attempt < maxAttempts) {
+                    runCatching { response.body()?.close() }
+                    kotlinx.coroutines.delay(3_000L)
+                    continue
+                }
+
+                val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
+                val doc = org.jsoup.Jsoup.parse(html, actionUrl)
+                val errors = extractFormErrors(doc)
+
+                val errorMsg = errors.joinToString("\n")
+                val fallbackError = when (response.code()) {
+                    502, 504 -> "El servidor o proxy de BookWyrm tardó demasiado en responder (Error ${response.code()}). Puede que la instancia esté sobrecargada."
+                    else -> "Error del servidor (${response.code()})"
+                }
+                return@withContext CreateBookResult.Error(errorMsg.ifBlank { fallbackError })
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                lastException = e
+                // Reintentar en caso de SocketTimeoutException (el servidor tardó demasiado
+                // consultando isni.oclc.org para resolver alias del autor seleccionado)
+                if (e is java.net.SocketTimeoutException && attempt < maxAttempts) {
+                    kotlinx.coroutines.delay(3_000L)
+                    continue
+                }
+                val isTimeout = e is java.net.SocketTimeoutException
+                val msg = if (isTimeout) {
+                    "Tiempo de espera agotado al confirmar el libro. La instancia puede estar saturada o tardando en verificar el autor."
+                } else {
+                    e.message ?: "Unknown error"
+                }
+                return@withContext CreateBookResult.Error(msg)
             }
-
-            val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
-            val doc = org.jsoup.Jsoup.parse(html, actionUrl)
-            val errors = doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
-                .map { it.text().trim() }
-                .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
-
-            val errorMsg = errors.distinct().joinToString("\n")
-            CreateBookResult.Error(errorMsg.ifBlank { "Error (${response.code()})" })
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            CreateBookResult.Error(e.message ?: "Unknown error")
         }
+        val isTimeout = lastException is java.net.SocketTimeoutException
+        val finalMsg = if (isTimeout) {
+            "Tiempo de espera agotado al confirmar el libro. La instancia tardó demasiado en procesar la solicitud."
+        } else {
+            lastException?.message ?: "Unknown error"
+        }
+        CreateBookResult.Error(finalMsg)
     }
 
     /**

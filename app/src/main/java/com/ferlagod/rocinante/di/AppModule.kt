@@ -320,9 +320,10 @@ object AppModule {
             .addInterceptor(bomInterceptor)
             .addNetworkInterceptor(cacheInterceptor)
             .followRedirects(false)
-            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
             .build()
 
         NetworkClient.lastOkHttpClient = okHttpClient

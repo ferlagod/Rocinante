@@ -19,6 +19,9 @@
  */
 package com.ferlagod.rocinante.ui.components
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,7 +40,9 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -50,6 +55,60 @@ import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+
+/**
+ * Comprime la imagen de portada seleccionada a un tamaño adecuado para la web (máximo 1200px),
+ * reduciendo el peso de ~10 MB a ~150 KB para evitar cortes por timeout en redes móviles.
+ */
+private fun compressCoverImage(
+    context: Context,
+    uri: Uri,
+    maxDimension: Int = 1200,
+    quality: Int = 85
+): Pair<ByteArray, String>? {
+    return runCatching {
+        val cr = context.contentResolver
+        val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, boundsOptions) }
+
+        val origW = boundsOptions.outWidth
+        val origH = boundsOptions.outHeight
+        if (origW <= 0 || origH <= 0) {
+            val raw = cr.openInputStream(uri)?.use { it.readBytes() } ?: return null
+            val mime = cr.getType(uri) ?: "image/jpeg"
+            return raw to mime
+        }
+
+        var sampleSize = 1
+        var w = origW
+        var h = origH
+        while (w > maxDimension * 2 || h > maxDimension * 2) {
+            sampleSize *= 2
+            w /= 2
+            h /= 2
+        }
+
+        val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        val bitmap = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOptions) } ?: return null
+
+        val finalBitmap = if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
+            val ratio = minOf(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
+            val newW = (bitmap.width * ratio).toInt().coerceAtLeast(1)
+            val newH = (bitmap.height * ratio).toInt().coerceAtLeast(1)
+            Bitmap.createScaledBitmap(bitmap, newW, newH, true).also {
+                if (it != bitmap) bitmap.recycle()
+            }
+        } else {
+            bitmap
+        }
+
+        val out = ByteArrayOutputStream()
+        finalBitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+        finalBitmap.recycle()
+        out.toByteArray() to "image/jpeg"
+    }.getOrNull()
+}
 
 /**
  * Diálogo para la creación manual de un libro en la instancia de BookWyrm.
@@ -79,17 +138,15 @@ fun CreateBookDialog(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Opciones oficiales de formato en BookWyrm
+    // Opciones oficiales de formato en BookWyrm (schema.org/BookFormatType)
     val formatOptions = remember {
         listOf(
             "" to R.string.create_book_format_unspecified,
             "Paperback" to R.string.create_book_format_paperback,
             "Hardcover" to R.string.create_book_format_hardcover,
-            "Ebook" to R.string.create_book_format_ebook,
-            "Audiobook" to R.string.create_book_format_audiobook,
-            "Mass market paperback" to R.string.create_book_format_pocket,
-            "Comic" to R.string.create_book_format_comic,
-            "Audio cd" to R.string.create_book_format_audio_cd
+            "EBook" to R.string.create_book_format_ebook,
+            "AudiobookFormat" to R.string.create_book_format_audiobook,
+            "GraphicNovel" to R.string.create_book_format_comic
         )
     }
 
@@ -109,37 +166,38 @@ fun CreateBookDialog(
         )
     }
 
-    // Campos del formulario principal
-    var title by remember { mutableStateOf(initialTitle) }
-    var author by remember { mutableStateOf("") }
-    var isbn by remember { mutableStateOf(initialIsbn) }
-    var pages by remember { mutableStateOf("") }
-    var subtitle by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var publishedDate by remember { mutableStateOf("") }
-    var selectedLanguageCode by remember { mutableStateOf("") }
-    var selectedFormatCode by remember { mutableStateOf("") }
+    // Campos del formulario principal persistidos frente a giros o cambios de app
+    var title by rememberSaveable { mutableStateOf(initialTitle) }
+    var author by rememberSaveable { mutableStateOf("") }
+    var isbn by rememberSaveable { mutableStateOf(initialIsbn) }
+    var pages by rememberSaveable { mutableStateOf("") }
+    var subtitle by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
+    var publishedDate by rememberSaveable { mutableStateOf("") }
+    var selectedLanguageCode by rememberSaveable { mutableStateOf("") }
+    var selectedFormatCode by rememberSaveable { mutableStateOf("") }
 
     // Estados de desplegables
     var formatDropdownExpanded by remember { mutableStateOf(false) }
     var languageDropdownExpanded by remember { mutableStateOf(false) }
 
-    // Imagen de portada
-    var coverUri by remember { mutableStateOf<Uri?>(null) }
+    // Imagen de portada (persistida como String para sobrevivir a recreation de Activity)
+    var coverUriString by rememberSaveable { mutableStateOf<String?>(null) }
+    val coverUri = remember(coverUriString) { coverUriString?.let { Uri.parse(it) } }
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            coverUri = uri
+            coverUriString = uri.toString()
         }
     }
 
-    var showMoreDetails by remember { mutableStateOf(false) }
+    var showMoreDetails by rememberSaveable { mutableStateOf(false) }
     var isWorking by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Si el usuario quiere guardar y añadir otro a continuación
-    var keepAddingAnother by remember { mutableStateOf(false) }
+    var keepAddingAnother by rememberSaveable { mutableStateOf(false) }
 
     // Estado de desambiguación de autor (paso 2)
     var pendingConfirmationForm by remember { mutableStateOf<BookWyrmScraper.BookEditForm?>(null) }
@@ -156,7 +214,7 @@ fun CreateBookDialog(
         publishedDate = ""
         selectedLanguageCode = ""
         selectedFormatCode = ""
-        coverUri = null
+        coverUriString = null
         pendingConfirmationForm = null
         authorCandidates = emptyList()
         selectedAuthorOption = null
@@ -177,17 +235,26 @@ fun CreateBookDialog(
             return
         }
 
+        // Si el usuario escribe DD/MM/AAAA o DD-MM-AAAA, normalizar a AAAA-MM-DD para Django
+        val normalizedDate = run {
+            val raw = publishedDate.trim()
+            val dmyRegex = Regex("""^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$""")
+            val match = dmyRegex.find(raw)
+            if (match != null) {
+                val (d, m, y) = match.destructured
+                "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
+            } else {
+                raw
+            }
+        }
+
         errorMessage = null
         isWorking = true
         keepAddingAnother = andAddAnother
 
         coroutineScope.launch {
             val (coverBytes, coverMimeType) = coverUri?.let { uri ->
-                val bytes = runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                }.getOrNull()
-                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-                bytes to mime
+                compressCoverImage(context, uri)
             } ?: (null to "image/jpeg")
 
             val result = BookWyrmScraper.createBookManually(
@@ -198,7 +265,7 @@ fun CreateBookDialog(
                 subtitle = subtitle.trim(),
                 isbn13 = isbn.trim(),
                 pages = pages.trim(),
-                publishedDate = publishedDate.trim(),
+                publishedDate = normalizedDate,
                 description = description.trim(),
                 languages = selectedLanguageCode,
                 physicalFormat = selectedFormatCode,
@@ -245,7 +312,22 @@ fun CreateBookDialog(
         isWorking = true
 
         coroutineScope.launch {
-            val result = BookWyrmScraper.confirmCreateBookAuthor(api, form, option)
+            // Si el formulario ya contiene la portada en la caché del servidor (file_resubmit),
+            // no es necesario volver a subirla por la red.
+            val hasCachedCover = form.fields.any { it.first.contains("cover-clearable_file_input_cache-key") }
+            val (coverBytes, coverMimeType) = if (hasCachedCover) {
+                null to null
+            } else {
+                coverUri?.let { uri -> compressCoverImage(context, uri) } ?: (null to null)
+            }
+
+            val result = BookWyrmScraper.confirmCreateBookAuthor(
+                api = api,
+                form = form,
+                option = option,
+                coverBytes = coverBytes,
+                coverMimeType = coverMimeType
+            )
             isWorking = false
 
             when (result) {
@@ -280,6 +362,9 @@ fun CreateBookDialog(
         onDismissRequest = {
             if (!isWorking) onDismiss()
         },
+        properties = DialogProperties(
+            dismissOnClickOutside = false
+        ),
         title = {
             Text(
                 text = if (pendingConfirmationForm != null) {
@@ -423,7 +508,7 @@ fun CreateBookDialog(
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = formatDropdownExpanded) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .menuAnchor(),
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                             enabled = !isWorking
                         )
 
@@ -475,7 +560,7 @@ fun CreateBookDialog(
                                     Text(stringResource(R.string.create_book_cover_change))
                                 }
                                 TextButton(
-                                    onClick = { coverUri = null },
+                                    onClick = { coverUriString = null },
                                     enabled = !isWorking,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -546,6 +631,7 @@ fun CreateBookDialog(
                                 value = publishedDate,
                                 onValueChange = { publishedDate = it },
                                 label = { Text(stringResource(R.string.create_book_field_published_date)) },
+                                placeholder = { Text("AAAA o AAAA-MM-DD") },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = !isWorking
@@ -569,7 +655,7 @@ fun CreateBookDialog(
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageDropdownExpanded) },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .menuAnchor(),
+                                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                     enabled = !isWorking
                                 )
 
