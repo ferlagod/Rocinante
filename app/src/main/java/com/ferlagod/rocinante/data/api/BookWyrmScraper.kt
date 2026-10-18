@@ -35,6 +35,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 
 object BookWyrmScraper {
@@ -977,6 +979,197 @@ object BookWyrmScraper {
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
+        }
+    }
+
+    /**
+     * Resultado del intento de crear un libro manualmente en BookWyrm.
+     */
+    sealed class CreateBookResult {
+        /** El libro se creó directamente en la instancia. */
+        data class Created(val bookUrl: String, val bookId: String) : CreateBookResult()
+
+        /**
+         * La instancia solicita desambiguación del autor: existen coincidencias o sugerencias
+         * (autor existente en la instancia, ISNI, o crear autor nuevo).
+         */
+        data class NeedsAuthorConfirmation(
+            val form: BookEditForm,
+            val options: List<AuthorOption>
+        ) : CreateBookResult()
+
+        /** Ocurrió un error devuelto por la instancia o problema de red. */
+        data class Error(val message: String) : CreateBookResult()
+    }
+
+    /**
+     * Envía los datos para crear un nuevo libro en la instancia de BookWyrm (/create-book).
+     *
+     * Si no hay conflictos con el autor, BookWyrm devuelve un 302 hacia la ficha del nuevo libro.
+     * Si el nombre del autor coincide con autores existentes o sugerencias ISNI, devuelve un 200
+     * con los campos ocultos del libro y los candidatos para elegir.
+     */
+    suspend fun createBookManually(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        title: String,
+        authorName: String,
+        subtitle: String = "",
+        isbn13: String = "",
+        pages: String = "",
+        publishedDate: String = "",
+        description: String = "",
+        languages: String = "",
+        physicalFormat: String = "",
+        coverBytes: ByteArray? = null,
+        coverMimeType: String = "image/jpeg"
+    ): CreateBookResult = withContext(Dispatchers.IO) {
+        try {
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+            val createUrl = "$cleanBase/create-book"
+
+            var csrfToken = NetworkClient.currentCsrfToken().orEmpty()
+            if (csrfToken.isEmpty()) {
+                try {
+                    val getResp = api.getRawHtmlResponse(createUrl)
+                    val html = runCatching { getResp.body()?.string() }.getOrNull().orEmpty()
+                    csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
+                } catch (_: Exception) {}
+            }
+
+            val bodyBuilder = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                .addFormDataPart("csrfmiddlewaretoken", csrfToken)
+                .addFormDataPart("title", title.trim())
+                .addFormDataPart("subtitle", subtitle.trim())
+                .addFormDataPart("add_author", authorName.trim())
+                .addFormDataPart("isbn_13", isbn13.trim())
+                .addFormDataPart("pages", pages.trim())
+                .addFormDataPart("published_date", publishedDate.trim())
+                .addFormDataPart("description", description.trim())
+                .addFormDataPart("languages", languages.trim())
+                .addFormDataPart("physical_format", physicalFormat.trim())
+                .addFormDataPart("parent_work", "")
+
+            if (coverBytes != null && coverBytes.isNotEmpty()) {
+                val mediaType = (coverMimeType.ifBlank { "image/jpeg" }).toMediaTypeOrNull()
+                bodyBuilder.addFormDataPart(
+                    "cover",
+                    "cover.jpg",
+                    coverBytes.toRequestBody(mediaType)
+                )
+            }
+
+            val response = api.postForm(createUrl, bodyBuilder.build())
+
+            if (response.code() in 301..303) {
+                val location = response.headers()["Location"].orEmpty()
+                val fullUrl = if (location.startsWith("http")) location else "$cleanBase/${location.trimStart('/')}"
+                val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
+                return@withContext CreateBookResult.Created(fullUrl, bookId)
+            }
+
+            val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
+            if (html.isEmpty()) {
+                return@withContext CreateBookResult.Error("Error (${response.code()})")
+            }
+
+            val doc = org.jsoup.Jsoup.parse(html, createUrl)
+            val radios = doc.select("input[type=radio][name^=author_match-], input[type=radio][name=add_author]")
+
+            if (radios.isNotEmpty()) {
+                val form = doc.selectFirst("form[action*='create-book']")
+                    ?: radios.firstOrNull()?.parents()?.firstOrNull { it.tagName() == "form" }
+
+                val hiddenPairs = mutableListOf<Pair<String, String>>()
+                form?.select("input[type=hidden]")?.forEach { input ->
+                    val name = input.attr("name").trim()
+                    val value = input.attr("value")
+                    if (name.isNotEmpty() && name != "csrfmiddlewaretoken") {
+                        hiddenPairs += name to value
+                    }
+                }
+
+                val options = radios.map { radio ->
+                    val value = radio.attr("value").trim()
+                    val label = radio.parent()
+                    val name = (label?.text() ?: "").trim()
+                    val help = generateSequence(label?.nextElementSibling()) { it.nextElementSibling() }
+                        .takeWhile { it.tagName() == "p" && it.hasClass("help") }
+                        .map { it.text().trim() }
+                        .filter { it.isNotEmpty() }
+                        .joinToString(" · ")
+                    val kind = when {
+                        value.toLongOrNull() != null -> AuthorOption.Kind.EXISTING
+                        value.startsWith("http") -> AuthorOption.Kind.ISNI
+                        else -> AuthorOption.Kind.NEW
+                    }
+                    AuthorOption(
+                        field = radio.attr("name").trim(),
+                        value = value,
+                        label = name.ifEmpty { value },
+                        help = help,
+                        kind = kind
+                    )
+                }.sortedBy { it.kind.ordinal }
+
+                val action = form?.attr("action")?.trim().orEmpty().ifEmpty { createUrl }
+                val actionUrl = if (action.startsWith("http")) action else "$cleanBase/${action.trimStart('/')}"
+                return@withContext CreateBookResult.NeedsAuthorConfirmation(
+                    BookEditForm(actionUrl, hiddenPairs),
+                    options
+                )
+            }
+
+            val errorMsg = doc.select(".message.is-danger, .help.is-danger, ul.errorlist li, .errors").text().trim()
+            CreateBookResult.Error(errorMsg.ifBlank { "Error (${response.code()})" })
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            CreateBookResult.Error(e.message ?: "Unknown error")
+        }
+    }
+
+    /**
+     * Confirma la creación del libro enviando la opción de autor seleccionada en el formulario
+     * con los campos ocultos preservados.
+     */
+    suspend fun confirmCreateBookAuthor(
+        api: BookWyrmApi,
+        form: BookEditForm,
+        option: AuthorOption
+    ): CreateBookResult = withContext(Dispatchers.IO) {
+        try {
+            val csrfToken = NetworkClient.currentCsrfToken().orEmpty()
+            val body = okhttp3.FormBody.Builder().apply {
+                add("csrfmiddlewaretoken", csrfToken)
+                for ((name, value) in form.fields) {
+                    if (name != option.field && name != "csrfmiddlewaretoken") {
+                        add(name, value)
+                    }
+                }
+                add(option.field, option.value)
+            }.build()
+
+            val response = api.postForm(form.actionUrl, body)
+            if (response.code() in 301..303) {
+                val location = response.headers()["Location"].orEmpty()
+                val fullUrl = if (location.startsWith("http")) {
+                    location
+                } else {
+                    val base = java.net.URL(form.actionUrl)
+                    "${base.protocol}://${base.host}/${location.trimStart('/')}"
+                }
+                val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
+                return@withContext CreateBookResult.Created(fullUrl, bookId)
+            }
+
+            val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
+            val errorMsg = if (html.isNotEmpty()) {
+                org.jsoup.Jsoup.parse(html).select(".message.is-danger, .help.is-danger, ul.errorlist li, .errors").text().trim()
+            } else ""
+            CreateBookResult.Error(errorMsg.ifBlank { "Error (${response.code()})" })
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            CreateBookResult.Error(e.message ?: "Unknown error")
         }
     }
 

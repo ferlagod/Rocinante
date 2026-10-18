@@ -234,6 +234,9 @@ fun SearchScreen(
 
     var showExplore by rememberSaveable { mutableStateOf(false) }
     var toolsExpanded by remember { mutableStateOf(false) }
+    var showCreateBookDialog by rememberSaveable { mutableStateOf(false) }
+    var createBookInitialTitle by rememberSaveable { mutableStateOf("") }
+    var createBookInitialIsbn by rememberSaveable { mutableStateOf("") }
 
     /**
      * Abre la ficha de un libro que ya está en la instancia, sea porque estaba o porque
@@ -383,10 +386,16 @@ fun SearchScreen(
             if (isEmptyBooksError) {
                 OutlinedButton(
                     onClick = {
-                        val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
-                        val url = "https://$cleanInstance/create-book"
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                        context.startActivity(intent)
+                        val cleanQuery = searchQuery.trim()
+                        val digitsOnly = cleanQuery.replace("-", "")
+                        if (digitsOnly.isNotEmpty() && digitsOnly.all { it.isDigit() } && digitsOnly.length in 10..13) {
+                            createBookInitialIsbn = digitsOnly
+                            createBookInitialTitle = ""
+                        } else {
+                            createBookInitialTitle = cleanQuery
+                            createBookInitialIsbn = ""
+                        }
+                        showCreateBookDialog = true
                     },
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                 ) {
@@ -705,12 +714,9 @@ fun SearchScreen(
             },
             onAddBook = {
                 toolsExpanded = false
-                val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
-                val intent = android.content.Intent(
-                    android.content.Intent.ACTION_VIEW,
-                    android.net.Uri.parse("https://$cleanInstance/create-book")
-                )
-                context.startActivity(intent)
+                createBookInitialTitle = ""
+                createBookInitialIsbn = ""
+                showCreateBookDialog = true
             },
             onScan = {
                 toolsExpanded = false
@@ -722,6 +728,22 @@ fun SearchScreen(
             }
         )
     }
+    }
+
+    if (showCreateBookDialog) {
+        com.ferlagod.rocinante.ui.components.CreateBookDialog(
+            instanceUrl = instanceUrl,
+            api = resolvedApi,
+            initialTitle = createBookInitialTitle,
+            initialIsbn = createBookInitialIsbn,
+            onBookCreated = { newBookUrl ->
+                showCreateBookDialog = false
+                openBookByUrl(newBookUrl)
+            },
+            onDismiss = {
+                showCreateBookDialog = false
+            }
+        )
     }
 
     selectedBookDetails?.let { details ->

@@ -669,4 +669,34 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_3_5">"• Connection &amp; Compatibility: Fixed an issue on instances protected by recent Anubis versions (such as kirja.casa) where content failed to load after updating.\n• Improved Stability: Optimized detection and automatic clearance renewal across all instance types."</string>
     <string name="changelog_text_v1_3_6">"• Reading statistics: Improvements to read books statistics."</string>
     <string name="changelog_text_v1_3_7">"• Reading dates fix: Fixed an issue where start dates could be overwritten or cleared when marking a book as finished. Existing reading dates are now properly preserved.\n• Reading activity: Fixed reading status updates so starting or finishing a book posts the correct \"started reading\" or \"finished reading\" event to the timeline instead of a generic \"shelved\"."</string>
+
+    <!-- Create Book Dialog -->
+    <string name="create_book_title">Add book</string>
+    <string name="create_book_field_title">Title *</string>
+    <string name="create_book_field_subtitle">Subtitle</string>
+    <string name="create_book_field_author">Author *</string>
+    <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_field_pages">Pages</string>
+    <string name="create_book_field_published_date">Publication date (YYYY or YYYY-MM-DD)</string>
+    <string name="create_book_field_description">Description / Synopsis</string>
+    <string name="create_book_field_languages">Language</string>
+    <string name="create_book_field_format">Physical format</string>
+    <string name="create_book_cover_label">Cover image</string>
+    <string name="create_book_cover_select">Select cover</string>
+    <string name="create_book_cover_change">Change cover</string>
+    <string name="create_book_cover_remove">Remove cover</string>
+    <string name="create_book_more_details">More details</string>
+    <string name="create_book_less_details">Fewer details</string>
+    <string name="create_book_save">Create book</string>
+    <string name="create_book_saving">Creating book…</string>
+    <string name="create_book_author_choice_title">Select author</string>
+    <string name="create_book_author_choice_explanation">The instance found existing author records matching \"%1$s\". Choose an existing author to avoid duplicates, or create a new one:</string>
+    <string name="create_book_confirm_author">Confirm author</string>
+    <string name="create_book_error_generic">Could not create the book. Please check the details.</string>
+    <string name="create_book_title_required">Please enter a title</string>
+    <string name="create_book_author_required">Please enter an author</string>
+    <string name="create_book_format_paperback">Paperback</string>
+    <string name="create_book_format_hardcover">Hardcover</string>
+    <string name="create_book_format_ebook">Ebook</string>
+    <string name="create_book_format_audiobook">Audiobook</string>
 </resources>

@@ -674,4 +674,34 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="changelog_text_v1_3_5">"• Conexión y compatibilidad: Solucionado un problema en instancias protegidas con versiones recientes de Anubis (como kirja.casa) donde no se cargaba contenido tras actualizar.\n• Mayor estabilidad: Optimizada la detección y renovación automática de credenciales de paso para todas las instancias."</string>
     <string name="changelog_text_v1_3_6">"• Estadísticas de lectura: Mejoras en las estadísticas de libros leídos."</string>
     <string name="changelog_text_v1_3_7">"• Corrección en fechas de lectura: Solucionado un problema por el cual las fechas de inicio se sobreescribían o borraban al marcar un libro como leído. Ahora las fechas existentes se conservan correctamente.\n• Actividad de lectura: Corregido el registro de lectura para que al empezar o terminar un libro se publique el evento correspondiente («empezó a leer» / «terminó de leer») en la cronología en lugar del genérico «guardó en estantería»."</string>
+
+    <!-- Create Book Dialog -->
+    <string name="create_book_title">Añadir libro</string>
+    <string name="create_book_field_title">Título *</string>
+    <string name="create_book_field_subtitle">Subtítulo</string>
+    <string name="create_book_field_author">Autor *</string>
+    <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_field_pages">Páginas</string>
+    <string name="create_book_field_published_date">Fecha de publicación (AAAA o AAAA-MM-DD)</string>
+    <string name="create_book_field_description">Sinopsis / Descripción</string>
+    <string name="create_book_field_languages">Idioma</string>
+    <string name="create_book_field_format">Formato físico</string>
+    <string name="create_book_cover_label">Portada</string>
+    <string name="create_book_cover_select">Seleccionar portada</string>
+    <string name="create_book_cover_change">Cambiar portada</string>
+    <string name="create_book_cover_remove">Quitar portada</string>
+    <string name="create_book_more_details">Más detalles</string>
+    <string name="create_book_less_details">Menos detalles</string>
+    <string name="create_book_save">Crear libro</string>
+    <string name="create_book_saving">Creando libro…</string>
+    <string name="create_book_author_choice_title">Seleccionar autor</string>
+    <string name="create_book_author_choice_explanation">La instancia ha encontrado autores coincidentes con «%1$s». Elige uno existente para no duplicarlo, o crea uno nuevo:</string>
+    <string name="create_book_confirm_author">Confirmar autor</string>
+    <string name="create_book_error_generic">No se pudo crear el libro. Revisa los datos introducidos.</string>
+    <string name="create_book_title_required">El título es obligatorio</string>
+    <string name="create_book_author_required">El autor es obligatorio</string>
+    <string name="create_book_format_paperback">Tapa blanda</string>
+    <string name="create_book_format_hardcover">Tapa dura</string>
+    <string name="create_book_format_ebook">Libro electrónico</string>
+    <string name="create_book_format_audiobook">Audiolibro</string>
 </resources>
