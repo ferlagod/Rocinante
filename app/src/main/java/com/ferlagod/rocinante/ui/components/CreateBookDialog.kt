@@ -20,6 +20,7 @@
 package com.ferlagod.rocinante.ui.components
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -53,8 +54,9 @@ import kotlinx.coroutines.launch
 /**
  * Diálogo para la creación manual de un libro en la instancia de BookWyrm.
  *
- * Soporta entrada de metadatos completos, selección opcional de portada desde el dispositivo,
- * y resolución del paso intermedio de confirmación y desambiguación de autor (antiduplicados).
+ * Soporta entrada de metadatos completos con desplegables controlados para formato e idioma,
+ * selección opcional de portada desde el dispositivo, desambiguación de autor (antiduplicados),
+ * y opción de crear y seguir añadiendo más libros consecutivamente.
  *
  * @param initialTitle Título inicial (ej. proveniente de la búsqueda si no es un ISBN).
  * @param initialIsbn ISBN inicial (ej. proveniente del escáner de código de barras o búsqueda numérica).
@@ -64,6 +66,7 @@ import kotlinx.coroutines.launch
  *                      con la URL completa del nuevo libro.
  * @param onDismiss Callback para cerrar el diálogo.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBookDialog(
     instanceUrl: String,
@@ -76,6 +79,36 @@ fun CreateBookDialog(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    // Opciones oficiales de formato en BookWyrm
+    val formatOptions = remember {
+        listOf(
+            "" to R.string.create_book_format_unspecified,
+            "Paperback" to R.string.create_book_format_paperback,
+            "Hardcover" to R.string.create_book_format_hardcover,
+            "Ebook" to R.string.create_book_format_ebook,
+            "Audiobook" to R.string.create_book_format_audiobook,
+            "Mass market paperback" to R.string.create_book_format_pocket,
+            "Comic" to R.string.create_book_format_comic,
+            "Audio cd" to R.string.create_book_format_audio_cd
+        )
+    }
+
+    // Opciones oficiales de idioma en BookWyrm
+    val languageOptions = remember {
+        listOf(
+            "" to R.string.create_book_lang_unspecified,
+            "spa" to R.string.create_book_lang_es,
+            "eng" to R.string.create_book_lang_en,
+            "cat" to R.string.create_book_lang_ca,
+            "glg" to R.string.create_book_lang_gl,
+            "eus" to R.string.create_book_lang_eu,
+            "fra" to R.string.create_book_lang_fr,
+            "deu" to R.string.create_book_lang_de,
+            "ita" to R.string.create_book_lang_it,
+            "por" to R.string.create_book_lang_pt
+        )
+    }
+
     // Campos del formulario principal
     var title by remember { mutableStateOf(initialTitle) }
     var author by remember { mutableStateOf("") }
@@ -84,8 +117,12 @@ fun CreateBookDialog(
     var subtitle by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var publishedDate by remember { mutableStateOf("") }
-    var languages by remember { mutableStateOf("") }
-    var physicalFormat by remember { mutableStateOf("") }
+    var selectedLanguageCode by remember { mutableStateOf("") }
+    var selectedFormatCode by remember { mutableStateOf("") }
+
+    // Estados de desplegables
+    var formatDropdownExpanded by remember { mutableStateOf(false) }
+    var languageDropdownExpanded by remember { mutableStateOf(false) }
 
     // Imagen de portada
     var coverUri by remember { mutableStateOf<Uri?>(null) }
@@ -101,12 +138,33 @@ fun CreateBookDialog(
     var isWorking by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Si el usuario quiere guardar y añadir otro a continuación
+    var keepAddingAnother by remember { mutableStateOf(false) }
+
     // Estado de desambiguación de autor (paso 2)
     var pendingConfirmationForm by remember { mutableStateOf<BookWyrmScraper.BookEditForm?>(null) }
     var authorCandidates by remember { mutableStateOf<List<BookWyrmScraper.AuthorOption>>(emptyList()) }
     var selectedAuthorOption by remember { mutableStateOf<BookWyrmScraper.AuthorOption?>(null) }
 
-    fun submitInitialForm() {
+    fun resetForm() {
+        title = ""
+        author = ""
+        isbn = ""
+        pages = ""
+        subtitle = ""
+        description = ""
+        publishedDate = ""
+        selectedLanguageCode = ""
+        selectedFormatCode = ""
+        coverUri = null
+        pendingConfirmationForm = null
+        authorCandidates = emptyList()
+        selectedAuthorOption = null
+        errorMessage = null
+        keepAddingAnother = false
+    }
+
+    fun submitInitialForm(andAddAnother: Boolean = false) {
         val trimmedTitle = title.trim()
         val trimmedAuthor = author.trim()
 
@@ -121,6 +179,7 @@ fun CreateBookDialog(
 
         errorMessage = null
         isWorking = true
+        keepAddingAnother = andAddAnother
 
         coroutineScope.launch {
             val (coverBytes, coverMimeType) = coverUri?.let { uri ->
@@ -141,8 +200,8 @@ fun CreateBookDialog(
                 pages = pages.trim(),
                 publishedDate = publishedDate.trim(),
                 description = description.trim(),
-                languages = languages.trim(),
-                physicalFormat = physicalFormat.trim(),
+                languages = selectedLanguageCode,
+                physicalFormat = selectedFormatCode,
                 coverBytes = coverBytes,
                 coverMimeType = coverMimeType
             )
@@ -151,8 +210,17 @@ fun CreateBookDialog(
 
             when (result) {
                 is BookWyrmScraper.CreateBookResult.Created -> {
-                    onBookCreated(result.bookUrl)
-                    onDismiss()
+                    if (andAddAnother) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.create_book_created_toast, trimmedTitle),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        resetForm()
+                    } else {
+                        onBookCreated(result.bookUrl)
+                        onDismiss()
+                    }
                 }
                 is BookWyrmScraper.CreateBookResult.NeedsAuthorConfirmation -> {
                     pendingConfirmationForm = result.form
@@ -171,6 +239,7 @@ fun CreateBookDialog(
     fun submitAuthorConfirmation() {
         val form = pendingConfirmationForm ?: return
         val option = selectedAuthorOption ?: return
+        val bookTitle = title.trim()
 
         errorMessage = null
         isWorking = true
@@ -181,8 +250,17 @@ fun CreateBookDialog(
 
             when (result) {
                 is BookWyrmScraper.CreateBookResult.Created -> {
-                    onBookCreated(result.bookUrl)
-                    onDismiss()
+                    if (keepAddingAnother) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.create_book_created_toast, bookTitle),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        resetForm()
+                    } else {
+                        onBookCreated(result.bookUrl)
+                        onDismiss()
+                    }
                 }
                 is BookWyrmScraper.CreateBookResult.NeedsAuthorConfirmation -> {
                     pendingConfirmationForm = result.form
@@ -327,6 +405,44 @@ fun CreateBookDialog(
                         )
                     }
 
+                    // Selector de formato (desplegable)
+                    ExposedDropdownMenuBox(
+                        expanded = formatDropdownExpanded && !isWorking,
+                        onExpandedChange = { if (!isWorking) formatDropdownExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val formatLabel = formatOptions.firstOrNull { it.first == selectedFormatCode }?.let {
+                            stringResource(it.second)
+                        } ?: stringResource(R.string.create_book_format_unspecified)
+
+                        OutlinedTextField(
+                            value = formatLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.create_book_field_format)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = formatDropdownExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            enabled = !isWorking
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = formatDropdownExpanded && !isWorking,
+                            onDismissRequest = { formatDropdownExpanded = false }
+                        ) {
+                            formatOptions.forEach { (code, stringRes) ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(stringRes)) },
+                                    onClick = {
+                                        selectedFormatCode = code
+                                        formatDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     // Selector de portada
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -435,23 +551,43 @@ fun CreateBookDialog(
                                 enabled = !isWorking
                             )
 
-                            OutlinedTextField(
-                                value = languages,
-                                onValueChange = { languages = it },
-                                label = { Text(stringResource(R.string.create_book_field_languages)) },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
-                            )
+                            // Selector de idioma (desplegable)
+                            ExposedDropdownMenuBox(
+                                expanded = languageDropdownExpanded && !isWorking,
+                                onExpandedChange = { if (!isWorking) languageDropdownExpanded = it },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                val langLabel = languageOptions.firstOrNull { it.first == selectedLanguageCode }?.let {
+                                    stringResource(it.second)
+                                } ?: stringResource(R.string.create_book_lang_unspecified)
 
-                            OutlinedTextField(
-                                value = physicalFormat,
-                                onValueChange = { physicalFormat = it },
-                                label = { Text(stringResource(R.string.create_book_field_format)) },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
-                            )
+                                OutlinedTextField(
+                                    value = langLabel,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text(stringResource(R.string.create_book_field_languages)) },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageDropdownExpanded) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .menuAnchor(),
+                                    enabled = !isWorking
+                                )
+
+                                ExposedDropdownMenu(
+                                    expanded = languageDropdownExpanded && !isWorking,
+                                    onDismissRequest = { languageDropdownExpanded = false }
+                                ) {
+                                    languageOptions.forEach { (code, stringRes) ->
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(stringRes)) },
+                                            onClick = {
+                                                selectedLanguageCode = code
+                                                languageDropdownExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
 
                             OutlinedTextField(
                                 value = description,
@@ -476,23 +612,31 @@ fun CreateBookDialog(
                     strokeWidth = 2.dp
                 )
             } else {
-                Button(
-                    onClick = {
-                        if (pendingConfirmationForm != null) {
-                            submitAuthorConfirmation()
-                        } else {
-                            submitInitialForm()
-                        }
-                    },
-                    enabled = !isWorking && (pendingConfirmationForm == null || selectedAuthorOption != null)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        if (pendingConfirmationForm != null) {
-                            stringResource(R.string.create_book_confirm_author)
-                        } else {
-                            stringResource(R.string.create_book_save)
+                    if (pendingConfirmationForm != null) {
+                        Button(
+                            onClick = { submitAuthorConfirmation() },
+                            enabled = !isWorking && selectedAuthorOption != null
+                        ) {
+                            Text(stringResource(R.string.create_book_confirm_author))
                         }
-                    )
+                    } else {
+                        OutlinedButton(
+                            onClick = { submitInitialForm(andAddAnother = true) },
+                            enabled = !isWorking
+                        ) {
+                            Text(stringResource(R.string.create_book_save_and_add_another))
+                        }
+                        Button(
+                            onClick = { submitInitialForm(andAddAnother = false) },
+                            enabled = !isWorking
+                        ) {
+                            Text(stringResource(R.string.create_book_save))
+                        }
+                    }
                 }
             }
         },

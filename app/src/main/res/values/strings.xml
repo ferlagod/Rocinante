@@ -699,4 +699,20 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="create_book_format_hardcover">Hardcover</string>
     <string name="create_book_format_ebook">Ebook</string>
     <string name="create_book_format_audiobook">Audiobook</string>
+    <string name="create_book_format_pocket">Pocket / Mass market</string>
+    <string name="create_book_format_comic">Comic / Graphic novel</string>
+    <string name="create_book_format_audio_cd">Audio CD</string>
+    <string name="create_book_format_unspecified">Unspecified format</string>
+    <string name="create_book_save_and_add_another">Save and add another</string>
+    <string name="create_book_created_toast">\"%1$s\" created successfully</string>
+    <string name="create_book_lang_unspecified">Unspecified language</string>
+    <string name="create_book_lang_es">Spanish</string>
+    <string name="create_book_lang_en">English</string>
+    <string name="create_book_lang_ca">Catalan</string>
+    <string name="create_book_lang_gl">Galician</string>
+    <string name="create_book_lang_eu">Basque</string>
+    <string name="create_book_lang_fr">French</string>
+    <string name="create_book_lang_de">German</string>
+    <string name="create_book_lang_it">Italian</string>
+    <string name="create_book_lang_pt">Portuguese</string>
 </resources>

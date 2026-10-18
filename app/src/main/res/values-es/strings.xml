@@ -704,4 +704,20 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="create_book_format_hardcover">Tapa dura</string>
     <string name="create_book_format_ebook">Libro electrónico</string>
     <string name="create_book_format_audiobook">Audiolibro</string>
+    <string name="create_book_format_pocket">Edición de bolsillo</string>
+    <string name="create_book_format_comic">Cómic / Novela gráfica</string>
+    <string name="create_book_format_audio_cd">CD de audio</string>
+    <string name="create_book_format_unspecified">Formato sin especificar</string>
+    <string name="create_book_save_and_add_another">Crear y añadir otro</string>
+    <string name="create_book_created_toast">«%1$s» creado correctamente</string>
+    <string name="create_book_lang_unspecified">Idioma sin especificar</string>
+    <string name="create_book_lang_es">Español</string>
+    <string name="create_book_lang_en">Inglés</string>
+    <string name="create_book_lang_ca">Catalán</string>
+    <string name="create_book_lang_gl">Gallego</string>
+    <string name="create_book_lang_eu">Euskera</string>
+    <string name="create_book_lang_fr">Francés</string>
+    <string name="create_book_lang_de">Alemán</string>
+    <string name="create_book_lang_it">Italiano</string>
+    <string name="create_book_lang_pt">Portugués</string>
 </resources>

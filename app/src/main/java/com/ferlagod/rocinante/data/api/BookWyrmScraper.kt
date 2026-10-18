@@ -1037,30 +1037,40 @@ object BookWyrmScraper {
                 } catch (_: Exception) {}
             }
 
-            val bodyBuilder = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
-                .addFormDataPart("csrfmiddlewaretoken", csrfToken)
-                .addFormDataPart("title", title.trim())
-                .addFormDataPart("subtitle", subtitle.trim())
-                .addFormDataPart("add_author", authorName.trim())
-                .addFormDataPart("isbn_13", isbn13.trim())
-                .addFormDataPart("pages", pages.trim())
-                .addFormDataPart("published_date", publishedDate.trim())
-                .addFormDataPart("description", description.trim())
-                .addFormDataPart("languages", languages.trim())
-                .addFormDataPart("physical_format", physicalFormat.trim())
-                .addFormDataPart("parent_work", "")
-
-            if (coverBytes != null && coverBytes.isNotEmpty()) {
+            // Si hay portada se envía MultipartBody; si no, FormBody estándar
+            val initialRequestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
                 val mediaType = (coverMimeType.ifBlank { "image/jpeg" }).toMediaTypeOrNull()
-                bodyBuilder.addFormDataPart(
-                    "cover",
-                    "cover.jpg",
-                    coverBytes.toRequestBody(mediaType)
-                )
+                okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                    .addFormDataPart("csrfmiddlewaretoken", csrfToken)
+                    .addFormDataPart("title", title.trim())
+                    .addFormDataPart("subtitle", subtitle.trim())
+                    .addFormDataPart("add_author", authorName.trim())
+                    .addFormDataPart("isbn_13", isbn13.trim())
+                    .addFormDataPart("pages", pages.trim())
+                    .addFormDataPart("published_date", publishedDate.trim())
+                    .addFormDataPart("description", description.trim())
+                    .addFormDataPart("languages", languages.trim())
+                    .addFormDataPart("physical_format", physicalFormat.trim())
+                    .addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
+                    .build()
+            } else {
+                okhttp3.FormBody.Builder()
+                    .add("csrfmiddlewaretoken", csrfToken)
+                    .add("title", title.trim())
+                    .add("subtitle", subtitle.trim())
+                    .add("add_author", authorName.trim())
+                    .add("isbn_13", isbn13.trim())
+                    .add("pages", pages.trim())
+                    .add("published_date", publishedDate.trim())
+                    .add("description", description.trim())
+                    .add("languages", languages.trim())
+                    .add("physical_format", physicalFormat.trim())
+                    .build()
             }
 
-            val response = api.postForm(createUrl, bodyBuilder.build())
+            val response = api.postForm(createUrl, initialRequestBody)
 
+            // Caso A: Se creó de inmediato (302)
             if (response.code() in 301..303) {
                 val location = response.headers()["Location"].orEmpty()
                 val fullUrl = if (location.startsWith("http")) location else "$cleanBase/${location.trimStart('/')}"
@@ -1074,27 +1084,71 @@ object BookWyrmScraper {
             }
 
             val doc = org.jsoup.Jsoup.parse(html, createUrl)
-            val radios = doc.select("input[type=radio][name^=author_match-], input[type=radio][name=add_author]")
 
-            if (radios.isNotEmpty()) {
-                val form = doc.selectFirst("form[action*='create-book']")
-                    ?: radios.firstOrNull()?.parents()?.firstOrNull { it.tagName() == "form" }
+            // Comprobar si la sesión no es válida (redirigió o devolvió login)
+            if (doc.selectFirst("input[name=username]") != null && doc.selectFirst("input[name=password]") != null) {
+                return@withContext CreateBookResult.Error("Sesión expirada o no iniciada en la instancia")
+            }
 
-                val hiddenPairs = mutableListOf<Pair<String, String>>()
-                form?.select("input[type=hidden]")?.forEach { input ->
-                    val name = input.attr("name").trim()
-                    val value = input.attr("value")
-                    if (name.isNotEmpty() && name != "csrfmiddlewaretoken") {
-                        hiddenPairs += name to value
+            // Comprobar errores de validación específicos en los campos
+            val fieldErrors = doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
+                .map { it.text().trim() }
+                .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
+            if (fieldErrors.isNotEmpty()) {
+                return@withContext CreateBookResult.Error(fieldErrors.distinct().joinToString("\n"))
+            }
+
+            // Localizar el formulario en la página (en confirm_mode la acción es create-book-confirm)
+            val form = doc.selectFirst("form[action*='confirm']")
+                ?: doc.selectFirst("form[name='create-book']")
+                ?: doc.selectFirst("form[action*='create-book']")
+                ?: doc.selectFirst("form")
+
+            if (form == null) {
+                return@withContext CreateBookResult.Error("No se encontró el formulario de creación (${response.code()})")
+            }
+
+            // Extraer todos los campos presentes en el formulario
+            val formFields = mutableListOf<Pair<String, String>>()
+            for (el in form.select("input[name], select[name], textarea[name]")) {
+                val name = el.attr("name").trim()
+                if (name.isEmpty() || name == "cover") continue
+                when (el.tagName()) {
+                    "input" -> {
+                        val type = el.attr("type").lowercase().ifEmpty { "text" }
+                        if (type in setOf("file", "submit", "button", "image", "reset")) continue
+                        if (type in setOf("checkbox", "radio")) {
+                            if (el.hasAttr("checked")) {
+                                formFields += name to el.attr("value")
+                            }
+                        } else {
+                            formFields += name to el.attr("value")
+                        }
+                    }
+                    "textarea" -> formFields += name to el.wholeText()
+                    "select" -> {
+                        val chosen = el.select("option[selected]").firstOrNull() ?: el.select("option").firstOrNull()
+                        if (chosen != null) {
+                            formFields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
+                        }
                     }
                 }
+            }
 
-                val options = radios.map { radio ->
+            val rawAction = form.attr("action").trim().ifEmpty { "/create-book/confirm" }
+            val actionUrl = if (rawAction.startsWith("http")) rawAction else "$cleanBase/${rawAction.trimStart('/')}"
+
+            // Comprobar si BookWyrm pide confirmar autores (author_matches)
+            val authorRadios = form.select("input[type=radio][name^=author_match-]")
+
+            if (authorRadios.isNotEmpty()) {
+                // Hay candidatos de autor para que el usuario elija
+                val options = authorRadios.map { radio ->
                     val value = radio.attr("value").trim()
                     val label = radio.parent()
                     val name = (label?.text() ?: "").trim()
                     val help = generateSequence(label?.nextElementSibling()) { it.nextElementSibling() }
-                        .takeWhile { it.tagName() == "p" && it.hasClass("help") }
+                        .takeWhile { it.tagName() == "p" && (it.hasClass("help") || it.hasClass("is-danger")) }
                         .map { it.text().trim() }
                         .filter { it.isNotEmpty() }
                         .joinToString(" · ")
@@ -1112,16 +1166,28 @@ object BookWyrmScraper {
                     )
                 }.sortedBy { it.kind.ordinal }
 
-                val action = form?.attr("action")?.trim().orEmpty().ifEmpty { createUrl }
-                val actionUrl = if (action.startsWith("http")) action else "$cleanBase/${action.trimStart('/')}"
+                // Asegurar que parent_work="0" (This is a new work) esté en los campos
+                if (formFields.none { it.first == "parent_work" }) {
+                    formFields += "parent_work" to "0"
+                }
+
                 return@withContext CreateBookResult.NeedsAuthorConfirmation(
-                    BookEditForm(actionUrl, hiddenPairs),
+                    BookEditForm(actionUrl, formFields),
                     options
                 )
             }
 
-            val errorMsg = doc.select(".message.is-danger, .help.is-danger, ul.errorlist li, .errors").text().trim()
-            CreateBookResult.Error(errorMsg.ifBlank { "Error (${response.code()})" })
+            // Si NO hay radios de autor, BookWyrm ya aceptó el autor como nuevo autor.
+            // Proceder a la confirmación automática requerida por confirm_mode:
+            val finalFields = formFields.toMutableList()
+            if (finalFields.none { it.first == "parent_work" }) {
+                finalFields += "parent_work" to "0"
+            }
+            if (form.selectFirst("input[name=series_match]") != null && finalFields.none { it.first == "series_match" }) {
+                finalFields += "series_match" to "0"
+            }
+
+            sendConfirmCreateBook(api, actionUrl, finalFields, coverBytes, coverMimeType)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             CreateBookResult.Error(e.message ?: "Unknown error")
@@ -1130,7 +1196,7 @@ object BookWyrmScraper {
 
     /**
      * Confirma la creación del libro enviando la opción de autor seleccionada en el formulario
-     * con los campos ocultos preservados.
+     * a la URL de confirmación de BookWyrm.
      */
     suspend fun confirmCreateBookAuthor(
         api: BookWyrmApi,
@@ -1138,24 +1204,77 @@ object BookWyrmScraper {
         option: AuthorOption
     ): CreateBookResult = withContext(Dispatchers.IO) {
         try {
+            val fields = form.fields.toMutableList()
+            // Reemplazar o añadir el campo de autor elegido
+            fields.removeAll { it.first == option.field }
+            fields.add(option.field to option.value)
+
+            // Asegurar que parent_work="0" (nueva obra) esté seleccionado
+            if (fields.none { it.first == "parent_work" }) {
+                fields.add("parent_work" to "0")
+            }
+
+            sendConfirmCreateBook(api, form.actionUrl, fields, null, null)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            CreateBookResult.Error(e.message ?: "Unknown error")
+        }
+    }
+
+    /**
+     * Envía la confirmación final de la creación del libro (/create-book/confirm).
+     */
+    private suspend fun sendConfirmCreateBook(
+        api: BookWyrmApi,
+        actionUrl: String,
+        fields: List<Pair<String, String>>,
+        coverBytes: ByteArray?,
+        coverMimeType: String?
+    ): CreateBookResult = withContext(Dispatchers.IO) {
+        try {
             val csrfToken = NetworkClient.currentCsrfToken().orEmpty()
-            val body = okhttp3.FormBody.Builder().apply {
-                add("csrfmiddlewaretoken", csrfToken)
-                for ((name, value) in form.fields) {
-                    if (name != option.field && name != "csrfmiddlewaretoken") {
-                        add(name, value)
+
+            val requestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
+                val mediaType = (coverMimeType ?: "image/jpeg").toMediaTypeOrNull()
+                val multipart = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                var hasCsrf = false
+                for ((name, value) in fields) {
+                    if (name == "csrfmiddlewaretoken") {
+                        multipart.addFormDataPart(name, csrfToken.ifEmpty { value })
+                        hasCsrf = true
+                    } else {
+                        multipart.addFormDataPart(name, value)
                     }
                 }
-                add(option.field, option.value)
-            }.build()
+                if (!hasCsrf && csrfToken.isNotEmpty()) {
+                    multipart.addFormDataPart("csrfmiddlewaretoken", csrfToken)
+                }
+                multipart.addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
+                multipart.build()
+            } else {
+                val formBody = okhttp3.FormBody.Builder()
+                var hasCsrf = false
+                for ((name, value) in fields) {
+                    if (name == "csrfmiddlewaretoken") {
+                        formBody.add(name, csrfToken.ifEmpty { value })
+                        hasCsrf = true
+                    } else {
+                        formBody.add(name, value)
+                    }
+                }
+                if (!hasCsrf && csrfToken.isNotEmpty()) {
+                    formBody.add("csrfmiddlewaretoken", csrfToken)
+                }
+                formBody.build()
+            }
 
-            val response = api.postForm(form.actionUrl, body)
+            val response = api.postForm(actionUrl, requestBody)
             if (response.code() in 301..303) {
                 val location = response.headers()["Location"].orEmpty()
                 val fullUrl = if (location.startsWith("http")) {
                     location
                 } else {
-                    val base = java.net.URL(form.actionUrl)
+                    val base = java.net.URL(actionUrl)
                     "${base.protocol}://${base.host}/${location.trimStart('/')}"
                 }
                 val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
@@ -1163,9 +1282,12 @@ object BookWyrmScraper {
             }
 
             val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
-            val errorMsg = if (html.isNotEmpty()) {
-                org.jsoup.Jsoup.parse(html).select(".message.is-danger, .help.is-danger, ul.errorlist li, .errors").text().trim()
-            } else ""
+            val doc = org.jsoup.Jsoup.parse(html, actionUrl)
+            val errors = doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
+                .map { it.text().trim() }
+                .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
+
+            val errorMsg = errors.distinct().joinToString("\n")
             CreateBookResult.Error(errorMsg.ifBlank { "Error (${response.code()})" })
         } catch (e: Exception) {
             if (e is CancellationException) throw e
