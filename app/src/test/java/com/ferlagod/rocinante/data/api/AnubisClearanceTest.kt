@@ -158,4 +158,17 @@ class AnubisClearanceTest {
         assertNull(AnubisClearance.baseUrlOf(null))
         assertNull(AnubisClearance.baseUrlOf("  "))
     }
+
+    @Test
+    fun `un 200 que emite una cookie de auth valida no es un reto`() {
+        val builder = Response.Builder()
+            .request(Request.Builder().url("https://kirja.casa/book/1").build())
+            .protocol(Protocol.HTTP_2)
+            .code(200)
+            .message("OK")
+            .header("Server", "nginx")
+            .header("Set-Cookie", "techaro.lol-anubis-auth=eyJ.jwt.firma; Path=/; Expires=Sun, 27 Sep 2026 10:00:00 GMT")
+            .body("".toResponseBody(null))
+        assertFalse(AnubisClearance.isChallenge(builder.build()))
+    }
 }

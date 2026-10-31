@@ -25,6 +25,13 @@ import com.ferlagod.rocinante.data.api.BookWyrmApi
 class InteractionRepository(
     private val api: BookWyrmApi
 ) {
+    /** ¿Es [url] de la instancia del usuario (por host, no por contener el texto)? */
+    private fun isLocalUrl(url: String, instanceUrl: String): Boolean {
+        val host = runCatching { java.net.URL(url).host }.getOrNull() ?: return false
+        val instanceHost = instanceUrl.removePrefix("http://").removePrefix("https://").substringBefore("/")
+        return com.ferlagod.rocinante.data.api.NetworkClient.isInstanceHost(host, instanceHost)
+    }
+
     /**
      * Resuelve el identificador local (base de datos interna de la instancia) de una actividad
      * (estado/review/comentario) a partir de su URL pública, interactuando con el HTML
@@ -46,7 +53,7 @@ class InteractionRepository(
                 val typeRegex = """/(status|review|comment|quotation|reviewrating|post)/(\d+)""".toRegex()
                 
                 // If it is already a local status URL (contains our instance url) and has a valid ID
-                if (statusUrl.contains(cleanInstance)) {
+                if (isLocalUrl(statusUrl, instanceUrl)) {
                     val match = typeRegex.find(statusUrl)
                     if (match != null) {
                         return@withContext match.groupValues[2]
@@ -133,22 +140,30 @@ class InteractionRepository(
                     }
                 }
                 
-                // Fallback: extract from original URL
-                val match = typeRegex.find(statusUrl)
-                if (match != null) {
-                    return@withContext match.groupValues[2]
+                // El número que trae la URL solo vale si el estado es de esta instancia. El de
+                // una URL remota es el ID *de allí*: usarlo aquí daba like o respondía a un estado
+                // local cualquiera que tuviera ese mismo número.
+                if (isLocalUrl(statusUrl, instanceUrl)) {
+                    val match = typeRegex.find(statusUrl)
+                    if (match != null) {
+                        return@withContext match.groupValues[2]
+                    }
                 }
                 
                 // Final Fallback: search for the status URL on the local instance
                 try {
                     val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
                     val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-                    val searchUrl = "${baseUrl}search?q=$statusUrl"
+                    val searchUrl = "${baseUrl}search?q=${java.net.URLEncoder.encode(statusUrl, "UTF-8")}"
                     val searchResponse = api.getRawHtmlResponse(searchUrl)
                     if (searchResponse.isSuccessful || searchResponse.code() in 300..399) {
                         val searchHtml = searchResponse.body()?.string() ?: ""
-                        // 1. If it redirected straight to the status
-                        val finalUrl = searchResponse.raw().request.url.toString()
+                        // 1. If it redirected straight to the status. El cliente no sigue las
+                        // redirecciones, así que el destino está en Location, no en la URL pedida.
+                        val requestUrl = searchResponse.raw().request.url
+                        val finalUrl = searchResponse.headers()["Location"]
+                            ?.let { requestUrl.resolve(it)?.toString() }
+                            ?: requestUrl.toString()
                         val redirectMatch = typeRegex.find(finalUrl)
                         if (redirectMatch != null && finalUrl.contains(cleanInstance)) {
                             return@withContext redirectMatch.groupValues[2]
@@ -174,13 +189,13 @@ class InteractionRepository(
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 e.printStackTrace()
-                try {
+                if (isLocalUrl(statusUrl, instanceUrl)) {
                     val typeRegex = """/(status|review|comment|quotation|reviewrating|post)/(\d+)""".toRegex()
                     val match = typeRegex.find(statusUrl)
                     if (match != null) {
                         return@withContext match.groupValues[2]
                     }
-                } catch (_: Exception) {}
+                }
                 null
             }
         }
@@ -194,8 +209,9 @@ class InteractionRepository(
     suspend fun favoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.favoriteStatus(statusId)
-            response.isSuccessful || response.code() in 200..299 || response.code() == 302
-        } catch (_: Exception) {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }
@@ -208,8 +224,9 @@ class InteractionRepository(
     suspend fun unfavoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.unfavoriteStatus(statusId)
-            response.isSuccessful || response.code() in 200..299 || response.code() == 302
-        } catch (_: Exception) {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }
@@ -219,8 +236,9 @@ class InteractionRepository(
     suspend fun boostStatus(statusId: String): Boolean {
         return try {
             val response = api.boostStatus(statusId)
-            response.isSuccessful || response.code() in 200..399
-        } catch (_: Exception) {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }
@@ -231,8 +249,9 @@ class InteractionRepository(
     suspend fun unboostStatus(statusId: String): Boolean {
         return try {
             val response = api.unboostStatus(statusId)
-            response.isSuccessful || response.code() in 200..399
-        } catch (_: Exception) {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }
@@ -248,8 +267,9 @@ class InteractionRepository(
     suspend fun replyStatus(userId: String, content: String, replyParent: String, csrfToken: String): Boolean {
         return try {
             val response = api.replyStatus(userId = userId, content = content, replyParent = replyParent, csrfToken = csrfToken)
-            response.isSuccessful || response.code() == 302
-        } catch (_: Exception) {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }

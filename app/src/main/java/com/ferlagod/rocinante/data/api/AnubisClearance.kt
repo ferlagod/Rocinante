@@ -81,6 +81,19 @@ object AnubisClearance {
     private val mutex = Mutex()
 
     /**
+     * Tras un intento fallido no se vuelve a probar durante este tiempo. Sin esta pausa, cada
+     * petición que esperaba turno en el mutex abría su propio WebView de 30 s, y diez
+     * peticiones a la vez dejaban la app colgada varios minutos.
+     */
+    private const val FAILURE_COOLDOWN_MS = 60_000L
+
+    @Volatile
+    private var lastFailureAt: Long = 0L
+
+    @Volatile
+    private var lastFailureBase: String? = null
+
+    /**
      * Guarda lo que hace falta para poder renovar desde el interceptor, que no tiene
      * acceso ni al contexto ni a la sesión.
      */
@@ -89,12 +102,6 @@ object AnubisClearance {
         sessionStorage = storage
     }
 
-    /**
-     * ¿Este intercambio es el reto de Anubis en lugar de lo que se había pedido?
-     *
-     * Cubre todos los casos: la redirección hacia el reto (307), haber acabado dentro de él
-     * porque el cliente siguió la redirección, o un error 403 originado por Anubis.
-     */
     /**
      * ¿Este intercambio es el reto de Anubis en lugar de lo que se había pedido?
      *
@@ -135,9 +142,16 @@ object AnubisClearance {
 
         if (response.code == 403 && isAnubis) return true
 
-        // Reto servido con HTTP 200: Anubis borra la cookie de auth o envía verificación
-        val clearsAuthCookie = setCookie.contains("anubis-auth", ignoreCase = true) && 
-            (setCookie.contains("=;") || setCookie.contains("Max-Age=0", ignoreCase = true) || setCookie.contains("Expires=", ignoreCase = true))
+        // Reto servido con HTTP 200: Anubis borra la cookie de auth o envía verificación.
+        // Se mira cada Set-Cookie por separado: solo cuenta si es la de auth y llega vacía o con
+        // Max-Age=0. Un `Expires=` a secas lo lleva también la cookie buena cuando se emite.
+        val clearsAuthCookie = response.headers("Set-Cookie").any { header ->
+            val nameValue = header.substringBefore(';')
+            val name = nameValue.substringBefore('=').trim()
+            val value = nameValue.substringAfter('=', "").trim()
+            name.contains("anubis-auth", ignoreCase = true) &&
+                (value.isEmpty() || header.contains("Max-Age=0", ignoreCase = true))
+        }
         val hasVerificationCookie = setCookie.contains("anubis-cookie-verification", ignoreCase = true)
         if (response.code == 200 && (hasVerificationCookie || clearsAuthCookie)) {
             return true
@@ -188,7 +202,17 @@ object AnubisClearance {
             return propagate(current)
         }
 
-        val solved = solveChallenge(base, staleToken, staleCookie) ?: return null
+        if (lastFailureBase == base && System.currentTimeMillis() - lastFailureAt < FAILURE_COOLDOWN_MS) {
+            return null
+        }
+
+        val solved = solveChallenge(base, staleToken, staleCookie)
+        if (solved == null) {
+            lastFailureBase = base
+            lastFailureAt = System.currentTimeMillis()
+            return null
+        }
+        lastFailureBase = null
         propagate(solved)
     }
 

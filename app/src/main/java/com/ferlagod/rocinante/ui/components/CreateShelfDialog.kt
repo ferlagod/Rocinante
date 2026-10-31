@@ -113,7 +113,7 @@ fun CreateShelfDialog(
                     ?.substringAfterLast("/books/")
                     ?.substringAfterLast('/')
                     ?.takeIf { it.isNotEmpty() }
-                if (response.code() == 302 && identifier != null) {
+                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) && identifier != null) {
                     onCreated(identifier)
                     onDismiss()
                 } else {

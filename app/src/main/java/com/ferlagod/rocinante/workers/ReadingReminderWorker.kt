@@ -52,7 +52,8 @@ class ReadingReminderWorker(
      * Realiza el trabajo en segundo plano: obtiene la sesión del usuario, consulta los libros
      * en la estantería de lectura activa y muestra una notificación local.
      *
-     * @return [Result.success] si se ejecutó correctamente o [Result.retry] si falla la conexión de red.
+     * @return Siempre [Result.success]: si la red falla se avisa con el texto genérico, y el
+     *   siguiente aviso lo programa el propio worker (reintentar duplicaría la programación).
      */
     override suspend fun doWork(): Result {
         try {
@@ -128,6 +129,15 @@ class ReadingReminderWorker(
      * @param message Mensaje del cuerpo de la notificación.
      */
     private fun showNotification(title: String, message: String) {
+        // Desde Android 13 hace falta el permiso; sin él, notify() no enseña nada y se
+        // registra un aviso, así que ni se intenta.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val channelId = "rocinante_reading_reminders"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

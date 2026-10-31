@@ -34,11 +34,14 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Número máximo de usuarios seguidos cuyos outboxes se cargarán. */
 private const val MAX_FOLLOWING_TO_LOAD = 200
+
+private const val MAX_CONCURRENT_ACTORS = 16
 
 /**
  * Tipos de actividad ActivityPub que no tienen relevancia en el timeline y deben filtrarse.
@@ -268,10 +271,14 @@ class TimelineRepository(
 
         val followingActorUrls = allFollowingUrls.take(MAX_FOLLOWING_TO_LOAD)
 
-        // Cargar cada perfil de seguido en paralelo para obtener su outbox y datos de actor
+        // Cargar cada perfil de seguido en paralelo para obtener su outbox y datos de actor,
+        // pero pocos a la vez: cada uno arrastra su perfil, dos páginas de outbox y los objetos,
+        // portadas y autores de cada actividad, casi siempre en servidores ajenos. Sin límite
+        // eran miles de peticiones de golpe contra instancias pequeñas.
+        val limiter = kotlinx.coroutines.sync.Semaphore(MAX_CONCURRENT_ACTORS)
         val deferreds = followingActorUrls.map { actorUrl ->
             async {
-                loadFollowedActorActivities(actorUrl)
+                limiter.withPermit { loadFollowedActorActivities(actorUrl) }
             }
         }
 
@@ -298,7 +305,7 @@ class TimelineRepository(
                 val profile = userRepository.profileCache.getOrPut(profileUrl) {
                     val rawJson = api.getRawJson(profileUrl).string()
                     if (!rawJson.trimStart().startsWith("{")) throw IllegalArgumentException("Not a JSON object")
-                    Gson().fromJson(rawJson, BookWyrmProfile::class.java)
+                    com.ferlagod.rocinante.data.api.NetworkClient.gson.fromJson(rawJson, BookWyrmProfile::class.java)
                 }
 
                 val actorName = profile.name?.takeIf { it.isNotBlank() }
@@ -426,7 +433,7 @@ class TimelineRepository(
                                 api.getRawJson(actorUrl).string()
                             }
                             if (fetchedJson != null && fetchedJson.trimStart().startsWith("{")) {
-                                val p = Gson().fromJson(fetchedJson, BookWyrmProfile::class.java)
+                                val p = com.ferlagod.rocinante.data.api.NetworkClient.gson.fromJson(fetchedJson, BookWyrmProfile::class.java)
                                 userRepository.profileCache[actorUrl] = p
                                 p
                             } else null

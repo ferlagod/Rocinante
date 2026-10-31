@@ -23,6 +23,7 @@ package com.ferlagod.rocinante.ui.screens.home
 import com.ferlagod.rocinante.data.model.*
 
 import android.widget.Toast
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -154,14 +155,19 @@ fun HomeScreen(
         viewModel.load(instanceUrl, username, cookie)
     }
 
-    LaunchedEffect(api, instanceUrl) {
-        while (true) {
-            try {
-                unreadNotifications = BookWyrmScraper.getUnreadNotificationCount(api, instanceUrl)
-            } catch (e: Exception) {
-                // Ignore
+    // Solo con la app a la vista: en segundo plano el bucle seguía pidiendo a la instancia cada
+    // tres minutos (y, tras Anubis, abriendo un WebView) aunque nadie mirase la pantalla.
+    val pollLifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(api, instanceUrl, pollLifecycle) {
+        pollLifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            while (true) {
+                try {
+                    unreadNotifications = BookWyrmScraper.getUnreadNotificationCount(api, instanceUrl)
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                }
+                delay(3 * 60 * 1000L) // 3 mins
             }
-            delay(3 * 60 * 1000L) // 3 mins
         }
     }
 
@@ -481,7 +487,7 @@ fun HomeScreen(
                                                 val cookieJar = NetworkClient.lastOkHttpClient?.cookieJar as? com.ferlagod.rocinante.data.api.SessionCookieJar
                                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
                                                 val response = api.createStatus(userId = userId, content = statusText, csrfToken = csrfToken)
-                                                if (response.isSuccessful || response.code() == 302) {
+                                                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                                     showPostDialog = false
                                                     Toast.makeText(context, postSuccessMsg, Toast.LENGTH_SHORT).show()
                                                     viewModel.load(instanceUrl, username, cookie, forceRefresh = true)
@@ -938,8 +944,8 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
                                 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
 
                                 var response: retrofit2.Response<okhttp3.ResponseBody>? = null
                                 if (!formId.isNullOrBlank()) {
@@ -984,8 +990,8 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
 
                                 var response: retrofit2.Response<okhttp3.ResponseBody>? = null
                                 try { response = api.unfollowUser(cleanHandle) } catch (_: Exception) {}
@@ -1031,8 +1037,8 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
 
                                 var response: retrofit2.Response<okhttp3.ResponseBody>? = null
                                 try { response = api.followUser(cleanHandle) } catch (_: Exception) {}
@@ -1097,8 +1103,8 @@ fun SuggestedUserDialog(
                                 }
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
+                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
 
                                 var response: retrofit2.Response<okhttp3.ResponseBody>? = null
                                 if (!formId.isNullOrBlank()) {
@@ -2070,7 +2076,7 @@ fun ProfileTab(
                             if (userId != null) {
                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
                                 val response = api.createStatus(userId = userId, content = shareText, csrfToken = csrfToken)
-                                if (response.isSuccessful || response.code() == 302) {
+                                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.post_success), Toast.LENGTH_SHORT).show()
                                 } else {
                                     Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
@@ -2757,7 +2763,7 @@ fun ProfileTab(
                             try {
                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
                                 val response = api.editProfile(editName, editSummary, csrfToken)
-                                if (response.code() == 302 || response.code() == 201) {
+                                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) || response.code() == 201) {
                                     Toast.makeText(context, context.getString(R.string.profile_updated), Toast.LENGTH_SHORT).show()
                                     showEditDialog = false
                                     refreshTrigger++

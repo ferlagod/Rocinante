@@ -183,7 +183,9 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
 
                         Button(
                             onClick = {
-                                if (instanceUrl.isNotBlank() && username.isNotBlank()) {
+                                val normalized = com.ferlagod.rocinante.utils.InstanceUrl.normalize(instanceUrl)
+                                if (normalized.isNotBlank() && username.isNotBlank()) {
+                                    instanceUrl = normalized
                                     showWebView = true
                                 }
                             },
@@ -236,7 +238,7 @@ fun LoginScreen(onLoginSuccess: (String, String, String) -> Unit) {
             }
         }
     } else {
-            val cleanInstance = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+            val cleanInstance = com.ferlagod.rocinante.utils.InstanceUrl.normalize(instanceUrl)
             val loginUrl = "$cleanInstance/login"
 
             BookWyrmLoginWebView(
@@ -266,6 +268,9 @@ fun BookWyrmLoginWebView(
     onLoginSuccess: (String, String, String) -> Unit
 ) {
     val isDarkTheme = isSystemInDarkTheme()
+    // onPageFinished salta con cada carga (la redirección tras entrar, la página de inicio...),
+    // y cada vez se daba la sesión por iniciada: se guardaba y se navegaba varias veces.
+    val loginReported = androidx.compose.runtime.remember { java.util.concurrent.atomic.AtomicBoolean(false) }
 
     AndroidView(
         factory = { context ->
@@ -299,9 +304,10 @@ fun BookWyrmLoginWebView(
                         val isStillLoginPage = url.contains("/login") || 
                                 url.contains("/two_factor") || 
                                 url.contains("/two-factor") ||
-                                url.contains("/2fa")
+                                url.contains("/2fa") ||
+                                url.contains(com.ferlagod.rocinante.data.api.AnubisClearance.CHALLENGE_PATH)
 
-                        if (hasSession && !isStillLoginPage) {
+                        if (hasSession && !isStillLoginPage && !loginReported.get()) {
                             // Inyectamos JavaScript para extraer el nombre de usuario de la sesión real en BookWyrm
                             view.evaluateJavascript(
                                 "(function() { " +
@@ -324,7 +330,9 @@ fun BookWyrmLoginWebView(
                                     realUsername
                                 }
                                 
-                                onLoginSuccess(cookies, instanceUrl, finalUsername)
+                                if (loginReported.compareAndSet(false, true)) {
+                                    onLoginSuccess(cookies, instanceUrl, finalUsername)
+                                }
                             }
                         }
                     }

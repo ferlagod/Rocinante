@@ -112,21 +112,32 @@ object AppModule {
         // que no puede recibir inyección: el contexto para el WebView y la sesión que guardar.
         AnubisClearance.init(context, sessionStorage)
 
+        // Host de la instancia con la que se ha iniciado sesión; "" si aún no hay sesión, y
+        // entonces el tarro no manda cookies a nadie.
+        val instanceHostOf: (com.ferlagod.rocinante.data.model.SessionData) -> String = {
+            val clean = if (it.instanceUrl.startsWith("http")) it.instanceUrl else "https://${it.instanceUrl}"
+            clean.toHttpUrlOrNull()?.host?.lowercase() ?: clean.lowercase()
+        }
         val hostProvider: () -> String = {
-            val sess = sessionStorage.currentSession
-            sess?.let {
-                val clean = if (it.instanceUrl.startsWith("http")) it.instanceUrl else "https://${it.instanceUrl}"
-                clean.toHttpUrlOrNull()?.host?.lowercase() ?: clean.lowercase()
-            } ?: NetworkClient.lastInstanceHost ?: "bookwyrm.social"
+            sessionStorage.currentSession?.let(instanceHostOf)
+                ?: NetworkClient.lastInstanceHost
+                ?: ""
         }
 
         val initialCookies = sessionStorage.currentSession?.cookie.orEmpty()
         val cookieJar = com.ferlagod.rocinante.data.api.SessionCookieJar(initialCookies, hostProvider) { newCookies ->
             val sess = sessionStorage.currentSession
             if (sess != null && sess.cookie != newCookies) {
+                // Se fija en memoria ya, para que la siguiente petición no reponga la cadena vieja,
+                // y se escribe en disco aparte.
+                val updated = sess.copy(cookie = newCookies)
+                sessionStorage.currentSession = updated
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                     try {
-                        sessionStorage.saveSession(sess.copy(cookie = newCookies))
+                        val latest = sessionStorage.currentSession
+                        if (latest != null && latest.instanceUrl == updated.instanceUrl && latest.username == updated.username) {
+                            sessionStorage.saveSession(latest)
+                        }
                     } catch (_: Exception) {}
                 }
             }
@@ -135,16 +146,15 @@ object AppModule {
         // We create a singleton Retrofit instance using a base URL placeholder.
         // An interceptor reads the active session from SessionStorage dynamically.
         val interceptor = okhttp3.Interceptor { chain ->
-            val session = sessionStorage.currentSession
+            val session = sessionStorage.loadedSession()
             val request = chain.request()
             val requestBuilder = request.newBuilder()
 
             var isToInstance = false
-            var finalUrl = "https://bookwyrm.social/"
 
             if (session != null) {
                 val cleanUrl = if (session.instanceUrl.startsWith("http")) session.instanceUrl else "https://${session.instanceUrl}"
-                finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
+                val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
                 val hostUrl = finalUrl.toHttpUrlOrNull()
                 val host = hostUrl?.host?.lowercase() ?: cleanUrl.lowercase()
                 NetworkClient.lastInstanceHost = host
@@ -162,23 +172,23 @@ object AppModule {
                         .build()
                     requestBuilder.url(newUrl)
                     isToInstance = true
-                } else if (request.url.host.equals(host, ignoreCase = true) || request.url.host.endsWith(".$host", ignoreCase = true)) {
+                } else if (NetworkClient.isInstanceHost(request.url.host, host)) {
                     isToInstance = true
                 }
 
                 if (isToInstance) {
-                    requestBuilder.addHeader("Origin", origin)
-                    requestBuilder.addHeader("Referer", referer)
+                    requestBuilder.header("Origin", origin)
+                    requestBuilder.header("Referer", referer)
                 }
 
-                requestBuilder.addHeader("User-Agent", NetworkClient.userAgent)
+                requestBuilder.header("User-Agent", NetworkClient.userAgent)
 
                 val acceptHeader = request.header("Accept")
                 if (acceptHeader?.contains("text/html") != true) {
-                    requestBuilder.addHeader("X-Requested-With", "XMLHttpRequest")
+                    requestBuilder.header("X-Requested-With", "XMLHttpRequest")
                 }
                 if (acceptHeader == null) {
-                    requestBuilder.addHeader("Accept", "application/activity+json, application/json")
+                    requestBuilder.header("Accept", "application/activity+json, application/json")
                 }
 
                 // Sincronizar cookies y host con la sesión activa
@@ -186,67 +196,31 @@ object AppModule {
 
                 if (isToInstance) {
                     val csrf = cookieJar.currentCsrfToken()
-                        ?: "csrftoken=([^;]+)".toRegex().find(cookieJar.asCookieString())?.groupValues?.get(1)
                         ?: "csrftoken=([^;]+)".toRegex().find(session.cookie)?.groupValues?.get(1)
                     if (!csrf.isNullOrBlank()) {
-                        requestBuilder.addHeader("X-CSRFToken", csrf)
-
-                        val originalBody = request.body
-                        if (originalBody is okhttp3.FormBody) {
-                            val newFormBody = okhttp3.FormBody.Builder()
-                            var hasCsrf = false
-                            for (i in 0 until originalBody.size) {
-                                val name = originalBody.name(i)
-                                val value = originalBody.value(i)
-                                if (name == "csrfmiddlewaretoken") {
-                                    newFormBody.add(name, if (value.isBlank()) csrf else value)
-                                    hasCsrf = true
-                                } else {
-                                    newFormBody.add(name, value)
-                                }
-                            }
-                            if (!hasCsrf) {
-                                newFormBody.add("csrfmiddlewaretoken", csrf)
-                            }
-                            requestBuilder.method(request.method, newFormBody.build())
-                        }
+                        requestBuilder.header("X-CSRFToken", csrf)
+                        NetworkClient.formWithCsrf(request.body, csrf)?.let { requestBuilder.method(request.method, it) }
                     }
                 }
+            } else {
+                requestBuilder.header("User-Agent", NetworkClient.userAgent)
             }
 
             var response = chain.proceed(requestBuilder.build())
 
-            // Anubis: renovación automática ante 307 hacia el reto o 403 de protección
-            if (session != null && AnubisClearance.isChallenge(response)) {
+            // Anubis: renovación automática ante 307 hacia el reto o 403 de protección. Solo si
+            // es la propia instancia: el reto de otro servidor no se arregla renovando esta cookie.
+            if (session != null && isToInstance && AnubisClearance.isChallenge(response)) {
                 val fresh = AnubisClearance.refreshBlocking(session.instanceUrl, cookieJar.asCookieString())
                 if (fresh != null) {
                     cookieJar.merge(fresh)
                     response.close()
                     val csrf = cookieJar.currentCsrfToken()
-                    val retryRequestBuilder = requestBuilder
                     if (csrf != null) {
-                        retryRequestBuilder.removeHeader("X-CSRFToken").addHeader("X-CSRFToken", csrf)
-                        val originalBody = request.body
-                        if (originalBody is okhttp3.FormBody) {
-                            val newFormBody = okhttp3.FormBody.Builder()
-                            var hasCsrf = false
-                            for (i in 0 until originalBody.size) {
-                                val name = originalBody.name(i)
-                                val value = originalBody.value(i)
-                                if (name == "csrfmiddlewaretoken") {
-                                    newFormBody.add(name, if (value.isBlank()) csrf else value)
-                                    hasCsrf = true
-                                } else {
-                                    newFormBody.add(name, value)
-                                }
-                            }
-                            if (!hasCsrf) {
-                                newFormBody.add("csrfmiddlewaretoken", csrf)
-                            }
-                            retryRequestBuilder.method(request.method, newFormBody.build())
-                        }
+                        requestBuilder.header("X-CSRFToken", csrf)
+                        NetworkClient.formWithCsrf(request.body, csrf)?.let { requestBuilder.method(request.method, it) }
                     }
-                    response = chain.proceed(retryRequestBuilder.build())
+                    response = chain.proceed(requestBuilder.build())
                 }
             }
 
@@ -262,6 +236,12 @@ object AppModule {
                 response = chain.proceed(newRequest)
                 followCount++
             }
+
+            // Sesión caducada: la instancia contesta 401 o, como hace Django, redirige a /login.
+            // Solo cuenta la propia instancia; un 401 de un servidor federado es cosa suya.
+            if (session != null && isToInstance && (response.code == 401 || NetworkClient.isLoginRedirect(response))) {
+                com.ferlagod.rocinante.utils.NetworkErrors.reportSessionExpired()
+            }
             response
         }
 
@@ -270,18 +250,18 @@ object AppModule {
             val body = response.body
             if (body != null) {
                 val contentType = body.contentType()
-                if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("activity+json") == true) {
+                if (contentType?.subtype?.contains("json") == true) {
                     val source = body.source()
-                    source.request(3)
-                    val buffer = source.buffer
                     // UTF-8 BOM bytes: 0xEF, 0xBB, 0xBF
-                    if (buffer.size >= 3 && 
-                        buffer[0] == 0xEF.toByte() && 
-                        buffer[1] == 0xBB.toByte() && 
-                        buffer[2] == 0xBF.toByte()
+                    if (source.request(3) &&
+                        source.buffer[0] == 0xEF.toByte() &&
+                        source.buffer[1] == 0xBB.toByte() &&
+                        source.buffer[2] == 0xBF.toByte()
                     ) {
-                        buffer.skip(3)
-                        val cleanJson = buffer.readUtf8()
+                        source.skip(3)
+                        // Del source, no del buffer: el buffer solo tiene lo leído hasta ahora
+                        // y cortaba los JSON largos.
+                        val cleanJson = source.readUtf8()
                         val newBody = cleanJson.toResponseBody(contentType)
                         return@Interceptor response.newBuilder().body(newBody).build()
                     }
@@ -293,6 +273,10 @@ object AppModule {
         val cacheSize = 15L * 1024 * 1024
         val cache = okhttp3.Cache(java.io.File(context.cacheDir, "http_cache"), cacheSize)
 
+        // Solo JSON e imágenes. Las páginas HTML de libros ya no se fuerzan a caché: llevan el
+        // estado de lectura, las lecturas y los tokens del usuario, y servir durante 10 minutos
+        // la copia de antes de cambiar de estantería o terminar un libro deshacía en pantalla
+        // lo que se acababa de hacer.
         val cacheInterceptor = okhttp3.Interceptor { chain ->
             val request = chain.request()
             var response = chain.proceed(request)
@@ -300,7 +284,7 @@ object AppModule {
                 val urlPath = request.url.encodedPath
                 if (urlPath.contains("/book/") || urlPath.contains("/author/") || urlPath.contains("/edition/") || urlPath.contains("/images/")) {
                     val contentType = response.body?.contentType()
-                    if (contentType?.subtype?.contains("json") == true || contentType?.subtype?.contains("html") == true || contentType?.subtype?.contains("activity+json") == true || contentType?.type?.contains("image") == true) {
+                    if (contentType?.subtype?.contains("json") == true || contentType?.type?.contains("image") == true) {
                         response = response.newBuilder()
                             .removeHeader("Pragma")
                             .removeHeader("Cache-Control")
@@ -327,22 +311,20 @@ object AppModule {
             .build()
 
         NetworkClient.lastOkHttpClient = okHttpClient
-        NetworkClient.lastInstanceHost = hostProvider()
+        NetworkClient.lastInstanceHost = hostProvider().ifBlank { null }
 
-        val gson = com.google.gson.GsonBuilder()
-            .registerTypeAdapter(
-                com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
-                com.ferlagod.rocinante.data.model.ProfileIconDeserializer()
-            )
-            .setLenient()
-            .create()
-
-        return Retrofit.Builder()
+        val api = Retrofit.Builder()
             .baseUrl("https://bookwyrm.social/") // Placeholder, overwritten by interceptor
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(GsonConverterFactory.create(NetworkClient.gson))
             .build()
             .create(BookWyrmApi::class.java)
+
+        // Las pantallas que aún piden su propia API con createAuthenticatedApi reciben esta.
+        // Lectura sin bloquear: se consulta desde la composición, en el hilo principal.
+        NetworkClient.sharedApiHostProvider = { sessionStorage.currentSession?.let(instanceHostOf) }
+        NetworkClient.sharedApi = api
+        return api
     }
 
     /**

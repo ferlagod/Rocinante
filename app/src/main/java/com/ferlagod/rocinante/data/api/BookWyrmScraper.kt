@@ -111,7 +111,7 @@ object BookWyrmScraper {
                            else instanceHostUrl.trimEnd('/') + "/" + actorUrl.trimStart('/')
             val raw = api.getRawJson(absolute).string()
             if (!raw.trimStart().startsWith("{")) return@withContext null
-            val profile = com.google.gson.Gson().fromJson(raw, BookWyrmProfile::class.java)
+            val profile = NetworkClient.gson.fromJson(raw, BookWyrmProfile::class.java)
             val preferredUsername = profile.preferredUsername
                 ?: profile.id?.substringAfterLast("/")
                 ?: return@withContext null
@@ -162,7 +162,8 @@ object BookWyrmScraper {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val response = api.resolveBook(bookUrl)
-                if (response.code() in 300..399) {
+                // Una redirección al login (sesión caducada) o al reto de Anubis no es la URL del libro.
+                if (BookWyrmUtils.isOkRedirect(response)) {
                     val location = response.headers()["Location"]
                     if (location != null) {
                         if (location.startsWith("http")) location else {
@@ -797,7 +798,7 @@ object BookWyrmScraper {
             // Guardado, la instancia redirige a la ficha del libro; el cliente de la app no
             // sigue las redirecciones, así que un 302 es que se guardó. Un formulario con algo
             // mal se devuelve a sí mismo con un 200 y no ha guardado nada.
-            response.code() == 302
+            BookWyrmUtils.isOkRedirect(response)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -965,7 +966,7 @@ object BookWyrmScraper {
                 if (!written) add("add_author", authorName)
             }.build()
             val response = api.postForm(form.actionUrl, body)
-            if (response.code() == 302) return@withContext AddAuthorResult.Saved
+            if (BookWyrmUtils.isOkRedirect(response)) return@withContext AddAuthorResult.Saved
 
             val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
             if (html.isEmpty()) return@withContext AddAuthorResult.Failed
@@ -1022,7 +1023,7 @@ object BookWyrmScraper {
                 for ((name, value) in form.fields) add(name, value)
                 add(option.field, option.value)
             }.build()
-            api.postForm(form.actionUrl, body).code() == 302
+            BookWyrmUtils.isOkRedirect(api.postForm(form.actionUrl, body))
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -1772,8 +1773,16 @@ object BookWyrmScraper {
             val response = api.getRawHtmlResponse(currentUrl)
             if (response.isSuccessful) {
                 return response.body()?.string() ?: ""
-            } else if (response.code() in 300..399) {
+            }
+            // Lo que no se lee se cierra, o la conexión se queda ocupada en el pool.
+            BookWyrmUtils.closeQuietly(response)
+            if (response.code() in 300..399) {
                 val location = response.headers()["Location"]
+                // Sesión caducada: Django manda al login. Antes se seguía y se devolvía el HTML
+                // del formulario de entrada como si fuera la página pedida, y cada pantalla se
+                // quedaba vacía sin decir por qué. El cliente ya avisa de la caducidad.
+                if (NetworkClient.isLoginLocation(location, response.raw().request.url)) break
+                if (location?.contains(AnubisClearance.CHALLENGE_PATH) == true) break
                 if (location != null) {
                     currentUrl = if (location.startsWith("http")) location else {
                         val base = try {
@@ -2180,6 +2189,12 @@ object BookWyrmScraper {
         try {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+
+            // Primero el contador que usa la propia web para refrescar el globo
+            // (`{"count": n, ...}`): unos bytes en lugar de la portada entera cada pocos minutos.
+            notificationCountFromApi(api, baseUrl)?.let { return@withContext it }
+
+            // Si la instancia no lo tiene (o no contesta JSON), la portada como siempre.
             val html = fetchHtmlWithRedirects(api, baseUrl, baseUrl)
             if (html.isEmpty()) return@withContext 0
             
@@ -2188,7 +2203,27 @@ object BookWyrmScraper {
             val text = badge?.text()?.trim() ?: ""
             if (text.isNotEmpty()) text.toIntOrNull() ?: 0 else 0
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             0
+        }
+    }
+
+    /** Notificaciones sin leer según `api/updates/notifications`, o null si no se pudo leer. */
+    private suspend fun notificationCountFromApi(api: BookWyrmApi, baseUrl: String): Int? {
+        return try {
+            val response = api.getRawJsonResponse("${baseUrl}api/updates/notifications")
+            if (!response.isSuccessful) {
+                BookWyrmUtils.closeQuietly(response)
+                return null
+            }
+            val raw = response.body()?.string()?.trim().orEmpty()
+            if (!raw.startsWith("{")) return null
+            @Suppress("DEPRECATION")
+            val count = com.google.gson.JsonParser().parse(raw).asJsonObject.get("count")
+            if (count != null && count.isJsonPrimitive && count.asJsonPrimitive.isNumber) count.asInt else null
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
         }
     }
 
@@ -2481,8 +2516,9 @@ object BookWyrmScraper {
     /**
      * Borra en el servidor las notificaciones ya leídas.
      *
-     * @param api debe ser el cliente creado por [NetworkClient.createAuthenticatedApi]
-     *   (el que mantiene el CookieJar de sesión); con otro cliente el POST recibe un 403.
+     * @param api el cliente de sesión (el de Hilt, que es también el que devuelve
+     *   [NetworkClient.createAuthenticatedApi]): es el que tiene el tarro de cookies que se
+     *   consulta para el token CSRF.
      */
     suspend fun clearNotifications(api: BookWyrmApi, instanceUrl: String): ClearResult = withContext(Dispatchers.IO) {
         try {
@@ -2502,8 +2538,8 @@ object BookWyrmScraper {
             // Django valida el campo del formulario contra la cookie que viaja en la petición,
             // y solo el CookieJar de [NetworkClient] refleja las rotaciones de csrftoken.
             // El token del HTML queda como respaldo. Mismo criterio que la actualización de
-            // progreso (BookDetailsDialog). IMPORTANTE: el POST debe hacerlo el mismo cliente
-            // cuyo jar se consulta aquí; usar el api inyectado por Hilt (sin CookieJar) da 403.
+            // progreso (BookDetailsDialog). El POST debe hacerlo el mismo cliente cuyo tarro se
+            // consulta aquí; ahora hay uno solo para toda la app.
             val csrfToken = NetworkClient.currentCsrfToken()
                 ?: org.jsoup.Jsoup.parse(html).select("input[name=csrfmiddlewaretoken]").attr("value")
 
@@ -2516,7 +2552,7 @@ object BookWyrmScraper {
             // La vista de BookWyrm borra y termina con `redirect("/notifications")`, así que la
             // respuesta normal es un 302. El cliente de sesión no sigue redirecciones
             // (followRedirects(false)), por lo que un 3xx cuenta como éxito igual que un 2xx.
-            val success = response.isSuccessful || response.code() in 300..399
+            val success = BookWyrmUtils.isWriteSuccess(response)
             if (!success) {
                 android.util.Log.w(
                     TAG_CLEAR,

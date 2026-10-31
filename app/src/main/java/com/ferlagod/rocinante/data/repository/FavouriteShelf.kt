@@ -203,7 +203,7 @@ object FavouriteShelf {
             changeShelfFrom = from.takeIf { mode == Mode.MOVE && !it.isNullOrBlank() }
         )
         BookWyrmScraper.invalidateBookPage()
-        return response.isSuccessful || response.code() == 302
+        return com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)
     }
 
     /**
@@ -222,6 +222,6 @@ object FavouriteShelf {
             ?: return false
         val response = api.unshelveBook(editionId, number, csrfToken)
         BookWyrmScraper.invalidateBookPage()
-        return response.isSuccessful || response.code() == 302
+        return com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)
     }
 }

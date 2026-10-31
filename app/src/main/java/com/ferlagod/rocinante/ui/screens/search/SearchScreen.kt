@@ -884,7 +884,7 @@ fun UserProfileDialog(
                             coroutineScope.launch {
                                 try {
                                     val response = api.unfollowUser(cleanHandle)
-                                    if (response.isSuccessful || response.code() in 300..399) {
+                                    if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                         isFollowing = false
                                         android.widget.Toast.makeText(context, context.getString(R.string.unfollow_success), android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
@@ -909,7 +909,7 @@ fun UserProfileDialog(
                             coroutineScope.launch {
                                 try {
                                     val response = api.followUser(cleanHandle)
-                                    if (response.isSuccessful || response.code() in 300..399) {
+                                    if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                         isFollowing = true
                                         android.widget.Toast.makeText(context, context.getString(R.string.follow_success), android.widget.Toast.LENGTH_SHORT).show()
                                     } else {

@@ -28,6 +28,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.ferlagod.rocinante.data.model.SessionData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
@@ -41,7 +42,33 @@ private val Context.dataStore by preferencesDataStore(name = "session_prefs")
  */
 class SessionStorage(private val context: Context) {
 
+    /**
+     * Copia en memoria de la sesión, para quien no puede suspender (los interceptores de
+     * OkHttp). La rellena la lectura de [sessionFlow]; si todavía nadie lo ha recogido,
+     * [loadedSession] la lee del disco una vez.
+     */
+    @Volatile
     var currentSession: SessionData? = null
+
+    @Volatile
+    private var loadedOnce = false
+
+    /**
+     * La sesión actual, leyéndola de DataStore si aún no se había cargado. Bloquea, así que
+     * solo se llama desde hilos de red: sirve para que una petición hecha nada más arrancar
+     * (o desde el Worker) no salga hacia el host de relleno de Retrofit.
+     */
+    fun loadedSession(): SessionData? {
+        currentSession?.let { return it }
+        if (loadedOnce) return null
+        return try {
+            kotlinx.coroutines.runBlocking { sessionFlow.firstOrNull() }
+        } catch (_: Exception) {
+            null
+        } finally {
+            loadedOnce = true
+        }
+    }
 
     companion object {
         private val KEY_INSTANCE_URL = stringPreferencesKey("instance_url")
@@ -80,6 +107,7 @@ class SessionStorage(private val context: Context) {
                 )
             }
             currentSession = session
+            loadedOnce = true
             session
         }
 

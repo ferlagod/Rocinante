@@ -26,6 +26,35 @@ package com.ferlagod.rocinante.utils
 object BookWyrmUtils {
 
     /**
+     * ¿Es esta respuesta una redirección «buena», de las que da Django al guardar un formulario?
+     *
+     * No lo es la que lleva a `/login` (sesión caducada: no se ha guardado nada) ni la que
+     * lleva al reto de Anubis (la petición ni siquiera llegó a BookWyrm). Antes cualquier 302
+     * se daba por éxito y la app decía «hecho» sin haber hecho nada.
+     */
+    fun isOkRedirect(response: retrofit2.Response<*>): Boolean {
+        if (response.code() !in 300..399) return false
+        val location = response.headers()["Location"]
+        if (com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(location, response.raw().request.url)) return false
+        if (location?.contains(com.ferlagod.rocinante.data.api.AnubisClearance.CHALLENGE_PATH) == true) return false
+        return true
+    }
+
+    /** ¿Ha guardado la instancia lo enviado? Un 2xx o una redirección buena ([isOkRedirect]). */
+    fun isWriteSuccess(response: retrofit2.Response<*>): Boolean =
+        response.isSuccessful || isOkRedirect(response)
+
+    /**
+     * Cierra el cuerpo de una respuesta que no se va a leer. Retrofit deja abierta la conexión
+     * hasta que alguien lo hace, y las que se quedaban sin cerrar agotaban el pool.
+     */
+    fun closeQuietly(response: retrofit2.Response<*>?) {
+        if (response == null) return
+        try { (response.body() as? java.io.Closeable)?.close() } catch (_: Exception) {}
+        try { response.errorBody()?.close() } catch (_: Exception) {}
+    }
+
+    /**
      * Extrae el identificador de la obra (libro/edición) a partir de su URL completa de BookWyrm.
      * Ejemplo: "https://instancia.com/book/12345.json" -> "12345"
      *

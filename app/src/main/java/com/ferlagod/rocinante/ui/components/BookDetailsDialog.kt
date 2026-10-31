@@ -858,7 +858,7 @@ fun BookDetailsDialog(
                 // but shelveBook resolves them to Editions automatically.
                 if (mappedStatus != null && !response.isSuccessful && response.code() != 302) {
                     val fallback = api.shelveBook(editionId, slug)
-                    if (fallback.isSuccessful || fallback.code() == 302) {
+                    if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(fallback)) {
                         response = fallback
                         // shelveBook solo crea ShelfBook y no crea ReadThrough. Si es reading o read,
                         // creamos el readthrough explícitamente para guardar las fechas en el servidor.
@@ -881,7 +881,7 @@ fun BookDetailsDialog(
                     }
                 }
 
-                if (response.isSuccessful || response.code() == 302) {
+                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                     BookWyrmScraper.invalidateBookPage()
                     Toast.makeText(context, context.getString(R.string.error_shelve_added, toastLabel), Toast.LENGTH_SHORT).show()
                     // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
@@ -941,7 +941,7 @@ fun BookDetailsDialog(
                     return@launch
                 }
                 val response = api.unshelveBook(bookId, targetShelf, csrfToken)
-                if (response.isSuccessful || response.code() == 302) {
+                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                     BookWyrmScraper.invalidateBookPage()
                     // Solo al salir de una estantería de lectura deja el libro de estar en
                     // «sus libros»: de una propia sigue donde estaba, y vaciarle la caché lo
@@ -989,7 +989,7 @@ fun BookDetailsDialog(
                         finishDate = today,
                         csrfToken = contextData.csrfToken
                     )
-                    if (response.isSuccessful || response.code() == 302) {
+                    if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                         BookWyrmScraper.invalidateBookPage()
                         Toast.makeText(context, context.getString(R.string.shelf_toast_read), Toast.LENGTH_SHORT).show()
                         // Ya leído: las páginas del ebook anotadas aquí dejan de tener sentido.
@@ -2204,13 +2204,13 @@ private suspend fun submitProgress(
             csrfToken = csrfForForm
         )
 
-        val isRedirectToLogin = response.code() in 300..399 && response.headers()["Location"]?.contains("login") == true
+        val isRedirectToLogin = response.code() in 300..399 && !com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response)
         when {
             isRedirectToLogin -> {
                 Toast.makeText(context, context.getString(R.string.auth_login_required), Toast.LENGTH_SHORT).show()
                 false
             }
-            response.isSuccessful || response.code() == 302 -> {
+            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response) -> {
                 Toast.makeText(context, context.getString(R.string.progress_success), Toast.LENGTH_SHORT).show()
                 true
             }
@@ -3145,9 +3145,8 @@ private fun ReviewDialog(
                                         Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
                                     }
-                                } else if (response.code() == 302) {
-                                    val location = response.headers()["Location"]
-                                    if (location?.contains("/login") == true) {
+                                } else if (response.code() in 300..399) {
+                                    if (!com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response)) {
                                         Toast.makeText(context, context.getString(R.string.session_expired), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.review_success), Toast.LENGTH_SHORT).show()
@@ -3443,9 +3442,8 @@ private fun QuotationDialog(
                                         Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
                                         onSuccess()
                                     }
-                                } else if (response.code() == 302) {
-                                    val location = response.headers()["Location"]
-                                    if (location?.contains("/login") == true) {
+                                } else if (response.code() in 300..399) {
+                                    if (!com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response)) {
                                         Toast.makeText(context, context.getString(R.string.session_expired), Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, context.getString(R.string.quotation_success), Toast.LENGTH_SHORT).show()
@@ -3615,7 +3613,7 @@ fun ReviewDetailDialog(
                                         coroutineScope.launch {
                                             try {
                                                 val response = api.unfollowUser(cleanHandle)
-                                                if (response.isSuccessful || response.code() in 300..399) {
+                                                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                                     isFollowing = false
                                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                                 } else {
@@ -3641,7 +3639,7 @@ fun ReviewDetailDialog(
                                         coroutineScope.launch {
                                             try {
                                                 val response = api.followUser(cleanHandle)
-                                                if (response.isSuccessful || response.code() in 300..399) {
+                                                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                                     isFollowing = true
                                                     Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
                                                 } else {
@@ -3960,7 +3958,7 @@ private fun ReadDatesDialog(
                 // del libro. Al crear, en cambio, solo la redirección es éxito: create-readthrough
                 // no distingue peticiones JSON y un 200 es el formulario devuelto con errores
                 // (marcados con «help is-danger», no con «errorlist» de Django).
-                val saved = response.code() == 302 || (editingId != null && response.isSuccessful)
+                val saved = com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) || (editingId != null && response.isSuccessful)
                 if (saved) {
                     BookWyrmScraper.invalidateBookPage()
                     toast(context.getString(R.string.book_read_dates_saved))
@@ -4156,7 +4154,7 @@ private fun EditionPickerDialog(
                 // Token sin enmascarar de la cookie, como el resto de envíos.
                 val csrfToken = com.ferlagod.rocinante.data.api.NetworkClient.currentCsrfToken() ?: ""
                 val response = api.switchEdition(edition.id, csrfToken)
-                if (response.isSuccessful || response.code() == 302) {
+                if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                     Toast.makeText(
                         context,
                         context.getString(R.string.book_edition_switched),

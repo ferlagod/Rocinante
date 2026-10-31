@@ -344,8 +344,8 @@ class FollowListViewModel @Inject constructor(
                 val myHost = try { java.net.URI(activeBaseUrl).host?.lowercase() } catch (_: Exception) { null }
                 val isRemoteFromUrl = hostFromUrl != null && myHost != null && !hostFromUrl.equals(myHost, ignoreCase = true)
 
-                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && r.headers()["Location"]?.contains("login") == true }
-                val isSuccess = { r: retrofit2.Response<*>? -> r != null && (r.isSuccessful || (r.code() in 300..399 && !isLoginRedirect(r))) }
+                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
+                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
 
                 var response: retrofit2.Response<okhttp3.ResponseBody>? = null
 

@@ -75,4 +75,60 @@ class SessionCookieJarTest {
         assertFalse(names.contains("Expires"))
         assertFalse(names.contains("SameSite"))
     }
+
+    @Test
+    fun `las cookies de bookwyrm social no salen hacia otros servidores`() {
+        val jar = SessionCookieJar("csrftoken=c; sessionid=s", "bookwyrm.social")
+        assertEquals(2, jar.loadForRequest("https://bookwyrm.social/feed".toHttpUrl()).size)
+        assertTrue(jar.loadForRequest("https://covers.openlibrary.org/b/id/1-L.jpg".toHttpUrl()).isEmpty())
+        assertTrue(jar.loadForRequest("https://otra.instancia/book/1".toHttpUrl()).isEmpty())
+    }
+
+    @Test
+    fun `un host que solo contiene el de la instancia no recibe cookies`() {
+        val jar = SessionCookieJar("sessionid=s", "bookwyrm.it")
+        assertTrue(jar.loadForRequest("https://bookwyrm.it.evil.com/".toHttpUrl()).isEmpty())
+        assertTrue(jar.loadForRequest("https://notbookwyrm.it/".toHttpUrl()).isEmpty())
+        // Subdominios y www sí son de la instancia.
+        assertEquals(1, jar.loadForRequest("https://www.bookwyrm.it/".toHttpUrl()).size)
+        assertEquals(1, jar.loadForRequest("https://static.bookwyrm.it/x.css".toHttpUrl()).size)
+    }
+
+    @Test
+    fun `sin instancia conocida no se envia ninguna cookie`() {
+        val jar = SessionCookieJar("sessionid=s", "")
+        assertTrue(jar.loadForRequest("https://bookwyrm.social/".toHttpUrl()).isEmpty())
+    }
+
+    @Test
+    fun `el csrftoken de otra instancia no pisa el del usuario`() {
+        val jar = SessionCookieJar("csrftoken=mio; sessionid=s", "bookwyrm.it")
+        val remote = "https://otra.instancia/book/1".toHttpUrl()
+        jar.saveFromResponse(remote, listOf(
+            Cookie.Builder().name("csrftoken").value("ajeno").domain("otra.instancia").build()
+        ))
+        assertEquals("mio", jar.currentCsrfToken())
+    }
+
+    @Test
+    fun `volver a sincronizar la misma sesion no deshace un csrf rotado`() {
+        val saved = "csrftoken=viejo; sessionid=s"
+        val jar = SessionCookieJar(saved, "bookwyrm.it")
+        jar.syncSession("bookwyrm.it", saved)
+        jar.saveFromResponse("https://bookwyrm.it/shelve/".toHttpUrl(), listOf(
+            Cookie.Builder().name("csrftoken").value("nuevo").domain("bookwyrm.it").build()
+        ))
+        // La sesión guardada aún no se ha actualizado en disco: sigue siendo la vieja.
+        jar.syncSession("bookwyrm.it", saved)
+        assertEquals("nuevo", jar.currentCsrfToken())
+    }
+
+    @Test
+    fun `cambiar de instancia limpia las cookies de la anterior`() {
+        val jar = SessionCookieJar("sessionid=a", "a.social")
+        jar.syncSession("a.social", "sessionid=a")
+        jar.syncSession("b.social", "csrftoken=b")
+        assertFalse(jar.asCookieString().contains("sessionid=a"))
+        assertEquals("b", jar.currentCsrfToken())
+    }
 }

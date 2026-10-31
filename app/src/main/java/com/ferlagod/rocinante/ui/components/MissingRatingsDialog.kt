@@ -133,8 +133,8 @@ fun MissingRatingsDialog(
                 val ok = when {
                     response.isSuccessful ->
                         !body.contains("class=\"errorlist\"") && !body.contains("error_1_id_")
-                    response.code() == 302 ->
-                        response.headers()["Location"]?.contains("/login") != true
+                    response.code() in 300..399 ->
+                        com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response)
                     else -> false
                 }
                 if (ok) {

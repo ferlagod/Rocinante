@@ -49,7 +49,9 @@ data class SessionUiState(
  */
 @HiltViewModel
 class SessionViewModel @Inject constructor(
-    private val sessionStorage: SessionStorage
+    private val sessionStorage: SessionStorage,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
+    private val userRepository: com.ferlagod.rocinante.data.repository.UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SessionUiState())
@@ -77,6 +79,16 @@ class SessionViewModel @Inject constructor(
      */
     fun saveSession(session: SessionData) {
         viewModelScope.launch {
+            // Primero se apartan los datos de otra cuenta, si los hay: la pantalla principal
+            // no se compone hasta que la sesión nueva está guardada, así que no llega a verlos.
+            try {
+                com.ferlagod.rocinante.data.local.AccountDataCleaner.prepareFor(appContext, session) {
+                    userRepository.profileCache.clear()
+                    userRepository.optimisticFollowingIds.clear()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            }
             sessionStorage.saveSession(session)
         }
     }

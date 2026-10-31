@@ -27,8 +27,6 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.ferlagod.rocinante.data.api.NetworkClient
 import dagger.hilt.android.HiltAndroidApp
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 
 /**
  * Clase principal de la aplicación Android [Rocinante].
@@ -96,12 +94,9 @@ class RocinanteApplication : Application(), ImageLoaderFactory {
                     .maxSizeBytes(150L * 1024 * 1024)
                     .build()
             }
-            .okHttpClient {
-                NetworkClient.lastOkHttpClient ?: OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(20, TimeUnit.SECONDS)
-                    .build()
-            }
+            // El cliente se elige en cada petición: así da igual que Coil arranque antes que la
+            // sesión, y las portadas que redirigen (OpenLibrary, almacenamiento externo) cargan.
+            .callFactory(NetworkClient.imageCallFactory)
             .respectCacheHeaders(false)
             .crossfade(true)
             .build()

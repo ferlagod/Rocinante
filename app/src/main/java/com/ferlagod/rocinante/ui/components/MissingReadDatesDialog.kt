@@ -151,7 +151,7 @@ fun MissingReadDatesDialog(
                 }
                 // Al corregir, BookWyrm contesta 200 vacío o redirige. Al crear, un 200 es el
                 // formulario devuelto con errores: ahí solo vale la redirección.
-                val ok = response.code() == 302 || (latest != null && response.isSuccessful)
+                val ok = com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) || (latest != null && response.isSuccessful)
                 if (ok) {
                     BookWyrmScraper.invalidateBookPage()
                     done[id] = true

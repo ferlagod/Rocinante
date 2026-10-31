@@ -20,6 +20,7 @@
 package com.ferlagod.rocinante.data.api
 
 
+import okhttp3.Call
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.FormBody
@@ -27,6 +28,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -36,6 +38,10 @@ import java.util.concurrent.TimeUnit
  * 1. Inicializa las cookies a partir del string de sesión guardado en DataStore.
  * 2. Actualiza automáticamente `csrftoken` con cada respuesta Set-Cookie del servidor.
  *    Esto es imprescindible para Django, que rota el token CSRF en cada respuesta POST.
+ *
+ * Las cookies son solo de la instancia del usuario: no se envían a ningún otro servidor ni
+ * se aceptan de él. El tarro las guarda por nombre, sin dominio, así que una cookie
+ * `csrftoken` de otra instancia BookWyrm (otro Django) pisaría la del usuario.
  */
 class SessionCookieJar(
     initialCookieString: String,
@@ -55,6 +61,14 @@ class SessionCookieJar(
 
     @Volatile
     private var lastHost: String? = null
+
+    /**
+     * Última cadena de sesión que se ha volcado en el tarro con [syncSession]. Solo se vuelve
+     * a leer cuando cambia: si no, cada petición reponía la cadena guardada, que va por detrás
+     * del tarro mientras se escribe en disco, y deshacía la rotación de csrftoken recién recibida.
+     */
+    @Volatile
+    private var lastSyncedCookie: String? = null
 
     init {
         parseCookies(initialCookieString)
@@ -81,16 +95,9 @@ class SessionCookieJar(
             }
     }
 
-    private fun cleanDomain(h: String): String =
-        h.lowercase().trim().removePrefix("http://").removePrefix("https://").substringBefore("/").removePrefix("www.")
-
-    private fun matchesHost(requestHost: String): Boolean {
-        val r = cleanDomain(requestHost)
-        val currentHost = hostProvider()
-        val h = cleanDomain(currentHost)
-        if (h.isEmpty() || h == "bookwyrm.social") return true
-        return r == h || r.endsWith(".$h") || h.endsWith(".$r") || r.contains(h)
-    }
+    /** ¿Va la petición (o viene la respuesta) de la instancia del usuario o de un subdominio suyo? */
+    private fun matchesHost(requestHost: String): Boolean =
+        NetworkClient.isInstanceHost(requestHost, hostProvider())
 
     /** Devuelve el valor actual del csrftoken (puede haber rotado). */
     fun currentCsrfToken(): String? = cookieMap["csrftoken"]
@@ -100,15 +107,17 @@ class SessionCookieJar(
      * limpia las cookies de la instancia previa para evitar cruces.
      */
     fun syncSession(currentHost: String, cookieString: String) {
-        val cleanH = cleanDomain(currentHost)
-        if (lastHost != null && cleanH.isNotEmpty() && cleanH != "bookwyrm.social" && !lastHost.equals(cleanH, ignoreCase = true)) {
+        val cleanH = NetworkClient.cleanHost(currentHost)
+        if (lastHost != null && cleanH.isNotEmpty() && !lastHost.equals(cleanH, ignoreCase = true)) {
             cookieMap.clear()
+            lastSyncedCookie = null
         }
-        if (cleanH.isNotEmpty() && cleanH != "bookwyrm.social") {
+        if (cleanH.isNotEmpty()) {
             lastHost = cleanH
         }
-        if (cookieString.isNotBlank()) {
+        if (cookieString.isNotBlank() && cookieString != lastSyncedCookie) {
             parseCookies(cookieString)
+            lastSyncedCookie = cookieString
         }
     }
 
@@ -116,6 +125,7 @@ class SessionCookieJar(
     fun clear() {
         cookieMap.clear()
         lastHost = null
+        lastSyncedCookie = null
     }
 
     /**
@@ -137,7 +147,7 @@ class SessionCookieJar(
         
         var changed = false
         cookies.forEach { cookie ->
-            if (cookie.value.isEmpty()) {
+            if (cookie.value.isEmpty() || cookie.expiresAt < System.currentTimeMillis()) {
                 if (cookieMap.remove(cookie.name) != null) changed = true
             } else {
                 val prev = cookieMap.put(cookie.name, cookie.value)
@@ -174,6 +184,7 @@ class SessionCookieJar(
  */
 object NetworkClient {
     /** Último OkHttpClient creado; permite acceder al CookieJar desde la UI. */
+    @Volatile
     var lastOkHttpClient: OkHttpClient? = null
         internal set
 
@@ -181,8 +192,36 @@ object NetworkClient {
      * Host de la instancia con la que se ha iniciado sesión, en minúsculas. Sirve para saber
      * si un libro es de casa o viene de otra instancia, y ahorrarse así el resolverlo.
      */
+    @Volatile
     var lastInstanceHost: String? = null
         internal set
+
+    /**
+     * La API de la aplicación (la que da Hilt), con el único tarro de cookies de la sesión.
+     * [createAuthenticatedApi] la devuelve en lugar de montar otro cliente: con dos tarros,
+     * cada uno veía rotaciones de csrftoken y renovaciones de Anubis que el otro no, y los
+     * POST salían con el token equivocado.
+     */
+    @Volatile
+    internal var sharedApi: BookWyrmApi? = null
+
+    /** Host al que apunta [sharedApi], o null mientras no se sepa. */
+    @Volatile
+    internal var sharedApiHostProvider: (() -> String?)? = null
+
+    /**
+     * Gson con los adaptadores que necesitan los modelos (el icono de perfil puede llegar
+     * como objeto o como lista). Para leer perfiles a mano hay que usar este, no `Gson()`.
+     */
+    val gson: com.google.gson.Gson by lazy {
+        com.google.gson.GsonBuilder()
+            .registerTypeAdapter(
+                com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
+                com.ferlagod.rocinante.data.model.ProfileIconDeserializer()
+            )
+            .setLenient()
+            .create()
+    }
 
     /**
      * User-Agent que se envía en TODAS las peticiones HTTP. Debe coincidir con el del
@@ -195,6 +234,62 @@ object NetworkClient {
     @Volatile
     var userAgent: String =
         "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Rocinante/1.0"
+
+    /** Host en minúsculas, sin esquema, ruta ni «www.». */
+    internal fun cleanHost(h: String): String =
+        h.lowercase().trim().removePrefix("http://").removePrefix("https://").substringBefore("/").removePrefix("www.")
+
+    /**
+     * ¿Es [requestHost] la instancia [instanceHost] o un subdominio suyo? Sin instancia
+     * conocida la respuesta es no: ante la duda no se mandan cookies ni cabeceras de sesión.
+     */
+    fun isInstanceHost(requestHost: String, instanceHost: String?): Boolean {
+        val h = cleanHost(instanceHost.orEmpty())
+        if (h.isEmpty()) return false
+        val r = cleanHost(requestHost)
+        return r == h || r.endsWith(".$h")
+    }
+
+    /**
+     * ¿Lleva esta dirección a la página de login? Es lo que hace Django con una sesión que ya
+     * no vale: en lugar de un 401, un 302 a `/login?next=...`.
+     */
+    fun isLoginLocation(location: String?, requestUrl: HttpUrl? = null): Boolean {
+        if (location.isNullOrBlank()) return false
+        val path = requestUrl?.resolve(location)?.encodedPath
+            ?: location.toHttpUrlOrNull()?.encodedPath
+            ?: location.substringBefore('?')
+        return path.startsWith("/login")
+    }
+
+    /** ¿Es la respuesta una redirección a la página de login? */
+    fun isLoginRedirect(response: okhttp3.Response): Boolean =
+        response.isRedirect && isLoginLocation(response.header("Location"), response.request.url)
+
+    /**
+     * Pone el token CSRF en el campo `csrfmiddlewaretoken` de un formulario: lo añade si falta
+     * y lo rellena si viene vacío. Un token ya relleno se respeta. Si el cuerpo no es un
+     * formulario devuelve null y la petición sigue tal cual.
+     */
+    internal fun formWithCsrf(body: RequestBody?, csrf: String): FormBody? {
+        if (body !is FormBody) return null
+        val newFormBody = FormBody.Builder()
+        var hasCsrf = false
+        for (i in 0 until body.size) {
+            val name = body.name(i)
+            val value = body.value(i)
+            if (name == "csrfmiddlewaretoken") {
+                newFormBody.add(name, if (value.isBlank()) csrf else value)
+                hasCsrf = true
+            } else {
+                newFormBody.add(name, value)
+            }
+        }
+        if (!hasCsrf) {
+            newFormBody.add("csrfmiddlewaretoken", csrf)
+        }
+        return newFormBody.build()
+    }
 
     /**
      * Valor actual de la cookie csrftoken (el secreto que se enviará como Cookie).
@@ -217,6 +312,52 @@ object NetworkClient {
         (lastOkHttpClient?.cookieJar as? SessionCookieJar)?.clear()
     }
 
+    /** Vacía la caché HTTP en disco del cliente activo (al cerrar sesión o cambiar de cuenta). */
+    fun evictHttpCache() {
+        try {
+            lastOkHttpClient?.cache?.evictAll()
+        } catch (_: Exception) {}
+    }
+
+    @Volatile
+    private var imageClientBase: OkHttpClient? = null
+
+    @Volatile
+    private var imageClient: OkHttpClient? = null
+
+    private val fallbackImageClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("User-Agent", userAgent).build())
+            }
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .build()
+    }
+
+    /**
+     * Cliente para las imágenes. Parte del cliente de sesión (mismo UA y, para la instancia,
+     * mismas cookies, que hacen falta tras Anubis) pero sí sigue redirecciones: las portadas
+     * de OpenLibrary y las de instancias con almacenamiento externo redirigen con 302.
+     * Se resuelve en cada petición, así no importa si Coil arranca antes que la sesión.
+     */
+    private fun currentImageClient(): OkHttpClient {
+        val base = lastOkHttpClient ?: return fallbackImageClient
+        val cached = imageClient
+        if (cached != null && imageClientBase === base) return cached
+        val built = base.newBuilder()
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+        imageClientBase = base
+        imageClient = built
+        return built
+    }
+
+    /** Fábrica de llamadas para Coil. */
+    val imageCallFactory: Call.Factory = Call.Factory { request -> currentImageClient().newCall(request) }
+
     fun createAuthenticatedApi(
         baseUrl: String,
         cookieString: String,
@@ -225,6 +366,15 @@ object NetworkClient {
         val cleanUrl = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
         val finalUrl = if (cleanUrl.endsWith("/")) cleanUrl else "$cleanUrl/"
         val host = finalUrl.toHttpUrlOrNull()?.host?.lowercase() ?: cleanUrl.lowercase()
+
+        // Si ya existe la API de la aplicación y apunta a esta misma instancia, se usa esa:
+        // un solo tarro de cookies para toda la app.
+        val shared = sharedApi
+        val sharedHost = sharedApiHostProvider?.invoke()
+        if (shared != null && sharedHost != null && cleanHost(sharedHost) == cleanHost(host)) {
+            return shared
+        }
+
         val scheme = finalUrl.toHttpUrlOrNull()?.scheme ?: "https"
         val originHeader = "$scheme://$host"
         val refererHeader = "$originHeader/"
@@ -234,60 +384,46 @@ object NetworkClient {
 
         val interceptor = Interceptor { chain ->
             val request = chain.request()
+            val isToInstance = isInstanceHost(request.url.host, host)
             val requestBuilder = request.newBuilder()
-                .addHeader("Origin", originHeader)
-                .addHeader("Referer", refererHeader)
-                .addHeader("User-Agent", userAgent)
+                .header("User-Agent", userAgent)
+
+            if (isToInstance) {
+                requestBuilder.header("Origin", originHeader).header("Referer", refererHeader)
+            }
 
             val acceptHeader = request.header("Accept")
             if (acceptHeader?.contains("text/html") != true) {
-                requestBuilder.addHeader("X-Requested-With", "XMLHttpRequest")
+                requestBuilder.header("X-Requested-With", "XMLHttpRequest")
             }
 
             if (acceptHeader == null) {
-                requestBuilder.addHeader("Accept", "application/activity+json, application/json")
+                requestBuilder.header("Accept", "application/activity+json, application/json")
             }
 
             // Leer el CSRF más reciente del jar (puede haber rotado tras un POST previo)
-            val csrfToken = cookieJar.currentCsrfToken()
+            val csrfToken = if (isToInstance) cookieJar.currentCsrfToken() else null
             if (csrfToken != null) {
-                requestBuilder.addHeader("X-CSRFToken", csrfToken)
-
-                val originalBody = request.body
-                if (originalBody is FormBody) {
-                    val newFormBody = FormBody.Builder()
-                    var hasCsrf = false
-                    for (i in 0 until originalBody.size) {
-                        val name = originalBody.name(i)
-                        val value = originalBody.value(i)
-                        if (name == "csrfmiddlewaretoken") {
-                            newFormBody.add(name, if (value.isBlank()) csrfToken else value)
-                            hasCsrf = true
-                        } else {
-                            newFormBody.add(name, value)
-                        }
-                    }
-                    if (!hasCsrf) {
-                        newFormBody.add("csrfmiddlewaretoken", csrfToken)
-                    }
-                    requestBuilder.method(request.method, newFormBody.build())
-                }
+                requestBuilder.header("X-CSRFToken", csrfToken)
+                formWithCsrf(request.body, csrfToken)?.let { requestBuilder.method(request.method, it) }
             }
 
             var response = chain.proceed(requestBuilder.build())
 
             // Anubis: cuando su cookie de paso caduca, la instancia responde con 307 hacia el reto
-            // o 403. Se resuelve el reto y se repite la petición.
-            if (AnubisClearance.isChallenge(response)) {
+            // o 403. Se resuelve el reto y se repite la petición. Solo para la propia instancia:
+            // el reto de otro servidor no se arregla renovando la cookie de esta.
+            if (isToInstance && AnubisClearance.isChallenge(response)) {
                 val fresh = AnubisClearance.refreshBlocking(finalUrl, cookieJar.asCookieString())
                 if (fresh != null) {
                     cookieJar.merge(fresh)
                     response.close()
                     val newCsrf = cookieJar.currentCsrfToken()
-                    val retryRequest = requestBuilder
-                        .apply { if (newCsrf != null) removeHeader("X-CSRFToken").addHeader("X-CSRFToken", newCsrf) }
-                        .build()
-                    response = chain.proceed(retryRequest)
+                    if (newCsrf != null) {
+                        requestBuilder.header("X-CSRFToken", newCsrf)
+                        formWithCsrf(request.body, newCsrf)?.let { requestBuilder.method(request.method, it) }
+                    }
+                    response = chain.proceed(requestBuilder.build())
                 }
             }
 
@@ -317,12 +453,12 @@ object NetworkClient {
             .callTimeout(180, TimeUnit.SECONDS)
             .build()
 
-        lastOkHttpClient = okHttpClient
-        lastInstanceHost = host
-
-        val gson = com.google.gson.GsonBuilder()
-            .setLenient()
-            .create()
+        // Este cliente suelto solo se queda como «el de la app» si aún no hay otro: el Worker
+        // de recordatorios lo crea en segundo plano y no debe quitarle el tarro a la interfaz.
+        if (lastOkHttpClient == null) {
+            lastOkHttpClient = okHttpClient
+            lastInstanceHost = host
+        }
 
         return Retrofit.Builder()
             .baseUrl(finalUrl)

@@ -66,15 +66,7 @@ object NetworkErrors {
 
     /** Clasifica la excepción que ha tumbado la petición. */
     fun classify(error: Throwable): NetworkErrorKind = when {
-        error is retrofit2.HttpException -> {
-            val code = error.code()
-            if (code == 401 || code == 403) {
-                try {
-                    android.util.Log.e("RocinanteDebug", "HTTP $code from URL: ${error.response()?.raw()?.request?.url}")
-                } catch (_: Throwable) {}
-            }
-            classify(code)
-        }
+        error is retrofit2.HttpException -> classify(error.code())
 
         // Sin salida a la red: el nombre no resuelve o no se llega al puerto.
         error is java.net.UnknownHostException -> NetworkErrorKind.OFFLINE
@@ -112,20 +104,25 @@ object NetworkErrors {
      */
     val sessionExpiredEvent: kotlinx.coroutines.flow.SharedFlow<Unit> = _sessionExpiredEvent
 
-    /** Clasifica una respuesta HTTP que no ha ido bien. */
+    /**
+     * Avisa de que la instancia del usuario ha dado la sesión por caducada.
+     *
+     * Solo lo llama el cliente HTTP, y solo con respuestas de la propia instancia: un 401 de
+     * otro servidor (Mastodon o GoToSocial con *authorized fetch* contestan así a lo que no va
+     * firmado) no dice nada de la sesión del usuario y no debe echarle.
+     */
+    fun reportSessionExpired() {
+        _sessionExpiredEvent.tryEmit(Unit)
+    }
+
+    /**
+     * Clasifica una respuesta HTTP que no ha ido bien. No tiene efectos: se llama también solo
+     * para elegir el mensaje de error, y antes un 401 de cualquier servidor cerraba la sesión.
+     */
     fun classify(httpCode: Int): NetworkErrorKind = when {
-        httpCode == 401 -> {
-            try {
-                android.util.Log.e("RocinanteDebug", "Session expired triggered by HTTP 401")
-            } catch (_: Throwable) {}
-            _sessionExpiredEvent.tryEmit(Unit)
-            NetworkErrorKind.SESSION_EXPIRED
-        }
-        httpCode == 403 -> {
-            // Un 403 puede deberse a firmas ActivityPub requeridas (Secure Mode) o permisos,
-            // no necesariamente a una sesión expirada. Se clasifica para UI pero no expulsa la sesión.
-            NetworkErrorKind.SESSION_EXPIRED
-        }
+        // Un 403 puede deberse a firmas ActivityPub requeridas (Secure Mode) o permisos,
+        // no necesariamente a una sesión expirada. Se clasifica para la UI y nada más.
+        httpCode == 401 || httpCode == 403 -> NetworkErrorKind.SESSION_EXPIRED
         httpCode == 404 -> NetworkErrorKind.NOT_FOUND
         httpCode == 429 -> NetworkErrorKind.RATE_LIMITED
         httpCode in 500..599 -> NetworkErrorKind.SERVER_DOWN
