@@ -824,15 +824,16 @@ fun BookDetailsDialog(
                 )[slug]
                 // Si se termina de leer (finish), conservamos la fecha de inicio que ya tuviera
                 // la lectura activa para que BookWyrm no la sobreescriba con null borrándola.
+                // Solo vale la lectura EN CURSO: sin ella BookWyrm abre una lectura nueva, y darle
+                // el inicio de una anterior (o el resumen enrichment.started, que es el inicio
+                // más antiguo de todas) falsearía las fechas de una relectura.
                 val activeRtId = if (mappedStatus == "finish") BookWyrmScraper.extractReadthroughId(html) else null
-                val existingStartDate = if (mappedStatus == "finish") {
-                    val parsedDates = BookWyrmScraper.parseReadDates(html)
-                    val scrapedStart = if (!activeRtId.isNullOrBlank()) {
-                        parsedDates.readthroughs.firstOrNull { it.id == activeRtId }?.startDate
-                    } else {
-                        parsedDates.readthroughs.lastOrNull { it.finishDate == null }?.startDate
-                    }
-                    scrapedStart ?: enrichment?.started
+                val existingStartDate = if (mappedStatus == "finish" && !activeRtId.isNullOrBlank()) {
+                    BookWyrmScraper.parseReadDates(html).readthroughs
+                        .firstOrNull { it.id == activeRtId }?.startDate
+                        ?: BookWyrmScraper.extractActiveReadthrough(html)
+                            ?.takeIf { it.id == activeRtId }?.startDate
+                        ?: enrichment?.readthroughs?.firstOrNull { it.id == activeRtId }?.started
                 } else null
 
                 // La fecha del día, la misma que el formulario de la web trae ya rellena. Sin
@@ -973,9 +974,14 @@ fun BookDetailsDialog(
             try {
                 val contextData = BookWyrmScraper.getProgressContext(api, activeBookKey)
                 if (contextData != null) {
-                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                    val today = formatter.format(java.util.Date())
-                    val effectiveStartDate = contextData.startDate ?: enrichment?.started
+                    // ISO con dígitos ASCII: con Locale.getDefault() un móvil en árabe o persa
+                    // mandaba «٢٠٢٦-١٠-٣١», que la instancia no sabe leer.
+                    val today = java.time.LocalDate.now().toString()
+                    // Sin fecha de inicio BookWyrm la borra al cerrar la lectura; la de la caché
+                    // vale solo si es de esta misma lectura, no de una anterior.
+                    val effectiveStartDate = contextData.startDate
+                        ?: enrichment?.readthroughs
+                            ?.firstOrNull { it.id == contextData.readthroughId }?.started
                     val response = api.finishReadingDetailed(
                         bookIdPath = contextData.localBookId,
                         readthroughId = contextData.readthroughId,
@@ -3950,10 +3956,11 @@ private fun ReadDatesDialog(
                         csrfToken = ctx.csrfToken
                     )
                 }
-                // Al editar, BookWyrm contesta 200 vacío o redirige a la página del libro.
-                // Al crear, un 200 puede ser el formulario devuelto con errores o éxito según la instancia.
-                val body = if (response.isSuccessful) response.body()?.string().orEmpty() else ""
-                val saved = response.code() == 302 || (response.isSuccessful && !body.contains("class=\"errorlist\"") && !body.contains("error_1_id_"))
+                // Al editar, BookWyrm contesta 200 vacío (pedimos JSON) o redirige a la página
+                // del libro. Al crear, en cambio, solo la redirección es éxito: create-readthrough
+                // no distingue peticiones JSON y un 200 es el formulario devuelto con errores
+                // (marcados con «help is-danger», no con «errorlist» de Django).
+                val saved = response.code() == 302 || (editingId != null && response.isSuccessful)
                 if (saved) {
                     BookWyrmScraper.invalidateBookPage()
                     toast(context.getString(R.string.book_read_dates_saved))

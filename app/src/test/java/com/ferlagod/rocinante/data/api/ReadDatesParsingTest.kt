@@ -189,17 +189,40 @@ class ReadDatesParsingTest {
     }
 
     @Test
-    fun `extractReadthroughId encuentra lectura activa sin formulario reading-progress`() {
+    fun `extractReadthroughId toma la lectura activa del modal de terminar de leer`() {
         val html = """
             <html><body>
-            <form action="/edit-readthrough/" method="POST">
+            <form name="finish-reading-124985abc" action="/reading-status/finish/124985" method="post">
                 <input type="hidden" name="id" value="101">
                 <input type="date" name="start_date" value="2026-05-01">
-                <input type="date" name="finish_date" value="">
+                <input type="date" name="finish_date" value="2026-10-31">
             </form>
             </body></html>
         """.trimIndent()
 
         assertEquals("101", BookWyrmScraper.extractReadthroughId(html))
+        assertEquals("2026-05-01", BookWyrmScraper.extractActiveReadthrough(html)?.startDate)
+    }
+
+    @Test
+    fun `extractReadthroughId no confunde una lectura terminada con la activa`() {
+        // Relectura: solo hay una lectura anterior ya cerrada y el modal de terminar viene
+        // sin id. Devolver la antigua copiaba su fecha de inicio a la lectura nueva.
+        val html = """
+            <html><body>
+            <form action="/edit-readthrough/" method="POST">
+                <input type="hidden" name="id" value="55">
+                <input type="date" name="start_date" value="2024-01-01">
+                <input type="date" name="finish_date" value="2024-02-01">
+            </form>
+            <form name="finish-reading-124985abc" action="/reading-status/finish/124985" method="post">
+                <input type="hidden" name="id" value="">
+                <input type="date" name="start_date" value="">
+            </form>
+            </body></html>
+        """.trimIndent()
+
+        assertNull(BookWyrmScraper.extractReadthroughId(html))
+        assertNull(BookWyrmScraper.extractActiveReadthrough(html))
     }
 }

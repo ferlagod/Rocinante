@@ -301,32 +301,40 @@ object BookWyrmScraper {
     }
 
     /**
-     * Extrae el readthrough ID del formulario de progreso de lectura o de las lecturas activas.
-     * Busca primero el `<form name="reading-progress-...">` y dentro de él `<input name="id" value="(\d+)">`.
-     * Si no está presente, comprueba las lecturas en curso extraídas de la página.
+     * Extrae el readthrough ID de la lectura **activa**: primero del formulario de progreso
+     * (`<form name="reading-progress-...">`) y si no, del modal «Terminar de leer», que BookWyrm
+     * rellena con la lectura en curso.
+     *
+     * Nunca se recurre a una lectura ya terminada: con ella, terminar una relectura copiaba la
+     * fecha de inicio de la lectura anterior y actualizar el progreso tocaba una lectura cerrada.
      */
     internal fun extractReadthroughId(html: String): String? {
-        // 1. Formulario de progreso de lectura
         val formRegex = """<form[^>]*name=["']reading-progress-[\s\S]*?</form>""".toRegex()
         val formBlock = formRegex.find(html)?.value
         if (formBlock != null) {
             extractHiddenFieldValue(formBlock, "id")?.takeIf { it.isNotBlank() }?.let { return it }
         }
+        return extractActiveReadthrough(html)?.id
+    }
 
-        // 2. Si no hay formulario de progreso, lectura activa sin fecha de finalización
-        val parsed = parseReadDates(html)
-        val active = parsed.readthroughs.lastOrNull { it.finishDate == null } ?: parsed.readthroughs.lastOrNull()
-        if (active != null) {
-            return active.id
+    /**
+     * La lectura en curso tal y como la trae el modal «Terminar de leer» de la web
+     * (`<form name="finish-reading-...">`): BookWyrm le pone el id de la lectura activa y su
+     * fecha de inicio, que es justo lo que el propio formulario reenvía al terminar. Sin
+     * lectura activa el id viene vacío y se devuelve null.
+     */
+    internal fun extractActiveReadthrough(html: String): Readthrough? {
+        val doc = org.jsoup.Jsoup.parse(html)
+        return doc.select("form[name^=finish-reading-]").firstNotNullOfOrNull { form ->
+            val id = form.selectFirst("input[name=id]")?.attr("value")?.trim()?.ifEmpty { null }
+                ?: return@firstNotNullOfOrNull null
+            Readthrough(
+                id = id,
+                startDate = form.selectFirst("input[name=start_date]")
+                    ?.attr("value")?.trim()?.ifEmpty { null },
+                finishDate = null
+            )
         }
-
-        // 3. Formulario de edición de lectura
-        val editFormRegex = """<form[^>]*action=["'][^"']*edit-readthrough[^"']*["'][\s\S]*?</form>""".toRegex()
-        editFormRegex.find(html)?.value?.let { block ->
-            extractHiddenFieldValue(block, "id")?.takeIf { it.isNotBlank() }?.let { return it }
-        }
-
-        return null
     }
 
     /**
@@ -345,6 +353,7 @@ object BookWyrmScraper {
                 val userId = extractHiddenFieldValue(html, "user")
                 val startDate = if (!readthroughId.isNullOrBlank()) {
                     parseReadDates(html).readthroughs.firstOrNull { it.id == readthroughId }?.startDate
+                        ?: extractActiveReadthrough(html)?.takeIf { it.id == readthroughId }?.startDate
                 } else null
                 val formBookId = extractEditionId(html) ?: localBookId
 
