@@ -824,14 +824,15 @@ fun BookDetailsDialog(
                 )[slug]
                 // Si se termina de leer (finish), conservamos la fecha de inicio que ya tuviera
                 // la lectura activa para que BookWyrm no la sobreescriba con null borrándola.
+                val activeRtId = if (mappedStatus == "finish") BookWyrmScraper.extractReadthroughId(html) else null
                 val existingStartDate = if (mappedStatus == "finish") {
-                    val activeRtId = BookWyrmScraper.extractReadthroughId(html)
                     val parsedDates = BookWyrmScraper.parseReadDates(html)
-                    if (!activeRtId.isNullOrBlank()) {
+                    val scrapedStart = if (!activeRtId.isNullOrBlank()) {
                         parsedDates.readthroughs.firstOrNull { it.id == activeRtId }?.startDate
                     } else {
                         parsedDates.readthroughs.lastOrNull { it.finishDate == null }?.startDate
                     }
+                    scrapedStart ?: enrichment?.started
                 } else null
 
                 // La fecha del día, la misma que el formulario de la web trae ya rellena. Sin
@@ -845,7 +846,8 @@ fun BookDetailsDialog(
                         bookId = editionId,
                         startDate = if (mappedStatus == "start") today else existingStartDate,
                         finishDate = today.takeIf { mappedStatus == "finish" },
-                        stoppedDate = today.takeIf { mappedStatus == "stop" }
+                        stoppedDate = today.takeIf { mappedStatus == "stop" },
+                        readthroughId = activeRtId
                     )
                 } else {
                     api.shelveBook(editionId, slug)
@@ -857,6 +859,24 @@ fun BookDetailsDialog(
                     val fallback = api.shelveBook(editionId, slug)
                     if (fallback.isSuccessful || fallback.code() == 302) {
                         response = fallback
+                        // shelveBook solo crea ShelfBook y no crea ReadThrough. Si es reading o read,
+                        // creamos el readthrough explícitamente para guardar las fechas en el servidor.
+                        if (mappedStatus == "start" || mappedStatus == "finish") {
+                            runCatching {
+                                val ctx = BookWyrmScraper.getReadDatesContext(api, activeBookKey)
+                                if (ctx != null) {
+                                    val sDate = if (mappedStatus == "start") today else (existingStartDate ?: "")
+                                    val fDate = if (mappedStatus == "finish") today else ""
+                                    api.createReadthrough(
+                                        book = ctx.bookId,
+                                        user = ctx.userId,
+                                        startDate = sDate,
+                                        finishDate = fDate,
+                                        csrfToken = ctx.csrfToken
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -955,10 +975,11 @@ fun BookDetailsDialog(
                 if (contextData != null) {
                     val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     val today = formatter.format(java.util.Date())
+                    val effectiveStartDate = contextData.startDate ?: enrichment?.started
                     val response = api.finishReadingDetailed(
                         bookIdPath = contextData.localBookId,
                         readthroughId = contextData.readthroughId,
-                        startDate = contextData.startDate,
+                        startDate = effectiveStartDate,
                         finishDate = today,
                         csrfToken = contextData.csrfToken
                     )
@@ -975,7 +996,9 @@ fun BookDetailsDialog(
                         Toast.makeText(context, com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()), Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(context, context.getString(R.string.error_book_not_identified), Toast.LENGTH_SHORT).show()
+                    // Si no se pudo obtener el contexto detallado de progreso (p. ej. sin readthrough previo),
+                    // recurrimos a mover a la estantería de leídos para completar el proceso.
+                    moveToShelf("read", context.getString(R.string.shelf_toast_read))
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -3927,10 +3950,10 @@ private fun ReadDatesDialog(
                         csrfToken = ctx.csrfToken
                     )
                 }
-                // Al editar, BookWyrm contesta 200 vacío (pedimos JSON) o redirige a la página
-                // del libro. Al crear, en cambio, un 200 es el formulario devuelto con errores:
-                // ahí solo vale la redirección.
-                val saved = response.code() == 302 || (editingId != null && response.isSuccessful)
+                // Al editar, BookWyrm contesta 200 vacío o redirige a la página del libro.
+                // Al crear, un 200 puede ser el formulario devuelto con errores o éxito según la instancia.
+                val body = if (response.isSuccessful) response.body()?.string().orEmpty() else ""
+                val saved = response.code() == 302 || (response.isSuccessful && !body.contains("class=\"errorlist\"") && !body.contains("error_1_id_"))
                 if (saved) {
                     BookWyrmScraper.invalidateBookPage()
                     toast(context.getString(R.string.book_read_dates_saved))

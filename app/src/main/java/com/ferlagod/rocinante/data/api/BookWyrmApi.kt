@@ -200,6 +200,7 @@ interface BookWyrmApi {
         @Field("start_date") startDate: String? = null,
         @Field("finish_date") finishDate: String? = null,
         @Field("stopped_date") stoppedDate: String? = null,
+        @Field("id") readthroughId: String? = null,
         @Field("csrfmiddlewaretoken") csrfToken: String = NetworkClient.currentCsrfToken().orEmpty()
     ): retrofit2.Response<ResponseBody>
 

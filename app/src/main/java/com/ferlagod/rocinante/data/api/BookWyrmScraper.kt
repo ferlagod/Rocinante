@@ -275,20 +275,58 @@ object BookWyrmScraper {
      * exigen IDs de edición. BookWyrm resuelve la obra a la edición predeterminada al renderizar la página.
      */
     fun extractEditionId(html: String): String? {
-        return extractHiddenFieldValue(html, "book") ?: extractHiddenFieldValue(html, "mention_books")
+        // 1. Inputs ocultos habituales: name="book", name="mention_books", name="edition"
+        extractHiddenFieldValue(html, "book")?.takeIf { it.isNotBlank() }?.let { return it }
+        extractHiddenFieldValue(html, "mention_books")?.takeIf { it.isNotBlank() }?.let { return it }
+        extractHiddenFieldValue(html, "edition")?.takeIf { it.isNotBlank() }?.let { return it }
+
+        // 2. data attributes de BookWyrm (botones de estantería y modales)
+        val dataBookRegex = """data-(?:shelve-button-book|book-id|book|edition-id|edition)=["'](\d+)["']""".toRegex()
+        dataBookRegex.find(html)?.groupValues?.get(1)?.takeIf { it.isNotBlank() }?.let { return it }
+
+        // 3. Formularios con acción reading-status/<status>/<id>/
+        val readingStatusRegex = """action=["'][^"']*/reading-status/[^/"']+/(\d+)/?["']""".toRegex()
+        readingStatusRegex.find(html)?.groupValues?.get(1)?.takeIf { it.isNotBlank() }?.let { return it }
+
+        // 4. Formulario de create-readthrough o add-readthrough mediante selector DOM
+        val doc = org.jsoup.Jsoup.parse(html)
+        doc.selectFirst("form[action*=create-readthrough] input[name=book]")
+            ?.attr("value")?.trim()?.ifEmpty { null }?.let { return it }
+        doc.selectFirst("#add-readthrough input[name=book]")
+            ?.attr("value")?.trim()?.ifEmpty { null }?.let { return it }
+        doc.selectFirst("form[name^=reading-progress-] input[name=book]")
+            ?.attr("value")?.trim()?.ifEmpty { null }?.let { return it }
+
+        return null
     }
 
     /**
-     * Extrae el readthrough ID del formulario de progreso de lectura.
-     * Busca el `<form name="reading-progress-...">` y dentro de él, el input
-     * `<input name="id" value="(\d+)">` en cualquier orden de atributos.
+     * Extrae el readthrough ID del formulario de progreso de lectura o de las lecturas activas.
+     * Busca primero el `<form name="reading-progress-...">` y dentro de él `<input name="id" value="(\d+)">`.
+     * Si no está presente, comprueba las lecturas en curso extraídas de la página.
      */
     internal fun extractReadthroughId(html: String): String? {
-        // Localizar el bloque del formulario de progreso
+        // 1. Formulario de progreso de lectura
         val formRegex = """<form[^>]*name=["']reading-progress-[\s\S]*?</form>""".toRegex()
-        val formBlock = formRegex.find(html)?.value ?: return null
-        // Dentro del formulario, buscar el campo "id" en ambos órdenes
-        return extractHiddenFieldValue(formBlock, "id")
+        val formBlock = formRegex.find(html)?.value
+        if (formBlock != null) {
+            extractHiddenFieldValue(formBlock, "id")?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+
+        // 2. Si no hay formulario de progreso, lectura activa sin fecha de finalización
+        val parsed = parseReadDates(html)
+        val active = parsed.readthroughs.lastOrNull { it.finishDate == null } ?: parsed.readthroughs.lastOrNull()
+        if (active != null) {
+            return active.id
+        }
+
+        // 3. Formulario de edición de lectura
+        val editFormRegex = """<form[^>]*action=["'][^"']*edit-readthrough[^"']*["'][\s\S]*?</form>""".toRegex()
+        editFormRegex.find(html)?.value?.let { block ->
+            extractHiddenFieldValue(block, "id")?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+
+        return null
     }
 
     /**
@@ -1445,8 +1483,9 @@ object BookWyrmScraper {
     fun parseReadDates(html: String): ParsedReadDates {
         val doc = org.jsoup.Jsoup.parse(html)
 
-        val editForms = doc.select("form[action\$=edit-readthrough]")
+        val editForms = doc.select("form[action*=edit-readthrough]")
             .ifEmpty { doc.select("[id^=edit_readthrough_]:has(input[name=start_date])") }
+            .ifEmpty { doc.select("form:has(input[name=start_date]):has(input[name=id])") }
         val readthroughs = editForms
             .mapNotNull { form ->
                 val id = form.selectFirst("input[name=id]")
@@ -1461,7 +1500,7 @@ object BookWyrmScraper {
             }
             .distinctBy { it.id }
 
-        val addForm = doc.selectFirst("form[action\$=create-readthrough]")
+        val addForm = doc.selectFirst("form[action*=create-readthrough]")
             ?: doc.selectFirst("#add-readthrough")
         val bookId = addForm?.selectFirst("input[name=book]")?.attr("value")?.trim()?.ifEmpty { null }
             ?: extractEditionId(html)
@@ -1660,12 +1699,15 @@ object BookWyrmScraper {
             if (html.isEmpty()) return@withContext null
 
             val parsed = parseReadDates(html)
-            // Sin el id del libro en el formulario queda el de la propia URL; sin usuario,
-            // en cambio, no hay forma de dar de alta una lectura nueva.
+            // Sin el id del libro en el formulario se intenta extraer el de la edición;
+            // como último recurso el de la propia URL.
             val bookId = parsed.bookId
+                ?: extractEditionId(html)
                 ?: BookWyrmUtils.extractBookId(localUrl).takeIf { it.isNotEmpty() }
                 ?: return@withContext null
-            val userId = parsed.userId ?: return@withContext null
+            val userId = parsed.userId
+                ?: extractHiddenFieldValue(html, "user")
+                ?: return@withContext null
 
             // Token sin enmascarar de la cookie: es el que Django compara siempre bien.
             // Si el jar aún no lo tiene, sirve el del propio formulario de la página.

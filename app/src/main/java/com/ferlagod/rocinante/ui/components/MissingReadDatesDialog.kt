@@ -149,9 +149,10 @@ fun MissingReadDatesDialog(
                         csrfToken = ctx.csrfToken
                     )
                 }
-                // Al corregir, BookWyrm contesta 200 vacío o redirige. Al crear, un 200 es el
-                // formulario devuelto con errores: ahí solo vale la redirección.
-                val ok = response.code() == 302 || (latest != null && response.isSuccessful)
+                // Al corregir o crear, BookWyrm contesta 302 o 200. Si viene con errorlist en el
+                // cuerpo es que el formulario fue devuelto con errores de validación.
+                val body = if (response.isSuccessful) response.body()?.string().orEmpty() else ""
+                val ok = response.code() == 302 || (response.isSuccessful && !body.contains("class=\"errorlist\"") && !body.contains("error_1_id_"))
                 if (ok) {
                     BookWyrmScraper.invalidateBookPage()
                     done[id] = true

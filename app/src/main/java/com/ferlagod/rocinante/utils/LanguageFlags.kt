@@ -47,6 +47,10 @@ object LanguageFlags {
         "swedish" to "🇸🇪", "svenska" to "🇸🇪",
         "norwegian" to "🇳🇴", "norsk" to "🇳🇴",
         "finnish" to "🇫🇮", "suomi" to "🇫🇮",
+        "estonian" to "🇪🇪", "eesti" to "🇪🇪",
+        "latvian" to "🇱🇻", "latviešu" to "🇱🇻", "latviesu" to "🇱🇻",
+        "lithuanian" to "🇱🇹", "lietuvių" to "🇱🇹", "lietuviu" to "🇱🇹",
+        "esperanto" to "🟢",
         "german" to "🇩🇪", "deutsch" to "🇩🇪",
         "french" to "🇫🇷", "français" to "🇫🇷", "francais" to "🇫🇷",
         "spanish" to "🇪🇸", "español" to "🇪🇸", "espanol" to "🇪🇸", // por defecto (también 🇲🇽…)
@@ -55,6 +59,11 @@ object LanguageFlags {
         "portuguese" to "🇵🇹", "português" to "🇵🇹", "portugues" to "🇵🇹", // por defecto (también 🇧🇷)
         "polish" to "🇵🇱", "polski" to "🇵🇱",
         "czech" to "🇨🇿", "čeština" to "🇨🇿", "cestina" to "🇨🇿",
+        "slovak" to "🇸🇰", "slovenčina" to "🇸🇰", "slovencina" to "🇸🇰",
+        "slovenian" to "🇸🇮", "slovenščina" to "🇸🇮", "slovenscina" to "🇸🇮",
+        "croatian" to "🇭🇷", "hrvatski" to "🇭🇷",
+        "serbian" to "🇷🇸", "srpski" to "🇷🇸", "српски" to "🇷🇸",
+        "bulgarian" to "🇧🇬", "български" to "🇧🇬",
         "greek" to "🇬🇷", "ελληνικά" to "🇬🇷",
         "romanian" to "🇷🇴", "română" to "🇷🇴", "romana" to "🇷🇴",
         "ukrainian" to "🇺🇦", "українська" to "🇺🇦",
@@ -62,9 +71,13 @@ object LanguageFlags {
         "icelandic" to "🇮🇸", "íslenska" to "🇮🇸",
         "hungarian" to "🇭🇺", "magyar" to "🇭🇺",
         "turkish" to "🇹🇷", "türkçe" to "🇹🇷", "turkce" to "🇹🇷",
+        "hebrew" to "🇮🇱", "עברית" to "🇮🇱",
         "japanese" to "🇯🇵", "日本語" to "🇯🇵",
         "chinese" to "🇨🇳", "中文" to "🇨🇳",              // por defecto (también 🇹🇼)
         "korean" to "🇰🇷", "한국어" to "🇰🇷",
+        "vietnamese" to "🇻🇳", "tiếng việt" to "🇻🇳", "tieng viet" to "🇻🇳",
+        "thai" to "🇹🇭", "ไทย" to "🇹🇭",
+        "indonesian" to "🇮🇩", "bahasa indonesia" to "🇮🇩",
         "arabic" to "🇸🇦", "العربية" to "🇸🇦",           // por defecto (varios países)
         "hindi" to "🇮🇳", "हिन्दी" to "🇮🇳"
         // Catalán y gallego se omiten a propósito (sin bandera de emoji estándar): reserva a texto.

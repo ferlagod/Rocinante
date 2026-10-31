@@ -94,14 +94,14 @@ fun MissingRatingsDialog(
     val chosen = remember { mutableStateMapOf<String, Double>() }
     val saving = remember { mutableStateMapOf<String, Boolean>() }
     val done = remember { mutableStateMapOf<String, Boolean>() }
-    // Privado por defecto: rellenar huecos no es lo mismo que reseñar.
-    var privacy by remember { mutableStateOf("direct") }
+    // Público por defecto para que la puntuación aparezca en las listas y estanterías de BookWyrm.
+    var privacy by remember { mutableStateOf("public") }
     var privacyOpen by remember { mutableStateOf(false) }
 
     val privacyOptions = listOf(
-        "direct" to stringResource(R.string.progress_privacy_private),
+        "public" to stringResource(R.string.progress_privacy_public),
         "followers" to stringResource(R.string.progress_privacy_followers),
-        "public" to stringResource(R.string.progress_privacy_public)
+        "direct" to stringResource(R.string.progress_privacy_private)
     )
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()

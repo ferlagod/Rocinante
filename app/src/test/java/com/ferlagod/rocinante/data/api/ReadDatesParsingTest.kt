@@ -149,4 +149,57 @@ class ReadDatesParsingTest {
         val activeStartDate = parsed.readthroughs.firstOrNull { it.id == activeId }?.startDate
         assertEquals("2026-02-14", activeStartDate)
     }
+
+    @Test
+    fun `parseReadDates soporta acciones de formulario con barra final como genera Django`() {
+        val html = """
+            <html><body>
+            <div class="modal" id="edit_readthrough_12">
+              <form name="add-readthrough-12" action="/edit-readthrough/" method="POST">
+                <input type="hidden" name="id" value="12">
+                <input type="date" name="start_date" value="2026-04-01">
+                <input type="date" name="finish_date" value="2026-04-10">
+              </form>
+            </div>
+            <div class="modal" id="add-readthrough">
+              <form name="add-readthrough-" action="/create-readthrough/" method="POST">
+                <input type="hidden" name="book" value="99">
+                <input type="hidden" name="user" value="3">
+              </form>
+            </div>
+            </body></html>
+        """.trimIndent()
+
+        val parsed = BookWyrmScraper.parseReadDates(html)
+        assertEquals("99", parsed.bookId)
+        assertEquals("3", parsed.userId)
+        assertEquals(1, parsed.readthroughs.size)
+        assertEquals("12", parsed.readthroughs[0].id)
+        assertEquals("2026-04-01", parsed.readthroughs[0].startDate)
+        assertEquals("2026-04-10", parsed.readthroughs[0].finishDate)
+    }
+
+    @Test
+    fun `extractEditionId extrae el ID de edicion desde atributos data y formulario reading-status`() {
+        val htmlData = """<button data-shelve-button-book="77">Start reading</button>"""
+        assertEquals("77", BookWyrmScraper.extractEditionId(htmlData))
+
+        val htmlAction = """<form action="/reading-status/reading/88/" method="POST"></form>"""
+        assertEquals("88", BookWyrmScraper.extractEditionId(htmlAction))
+    }
+
+    @Test
+    fun `extractReadthroughId encuentra lectura activa sin formulario reading-progress`() {
+        val html = """
+            <html><body>
+            <form action="/edit-readthrough/" method="POST">
+                <input type="hidden" name="id" value="101">
+                <input type="date" name="start_date" value="2026-05-01">
+                <input type="date" name="finish_date" value="">
+            </form>
+            </body></html>
+        """.trimIndent()
+
+        assertEquals("101", BookWyrmScraper.extractReadthroughId(html))
+    }
 }
