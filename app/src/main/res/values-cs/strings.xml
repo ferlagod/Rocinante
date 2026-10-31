@@ -647,6 +647,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="changelog_text_v1_3_5">"• Připojení a kompatibilita: Opraven problém na instancích chráněných novějšími verzemi Anubis (jako kirja.casa), kde se po aktualizaci nenačítal obsah.\n• Vyšší stabilita: Optimalizována detekce a automatické obnovování přístupových oprávnění pro všechny instance."</string>
     <string name="changelog_text_v1_3_6">"• Statistiky čtení: Vylepšení statistik přečtených knih."</string>
     <string name="changelog_text_v1_3_7">"• Oprava dat čtení: Opravena chyba, kdy se data zahájení mohla přepsat nebo smazat při označení knihy jako přečtené. Stávající data jsou nyní správně zachována.\n• Aktivita čtení: Opravena aktualizace stavu čtení, takže zahájení nebo dokončení knihy nyní publikuje na časovou osu správnou událost („začal číst“ / „dočetl“) namísto obecného „přidal na polici“."</string>
+    <string name="changelog_text_v1_3_8">"• Přidávání knih: Nyní můžete vytvářet nové knihy a vydání přímo z vyhledávání v aplikaci.\n• Data čtení a hodnocení: Opravena synchronizace a zachování dat čtení, opakovaných čtení a viditelnost hodnocení na webu BookWyrm.\n• Vlajky jazyků: Přidány vlajky pro estonštinu (🇪🇪), esperanto (🟢) a další jazyky.\n• Relace a stabilita: Izolace relace a cookies podle instance, vyšší odolnost vůči Anubis a vylepšení sítě."</string>
 
     <!-- Create Book Dialog -->
     <string name="create_book_title">Přidat knihu</string>

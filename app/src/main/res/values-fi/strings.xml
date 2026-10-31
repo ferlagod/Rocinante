@@ -617,6 +617,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="changelog_text_v1_3_5">"• Yhteys ja yhteensopivuus: Korjattu ongelma uusimmilla Anubis-versioilla suojatuilla palvelimilla (kuten kirja.casa), joilla sisältöä ei ladattu päivityksen jälkeen.\n• Parempi vakaus: Pääsyoikeuksien automaattinen tunnistus ja uusiminen optimoitu kaikille palvelimille."</string>
     <string name="changelog_text_v1_3_6">"• Lukutilastot: Parannuksia luettujen kirjojen tilastoihin."</string>
     <string name="changelog_text_v1_3_7">"• Lukupäivämäärien korjaus: Korjattu ongelma, jossa aloituspäivämäärät saattoivat ylikirjoittua tai poistua, kun kirja merkittiin luetuksi. Olemassa olevat päivämäärät säilytetään nyt oikein.\n• Lukutoiminta: Korjattu lukutilan päivitys niin, että kirjan aloittaminen tai lopettaminen julkaisee aikajanalle oikean tapahtuman («alkoi lukea» / «sai luettua») yleisen «hyllytti»-merkinnän sijaan."</string>
+    <string name="changelog_text_v1_3_8">"• Lisää kirjoja: Voit nyt luoda uusia kirjoja ja painoksia suoraan sovelluksen hausta.\n• Lukupäivämäärät ja arviot: Korjattu lukupäivämäärien ja uudelleenlukujen tallennus sekä arvioiden näkyminen BookWyrm-verkkosivulla.\n• Kieliliput: Lisätty liput virolle (🇪🇪), esperantolle (🟢) ja muille kielille.\n• Istunto ja vakaus: Istunnon ja evästeiden eristys instanssikohtaisesti, parempi Anubis-yhteensopivuus ja verkkoparannukset."</string>
 
     <!-- Create Book Dialog -->
     <string name="create_book_title">Lisää kirja</string>

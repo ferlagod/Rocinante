@@ -669,6 +669,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="changelog_text_v1_3_5">"• Connection &amp; Compatibility: Fixed an issue on instances protected by recent Anubis versions (such as kirja.casa) where content failed to load after updating.\n• Improved Stability: Optimized detection and automatic clearance renewal across all instance types."</string>
     <string name="changelog_text_v1_3_6">"• Reading statistics: Improvements to read books statistics."</string>
     <string name="changelog_text_v1_3_7">"• Reading dates fix: Fixed an issue where start dates could be overwritten or cleared when marking a book as finished. Existing reading dates are now properly preserved.\n• Reading activity: Fixed reading status updates so starting or finishing a book posts the correct \"started reading\" or \"finished reading\" event to the timeline instead of a generic \"shelved\"."</string>
+    <string name="changelog_text_v1_3_8">"• Add books: You can now create new books and editions directly from search in the app.\n• Reading dates &amp; ratings: Fixed synchronization and preservation of reading dates, re-reads, and rating visibility on the BookWyrm web interface.\n• Language flags: Added flags for Estonian (🇪🇪), Esperanto (🟢), and more languages.\n• Session &amp; stability: Instance-isolated session and cookies, improved resilience with Anubis, and network optimizations."</string>
 
     <!-- Create Book Dialog -->
     <string name="create_book_title">Add book</string>
