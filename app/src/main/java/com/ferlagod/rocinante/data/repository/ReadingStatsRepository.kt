@@ -77,15 +77,27 @@ object ReadingStatsRepository {
             val cleanUser = username.removePrefix("@").substringBefore("@").trim()
 
             // 1. Descargar páginas de la estantería "read"
+            // Lo que ya había en caché es el historial entero de la vez anterior: mientras se
+            // descarga, las páginas nuevas se superponen a él en vez de sustituirlo. Antes la
+            // primera página (los ~15 más recientes) reemplazaba la lista, se guardaba en disco
+            // y el perfil «empezaba de cero»; si se salía a mitad, se quedaba así.
+            val cachedBooks = currentBooks
             val allFetchedBooks = mutableListOf<ShelfBookItem>()
             val existingIds = mutableSetOf<String>()
             var page = 1
             var hasMore = true
             var isFirstPage = true
+            // Solo una descarga que llega al final sin fallos puede sustituir la caché: así
+            // también desaparecen los libros que se hayan quitado de la estantería.
+            var complete = false
+
+            fun mergedWithCache(): List<ShelfBookItem> =
+                allFetchedBooks + cachedBooks.filter { it.id != null && it.id !in existingIds }
 
             while (hasMore && page <= 100) {
                 val shelfJsonUrl = "${baseUrl}user/$cleanUser/books/read.json?page=$page"
-                val pageItems = try {
+                // null = la página no se pudo leer (distinto de una página vacía, que es el final).
+                val pageItems: List<ShelfBookItem>? = try {
                     val response = api.getShelfData(shelfJsonUrl)
                     response.orderedItems ?: emptyList()
                 } catch (e: Exception) {
@@ -97,25 +109,29 @@ object ReadingStatsRepository {
                     } catch (e2: Exception) {
                         if (e2 is CancellationException) throw e2
                         val shelfHtmlUrl = "${baseUrl}user/$cleanUser/books/read?page=$page"
-                        BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl) ?: emptyList()
+                        BookWyrmScraper.scrapeShelfPage(api, shelfHtmlUrl, baseUrl)
                     }
                 }
 
-                if (pageItems.isEmpty()) {
+                if (pageItems == null) {
                     hasMore = false
+                } else if (pageItems.isEmpty()) {
+                    hasMore = false
+                    complete = true
                 } else {
                     val newItems = pageItems.filter { it.id == null || it.id !in existingIds }
                     if (newItems.isEmpty()) {
                         hasMore = false
+                        complete = true
                     } else {
                         newItems.forEach { it.id?.let { id -> existingIds.add(id) } }
                         allFetchedBooks.addAll(newItems)
 
-                        // Si es la primera página (libros del último año/más recientes),
-                        // guardamos y notificamos inmediatamente para alimentar la UI sin demora.
+                        // Primera página (lo más reciente): se avisa enseguida para que el año en
+                        // curso se vea al día, pero junto al resto del historial ya conocido.
                         if (isFirstPage) {
                             isFirstPage = false
-                            currentBooks = allFetchedBooks.toList()
+                            currentBooks = mergedWithCache()
                             dataCache.saveShelfBooks("read", currentBooks)
                             onProgress?.invoke(currentBooks, currentEnrichment)
                         }
@@ -127,7 +143,7 @@ object ReadingStatsRepository {
             }
 
             if (allFetchedBooks.isNotEmpty()) {
-                currentBooks = allFetchedBooks.toList()
+                currentBooks = if (complete) allFetchedBooks.toList() else mergedWithCache()
                 dataCache.saveShelfBooks("read", currentBooks)
                 onProgress?.invoke(currentBooks, currentEnrichment)
             }
