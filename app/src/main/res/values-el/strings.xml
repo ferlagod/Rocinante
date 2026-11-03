@@ -626,6 +626,7 @@
     <string name="create_book_field_subtitle">Υπότιτλος</string>
     <string name="create_book_field_author">Συγγραφέας *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Ελέγξτε το ISBN: δεν φαίνεται σωστό</string>
     <string name="create_book_field_pages">Σελίδες</string>
     <string name="create_book_field_published_date">Ημερομηνία έκδοσης (ΕΕΕΕ ή ΕΕΕΕ-ΜΜ-ΗΗ)</string>
     <string name="create_book_field_description">Περιγραφή / Σύνοψη</string>

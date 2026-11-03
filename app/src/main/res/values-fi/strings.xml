@@ -627,6 +627,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="create_book_field_subtitle">Alaotsikko</string>
     <string name="create_book_field_author">Kirjailija *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Tarkista ISBN: se ei näytä oikealta</string>
     <string name="create_book_field_pages">Sivumäärä</string>
     <string name="create_book_field_published_date">Julkaisupäivämäärä (VVVV tai VVVV-KK-PP)</string>
     <string name="create_book_field_description">Kuvaus / Tiivistelmä</string>

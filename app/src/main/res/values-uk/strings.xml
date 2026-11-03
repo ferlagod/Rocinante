@@ -659,6 +659,7 @@
     <string name="create_book_field_subtitle">Підзаголовок</string>
     <string name="create_book_field_author">Автор *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Перевірте ISBN: схоже, він неправильний</string>
     <string name="create_book_field_pages">Кількість сторінок</string>
     <string name="create_book_field_published_date">Дата публікації (РРРР або РРРР-ММ-ДД)</string>
     <string name="create_book_field_description">Опис / Анотація</string>

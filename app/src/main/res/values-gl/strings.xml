@@ -629,6 +629,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="create_book_field_subtitle">Subtítulo</string>
     <string name="create_book_field_author">Autor/a *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Revisa o ISBN: non parece correcto</string>
     <string name="create_book_field_pages">Páxinas</string>
     <string name="create_book_field_published_date">Data de publicación (AAAA ou AAAA-MM-DD)</string>
     <string name="create_book_field_description">Sinopse / Descrición</string>

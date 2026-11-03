@@ -627,6 +627,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="create_book_field_subtitle">Subtítulo</string>
     <string name="create_book_field_author">Autor/a *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Verifique o ISBN: não parece correto</string>
     <string name="create_book_field_pages">Páginas</string>
     <string name="create_book_field_published_date">Data de publicação (AAAA ou AAAA-MM-DD)</string>
     <string name="create_book_field_description">Sinopse / Descrição</string>

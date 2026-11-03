@@ -126,4 +126,18 @@ class IsbnUtilsTest {
     fun `normalize de cadena sin digitos devuelve vacio`() {
         assertEquals("", IsbnUtils.normalize("Dune"))
     }
+
+    @Test
+    fun `checksum valido en isbn13 e isbn10 con X`() {
+        assertTrue(IsbnUtils.hasValidChecksum("978-0-306-40615-7"))
+        assertTrue(IsbnUtils.hasValidChecksum("0-9752298-0-X"))
+        assertTrue(IsbnUtils.hasValidChecksum("8420412147"))
+    }
+
+    @Test
+    fun `checksum detecta erratas`() {
+        assertFalse(IsbnUtils.hasValidChecksum("9780306406158"))
+        assertFalse(IsbnUtils.hasValidChecksum("0975229801"))
+        assertFalse(IsbnUtils.hasValidChecksum("12345"))
+    }
 }

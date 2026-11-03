@@ -626,6 +626,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="create_book_field_subtitle">Undertitel</string>
     <string name="create_book_field_author">Författare *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Kontrollera ISBN: det ser inte rätt ut</string>
     <string name="create_book_field_pages">Sidor</string>
     <string name="create_book_field_published_date">Utgivningsdatum (ÅÅÅÅ eller ÅÅÅÅ-MM-DD)</string>
     <string name="create_book_field_description">Beskrivning / Sammanfattning</string>

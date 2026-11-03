@@ -627,6 +627,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="create_book_field_subtitle">Sottotitolo</string>
     <string name="create_book_field_author">Autore/rice *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Controlla l\'ISBN: non sembra corretto</string>
     <string name="create_book_field_pages">Pagine</string>
     <string name="create_book_field_published_date">Data di pubblicazione (AAAA o AAAA-MM-DD)</string>
     <string name="create_book_field_description">Sinossi / Descrizione</string>

@@ -627,6 +627,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="create_book_field_subtitle">Subtítol</string>
     <string name="create_book_field_author">Autor/a *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Revisa l\'ISBN: no sembla correcte</string>
     <string name="create_book_field_pages">Pàgines</string>
     <string name="create_book_field_published_date">Data de publicació (AAAA o AAAA-MM-DD)</string>
     <string name="create_book_field_description">Sinopsi / Descripció</string>

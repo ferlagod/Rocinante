@@ -60,14 +60,19 @@ import java.io.ByteArrayOutputStream
 /**
  * Comprime la imagen de portada seleccionada a un tamaño adecuado para la web (máximo 1200px),
  * reduciendo el peso de ~10 MB a ~150 KB para evitar cortes por timeout en redes móviles.
+ *
+ * Decodificar y comprimir una foto grande lleva su tiempo: se hace fuera del hilo principal
+ * (antes congelaba la pantalla mientras tanto). Se respeta la orientación EXIF, porque las
+ * fotos de la cámara guardan los píxeles girados y la marca aparte, y sin aplicarla la
+ * portada subía tumbada.
  */
-private fun compressCoverImage(
+private suspend fun compressCoverImage(
     context: Context,
     uri: Uri,
     maxDimension: Int = 1200,
     quality: Int = 85
-): Pair<ByteArray, String>? {
-    return runCatching {
+): Pair<ByteArray, String>? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+    runCatching {
         val cr = context.contentResolver
         val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, boundsOptions) }
@@ -75,9 +80,9 @@ private fun compressCoverImage(
         val origW = boundsOptions.outWidth
         val origH = boundsOptions.outHeight
         if (origW <= 0 || origH <= 0) {
-            val raw = cr.openInputStream(uri)?.use { it.readBytes() } ?: return null
+            val raw = cr.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
             val mime = cr.getType(uri) ?: "image/jpeg"
-            return raw to mime
+            return@runCatching raw to mime
         }
 
         var sampleSize = 1
@@ -90,7 +95,9 @@ private fun compressCoverImage(
         }
 
         val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val bitmap = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOptions) } ?: return null
+        val decoded = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOptions) } ?: return@runCatching null
+
+        val bitmap = applyExifOrientation(context, uri, decoded)
 
         val finalBitmap = if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
             val ratio = minOf(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
@@ -108,6 +115,38 @@ private fun compressCoverImage(
         finalBitmap.recycle()
         out.toByteArray() to "image/jpeg"
     }.getOrNull()
+}
+
+/**
+ * Gira o voltea [bitmap] según la marca EXIF de la imagen. Si no hay marca, no se puede leer
+ * o no hace falta tocar nada, devuelve el mismo bitmap.
+ */
+private fun applyExifOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
+    val orientation = runCatching {
+        context.contentResolver.openInputStream(uri)?.use {
+            android.media.ExifInterface(it).getAttributeInt(
+                android.media.ExifInterface.TAG_ORIENTATION,
+                android.media.ExifInterface.ORIENTATION_NORMAL
+            )
+        }
+    }.getOrNull() ?: return bitmap
+
+    val matrix = android.graphics.Matrix()
+    when (orientation) {
+        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        android.media.ExifInterface.ORIENTATION_TRANSPOSE -> { matrix.postRotate(90f); matrix.postScale(-1f, 1f) }
+        android.media.ExifInterface.ORIENTATION_TRANSVERSE -> { matrix.postRotate(270f); matrix.postScale(-1f, 1f) }
+        else -> return bitmap
+    }
+    return runCatching {
+        Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true).also {
+            if (it != bitmap) bitmap.recycle()
+        }
+    }.getOrDefault(bitmap)
 }
 
 /**
@@ -470,12 +509,28 @@ fun CreateBookDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Teclado de texto: el numérico no tiene la «X» de control de los ISBN-10.
+                        // Solo se admiten los caracteres de un ISBN.
+                        // Se avisa al tener ya la longitud de un ISBN, no mientras se teclea.
+                        val isbnLooksWrong = com.ferlagod.rocinante.utils.IsbnUtils.normalize(isbn).length
+                            .let { it == 10 || it >= 13 } &&
+                            !com.ferlagod.rocinante.utils.IsbnUtils.hasValidChecksum(isbn)
                         OutlinedTextField(
                             value = isbn,
-                            onValueChange = { isbn = it },
+                            onValueChange = { value ->
+                                isbn = value.filter { it.isDigit() || it == 'X' || it == 'x' || it == '-' || it == ' ' }
+                                    .uppercase()
+                            },
                             label = { Text(stringResource(R.string.create_book_field_isbn)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Ascii,
+                                capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters
+                            ),
                             singleLine = true,
+                            isError = isbnLooksWrong,
+                            supportingText = if (isbnLooksWrong) {
+                                { Text(stringResource(R.string.create_book_isbn_check_warning)) }
+                            } else null,
                             modifier = Modifier.weight(1f),
                             enabled = !isWorking
                         )

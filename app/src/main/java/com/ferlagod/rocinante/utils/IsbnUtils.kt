@@ -53,4 +53,20 @@ object IsbnUtils {
             else -> false
         }
     }
+
+    /**
+     * ¿El dígito de control cuadra? Sirve para avisar de una errata al teclearlo; el servidor
+     * no lo comprueba, así que no debe impedir guardar.
+     */
+    fun hasValidChecksum(raw: String): Boolean {
+        if (!isIsbn(raw)) return false
+        val n = normalize(raw)
+        return if (n.length == 13) {
+            val sum = n.mapIndexed { i, c -> (c - '0') * if (i % 2 == 0) 1 else 3 }.sum()
+            sum % 10 == 0
+        } else {
+            val sum = n.mapIndexed { i, c -> (if (c == 'X') 10 else c - '0') * (10 - i) }.sum()
+            sum % 11 == 0
+        }
+    }
 }

@@ -627,6 +627,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="create_book_field_subtitle">Sous-titre</string>
     <string name="create_book_field_author">Auteur/e *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Vérifiez l\'ISBN : il ne semble pas correct</string>
     <string name="create_book_field_pages">Pages</string>
     <string name="create_book_field_published_date">Date de publication (AAAA ou AAAA-MM-DD)</string>
     <string name="create_book_field_description">Synopsis / Description</string>

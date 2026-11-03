@@ -647,6 +647,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="create_book_field_subtitle">Subtitlu</string>
     <string name="create_book_field_author">Autor *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Verifică ISBN-ul: nu pare corect</string>
     <string name="create_book_field_pages">Număr de pagini</string>
     <string name="create_book_field_published_date">Data publicării (AAAA sau AAAA-LL-ZZ)</string>
     <string name="create_book_field_description">Descriere / Sinopsis</string>

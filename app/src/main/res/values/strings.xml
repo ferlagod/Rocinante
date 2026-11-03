@@ -679,6 +679,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="create_book_field_subtitle">Subtitle</string>
     <string name="create_book_field_author">Author *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Check the ISBN: it doesn\'t look right</string>
     <string name="create_book_field_pages">Pages</string>
     <string name="create_book_field_published_date">Publication date (YYYY or YYYY-MM-DD)</string>
     <string name="create_book_field_description">Description / Synopsis</string>

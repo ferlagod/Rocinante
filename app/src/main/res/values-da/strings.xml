@@ -676,6 +676,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="create_book_field_subtitle">Undertitel</string>
     <string name="create_book_field_author">Forfatter *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Tjek ISBN: det ser ikke rigtigt ud</string>
     <string name="create_book_field_pages">Sider</string>
     <string name="create_book_field_published_date">Udgivelsesdato (ÅÅÅÅ eller ÅÅÅÅ-MM-DD)</string>
     <string name="create_book_field_description">Beskrivelse / Synopse</string>

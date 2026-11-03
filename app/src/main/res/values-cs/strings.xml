@@ -657,6 +657,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="create_book_field_subtitle">Podnázev</string>
     <string name="create_book_field_author">Autor *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">Zkontrolujte ISBN: nevypadá správně</string>
     <string name="create_book_field_pages">Počet stran</string>
     <string name="create_book_field_published_date">Datum vydání (RRRR nebo RRRR-MM-DD)</string>
     <string name="create_book_field_description">Popis / anotace</string>

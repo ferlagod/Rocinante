@@ -627,6 +627,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="create_book_field_subtitle">Untertitel</string>
     <string name="create_book_field_author">Autor/in *</string>
     <string name="create_book_field_isbn">ISBN-13</string>
+    <string name="create_book_isbn_check_warning">ISBN prüfen: scheint nicht korrekt</string>
     <string name="create_book_field_pages">Seiten</string>
     <string name="create_book_field_published_date">Veröffentlichungsdatum (JJJJ oder JJJJ-MM-TT)</string>
     <string name="create_book_field_description">Beschreibung / Klappentext</string>
