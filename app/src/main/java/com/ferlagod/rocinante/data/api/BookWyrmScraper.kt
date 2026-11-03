@@ -2317,10 +2317,26 @@ object BookWyrmScraper {
             val document = org.jsoup.Jsoup.parse(html)
             announcements.addAll(parseServerAnnouncements(document, baseUrl))
 
+            // La vista previa del estado (respuestas, menciones, likes, difusiones) es otro
+            // div.notification metido dentro del de la notificación. Antes se recorrían los dos y
+            // el de dentro se intentaba fusionar con el anterior; si su texto (el de la reseña)
+            // parecía de otro tipo, salía como una notificación más. Ahora solo cuentan las de
+            // primer nivel y la vista previa se añade a su contenido.
             val elements = document.select("div.notification:not(.live-message)")
-            for (element in elements) {
+                .filter { el -> el.parents().none { it.hasClass("notification") } }
+            for (rawElement in elements) {
+                val previews = rawElement.select("div.notification").filter { it !== rawElement }
+                // Sin la vista previa: su texto y sus enlaces no son de la notificación.
+                val element = if (previews.isEmpty()) rawElement else rawElement.clone().also { copy ->
+                    copy.select("div.notification").filter { it !== copy }.forEach { it.remove() }
+                }
+                val previewHtml = previews.joinToString("<br>") { preview ->
+                    (preview.selectFirst(".column.is-clipped") ?: preview).html()
+                }
                 val id = element.attr("id").ifEmpty { java.util.UUID.randomUUID().toString() }
-                val isUnread = element.hasClass("unread")
+                // BookWyrm marca las no leídas con has-background-primary; «unread» se conserva
+                // por compatibilidad.
+                val isUnread = element.hasClass("unread") || element.hasClass("has-background-primary")
                 
                 val contentHtml = element.select(".content").firstOrNull()?.html() ?: element.text()
                 
@@ -2344,6 +2360,20 @@ object BookWyrmScraper {
                 val formUserId = followRequestForm?.select("input[name='user']")?.firstOrNull()?.attr("value")?.takeIf { it.isNotBlank() }
 
                 val fullText = element.text().lowercase()
+
+                // El icono principal dice el tipo sin depender del idioma (plantillas de
+                // notifications/items): el texto traducido no siempre lleva las palabras que se
+                // buscan abajo («ha impulsado», «te ha mencionado»…).
+                val primaryIcon = element.selectFirst("a.icon")
+                val iconType = when {
+                    primaryIcon == null -> null
+                    primaryIcon.select(".icon-boost").isNotEmpty() -> NotificationType.BOOST
+                    primaryIcon.select(".icon-heart").isNotEmpty() -> NotificationType.FAVORITE
+                    primaryIcon.select(".icon-comments").isNotEmpty() -> NotificationType.REPLY
+                    primaryIcon.select(".icon-comment").isNotEmpty() -> NotificationType.MENTION
+                    else -> null
+                }
+
                 val isFollowRequestText = fullText.contains("requested to follow") ||
                     fullText.contains("solicit") ||
                     fullText.contains("petición de seguimiento") ||
@@ -2406,6 +2436,7 @@ object BookWyrmScraper {
                     // Sin botones ya no hay solicitud que atender (se aceptó o rechazó): se trata
                     // como un seguidor más, para poder abrir su ficha y seguirle.
                     isFollowNotificationIcon -> NotificationType.FOLLOW
+                    iconType != null -> iconType
                     isFollowRequestText -> NotificationType.FOLLOW_REQUEST
                     fullText.contains("replied") || fullText.contains("respondió") || fullText.contains("respondeu") || fullText.contains("répondu") || fullText.contains("geantwortet") -> NotificationType.REPLY
                     fullText.contains("mention") || fullText.contains("mencionó") || fullText.contains("mencionou") || fullText.contains("mentionné") || fullText.contains("erwähnt") -> NotificationType.MENTION
@@ -2427,6 +2458,8 @@ object BookWyrmScraper {
                     .filter { anchor ->
                         val href = anchor.attr("href").removeSuffix("/").lowercase()
                         !anchor.hasClass("icon") &&
+                        // Solo perfiles: el enlace a «tu reseña» (/user/yo/review/12) no es un usuario.
+                        isProfileHref(href) &&
                         !href.endsWith("/followers") &&
                         !href.endsWith("/following") &&
                         !href.endsWith("/books") &&
@@ -2507,9 +2540,12 @@ object BookWyrmScraper {
                     permalink = relatedUsers.firstOrNull()?.profileUrl ?: permalink
                 }
                 
-                // BookWyrm sometimes splits a notification into the header ("User boosted...") and the embedded post ("<article>...").
-                // If this element looks like an embedded post, merge its content into the previous notification.
-                val isEmbeddedPost = element.select("article, .status").isNotEmpty() || type == NotificationType.UNKNOWN
+                // Maquetaciones antiguas sin icono podían traer el estado como un bloque suelto tras
+                // la cabecera: ese bloque se une a la notificación anterior. Una notificación de
+                // verdad (con su icono) de un tipo que no se conoce, como una importación
+                // terminada, se muestra por sí misma en vez de pegarse a otra.
+                val isEmbeddedPost = primaryIcon == null &&
+                    (element.select("article, .status").isNotEmpty() || type == NotificationType.UNKNOWN)
                 if (isEmbeddedPost && notifications.isNotEmpty()) {
                     val prev = notifications.removeAt(notifications.lastIndex)
                     val embeddedHtml = element.select(".content").firstOrNull()?.html() ?: element.html()
@@ -2526,7 +2562,7 @@ object BookWyrmScraper {
                         actorName = finalActorName,
                         actorAvatarUrl = finalAvatarUrl,
                         date = date,
-                        content = contentHtml,
+                        content = if (previewHtml.isBlank()) contentHtml else "$contentHtml<br><br>$previewHtml",
                         permalink = permalink,
                         formUserId = formUserId,
                         relatedUsers = relatedUsers
@@ -2539,6 +2575,21 @@ object BookWyrmScraper {
             e.printStackTrace()
             ScrapedNotificationsResult(emptyList(), emptyList())
         }
+    }
+
+    /**
+     * Si [href] apunta a un perfil (/user/nombre, /user/nombre@servidor, /users/nombre, /@nombre)
+     * y no a algo suyo (/user/nombre/review/12, /user/nombre/followers…).
+     */
+    internal fun isProfileHref(href: String): Boolean {
+        val path = href.substringBefore("?").substringBefore("#").removeSuffix("/")
+        val rest = when {
+            path.contains("/user/") -> path.substringAfter("/user/")
+            path.contains("/users/") -> path.substringAfter("/users/")
+            path.contains("/@") -> path.substringAfter("/@")
+            else -> return false
+        }
+        return rest.isNotBlank() && !rest.contains("/")
     }
 
     suspend fun scrapeNotifications(api: BookWyrmApi, instanceUrl: String): List<NotificationUiItem> =

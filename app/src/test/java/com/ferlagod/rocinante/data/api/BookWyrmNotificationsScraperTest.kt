@@ -14,6 +14,8 @@ import com.ferlagod.rocinante.data.model.NotificationType
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import retrofit2.Response
@@ -138,6 +140,83 @@ class BookWyrmNotificationsScraperTest {
         // Solicitud ya atendida (sin botones): se abre como un seguidor normal.
         assertEquals(NotificationType.FOLLOW, notifs[1].type)
         assertEquals("Luis", notifs[1].actorName)
+    }
+
+    private fun statusNotification(icon: String, text: String, previewText: String, unread: Boolean = false) = """
+        <div class="notification ${if (unread) "has-background-primary" else ""}">
+            <div class="columns is-mobile">
+                <div class="column is-narrow is-size-3">
+                    <a class="icon" href="/user/yo/review/12"><span class="icon $icon"></span></a>
+                </div>
+                <div class="column is-clipped">
+                    <div class="block content">
+                        <a href="/user/ana" class="mr-2"><img class="avatar" src="/a.png" alt="avatar de ana"></a>
+                        <a href="/user/ana">Ana</a> $text <a href="/user/yo/review/12">tu reseña de <em>Libro</em></a>
+                    </div>
+                    <div class="block">
+                        <div class="notification py-2 has-background-body">
+                            <div class="columns">
+                                <div class="column is-clipped"><a href="/user/yo/review/12">$previewText</a></div>
+                                <div class="column is-narrow">2 días</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    """
+
+    @Test
+    fun `spanish boost and mention are typed by their icon and keep their preview`() = runBlocking {
+        val html = statusNotification("icon-boost", "ha impulsado", "Me gustó y lo recomiendo a quien me follow", unread = true) +
+            statusNotification("icon-comment", "te ha mencionado en", "Hola @yo") +
+            statusNotification("icon-heart", "le ha gustado", "Una reseña") +
+            statusNotification("icon-comments", "ha respondido a", "Una respuesta")
+
+        val notifs = BookWyrmScraper.scrapeNotifications(createFakeApi(html), "https://bookwyrm.es")
+
+        // Cuatro, no ocho ni dos: la vista previa anidada no es otra notificación ni se fusiona.
+        assertEquals(4, notifs.size)
+        assertEquals(NotificationType.BOOST, notifs[0].type)
+        assertEquals(NotificationType.MENTION, notifs[1].type)
+        assertEquals(NotificationType.FAVORITE, notifs[2].type)
+        assertEquals(NotificationType.REPLY, notifs[3].type)
+        assertTrue(notifs[0].isUnread)
+        assertFalse(notifs[1].isUnread)
+        // El enlace a la reseña no es un usuario: solo Ana.
+        assertEquals(listOf("Ana"), notifs[0].relatedUsers.map { it.name })
+        assertEquals("Ana", notifs[0].actorName)
+        assertTrue(notifs[0].content.contains("lo recomiendo"))
+    }
+
+    @Test
+    fun `unknown notification with its own icon is not glued to the previous one`() = runBlocking {
+        val html = statusNotification("icon-heart", "le ha gustado", "Una reseña") + """
+            <div class="notification">
+                <div class="columns is-mobile">
+                    <div class="column is-narrow"><a class="icon" href="/import/5"><span class="icon icon-list"></span></a></div>
+                    <div class="column is-clipped"><div class="block content">Tu importación ha terminado.</div></div>
+                </div>
+            </div>
+        """
+
+        val notifs = BookWyrmScraper.scrapeNotifications(createFakeApi(html), "https://bookwyrm.es")
+
+        assertEquals(2, notifs.size)
+        assertEquals(NotificationType.FAVORITE, notifs[0].type)
+        assertEquals(NotificationType.UNKNOWN, notifs[1].type)
+    }
+
+    @Test
+    fun `profile hrefs exclude a user's own pages`() {
+        assertTrue(BookWyrmScraper.isProfileHref("/user/ana"))
+        assertTrue(BookWyrmScraper.isProfileHref("/user/ana@otro.club/"))
+        assertTrue(BookWyrmScraper.isProfileHref("https://mastodon.social/@jean"))
+        assertTrue(BookWyrmScraper.isProfileHref("https://mastodon.social/users/jean"))
+        assertFalse(BookWyrmScraper.isProfileHref("/user/ana/review/12"))
+        assertFalse(BookWyrmScraper.isProfileHref("/user/ana/followers"))
+        assertFalse(BookWyrmScraper.isProfileHref("https://mastodon.social/@jean/1234"))
+        assertFalse(BookWyrmScraper.isProfileHref("/book/12"))
     }
 
     @Test
