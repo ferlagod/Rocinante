@@ -97,6 +97,9 @@ class FollowListViewModel @Inject constructor(
     private var activeBaseUrl: String = ""
     private var currentDirection: FollowListDirection = FollowListDirection.FOLLOWING
 
+    /** Carga en curso: un refresco nuevo cancela el anterior para que no lo pise con datos viejos. */
+    private var loadJob: kotlinx.coroutines.Job? = null
+
     private val gson = com.google.gson.GsonBuilder()
         .registerTypeAdapter(
             com.ferlagod.rocinante.data.model.ProfileIcon::class.java,
@@ -118,7 +121,8 @@ class FollowListViewModel @Inject constructor(
             return // Usar caché en memoria (el ViewModel sobrevive en HomeScreen)
         }
 
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             if (!forceRefresh && _uiState.value.users.isEmpty()) {
                 val cachedUsers = cache.loadList(direction.name)
                 if (!cachedUsers.isNullOrEmpty()) {
@@ -146,7 +150,9 @@ class FollowListViewModel @Inject constructor(
                 coroutineScope {
                     // 1. Cargar mis seguidos y la lista target en paralelo
                     val myFollowingDeferred = async {
-                        loadAllActorUrls("${baseUrl}user/$cleanUser/following.json?page=1", maxPages = 5)
+                        // Todas las páginas: con solo unas pocas, a quien se sigue más allá de
+                        // ellas aparecía en «Seguidores» como no seguido.
+                        loadAllActorUrls("${baseUrl}user/$cleanUser/following.json?page=1")
                     }
                     val targetListDeferred = async {
                         val path = when (direction) {
@@ -161,7 +167,10 @@ class FollowListViewModel @Inject constructor(
 
                     val targetActorUrls = mutableListOf<String>()
                     if (direction == FollowListDirection.FOLLOWING) {
-                        val optimisticUrls = userRepository.optimisticFollowingIds.filter { it !in rawTargetActorUrls }
+                        val rawNorm = rawTargetActorUrls.map { normalizeActorUrl(it) }.toSet()
+                        val optimisticUrls = userRepository.optimisticFollowingIds
+                            .filter { normalizeActorUrl(it) !in rawNorm }
+                            .distinctBy { normalizeActorUrl(it) }
                         targetActorUrls.addAll(optimisticUrls)
                     }
                     targetActorUrls.addAll(rawTargetActorUrls)
@@ -183,9 +192,13 @@ class FollowListViewModel @Inject constructor(
                     val followingIds = mutableSetOf<String>()
                     val followingHandles = mutableSetOf<String>()
 
-                    // Mantener seguidos que fueron marcados durante la sesión actual
-                    followingIds.addAll(_uiState.value.myFollowingIds)
-                    followingIds.addAll(userRepository.optimisticFollowingIds)
+                    // Lo que el servidor ya confirma deja de ser optimista; lo que queda son
+                    // seguimientos recién hechos (o solicitudes a remotos) que aún no aparecen.
+                    // No se arrastran los seguidos del estado anterior: así, dejar de seguir a
+                    // alguien desde otra lista o desde una notificación se refleja aquí.
+                    val confirmed = myFollowingUrls.map { normalizeActorUrl(it) }.toSet()
+                    userRepository.optimisticFollowingIds.removeAll { normalizeActorUrl(it) in confirmed }
+                    followingIds.addAll(userRepository.optimisticFollowingIds.map { normalizeActorUrl(it) })
 
                     val myHost = try { java.net.URI(baseUrl).host?.lowercase() } catch (_: Exception) { null }
 
@@ -397,8 +410,9 @@ class FollowListViewModel @Inject constructor(
                     }
                 }
 
-                // 4. Si es local o falló remoto, probar con solo el username puro
-                if (!isSuccess(response) && slugFromUrl.isNotBlank() && slugFromUrl != cleanHandle) {
+                // 4. Solo para usuarios locales, probar con el username puro: con uno remoto ese
+                // nombre sin servidor apunta a la cuenta local homónima y se seguiría a otra persona.
+                if (!isSuccess(response) && !isRemoteFromUrl && slugFromUrl.isNotBlank() && slugFromUrl != cleanHandle) {
                     try {
                         response = if (follow) api.followUser(slugFromUrl) else api.unfollowUser(slugFromUrl)
                         android.util.Log.d("FollowListVM", "toggleFollow step 4 slugFromUrl ($slugFromUrl) result: ${response?.code()}")
@@ -443,6 +457,59 @@ class FollowListViewModel @Inject constructor(
                 _uiState.update { it.copy(pendingHandles = it.pendingHandles - handle) }
                 onResult?.invoke(success, errorMessage)
             }
+        }
+    }
+
+    /**
+     * Indica si, por lo que sabe esta lista, el usuario actual sigue a [actorUrl] o a [handle].
+     * Sirve de valor inicial en las fichas que se abren fuera de la lista (notificaciones,
+     * sugerencias) mientras se comprueba en el servidor.
+     */
+    fun isKnownFollowing(actorUrl: String?, handle: String?): Boolean {
+        val norm = actorUrl?.let { normalizeActorUrl(it) }?.takeIf { it.isNotBlank() }
+        val cleanHandle = handle?.removePrefix("@")?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val state = _uiState.value
+        if (norm != null && (norm in state.myFollowingIds ||
+                userRepository.optimisticFollowingIds.any { normalizeActorUrl(it) == norm })) return true
+        if (cleanHandle != null && userRepository.optimisticFollowingIds.any { handleFromActorUrl(it) == cleanHandle }) return true
+        return state.users.any { user ->
+            user.isFollowedByMe && (
+                (norm != null && normalizeActorUrl(user.actorUrl) == norm) ||
+                (cleanHandle != null && user.handle.removePrefix("@").trim().lowercase() == cleanHandle)
+            )
+        }
+    }
+
+    /**
+     * Registra un seguimiento hecho o deshecho fuera de esta lista (p. ej. desde la ficha de una
+     * notificación), para que la lista y la marca optimista no se queden con el estado antiguo.
+     */
+    fun onFollowChangedElsewhere(actorUrl: String, handle: String, followed: Boolean) {
+        if (actorUrl.isBlank() && handle.isBlank()) return
+        val actorNorm = normalizeActorUrl(actorUrl)
+        val cleanHandle = handle.removePrefix("@").trim().lowercase()
+        if (actorUrl.isNotBlank()) {
+            if (followed) {
+                userRepository.optimisticFollowingIds.add(actorNorm)
+            } else {
+                userRepository.optimisticFollowingIds.removeAll { normalizeActorUrl(it) == actorNorm }
+            }
+        }
+        // La ficha puede traer la URL local de un remoto (/user/nombre@servidor) y la lista la
+        // remota: se casan por handle.
+        if (!followed && cleanHandle.isNotBlank()) {
+            userRepository.optimisticFollowingIds.removeAll { handleFromActorUrl(it) == cleanHandle }
+        }
+        _uiState.update { state ->
+            state.copy(
+                users = state.users.map { user ->
+                    val sameActor = actorUrl.isNotBlank() && normalizeActorUrl(user.actorUrl) == actorNorm
+                    val sameHandle = cleanHandle.isNotBlank() && user.handle.removePrefix("@").trim().lowercase() == cleanHandle
+                    if (sameActor || sameHandle) user.copy(isFollowedByMe = followed) else user
+                },
+                myFollowingIds = if (actorUrl.isBlank()) state.myFollowingIds
+                    else if (followed) state.myFollowingIds + actorNorm else state.myFollowingIds - actorNorm
+            )
         }
     }
 
@@ -754,6 +821,17 @@ class FollowListViewModel @Inject constructor(
         } else {
             "@$username"
         }
+    }
+
+    /** Handle sin arroba deducido de la URL de un actor: «nombre» si es local, «nombre@servidor» si no. */
+    private fun handleFromActorUrl(url: String): String {
+        val norm = normalizeActorUrl(url)
+        val slug = norm.substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/")
+            .removePrefix("@").trim().lowercase()
+        if (slug.isBlank() || slug.contains("@")) return slug
+        val host = try { java.net.URI(norm).host?.lowercase() } catch (_: Exception) { null }
+        val myHost = try { java.net.URI(activeBaseUrl).host?.lowercase() } catch (_: Exception) { null }
+        return if (host != null && myHost != null && host != myHost) "$slug@$host" else slug
     }
 
     private fun normalizeActorUrl(url: String): String {
