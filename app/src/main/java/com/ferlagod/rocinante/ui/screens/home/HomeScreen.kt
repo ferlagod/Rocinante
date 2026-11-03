@@ -967,26 +967,14 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
                                 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
+                                val result = com.ferlagod.rocinante.data.repository.FollowActions.acceptRequest(api, formId, cleanHandle, actorId)
 
-                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
-                                if (!formId.isNullOrBlank()) {
-                                    try { response = api.acceptFollowRequest(formId) } catch (_: Exception) {}
-                                }
-                                if (!isSuccess(response) && cleanHandle.isNotBlank()) {
-                                    try { response = api.acceptFollowRequest(cleanHandle) } catch (_: Exception) {}
-                                }
-                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != formId) {
-                                    try { response = api.acceptFollowRequest(actorId) } catch (_: Exception) {}
-                                }
-
-                                if (isSuccess(response)) {
+                                if (result.success) {
                                     Toast.makeText(context, context.getString(R.string.follow_request_accepted), Toast.LENGTH_SHORT).show()
                                     isPendingRequest = false
                                     onFollowRequestHandled(true)
                                 } else {
-                                    val code = response?.code()?.toString() ?: "error"
+                                    val code = result.code?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
@@ -1014,27 +1002,15 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
+                                val result = com.ferlagod.rocinante.data.repository.FollowActions.unfollow(api, baseUrl, handleToUse, actorId)
 
-                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
-                                try { response = api.unfollowUser(cleanHandle) } catch (_: Exception) {}
-
-                                if (!isSuccess(response) && handleToUse.startsWith("@")) {
-                                    try { response = api.unfollowUser(handleToUse) } catch (_: Exception) {}
-                                }
-
-                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != handleToUse) {
-                                    try { response = api.unfollowUser(actorId) } catch (_: Exception) {}
-                                }
-
-                                if (isSuccess(response)) {
+                                if (result.success) {
                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = false
                                     onFollowChanged(actorId, handleToUse, false)
                                     onFollowSuccess()
                                 } else {
-                                    val code = response?.code()?.toString() ?: "error"
+                                    val code = result.code?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
@@ -1062,30 +1038,9 @@ fun SuggestedUserDialog(
                                 val cleanHandle = handleToFollow.removePrefix("@")
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
+                                val result = com.ferlagod.rocinante.data.repository.FollowActions.follow(api, baseUrl, handleToUse, actorId)
 
-                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
-                                try { response = api.followUser(cleanHandle) } catch (_: Exception) {}
-
-                                // Si es remoto y falló, forzar descubrimiento webfinger en la instancia local y reintentar
-                                if (!isSuccess(response) && cleanHandle.contains("@")) {
-                                    try {
-                                        val searchUrl = "${baseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
-                                        api.getRawHtmlResponse(searchUrl)
-                                        response = api.followUser(cleanHandle)
-                                    } catch (_: Exception) {}
-                                }
-
-                                if (!isSuccess(response) && handleToUse.startsWith("@")) {
-                                    try { response = api.followUser(handleToUse) } catch (_: Exception) {}
-                                }
-
-                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != handleToUse) {
-                                    try { response = api.followUser(actorId) } catch (_: Exception) {}
-                                }
-
-                                if (isSuccess(response)) {
+                                if (result.success) {
                                     // A un usuario de otro servidor o con la cuenta cerrada no se le
                                     // sigue al instante: queda una solicitud pendiente de su lado.
                                     val actorHost = try { java.net.URI(actorId).host } catch (_: Exception) { null }
@@ -1099,7 +1054,7 @@ fun SuggestedUserDialog(
                                     onFollowChanged(actorId, handleToUse, true)
                                     onFollowSuccess()
                                 } else {
-                                    val code = response?.code()?.toString() ?: "error"
+                                    val code = result.code?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
@@ -1137,26 +1092,14 @@ fun SuggestedUserDialog(
                                 }
                                 val actorId = fullProfile?.id ?: suggestedUser.profileUrl
 
-                                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
-                                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
+                                val result = com.ferlagod.rocinante.data.repository.FollowActions.rejectRequest(api, formId, cleanHandle, actorId)
 
-                                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
-                                if (!formId.isNullOrBlank()) {
-                                    try { response = api.deleteFollowRequest(formId) } catch (_: Exception) {}
-                                }
-                                if (!isSuccess(response) && cleanHandle.isNotBlank()) {
-                                    try { response = api.deleteFollowRequest(cleanHandle) } catch (_: Exception) {}
-                                }
-                                if (!isSuccess(response) && actorId.isNotBlank() && actorId != cleanHandle && actorId != formId) {
-                                    try { response = api.deleteFollowRequest(actorId) } catch (_: Exception) {}
-                                }
-
-                                if (isSuccess(response)) {
+                                if (result.success) {
                                     Toast.makeText(context, context.getString(R.string.follow_request_rejected), Toast.LENGTH_SHORT).show()
                                     onFollowRequestHandled(false)
                                     onDismiss()
                                 } else {
-                                    val code = response?.code()?.toString() ?: "error"
+                                    val code = result.code?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {

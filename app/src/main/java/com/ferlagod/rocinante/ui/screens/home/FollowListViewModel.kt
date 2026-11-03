@@ -351,99 +351,15 @@ class FollowListViewModel @Inject constructor(
             var success = false
             var errorMessage: String? = null
             try {
-                val cleanHandle = handle.removePrefix("@").trim()
-                val slugFromUrl = actorUrl.removeSuffix("/").removeSuffix(".json").substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/").removePrefix("@").trim()
-                val hostFromUrl = try { java.net.URI(actorUrl).host?.lowercase() } catch (_: Exception) { null }
-                val myHost = try { java.net.URI(activeBaseUrl).host?.lowercase() } catch (_: Exception) { null }
-                val isRemoteFromUrl = hostFromUrl != null && myHost != null && !hostFromUrl.equals(myHost, ignoreCase = true)
-
-                val isLoginRedirect = { r: retrofit2.Response<*>? -> r != null && r.code() in 300..399 && com.ferlagod.rocinante.data.api.NetworkClient.isLoginLocation(r.headers()["Location"], r.raw().request.url) }
-                val isSuccess = { r: retrofit2.Response<*>? -> r != null && com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(r) }
-
-                var response: retrofit2.Response<okhttp3.ResponseBody>? = null
-
-                // 1. Probar con cleanHandle (ej. "usuario" o "usuario@instancia.com")
-                if (cleanHandle.isNotBlank()) {
-                    try {
-                        response = if (follow) api.followUser(cleanHandle) else api.unfollowUser(cleanHandle)
-                        android.util.Log.d("FollowListVM", "toggleFollow step 1 cleanHandle ($cleanHandle) result: ${response?.code()}")
-                    } catch (e: Exception) {
-                        android.util.Log.w("FollowListVM", "toggleFollow step 1 exception: ${e.message}")
-                    }
+                val result = if (follow) {
+                    com.ferlagod.rocinante.data.repository.FollowActions.follow(api, activeBaseUrl, handle, actorUrl)
+                } else {
+                    com.ferlagod.rocinante.data.repository.FollowActions.unfollow(api, activeBaseUrl, handle, actorUrl)
                 }
-
-                // 2. Si es remoto y falló (404 porque la BD local aún no conoce al usuario remoto),
-                // invocar búsqueda webfinger en la instancia local para importar el usuario y reintentar
-                if (!isSuccess(response) && cleanHandle.contains("@") && follow) {
-                    try {
-                        val searchUrl = if (activeBaseUrl.isNotBlank()) {
-                            "${activeBaseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
-                        } else {
-                            "search?q=${java.net.URLEncoder.encode(cleanHandle, "UTF-8")}&type=user"
-                        }
-                        api.getRawHtmlResponse(searchUrl)
-                        response = api.followUser(cleanHandle)
-                        android.util.Log.d("FollowListVM", "toggleFollow step 2 webfinger retry ($cleanHandle) result: ${response?.code()}")
-                    } catch (e: Exception) {
-                        android.util.Log.w("FollowListVM", "toggleFollow step 2 exception: ${e.message}")
-                    }
-                }
-
-                // 3. Probar con username@host derivado de URL si era remoto y cleanHandle no lo tenía
-                if (!isSuccess(response) && isRemoteFromUrl && slugFromUrl.isNotBlank()) {
-                    val remoteHandle = "$slugFromUrl@$hostFromUrl"
-                    if (remoteHandle != cleanHandle) {
-                        try {
-                            if (follow) {
-                                val searchUrl = if (activeBaseUrl.isNotBlank()) {
-                                    "${activeBaseUrl.trimEnd('/')}/search?q=${java.net.URLEncoder.encode(remoteHandle, "UTF-8")}&type=user"
-                                } else {
-                                    "search?q=${java.net.URLEncoder.encode(remoteHandle, "UTF-8")}&type=user"
-                                }
-                                api.getRawHtmlResponse(searchUrl)
-                            }
-                            response = if (follow) api.followUser(remoteHandle) else api.unfollowUser(remoteHandle)
-                            android.util.Log.d("FollowListVM", "toggleFollow step 3 remoteHandle ($remoteHandle) result: ${response?.code()}")
-                        } catch (e: Exception) {
-                            android.util.Log.w("FollowListVM", "toggleFollow step 3 exception: ${e.message}")
-                        }
-                    }
-                }
-
-                // 4. Solo para usuarios locales, probar con el username puro: con uno remoto ese
-                // nombre sin servidor apunta a la cuenta local homónima y se seguiría a otra persona.
-                if (!isSuccess(response) && !isRemoteFromUrl && slugFromUrl.isNotBlank() && slugFromUrl != cleanHandle) {
-                    try {
-                        response = if (follow) api.followUser(slugFromUrl) else api.unfollowUser(slugFromUrl)
-                        android.util.Log.d("FollowListVM", "toggleFollow step 4 slugFromUrl ($slugFromUrl) result: ${response?.code()}")
-                    } catch (e: Exception) {
-                        android.util.Log.w("FollowListVM", "toggleFollow step 4 exception: ${e.message}")
-                    }
-                }
-
-                // 5. Probar con handle con @
-                if (!isSuccess(response) && handle.startsWith("@")) {
-                    try {
-                        response = if (follow) api.followUser(handle) else api.unfollowUser(handle)
-                        android.util.Log.d("FollowListVM", "toggleFollow step 5 handle ($handle) result: ${response?.code()}")
-                    } catch (e: Exception) {
-                        android.util.Log.w("FollowListVM", "toggleFollow step 5 exception: ${e.message}")
-                    }
-                }
-
-                // 6. Probar con actorUrl si todo lo demás falló
-                if (!isSuccess(response) && actorUrl.isNotBlank() && actorUrl != cleanHandle && actorUrl != handle) {
-                    try {
-                        response = if (follow) api.followUser(actorUrl) else api.unfollowUser(actorUrl)
-                        android.util.Log.d("FollowListVM", "toggleFollow step 6 actorUrl ($actorUrl) result: ${response?.code()}")
-                    } catch (e: Exception) {
-                        android.util.Log.w("FollowListVM", "toggleFollow step 6 exception: ${e.message}")
-                    }
-                }
-
-                success = isSuccess(response)
+                android.util.Log.d("FollowListVM", "toggleFollow follow=$follow ($handle) result: ${result.code}")
+                success = result.success
                 if (!success) {
-                    errorMessage = response?.code()?.toString()
+                    errorMessage = result.code?.toString()
                     revertFollowState(actorUrl, handle, !follow)
                 } else {
                     cache.saveList(currentDirection.name, _uiState.value.users)
