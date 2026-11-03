@@ -88,6 +88,9 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Splash Screen API (nativa Android 12+, con compat para versiones anteriores)
     implementation(libs.androidx.core.splashscreen)
+    // Instala en el móvil el perfil de arranque (src/main/baseline-prof.txt) para que ART
+    // compile por adelantado el código de la app en vez de interpretarlo los primeros usos.
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.webkit)
     // Soporte oficial de idiomas por app (Per-App Language) para APIs < 33
     implementation(libs.androidx.appcompat)

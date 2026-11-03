@@ -1,0 +1,6 @@
+# Perfil de arranque de Rocinante, escrito a mano (no hay dispositivo con el que generarlo).
+# Pide a ART que compile por adelantado todo el código propio de la app: arranque, pestañas,
+# timeline, estanterías y fichas. Las librerías (Compose, OkHttp, Coil...) traen ya su propio
+# perfil. Si se genera uno medido con el plugin de Baseline Profile, puede sustituir a este.
+HSPLcom/ferlagod/rocinante/**;->**(**)**
+Lcom/ferlagod/rocinante/**;

@@ -43,3 +43,9 @@
 -keep class com.journeyapps.barcodescanner.** { *; }
 -keep class com.google.zxing.** { *; }
 -dontwarn com.google.zxing.**
+# Los registros de depuración no deben ejecutarse en la versión publicada: ni gastan tiempo
+# ni dejan datos (handles, URLs) en el logcat. Warnings y errores se conservan.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+}
