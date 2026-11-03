@@ -68,6 +68,13 @@ data class TimelineUiItem(
 )
 
 /**
+ * Clave estable de la actividad en la lista del timeline. Compose exige que no se repita: al
+ * juntar páginas se descartan las que ya están con esta misma clave.
+ */
+val TimelineUiItem.listKey: String
+    get() = id.ifBlank { objectId }.ifBlank { "${actorName}_${published}_${type}_${bookUrl.orEmpty()}" }
+
+/**
  * Representa un usuario en la lista de seguidores o seguidos.
  * Contiene información de perfil básica y el estado de seguimiento.
  *

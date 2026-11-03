@@ -57,6 +57,8 @@ data class ShelfTarget(
  * @property visibleTimeline Subconjunto de actividades visibles actualmente en la vista (usado para paginación local).
  * @property currentPage Página actual cargada en la vista paginada de la línea de tiempo.
  * @property shelfTarget Libro pendiente de abrir en su estantería, o null si no hay ninguno.
+ * @property nextFeedPage Siguiente página del feed que se puede pedir al servidor, o null.
+ * @property isLoadingMore Si se está pidiendo esa página.
  */
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -70,5 +72,7 @@ data class HomeUiState(
     val userId: String? = null,
     val currentPage: Int = 1,
     val selectedTab: Int = 0,
-    val shelfTarget: ShelfTarget? = null
+    val shelfTarget: ShelfTarget? = null,
+    val nextFeedPage: Int? = null,
+    val isLoadingMore: Boolean = false
 )

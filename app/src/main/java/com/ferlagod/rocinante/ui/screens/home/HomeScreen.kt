@@ -88,6 +88,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.ui.components.AppTopBar
 import com.ferlagod.rocinante.ui.components.FollowListSheet
+import com.ferlagod.rocinante.data.model.listKey
 import com.ferlagod.rocinante.utils.HtmlUtils
 import com.ferlagod.rocinante.ui.screens.shelves.MyBooksScreen
 import com.ferlagod.rocinante.ui.screens.search.SearchScreen
@@ -297,6 +298,7 @@ fun HomeScreen(
                     boostedStatusIds = uiState.boostedStatusIds,
                     isLoading = uiState.isLoading,
                     isRefreshing = uiState.isRefreshing,
+                    isLoadingMore = uiState.isLoadingMore,
                     onRefresh = { viewModel.load(instanceUrl, username, cookie, forceRefresh = true) },
                     onLikeClick = { item -> 
                         if (item.objectId.startsWith("scraped-")) {
@@ -1304,6 +1306,7 @@ fun ActivityTab(
     isLoading: Boolean,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    isLoadingMore: Boolean = false,
     onLikeClick: (TimelineUiItem) -> Unit,
     onBoostClick: (TimelineUiItem) -> Unit,
     onShareClick: (TimelineUiItem) -> Unit,
@@ -1388,7 +1391,9 @@ fun ActivityTab(
                     lastVisibleItem != null && lastVisibleItem.index >= listState.layoutInfo.totalItemsCount - 5
                 }
             }
-            LaunchedEffect(shouldLoadMore.value) {
+            // También al crecer la lista: si la página nueva trae pocas actividades se sigue cerca
+            // del final y hay que pedir otra, aunque «cerca del final» no haya dejado de ser cierto.
+            LaunchedEffect(shouldLoadMore.value, timeline.size) {
                 if (shouldLoadMore.value) {
                     onLoadMore()
                 }
@@ -1406,7 +1411,7 @@ fun ActivityTab(
                 ) {
                     items(
                         items = timeline,
-                        key = { it.id.ifBlank { it.objectId }.ifBlank { "${it.actorName}_${it.published}_${it.type}_${it.bookUrl.orEmpty()}" } }
+                        key = { it.listKey }
                     ) { item ->
                         val isLiked = likedStatusIds.contains(item.objectId)
                         ActivityItemCard(
@@ -1455,6 +1460,18 @@ fun ActivityTab(
                                 }
                             }
                         )
+                    }
+                    if (isLoadingMore) {
+                        item(key = "timeline_loading_more") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                            }
+                        }
                     }
                 }
             }

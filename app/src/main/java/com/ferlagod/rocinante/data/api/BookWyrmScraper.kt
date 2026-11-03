@@ -1740,19 +1740,9 @@ object BookWyrmScraper {
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
 
         for (page in 1..maxPages) {
-            try {
-                val feedUrl = if (page == 1) baseUrl else "${baseUrl}?page=$page"
-                val html = fetchHtmlWithRedirects(api, feedUrl, baseUrl)
-                if (html.isEmpty()) break
-
-                val document = org.jsoup.Jsoup.parse(html)
-                val pageItems = parseStatusCards(document, baseUrl)
-
-                if (pageItems.isEmpty()) break
-                allItems.addAll(pageItems)
-            } catch (_: Exception) {
-                break
-            }
+            val pageItems = scrapeHomeFeedPage(api, baseUrl, page)
+            if (pageItems.isNullOrEmpty()) break
+            allItems.addAll(pageItems)
         }
 
         allItems.distinctBy { 
@@ -1760,6 +1750,30 @@ object BookWyrmScraper {
                 ?: it.objectId.takeIf { oid -> oid.isNotBlank() && !oid.startsWith("scraped-") }
                 ?: "${it.actorName}_${it.published}_${it.type}_${it.bookUrl.orEmpty()}_${it.content.take(30)}"
             key
+        }
+    }
+
+    /**
+     * Una página del feed de inicio. Devuelve null si no se pudo leer (red, sesión, HTML vacío)
+     * y una lista, quizá vacía, si se leyó. Ojo: el paginador de Django que usa BookWyrm
+     * responde a una página que no existe con la última, así que quien pagina debe parar cuando
+     * una página no trae nada nuevo, no cuando viene vacía.
+     */
+    suspend fun scrapeHomeFeedPage(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        page: Int
+    ): List<com.ferlagod.rocinante.data.model.TimelineUiItem>? = withContext(Dispatchers.IO) {
+        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+        val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+        try {
+            val feedUrl = if (page <= 1) baseUrl else "${baseUrl}?page=$page"
+            val html = fetchHtmlWithRedirects(api, feedUrl, baseUrl)
+            if (html.isEmpty()) return@withContext null
+            parseStatusCards(org.jsoup.Jsoup.parse(html), baseUrl)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
         }
     }
 

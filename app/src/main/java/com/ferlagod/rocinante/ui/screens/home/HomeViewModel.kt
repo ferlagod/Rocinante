@@ -25,6 +25,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.local.TimelineCache
+import com.ferlagod.rocinante.data.model.listKey
 import com.ferlagod.rocinante.data.repository.InteractionRepository
 import com.ferlagod.rocinante.data.repository.TimelineRepository
 import com.ferlagod.rocinante.data.repository.UserRepository
@@ -33,6 +34,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -85,9 +87,14 @@ class HomeViewModel @Inject constructor(
             return
         }
 
+        feedInstanceUrl = instanceUrl
+        // Una página pedida antes del refresco no debe añadirse a la lista nueva.
+        loadMoreJob?.cancel()
+        _uiState.update { it.copy(isLoadingMore = false) }
+
         viewModelScope.launch {
             if (!forceRefresh && _uiState.value.timeline.isEmpty()) {
-                val cachedTimeline = timelineCache.loadTimeline()
+                val cachedTimeline = timelineCache.loadTimeline()?.distinctBy { it.listKey }
                 val cachedLikes = timelineCache.loadLikedStatuses()
                 val cachedBoosts = timelineCache.loadBoostedStatuses()
                 val cachedProfile = timelineCache.loadProfile()
@@ -129,7 +136,7 @@ class HomeViewModel @Inject constructor(
                 timelineCache.saveProfile(profile)
                 val cachedLikes = timelineCache.loadLikedStatuses()
                 
-                val mergedTimeline = timelineRepository.loadTimeline(
+                val timelineLoad = timelineRepository.loadTimeline(
                     inboxUrl = profile.inbox,
                     outboxUrl = profile.outbox,
                     instanceUrl = instanceUrl,
@@ -137,6 +144,7 @@ class HomeViewModel @Inject constructor(
                     actorNameHint = profile.name ?: username,
                     actorAvatarHint = profile.icon?.url
                 )
+                val mergedTimeline = timelineLoad.items.distinctBy { it.listKey }
 
                 timelineCache.saveTimeline(mergedTimeline)
                 val updatedLikes = timelineCache.loadLikedStatuses()
@@ -159,7 +167,8 @@ class HomeViewModel @Inject constructor(
                     visibleTimeline = mergedTimeline.take(10),
                     currentPage = 1,
                     likedStatusIds = finalLikes,
-                    boostedStatusIds = finalBoosts
+                    boostedStatusIds = finalBoosts,
+                    nextFeedPage = timelineLoad.nextFeedPage
                 )
 
                 if (_uiState.value.userId == null) {
@@ -446,15 +455,62 @@ class HomeViewModel @Inject constructor(
      * Mantiene los elementos actuales y añade los nuevos recuperados del servidor.
      */
     fun loadMoreActivities() {
-        val currentVisibleSize = _uiState.value.visibleTimeline.size
-        val totalSize = _uiState.value.timeline.size
+        val state = _uiState.value
+        val currentVisibleSize = state.visibleTimeline.size
+        val totalSize = state.timeline.size
         if (currentVisibleSize < totalSize) {
-            val nextPage = _uiState.value.currentPage + 1
-            val nextVisible = _uiState.value.timeline.take(nextPage * 10)
-            _uiState.value = _uiState.value.copy(
-                visibleTimeline = nextVisible,
-                currentPage = nextPage
-            )
+            val nextPage = state.currentPage + 1
+            val nextVisible = state.timeline.take(nextPage * 10)
+            _uiState.update { it.copy(visibleTimeline = nextVisible, currentPage = nextPage) }
+            return
+        }
+
+        // Todo lo descargado está ya a la vista: se pide la siguiente página al servidor.
+        val page = state.nextFeedPage ?: return
+        val instanceUrl = feedInstanceUrl ?: return
+        if (state.isLoadingMore || state.isLoading || state.isRefreshing) return
+        _uiState.update { it.copy(isLoadingMore = true) }
+
+        loadMoreJob = viewModelScope.launch {
+            val pageItems = try {
+                timelineRepository.loadFeedPage(instanceUrl, page)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                null
+            }
+            if (pageItems == null) {
+                // Fallo puntual: se queda la misma página para volver a intentarlo al seguir bajando.
+                _uiState.update { it.copy(isLoadingMore = false) }
+                return@launch
+            }
+            _uiState.update { current ->
+                val known = current.timeline.mapTo(HashSet()) { it.listKey }
+                val fresh = pageItems.distinctBy { it.listKey }.filter { it.listKey !in known }
+                if (fresh.isEmpty()) {
+                    // Página vacía o repetida (Django devuelve la última si se pide una que no
+                    // existe): se ha llegado al final.
+                    current.copy(isLoadingMore = false, nextFeedPage = null)
+                } else {
+                    val newTimeline = current.timeline + fresh
+                    current.copy(
+                        isLoadingMore = false,
+                        timeline = newTimeline,
+                        visibleTimeline = newTimeline,
+                        currentPage = (newTimeline.size + 9) / 10,
+                        nextFeedPage = page + 1,
+                        likedStatusIds = current.likedStatusIds +
+                            fresh.filter { it.isLikedByMe }.map { it.objectId },
+                        boostedStatusIds = current.boostedStatusIds +
+                            fresh.filter { it.isBoostedByMe }.map { it.objectId }
+                    )
+                }
+            }
         }
     }
+
+    /** Instancia del último [load], para pedir más páginas del feed. */
+    private var feedInstanceUrl: String? = null
+
+    /** Petición en curso de la siguiente página del feed. */
+    private var loadMoreJob: kotlinx.coroutines.Job? = null
 }

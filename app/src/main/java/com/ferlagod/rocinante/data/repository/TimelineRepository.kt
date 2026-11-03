@@ -77,7 +77,7 @@ class TimelineRepository(
         username: String,
         actorNameHint: String?,
         actorAvatarHint: String?
-    ): List<TimelineUiItem> = withContext(Dispatchers.IO) {
+    ): TimelineLoad = withContext(Dispatchers.IO) {
 
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
@@ -88,18 +88,21 @@ class TimelineRepository(
         // en el servidor con Redis + Django ORM y solo es accesible como HTML. Este es
         // el mismo feed que el usuario ve en el navegador y contiene TODAS las actividades
         // de los seguidos, incluidos boosts y posts followers-only.
+        // Solo la primera página, para pintar cuanto antes: las siguientes se piden al llegar
+        // al final de la lista con [loadFeedPage].
         val htmlFeedItems = try {
             com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeHomeFeed(
                 api = api,
                 instanceUrl = instanceUrl,
-                maxPages = 2
+                maxPages = 1
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             emptyList()
         }
 
         if (htmlFeedItems.isNotEmpty()) {
-            return@withContext htmlFeedItems
+            return@withContext TimelineLoad(htmlFeedItems, nextFeedPage = 2)
         }
 
         // ─── ESTRATEGIA 2: Fallback a outboxes individuales (método clásico corregido) ───
@@ -124,8 +127,23 @@ class TimelineRepository(
             }
             .sortedByDescending { it.published } // más recientes primero
 
-        allActivities
+        // Los outboxes ya se han leído enteros (hasta su límite): no hay más páginas que pedir.
+        TimelineLoad(allActivities, nextFeedPage = null)
     }
+
+    /**
+     * Página [page] del feed de inicio, o null si no se pudo leer (se puede reintentar).
+     */
+    suspend fun loadFeedPage(instanceUrl: String, page: Int): List<TimelineUiItem>? =
+        com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeHomeFeedPage(api, instanceUrl, page)
+
+    /**
+     * Resultado de cargar el timeline.
+     *
+     * @property items Actividades, de la más reciente a la más antigua.
+     * @property nextFeedPage Siguiente página del feed que se puede pedir, o null si no hay.
+     */
+    data class TimelineLoad(val items: List<TimelineUiItem>, val nextFeedPage: Int?)
     /**
      * Carga el timeline de los usuarios que el usuario actual sigue.
      *
