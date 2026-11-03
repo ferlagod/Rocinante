@@ -131,6 +131,7 @@ import com.ferlagod.rocinante.utils.ShelfSection
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 
 /**
  * Modelo de datos optimizado para la vista de estanterías (Shelves).
@@ -226,6 +227,9 @@ private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
  * guarda en el acto, así que esta espera solo importa si se toca el progreso desde la web.
  */
 private const val READING_PROGRESS_TTL_MS = 60L * 60 * 1000
+
+/** Cuántas páginas de libro se piden a la vez para saber el progreso de «Leyendo». */
+private const val READING_PROGRESS_CONCURRENCY = 3
 
 private enum class ShelfSortMode {
     DEFAULT, TITLE_ASC, TITLE_DESC, FINISHED_DESC, FINISHED_ASC, RATING_DESC, RATING_ASC;
@@ -857,26 +861,47 @@ fun ShelfNativeDetailScreen(
         stored.forEach { (id, value) -> fractions[id] = value }
         fractionByBook = fractions.toMap()
 
-        books.forEach { book ->
-            val id = book.id ?: return@forEach
-            // Lo que ya se sabe y sigue siendo reciente no se vuelve a pedir.
-            if (fresh && stored.containsKey(id)) return@forEach
-            val progress = runCatching {
-                com.ferlagod.rocinante.data.api.BookWyrmScraper.getReadingProgress(api, id)
-            }.getOrNull()
-            val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
-                progress = progress?.progress,
-                isPercent = progress?.mode == "PCT",
-                totalPages = book.pages
-            )
-            fraction?.let {
-                fractions[id] = it
-                fractionByBook = fractions.toMap()
+        // Lo que ya se sabe y sigue siendo reciente no se vuelve a pedir.
+        val pending = books.filter { book -> book.id != null && !(fresh && stored.containsKey(book.id)) }
+        if (pending.isEmpty()) return@LaunchedEffect
+
+        // Antes, uno detrás de otro con una pausa entre medias: con diez libros eran varios
+        // segundos. Ahora unos pocos a la vez, sin pasar de tres para no cargar al servidor
+        // (cada uno es la página entera del libro) ni despertar a protecciones como Anubis.
+        // Todo corre en el hilo principal (la red va por dentro a IO), así que el mapa no
+        // se toca desde dos sitios a la vez.
+        val limiter = kotlinx.coroutines.sync.Semaphore(READING_PROGRESS_CONCURRENCY)
+        try {
+            kotlinx.coroutines.coroutineScope {
+                pending.forEach { book ->
+                    val id = book.id ?: return@forEach
+                    launch {
+                        val progress = limiter.withPermit {
+                            runCatching {
+                                com.ferlagod.rocinante.data.api.BookWyrmScraper.getReadingProgress(api, id)
+                            }.getOrNull()
+                        }
+                        val fraction = com.ferlagod.rocinante.utils.ReadingPace.fractionRead(
+                            progress = progress?.progress,
+                            isPercent = progress?.mode == "PCT",
+                            totalPages = book.pages
+                        )
+                        fraction?.let {
+                            fractions[id] = it
+                            fractionByBook = fractions.toMap()
+                        }
+                    }
+                }
             }
-            // Los libros que ya no están en la estantería se caen solos: se guarda lo
-            // recogido en esta pasada, no lo de antes más esto.
-            dataCache.saveReadingFractions(fractions.toMap())
-            kotlinx.coroutines.delay(250)
+        } finally {
+            // Una sola escritura al final (antes, una por libro), también si se sale de la
+            // pantalla a medias, para no volver a pedir lo ya recogido. Los libros que ya no
+            // están en la estantería se caen solos: se guarda lo recogido en esta pasada, no lo
+            // de antes más esto.
+            val snapshot = fractions.toMap()
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                dataCache.saveReadingFractions(snapshot)
+            }
         }
     }
 
