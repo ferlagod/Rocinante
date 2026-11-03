@@ -2360,7 +2360,23 @@ object BookWyrmScraper {
                     fullText.contains("vill följa") ||
                     fullText.contains("vil følge")
 
+                // Las plantillas de seguimiento (follow.html y follow_request.html) son las únicas
+                // cuyo icono enlaza a «/user/<yo>/followers». Es la señal fiable: el texto cambia
+                // con el idioma (en español es «te ha seguido», que antes no se reconocía y la
+                // notificación acababa pegada a la anterior, sin poder abrirse).
+                val isFollowNotificationIcon = element.select("a.icon[href]").any {
+                    it.attr("href").substringBefore("?").removeSuffix("/").endsWith("/followers")
+                }
+
                 val isFollowText = fullText.contains("follow") ||
+                    fullText.contains("ha seguido") ||
+                    fullText.contains("han seguido") ||
+                    fullText.contains("seguir-vos") ||
+                    fullText.contains("seguiute") ||
+                    fullText.contains("seguíronte") ||
+                    fullText.contains("seguironte") ||
+                    fullText.contains("gevolgd") ||
+                    fullText.contains("fulgte") ||
                     fullText.contains("siguió") ||
                     fullText.contains("sigue") ||
                     fullText.contains("seguirte") ||
@@ -2386,7 +2402,11 @@ object BookWyrmScraper {
                     fullText.contains("følger")
 
                 val type = when {
-                    hasFollowRequestForm || isFollowRequestText -> NotificationType.FOLLOW_REQUEST
+                    hasFollowRequestForm -> NotificationType.FOLLOW_REQUEST
+                    // Sin botones ya no hay solicitud que atender (se aceptó o rechazó): se trata
+                    // como un seguidor más, para poder abrir su ficha y seguirle.
+                    isFollowNotificationIcon -> NotificationType.FOLLOW
+                    isFollowRequestText -> NotificationType.FOLLOW_REQUEST
                     fullText.contains("replied") || fullText.contains("respondió") || fullText.contains("respondeu") || fullText.contains("répondu") || fullText.contains("geantwortet") -> NotificationType.REPLY
                     fullText.contains("mention") || fullText.contains("mencionó") || fullText.contains("mencionou") || fullText.contains("mentionné") || fullText.contains("erwähnt") -> NotificationType.MENTION
                     fullText.contains("favorite") || fullText.contains("favorito") || fullText.contains("gusta") || fullText.contains("aimé") || fullText.contains("gefällt") -> NotificationType.FAVORITE
@@ -2402,6 +2422,7 @@ object BookWyrmScraper {
 
                 // Extraer todos los usuarios vinculados a esta notificación (soporta notificaciones agrupadas "User 1 and User 2 followed you")
                 val relatedUsers = mutableListOf<com.ferlagod.rocinante.data.model.SuggestedUser>()
+                val namedFromText = mutableSetOf<String>()
                 val userAnchors = element.select("a[href*='/user/'], a[href*='/users/'], a[href*='/@']")
                     .filter { anchor ->
                         val href = anchor.attr("href").removeSuffix("/").lowercase()
@@ -2419,41 +2440,57 @@ object BookWyrmScraper {
                 for (anchor in userAnchors) {
                     val href = anchor.attr("href").trim()
                     val fullProfileUrl = if (href.startsWith("http")) href else "$baseUrl${href.trimStart('/')}"
-                    if (relatedUsers.none { it.profileUrl == fullProfileUrl }) {
-                        val avatarImg = anchor.selectFirst("img.avatar, img")
-                            ?: element.select("a[href='$href'] img").firstOrNull()
-                        var userAvatar = avatarImg?.attr("src") ?: ""
-                        if (userAvatar.isNotEmpty() && !userAvatar.startsWith("http")) {
-                            userAvatar = "$baseUrl${userAvatar.trimStart('/')}"
+                    // BookWyrm pone primero el enlace del avatar (sin texto) y luego el del nombre:
+                    // si ya se tenía al usuario sin nombre de verdad, se toma el del enlace de texto.
+                    val existingIndex = relatedUsers.indexOfFirst { it.profileUrl == fullProfileUrl }
+                    if (existingIndex >= 0) {
+                        val text = anchor.text().trim()
+                        if (text.isNotBlank() && anchor.select("img").isEmpty() && !namedFromText.contains(fullProfileUrl)) {
+                            relatedUsers[existingIndex] = relatedUsers[existingIndex].copy(name = text)
+                            namedFromText.add(fullProfileUrl)
                         }
-
-                        val name = anchor.text().trim().takeIf { it.isNotBlank() }
-                            ?: avatarImg?.attr("alt")?.trim()?.takeIf { it.isNotBlank() }
-                            ?: ""
-
-                        val slug = fullProfileUrl.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/@")
-                        val permalinkUri = try { java.net.URI(fullProfileUrl) } catch (_: Exception) { null }
-                        val myUri = try { java.net.URI(baseUrl) } catch (_: Exception) { null }
-                        val isRemote = permalinkUri?.host != null && myUri?.host != null && !permalinkUri.host.equals(myUri.host, ignoreCase = true)
-
-                        val handle = when {
-                            slug.contains("@") -> if (slug.startsWith("@")) slug else "@$slug"
-                            isRemote && permalinkUri?.host != null -> "@$slug@${permalinkUri.host}"
-                            slug.isNotEmpty() && !slug.startsWith("http") -> "@$slug"
-                            else -> name.takeIf { it.isNotEmpty() && !it.contains(" ") }?.let { if (it.startsWith("@")) it else "@$it" } ?: ""
-                        }
-
-                        relatedUsers.add(
-                            com.ferlagod.rocinante.data.model.SuggestedUser(
-                                name = name.ifEmpty { slug },
-                                handle = handle,
-                                avatarUrl = userAvatar,
-                                profileUrl = fullProfileUrl,
-                                isFollowRequest = type == NotificationType.FOLLOW_REQUEST,
-                                formUserId = formUserId
-                            )
-                        )
+                        continue
                     }
+                    val avatarImg = anchor.selectFirst("img.avatar, img")
+                        ?: element.select("a[href='$href'] img").firstOrNull()
+                    var userAvatar = avatarImg?.attr("src") ?: ""
+                    if (userAvatar.isNotEmpty() && !userAvatar.startsWith("http")) {
+                        userAvatar = "$baseUrl${userAvatar.trimStart('/')}"
+                    }
+
+                    val slug = fullProfileUrl.removeSuffix(".json").removeSuffix("/").substringAfterLast("/user/").substringAfterLast("/users/").substringAfterLast("/@")
+
+                    val anchorText = anchor.text().trim()
+                    if (anchorText.isNotBlank()) namedFromText.add(fullProfileUrl)
+                    // El alt del avatar es «avatar for usuario» (traducido); si lleva el usuario
+                    // dentro, mejor el usuario que la frase.
+                    val altText = avatarImg?.attr("alt")?.trim().orEmpty()
+                    val name = anchorText.takeIf { it.isNotBlank() }
+                        ?: altText.takeIf { it.isNotBlank() && slug.isNotBlank() && it.contains(slug, ignoreCase = true) && !it.equals(slug, ignoreCase = true) }
+                            ?.let { slug.removePrefix("@").substringBefore("@") }
+                        ?: altText.takeIf { it.isNotBlank() }
+                        ?: ""
+                    val permalinkUri = try { java.net.URI(fullProfileUrl) } catch (_: Exception) { null }
+                    val myUri = try { java.net.URI(baseUrl) } catch (_: Exception) { null }
+                    val isRemote = permalinkUri?.host != null && myUri?.host != null && !permalinkUri.host.equals(myUri.host, ignoreCase = true)
+
+                    val handle = when {
+                        slug.contains("@") -> if (slug.startsWith("@")) slug else "@$slug"
+                        isRemote && permalinkUri?.host != null -> "@$slug@${permalinkUri.host}"
+                        slug.isNotEmpty() && !slug.startsWith("http") -> "@$slug"
+                        else -> name.takeIf { it.isNotEmpty() && !it.contains(" ") }?.let { if (it.startsWith("@")) it else "@$it" } ?: ""
+                    }
+
+                    relatedUsers.add(
+                        com.ferlagod.rocinante.data.model.SuggestedUser(
+                            name = name.ifEmpty { slug },
+                            handle = handle,
+                            avatarUrl = userAvatar,
+                            profileUrl = fullProfileUrl,
+                            isFollowRequest = type == NotificationType.FOLLOW_REQUEST,
+                            formUserId = formUserId
+                        )
+                    )
                 }
 
                 val finalAvatarUrl = relatedUsers.firstOrNull { it.avatarUrl.isNotBlank() }?.avatarUrl

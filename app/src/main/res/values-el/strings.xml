@@ -276,6 +276,8 @@
     <string name="unfollow_success">Σταματήσατε να ακολουθείτε</string>
     <string name="follow_request_accept">Αποδοχή</string>
     <string name="follow_request_reject">Απόρριψη</string>
+    <string name="follow_request_accepted">Το αίτημα παρακολούθησης έγινε δεκτό</string>
+    <string name="follow_request_rejected">Το αίτημα παρακολούθησης απορρίφθηκε</string>
     <string name="follow_error">Σφάλμα παρακολούθησης: %1$s</string>
     <string name="nav_settings">Ρυθμίσεις</string>
     <string name="review_dialog_title">Δημοσίευση κριτικής</string>

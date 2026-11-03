@@ -28,6 +28,8 @@
     <string name="unfollow_success">Følger ikke længere</string>
     <string name="follow_request_accept">Accepter</string>
     <string name="follow_request_reject">Afvis</string>
+    <string name="follow_request_accepted">Følgeanmodning accepteret</string>
+    <string name="follow_request_rejected">Følgeanmodning afvist</string>
     <string name="follow_error">Fejl ved følg: %1$s</string>
     <string name="post_fab_desc">Skriv indlæg</string>
     <string name="post_dialog_title">Nyt indlæg</string>

@@ -276,6 +276,8 @@
     <string name="unfollow_success">Ontvolgd</string>
     <string name="follow_request_accept">Accepteren</string>
     <string name="follow_request_reject">Weigeren</string>
+    <string name="follow_request_accepted">Volgverzoek geaccepteerd</string>
+    <string name="follow_request_rejected">Volgverzoek geweigerd</string>
     <string name="follow_error">Fout bij volgen: %1$s</string>
     <string name="nav_settings">Instellingen</string>
     <string name="review_dialog_title">Recensie publiceren</string>

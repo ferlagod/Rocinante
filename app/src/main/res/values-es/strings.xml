@@ -29,6 +29,8 @@
     <string name="unfollow_success">Dejaste de seguir</string>
     <string name="follow_request_accept">Aceptar</string>
     <string name="follow_request_reject">Rechazar</string>
+    <string name="follow_request_accepted">Solicitud de seguimiento aceptada</string>
+    <string name="follow_request_rejected">Solicitud de seguimiento rechazada</string>
     <string name="follow_error">Error al seguir: %1$s</string>
     <string name="post_fab_desc">Redactar publicación</string>
     <string name="post_dialog_title">Nueva publicación</string>

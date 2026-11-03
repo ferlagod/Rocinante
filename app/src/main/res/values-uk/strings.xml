@@ -286,6 +286,8 @@
     <string name="unfollow_success">Відписано</string>
     <string name="follow_request_accept">Прийняти</string>
     <string name="follow_request_reject">Відхилити</string>
+    <string name="follow_request_accepted">Запит на підписку прийнято</string>
+    <string name="follow_request_rejected">Запит на підписку відхилено</string>
     <string name="follow_error">Помилка підписки: %1$s</string>
     <string name="nav_settings">Налаштування</string>
     <string name="review_dialog_title">Опублікувати відгук</string>

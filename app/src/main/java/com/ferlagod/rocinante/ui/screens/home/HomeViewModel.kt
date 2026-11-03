@@ -315,6 +315,21 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Incrementa optimísticamente el contador de 'Seguidores' en el perfil actual.
+     * Útil tras aceptar una solicitud de seguimiento.
+     */
+    fun incrementFollowersCount() {
+        val currentProfile = _uiState.value.profile
+        if (currentProfile != null) {
+            _uiState.value = _uiState.value.copy(
+                profile = currentProfile.copy(
+                    followersCountLocal = currentProfile.followersCountLocal?.plus(1)
+                )
+            )
+        }
+    }
+
+    /**
      * Alterna el estado de "me gusta" (favorite) para una publicación determinada.
      * Aplica los cambios de manera optimista en la UI y revierte el estado si la llamada
      * de red falla.

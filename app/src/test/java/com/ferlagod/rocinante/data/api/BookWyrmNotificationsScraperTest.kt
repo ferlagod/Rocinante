@@ -65,6 +65,96 @@ class BookWyrmNotificationsScraperTest {
     }
 
     @Test
+    fun `follow notification takes the name from the text link, not the avatar alt`() = runBlocking {
+        // Tal cual lo sirve BookWyrm: primero el enlace del avatar (alt «avatar for …») y luego el
+        // del nombre.
+        val html = """
+            <html>
+            <body>
+                <div class="notification ">
+                    <div class="columns is-mobile has-text-more-muted">
+                        <div class="column is-narrow is-size-3">
+                            <a class="icon" href="/user/Rocinante/followers"><span class="icon icon-local"></span></a>
+                        </div>
+                        <div class="column is-clipped">
+                            <div class="block content">
+                                <a href="/user/ferlagod@frikiverse.zone" class="mr-2"><img
+                                    class="avatar image is-32x32"
+                                    src="/images/avatars/e850.png"
+                                    alt="avatar for ferlagod@frikiverse.zone"></a>
+                                <a href="/user/ferlagod@frikiverse.zone">ferlagod</a> ti segue
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val notifs = BookWyrmScraper.scrapeNotifications(createFakeApi(html), "https://bookwyrm.it")
+
+        assertEquals(1, notifs.size)
+        val item = notifs[0]
+        assertEquals(NotificationType.FOLLOW, item.type)
+        assertEquals(1, item.relatedUsers.size)
+        assertEquals("ferlagod", item.actorName)
+        assertEquals("ferlagod", item.relatedUsers[0].name)
+        assertEquals("@ferlagod@frikiverse.zone", item.relatedUsers[0].handle)
+        assertEquals("https://bookwyrm.it/user/ferlagod@frikiverse.zone", item.relatedUsers[0].profileUrl)
+        assertEquals("https://bookwyrm.it/images/avatars/e850.png", item.relatedUsers[0].avatarUrl)
+    }
+
+    @Test
+    fun `spanish follow notification is recognised by its icon link`() = runBlocking {
+        // «te ha seguido» es la traducción real de BookWyrm y no estaba entre los textos conocidos:
+        // la notificación salía como desconocida y se fusionaba con la anterior.
+        val html = """
+            <div class="notification">
+                <div class="columns is-mobile">
+                    <div class="column is-narrow"><a class="icon" href="/user/yo/followers"><span class="icon icon-local"></span></a></div>
+                    <div class="column is-clipped"><div class="block content">
+                        <a href="/user/ana" class="mr-2"><img class="avatar" src="/a.png" alt="avatar de ana"></a>
+                        <a href="/user/ana">Ana</a> te ha seguido
+                    </div></div>
+                </div>
+            </div>
+            <div class="notification">
+                <div class="columns is-mobile">
+                    <div class="column is-narrow"><a class="icon" href="/user/yo/followers"><span class="icon icon-local"></span></a></div>
+                    <div class="column is-clipped"><div class="block content">
+                        <a href="/user/luis" class="mr-2"><img class="avatar" src="/l.png" alt="avatar de luis"></a>
+                        <a href="/user/luis">Luis</a> te ha enviado una solicitud de seguimiento
+                    </div></div>
+                </div>
+            </div>
+        """.trimIndent()
+
+        val notifs = BookWyrmScraper.scrapeNotifications(createFakeApi(html), "https://bookwyrm.es")
+
+        assertEquals(2, notifs.size)
+        assertEquals(NotificationType.FOLLOW, notifs[0].type)
+        assertEquals("Ana", notifs[0].actorName)
+        assertEquals("https://bookwyrm.es/user/ana", notifs[0].permalink)
+        // Solicitud ya atendida (sin botones): se abre como un seguidor normal.
+        assertEquals(NotificationType.FOLLOW, notifs[1].type)
+        assertEquals("Luis", notifs[1].actorName)
+    }
+
+    @Test
+    fun `avatar alt with the username falls back to the username`() = runBlocking {
+        val html = """
+            <div class="notification">
+                <a href="/user/lector"><img class="avatar" src="/a.png" alt="avatar de lector"></a>
+                te ha seguido
+            </div>
+        """.trimIndent()
+
+        val item = BookWyrmScraper.scrapeNotifications(createFakeApi(html), "https://bookwyrm.es").single()
+
+        assertEquals("lector", item.relatedUsers.single().name)
+    }
+
+    @Test
     fun `test scrape follow request notification`() = runBlocking {
         val html = """
             <html>

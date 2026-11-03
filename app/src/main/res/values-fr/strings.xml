@@ -276,6 +276,8 @@
     <string name="unfollow_success">Ne suit plus</string>
     <string name="follow_request_accept">Accepter</string>
     <string name="follow_request_reject">Refuser</string>
+    <string name="follow_request_accepted">Demande de suivi acceptée</string>
+    <string name="follow_request_rejected">Demande de suivi refusée</string>
     <string name="follow_error">Erreur de suivi : %1$s</string>
     <string name="nav_settings">Paramètres</string>
     <string name="review_dialog_title">Publier une critique</string>

@@ -149,6 +149,7 @@ fun HomeScreen(
 
     val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val followingViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_FOLLOWING")
+    val followersViewModel: com.ferlagod.rocinante.ui.screens.home.FollowListViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "follow_list_FOLLOWERS")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(instanceUrl, username, cookie) {
@@ -623,18 +624,27 @@ fun HomeScreen(
         }
 
         selectedNotificationUser?.let { suggestedUser ->
+            val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
+            val followBaseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+            val followUser = username.removePrefix("@").trim()
             SuggestedUserDialog(
                 suggestedUser = suggestedUser,
                 api = api,
                 instanceUrl = instanceUrl,
+                initiallyFollowed = followingViewModel.isKnownFollowing(suggestedUser.profileUrl, suggestedUser.handle),
                 onDismiss = { selectedNotificationUser = null },
-                onFollowSuccess = { 
-                    selectedNotificationUser = null
-                    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                    val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-                    val cleanUser = username.removePrefix("@").trim()
-                    followingViewModel.load(baseUrl, cleanUser, FollowListDirection.FOLLOWING, forceRefresh = true)
-                }
+                onFollowChanged = { actorUrl, handle, followed ->
+                    // Que la ficha del perfil, sus listas y el contador cuenten ya con el cambio.
+                    followingViewModel.onFollowChangedElsewhere(actorUrl, handle, followed)
+                    followersViewModel.onFollowChangedElsewhere(actorUrl, handle, followed)
+                    if (followed) viewModel.incrementFollowingCount() else viewModel.decrementFollowingCount()
+                    followingViewModel.load(followBaseUrl, followUser, FollowListDirection.FOLLOWING, forceRefresh = true)
+                },
+                onFollowRequestHandled = { accepted ->
+                    if (accepted) viewModel.incrementFollowersCount()
+                    followersViewModel.load(followBaseUrl, followUser, FollowListDirection.FOLLOWERS, forceRefresh = true)
+                },
+                onFollowSuccess = { selectedNotificationUser = null }
             )
         }
 
@@ -673,8 +683,13 @@ fun HomeScreen(
  * @param suggestedUser Información preliminar del usuario sugerido.
  * @param api Cliente REST para obtener el perfil completo y efectuar el seguimiento.
  * @param instanceUrl URL de la instancia actual para resolver el handle completo del usuario.
+ * @param initiallyFollowed Si ya se sabe (por la lista de seguidos) que se sigue al usuario; se
+ *   usa mientras se comprueba en su página y si esa comprobación no es concluyente.
  * @param onDismiss Callback invocado al descartar o cerrar el diálogo.
- * @param onFollowSuccess Callback invocado cuando el seguimiento se completa exitosamente.
+ * @param onFollowChanged Se invoca al seguir (true) o dejar de seguir (false) con éxito, con la
+ *   URL del actor y su handle, para que el resto de la app refleje el cambio.
+ * @param onFollowRequestHandled Se invoca al aceptar (true) o rechazar (false) una solicitud.
+ * @param onFollowSuccess Callback invocado cuando se sigue o deja de seguir con éxito.
  */
 @Composable
 fun SuggestedUserDialog(
@@ -682,13 +697,19 @@ fun SuggestedUserDialog(
     api: com.ferlagod.rocinante.data.api.BookWyrmApi,
     instanceUrl: String,
     onDismiss: () -> Unit,
-    onFollowSuccess: () -> Unit
+    onFollowSuccess: () -> Unit,
+    initiallyFollowed: Boolean = false,
+    onFollowChanged: (actorUrl: String, handle: String, followed: Boolean) -> Unit = { _, _, _ -> },
+    onFollowRequestHandled: (accepted: Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     var fullProfile by remember { mutableStateOf<BookWyrmProfile?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var isFollowingAction by remember { mutableStateOf(false) }
-    var isFollowedByMe by remember { mutableStateOf(false) }
+    var isFollowedByMe by remember(suggestedUser) { mutableStateOf(initiallyFollowed) }
+    // Una solicitud aceptada deja la ficha abierta con el botón de seguir, para devolver el
+    // seguimiento sin tener que buscar al usuario.
+    var isPendingRequest by remember(suggestedUser) { mutableStateOf(suggestedUser.isFollowRequest) }
     val coroutineScope = rememberCoroutineScope()
 
     val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
@@ -787,12 +808,12 @@ fun SuggestedUserDialog(
                         val hasVisibleUnfollow = unfollowForms.any { !isHidden(it) }
                         val hasVisibleFollow = followForms.any { !isHidden(it) }
                         
-                        isFollowedByMe = if (hasVisibleUnfollow) {
-                            true
+                        // Sin ningún botón visible (página propia, bloqueos, HTML inesperado) no
+                        // se sabe nada: se queda lo que ya se sabía por la lista de seguidos.
+                        if (hasVisibleUnfollow) {
+                            isFollowedByMe = true
                         } else if (hasVisibleFollow) {
-                            false
-                        } else {
-                            unfollowForms.any { !isHidden(it) }
+                            isFollowedByMe = false
                         }
                     }
                 }
@@ -934,7 +955,7 @@ fun SuggestedUserDialog(
             }
         },
         confirmButton = {
-            if (suggestedUser.isFollowRequest) {
+            if (isPendingRequest) {
                 Button(
                     onClick = {
                         coroutineScope.launch {
@@ -959,8 +980,9 @@ fun SuggestedUserDialog(
                                 }
 
                                 if (isSuccess(response)) {
-                                    Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
-                                    onFollowSuccess()
+                                    Toast.makeText(context, context.getString(R.string.follow_request_accepted), Toast.LENGTH_SHORT).show()
+                                    isPendingRequest = false
+                                    onFollowRequestHandled(true)
                                 } else {
                                     val code = response?.code()?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
@@ -1007,6 +1029,7 @@ fun SuggestedUserDialog(
                                 if (isSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.unfollow_success), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = false
+                                    onFollowChanged(actorId, handleToUse, false)
                                     onFollowSuccess()
                                 } else {
                                     val code = response?.code()?.toString() ?: "error"
@@ -1061,8 +1084,17 @@ fun SuggestedUserDialog(
                                 }
 
                                 if (isSuccess(response)) {
-                                    Toast.makeText(context, context.getString(R.string.follow_success), Toast.LENGTH_SHORT).show()
+                                    // A un usuario de otro servidor o con la cuenta cerrada no se le
+                                    // sigue al instante: queda una solicitud pendiente de su lado.
+                                    val actorHost = try { java.net.URI(actorId).host } catch (_: Exception) { null }
+                                    val myHost = try { java.net.URI(baseUrl).host } catch (_: Exception) { null }
+                                    val isRemote = cleanHandle.contains("@") ||
+                                        (actorHost != null && myHost != null && !actorHost.equals(myHost, ignoreCase = true))
+                                    val isRequest = isRemote || fullProfile?.manuallyApprovesFollowers == true
+                                    val msg = if (isRequest) R.string.follow_request_sent else R.string.follow_success
+                                    Toast.makeText(context, context.getString(msg), Toast.LENGTH_SHORT).show()
                                     isFollowedByMe = true
+                                    onFollowChanged(actorId, handleToUse, true)
                                     onFollowSuccess()
                                 } else {
                                     val code = response?.code()?.toString() ?: "error"
@@ -1087,7 +1119,7 @@ fun SuggestedUserDialog(
             }
         },
         dismissButton = {
-            if (suggestedUser.isFollowRequest) {
+            if (isPendingRequest) {
                 androidx.compose.material3.OutlinedButton(
                     onClick = {
                         coroutineScope.launch {
@@ -1118,8 +1150,9 @@ fun SuggestedUserDialog(
                                 }
 
                                 if (isSuccess(response)) {
-                                    Toast.makeText(context, context.getString(R.string.follow_request_reject), Toast.LENGTH_SHORT).show()
-                                    onFollowSuccess()
+                                    Toast.makeText(context, context.getString(R.string.follow_request_rejected), Toast.LENGTH_SHORT).show()
+                                    onFollowRequestHandled(false)
+                                    onDismiss()
                                 } else {
                                     val code = response?.code()?.toString() ?: "error"
                                     Toast.makeText(context, context.getString(R.string.profile_server_error, code), Toast.LENGTH_LONG).show()
@@ -2206,12 +2239,18 @@ fun ProfileTab(
             suggestedUser = user,
             api = api,
             instanceUrl = instanceUrl,
+            initiallyFollowed = followingViewModel.isKnownFollowing(user.profileUrl, user.handle),
             onDismiss = { selectedSuggestedUser = null },
+            onFollowChanged = { actorUrl, handle, followed ->
+                followingViewModel.onFollowChangedElsewhere(actorUrl, handle, followed)
+                followersViewModel.onFollowChangedElsewhere(actorUrl, handle, followed)
+                // Antes se sumaba uno también al dejar de seguir.
+                if (followed) onFollowingIncremented() else onFollowingDecremented()
+            },
             onFollowSuccess = { 
                 selectedSuggestedUser = null
                 refreshTrigger++
-                onFollowingIncremented()
-                
+
                 // Refresh the following list in the background
                 val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
                 val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
