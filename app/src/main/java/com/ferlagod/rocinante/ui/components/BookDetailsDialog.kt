@@ -110,6 +110,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -431,10 +432,30 @@ fun BookDetailsDialog(
     var selectedReviewForDetail by remember { mutableStateOf<ActivityPubActivity?>(null) }
     var isFinishing by remember { mutableStateOf(false) }
 
+    // Lo que la ficha descarga al abrirse (datos de la página, progreso, autores) vive en un
+    // ViewModel por libro: así no se vuelve a pedir si la ficha se rehace (al girar el móvil).
+    // La sesión cambia en cada apertura, de modo que abrir de nuevo el libro sí lo refresca.
+    val detailsViewModel: BookDetailsViewModel = androidx.hilt.navigation.compose.hiltViewModel(
+        key = "book_details:$activeBookKey"
+    )
+    val detailsSession = androidx.compose.runtime.saveable.rememberSaveable(activeBookKey) {
+        java.util.UUID.randomUUID().toString()
+    }
+    remember(detailsSession) {
+        detailsViewModel.bind(
+            session = detailsSession,
+            api = api,
+            bookKey = activeBookKey,
+            initialEnrichment = initialEnrichment,
+            authorUrls = bookDetails.authors.orEmpty()
+        )
+    }
+    val detailsState by detailsViewModel.state.collectAsStateWithLifecycle()
+
     // Progreso de lectura actual (solo relevante mientras el libro está en lectura).
     // Se recarga cada vez que cambia el libro o tras una actualización correcta.
-    var readingProgress by remember { mutableStateOf<BookWyrmScraper.ReadingProgressInfo?>(null) }
-    var isLoadingProgress by remember { mutableStateOf(false) }
+    val readingProgress = detailsState.readingProgress
+    val isLoadingProgress = detailsState.isLoadingProgress
     var progressRefreshKey by remember { mutableStateOf(0) }
 
     // Configuración de progreso de este libro, que se olvida al terminarlo.
@@ -442,19 +463,12 @@ fun BookDetailsDialog(
 
     // Datos enriquecidos del libro (autor, valoración, fechas, idioma) leídos de su página
     // HTML — no vienen en el .json. Se cargan una vez al abrir la ficha.
-    var enrichment by remember { mutableStateOf(initialEnrichment) }
-    LaunchedEffect(activeBookKey) {
-        val fresh = runCatching { BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey) }.getOrNull()
-        if (fresh != null) {
-            enrichment = fresh
-            // Se cachea desde aquí, y no solo avisando a quien abrió la ficha: por la búsqueda
-            // y la actividad pasan los libros que aún no están en ninguna estantería, que son
-            // justo los que se acaban de añadir. Guardado ya, «Mis libros» los enseña completos
-            // sin volver a leer su página.
-            runCatching {
-                com.ferlagod.rocinante.data.local.TimelineCache(context).mergeEnrichment(fresh)
-            }
+    // (Los pide y los guarda en caché [BookDetailsViewModel].)
+    val enrichment = detailsState.enrichment
+    LaunchedEffect(detailsState.freshEnrichment) {
+        detailsState.freshEnrichment?.let { fresh ->
             onEnrichmentUpdated?.invoke(fresh)
+            detailsViewModel.consumeFreshEnrichment()
         }
     }
 
@@ -492,13 +506,7 @@ fun BookDetailsDialog(
     // El progreso se pide en cuanto se sabe que el libro se está leyendo, que puede ser al
     // abrir la ficha (desde la estantería) o al llegar su página (desde cualquier otro sitio).
     LaunchedEffect(activeBookKey, activeShelf, progressRefreshKey) {
-        if (activeShelf == "reading") {
-            isLoadingProgress = true
-            readingProgress = runCatching { BookWyrmScraper.getReadingProgress(api, activeBookKey) }.getOrNull()
-            isLoadingProgress = false
-        } else {
-            readingProgress = null
-        }
+        detailsViewModel.loadProgress(api, activeBookKey, activeShelf, progressRefreshKey)
     }
 
     // Menú de tres puntos (⋮) de la barra + confirmación para cambiar de estante.
@@ -518,31 +526,14 @@ fun BookDetailsDialog(
     // El .json del libro solo trae sus direcciones; el nombre y lo demás están en la ficha de
     // cada uno. Se piden **después** de que la pantalla esté abierta y aparecen cuando llegan:
     // la ficha del libro no debe esperar por esto.
+    // (Los pide [BookDetailsViewModel], varios a la vez y guardando cada ficha.)
+    val authors = detailsState.authors
+    LaunchedEffect(bookDetails.authors) {
+        detailsViewModel.updateAuthors(api, bookDetails.authors.orEmpty())
+    }
+    // La caché local, que también guarda los libros marcados como favoritos.
     val authorCache = remember(context) {
         com.ferlagod.rocinante.data.local.TimelineCache(context)
-    }
-    var authors by remember {
-        mutableStateOf<List<com.ferlagod.rocinante.data.model.BookWyrmAuthor>>(emptyList())
-    }
-    LaunchedEffect(activeBookKey, bookDetails.authors) {
-        val urls = bookDetails.authors.orEmpty().filter { it.isNotBlank() }
-        if (urls.isEmpty()) {
-            authors = emptyList()
-            return@LaunchedEffect
-        }
-        val loaded = mutableListOf<com.ferlagod.rocinante.data.model.BookWyrmAuthor>()
-        urls.forEach { url ->
-            // Guardada la ficha, el segundo libro del mismo autor no cuesta nada.
-            val cached = authorCache.loadAuthor(url)
-            val author = cached ?: runCatching {
-                api.getAuthor(BookWyrmUtils.ensureJsonUrl(url))
-            }.getOrNull()?.also { authorCache.saveAuthor(url, it) }
-            if (author != null) {
-                loaded += author
-                // Se van enseñando según llegan, en vez de esperar a tenerlos todos.
-                authors = loaded.toList()
-            }
-        }
     }
 
     var showShelfPicker by remember { mutableStateOf(false) }
@@ -1965,7 +1956,7 @@ fun BookDetailsDialog(
                         BookWyrmScraper.scrapeBookEnrichment(api, activeBookKey)
                     }.getOrNull()
                     if (fresh != null) {
-                        enrichment = fresh
+                        detailsViewModel.setEnrichment(fresh)
                         onEnrichmentUpdated?.invoke(fresh)
                     }
                 }
@@ -1997,7 +1988,7 @@ fun BookDetailsDialog(
         // Reflejar el nuevo progreso al instante con el valor enviado.
         // Si por algún motivo no llegó el valor, recargar desde la red como respaldo.
         if (newProgress != null) {
-            readingProgress = newProgress
+            detailsViewModel.setProgress(newProgress)
             onProgressUpdated?.invoke(newProgress)
         } else {
             progressRefreshKey++
