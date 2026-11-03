@@ -1053,15 +1053,20 @@ object BookWyrmScraper {
     /**
      * Envía los datos para crear un nuevo libro en la instancia de BookWyrm (/create-book).
      *
-     * Si no hay conflictos con el autor, BookWyrm devuelve un 302 hacia la ficha del nuevo libro.
-     * Si el nombre del autor coincide con autores existentes o sugerencias ISNI, devuelve un 200
-     * con los campos ocultos del libro y los candidatos para elegir.
+     * Si no hay nada que confirmar, BookWyrm devuelve un 302 hacia la ficha del nuevo libro.
+     * Lo normal con un libro nuevo es que pida confirmación (autores, si es una edición de una
+     * obra que ya tiene, serie): devuelve un 200 con los campos ocultos del libro y las opciones
+     * de cada pregunta.
+     *
+     * @param authorNames Un nombre por autor. BookWyrm lee `add_author` como una lista y, al
+     *   confirmar, pregunta por cada uno por separado.
+     * @param publishers Editoriales separadas por comas, como en el formulario web.
      */
     suspend fun createBookManually(
         api: BookWyrmApi,
         instanceUrl: String,
         title: String,
-        authorName: String,
+        authorNames: List<String>,
         subtitle: String = "",
         isbn13: String = "",
         pages: String = "",
@@ -1069,6 +1074,9 @@ object BookWyrmScraper {
         description: String = "",
         languages: String = "",
         physicalFormat: String = "",
+        publishers: String = "",
+        series: String = "",
+        seriesNumber: String = "",
         coverBytes: ByteArray? = null,
         coverMimeType: String = "image/jpeg"
     ): CreateBookResult = withContext(Dispatchers.IO) {
@@ -1082,60 +1090,37 @@ object BookWyrmScraper {
                     val getResp = api.getRawHtmlResponse(createUrl)
                     val html = runCatching { getResp.body()?.string() }.getOrNull().orEmpty()
                     csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                }
             }
 
-            // Campos del formulario. Los campos enteros opcionales (pages, published_date)
-            // se omiten cuando están vacíos para evitar que Django reciba "" en un IntegerField/DateField
-            // y devuelva un 500/502 al no poder convertirlo.
-            val trimmedPages = pages.trim().filter { it.isDigit() }
-            val trimmedDate = publishedDate.trim()
-            val cleanIsbn = isbn13.replace("-", "").replace(" ", "").trim()
+            val fields = buildCreateBookFields(
+                csrfToken = csrfToken,
+                title = title,
+                authorNames = authorNames,
+                subtitle = subtitle,
+                isbn = isbn13,
+                pages = pages,
+                publishedDate = publishedDate,
+                description = description,
+                languages = languages,
+                physicalFormat = physicalFormat,
+                publishers = publishers,
+                series = series,
+                seriesNumber = seriesNumber
+            )
 
             // Si hay portada se envía MultipartBody; si no, FormBody estándar
             val initialRequestBody: okhttp3.RequestBody = if (coverBytes != null && coverBytes.isNotEmpty()) {
                 val mediaType = (coverMimeType.ifBlank { "image/jpeg" }).toMediaTypeOrNull()
                 val builder = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
-                    .addFormDataPart("csrfmiddlewaretoken", csrfToken)
-                    .addFormDataPart("title", title.trim())
-                    .addFormDataPart("subtitle", subtitle.trim())
-                    .addFormDataPart("add_author", authorName.trim())
-                    .addFormDataPart("description", description.trim())
-                    .addFormDataPart("languages", languages.trim())
-                    .addFormDataPart("physical_format", physicalFormat.trim())
-                    .addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
-                if (cleanIsbn.length == 10) {
-                    builder.addFormDataPart("isbn_10", cleanIsbn)
-                } else if (cleanIsbn.isNotEmpty()) {
-                    builder.addFormDataPart("isbn_13", cleanIsbn)
-                }
-                if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
-                    builder.addFormDataPart("pages", trimmedPages)
-                }
-                if (trimmedDate.isNotEmpty()) {
-                    builder.addFormDataPart("published_date", trimmedDate)
-                }
+                fields.forEach { (name, value) -> builder.addFormDataPart(name, value) }
+                builder.addFormDataPart("cover", "cover.jpg", coverBytes.toRequestBody(mediaType))
                 builder.build()
             } else {
                 val builder = okhttp3.FormBody.Builder()
-                    .add("csrfmiddlewaretoken", csrfToken)
-                    .add("title", title.trim())
-                    .add("subtitle", subtitle.trim())
-                    .add("add_author", authorName.trim())
-                    .add("description", description.trim())
-                    .add("languages", languages.trim())
-                    .add("physical_format", physicalFormat.trim())
-                if (cleanIsbn.length == 10) {
-                    builder.add("isbn_10", cleanIsbn)
-                } else if (cleanIsbn.isNotEmpty()) {
-                    builder.add("isbn_13", cleanIsbn)
-                }
-                if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
-                    builder.add("pages", trimmedPages)
-                }
-                if (trimmedDate.isNotEmpty()) {
-                    builder.add("published_date", trimmedDate)
-                }
+                fields.forEach { (name, value) -> builder.add(name, value) }
                 builder.build()
             }
 
@@ -1144,6 +1129,7 @@ object BookWyrmScraper {
             // Caso A: Se creó de inmediato (302)
             if (response.code() in 301..303) {
                 val location = response.headers()["Location"].orEmpty()
+                BookWyrmUtils.closeQuietly(response)
                 val fullUrl = if (location.startsWith("http")) location else "$cleanBase/${location.trimStart('/')}"
                 val bookId = fullUrl.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
                 return@withContext CreateBookResult.Created(fullUrl, bookId)
@@ -1154,109 +1140,13 @@ object BookWyrmScraper {
                 return@withContext CreateBookResult.Error("Error (${response.code()})")
             }
 
-            val doc = org.jsoup.Jsoup.parse(html, createUrl)
-
-            // Comprobar si la sesión no es válida (redirigió o devolvió login)
-            if (doc.selectFirst("input[name=username]") != null && doc.selectFirst("input[name=password]") != null) {
-                return@withContext CreateBookResult.Error("Sesión expirada o no iniciada en la instancia")
+            when (val step = parseCreateConfirmation(html, createUrl, cleanBase)) {
+                is ConfirmationStep.Failed -> CreateBookResult.Error(step.message.ifBlank { "Error (${response.code()})" })
+                is ConfirmationStep.Ask -> CreateBookResult.NeedsAuthorConfirmation(step.form, step.options)
+                // Nada que elegir (instancias antiguas sin candidatos): se confirma con las
+                // opciones por defecto, que es lo que haría la web al pulsar «Confirmar».
+                is ConfirmationStep.Auto -> sendConfirmCreateBook(api, step.form.actionUrl, step.form.fields, coverBytes, coverMimeType)
             }
-
-            // Comprobar errores de validación específicos en los campos
-            val fieldErrors = extractFormErrors(doc)
-            if (fieldErrors.isNotEmpty()) {
-                return@withContext CreateBookResult.Error(fieldErrors.joinToString("\n"))
-            }
-
-            // Localizar el formulario en la página (en confirm_mode la acción es create-book-confirm)
-            val form = doc.selectFirst("form[action*='confirm']")
-                ?: doc.selectFirst("form[name='create-book']")
-                ?: doc.selectFirst("form[action*='create-book']")
-                ?: doc.selectFirst("form")
-
-            if (form == null) {
-                return@withContext CreateBookResult.Error("No se encontró el formulario de creación (${response.code()})")
-            }
-
-            // Extraer todos los campos presentes en el formulario
-            val formFields = mutableListOf<Pair<String, String>>()
-            for (el in form.select("input[name], select[name], textarea[name]")) {
-                val name = el.attr("name").trim()
-                if (name.isEmpty() || name == "cover") continue
-                when (el.tagName()) {
-                    "input" -> {
-                        val type = el.attr("type").lowercase().ifEmpty { "text" }
-                        if (type in setOf("file", "submit", "button", "image", "reset")) continue
-                        if (type in setOf("checkbox", "radio")) {
-                            if (el.hasAttr("checked")) {
-                                formFields += name to el.attr("value")
-                            }
-                        } else {
-                            formFields += name to el.attr("value")
-                        }
-                    }
-                    "textarea" -> formFields += name to el.wholeText()
-                    "select" -> {
-                        val chosen = el.select("option[selected]").firstOrNull() ?: el.select("option").firstOrNull()
-                        if (chosen != null) {
-                            formFields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
-                        }
-                    }
-                }
-            }
-
-            val rawAction = form.attr("action").trim().ifEmpty { "/create-book/confirm" }
-            val actionUrl = if (rawAction.startsWith("http")) rawAction else "$cleanBase/${rawAction.trimStart('/')}"
-
-            // Comprobar si BookWyrm pide confirmar autores (author_matches)
-            val authorRadios = form.select("input[type=radio][name^=author_match-]")
-
-            if (authorRadios.isNotEmpty()) {
-                // Hay candidatos de autor para que el usuario elija
-                val options = authorRadios.map { radio ->
-                    val value = radio.attr("value").trim()
-                    val label = radio.parent()
-                    val name = (label?.text() ?: "").trim()
-                    val help = generateSequence(label?.nextElementSibling()) { it.nextElementSibling() }
-                        .takeWhile { it.tagName() == "p" && (it.hasClass("help") || it.hasClass("is-danger")) }
-                        .map { it.text().trim() }
-                        .filter { it.isNotEmpty() }
-                        .joinToString(" · ")
-                    val kind = when {
-                        value.toLongOrNull() != null -> AuthorOption.Kind.EXISTING
-                        value.startsWith("http") -> AuthorOption.Kind.ISNI
-                        else -> AuthorOption.Kind.NEW
-                    }
-                    AuthorOption(
-                        field = radio.attr("name").trim(),
-                        value = value,
-                        label = name.ifEmpty { value },
-                        help = help,
-                        kind = kind
-                    )
-                }.sortedBy { it.kind.ordinal }
-
-                // Asegurar que parent_work="0" (This is a new work) esté en los campos
-                if (formFields.none { it.first == "parent_work" }) {
-                    formFields += "parent_work" to "0"
-                }
-
-                return@withContext CreateBookResult.NeedsAuthorConfirmation(
-                    BookEditForm(actionUrl, formFields),
-                    options
-                )
-            }
-
-            // Si NO hay radios de autor, BookWyrm ya aceptó el autor como nuevo autor.
-            // Proceder a la confirmación automática requerida por confirm_mode:
-            val finalFields = formFields.toMutableList()
-            if (finalFields.none { it.first == "parent_work" }) {
-                finalFields += "parent_work" to "0"
-            }
-            if (form.selectFirst("input[name=series_match]") != null && finalFields.none { it.first == "series_match" }) {
-                finalFields += "series_match" to "0"
-            }
-
-            sendConfirmCreateBook(api, actionUrl, finalFields, coverBytes, coverMimeType)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             CreateBookResult.Error(e.message ?: "Unknown error")
@@ -1264,51 +1154,198 @@ object BookWyrmScraper {
     }
 
     /**
-     * Confirma la creación del libro enviando la opción de autor seleccionada en el formulario
-     * a la URL de confirmación de BookWyrm.
+     * Campos del formulario de alta. Los enteros y fechas opcionales (pages, published_date)
+     * se omiten cuando están vacíos para evitar que Django reciba "" en un IntegerField o
+     * DateField y devuelva un 500/502.
      */
-    suspend fun confirmCreateBookAuthor(
+    internal fun buildCreateBookFields(
+        csrfToken: String,
+        title: String,
+        authorNames: List<String>,
+        subtitle: String = "",
+        isbn: String = "",
+        pages: String = "",
+        publishedDate: String = "",
+        description: String = "",
+        languages: String = "",
+        physicalFormat: String = "",
+        publishers: String = "",
+        series: String = "",
+        seriesNumber: String = ""
+    ): List<Pair<String, String>> {
+        val fields = mutableListOf(
+            "csrfmiddlewaretoken" to csrfToken,
+            "title" to title.trim(),
+            "subtitle" to subtitle.trim()
+        )
+        val authors = authorNames.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        if (authors.isEmpty()) fields += "add_author" to ""
+        authors.forEach { fields += "add_author" to it }
+        fields += "description" to description.trim()
+        fields += "languages" to languages.trim()
+        fields += "physical_format" to physicalFormat.trim()
+        // Solo si se rellenan: en instancias con series como modelo aparte, mandar el campo
+        // vacío es inocuo, pero no hace falta añadir ruido al formulario.
+        if (publishers.isNotBlank()) fields += "publishers" to publishers.trim()
+        if (series.isNotBlank()) {
+            fields += "series" to series.trim()
+            if (seriesNumber.isNotBlank()) fields += "series_number" to seriesNumber.trim()
+        }
+        val cleanIsbn = isbn.replace("-", "").replace(" ", "").trim().uppercase()
+        if (cleanIsbn.length == 10) {
+            fields += "isbn_10" to cleanIsbn
+        } else if (cleanIsbn.isNotEmpty()) {
+            fields += "isbn_13" to cleanIsbn
+        }
+        val trimmedPages = pages.trim().filter { it.isDigit() }
+        if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
+            fields += "pages" to trimmedPages
+        }
+        if (publishedDate.isNotBlank()) fields += "published_date" to publishedDate.trim()
+        return fields
+    }
+
+    /** Qué hacer con la página que devuelve BookWyrm al crear o confirmar un libro. */
+    internal sealed class ConfirmationStep {
+        /** Hay preguntas con más de una respuesta: que elija el usuario. */
+        data class Ask(val form: BookEditForm, val options: List<AuthorOption>) : ConfirmationStep()
+
+        /** Nada que elegir: se puede confirmar con las respuestas por defecto. */
+        data class Auto(val form: BookEditForm) : ConfirmationStep()
+
+        data class Failed(val message: String) : ConfirmationStep()
+    }
+
+    /**
+     * Lee la pantalla de confirmación de BookWyrm (book/edit/edit_book.html en confirm_mode).
+     *
+     * Puede hacer tres preguntas, cada una un grupo de redondeles:
+     * - `author_match-N`: a quién se refiere cada autor escrito (uno por autor).
+     * - `parent_work`: si es una edición de una obra que ya está en la instancia («0» es obra nueva).
+     * - `series_match`: si es de una serie que ya existe («0» es serie nueva).
+     */
+    internal fun parseCreateConfirmation(html: String, pageUrl: String, cleanBase: String): ConfirmationStep {
+        val doc = org.jsoup.Jsoup.parse(html, pageUrl)
+
+        // Comprobar si la sesión no es válida (redirigió o devolvió login)
+        if (doc.selectFirst("input[name=username]") != null && doc.selectFirst("input[name=password]") != null) {
+            return ConfirmationStep.Failed("Sesión expirada o no iniciada en la instancia")
+        }
+
+        val fieldErrors = extractFormErrors(doc)
+        if (fieldErrors.isNotEmpty()) {
+            return ConfirmationStep.Failed(fieldErrors.joinToString("\n"))
+        }
+
+        // Localizar el formulario en la página (en confirm_mode la acción es create-book/confirm)
+        val form = doc.selectFirst("form[action*='confirm']")
+            ?: doc.selectFirst("form[name='create-book']")
+            ?: doc.selectFirst("form[action*='create-book']")
+            ?: doc.selectFirst("form")
+            ?: return ConfirmationStep.Failed("")
+
+        // Los redondeles de las preguntas no van aquí: se mandan aparte, con lo que se elija.
+        val formFields = mutableListOf<Pair<String, String>>()
+        for (el in form.select("input[name], select[name], textarea[name]")) {
+            val name = el.attr("name").trim()
+            if (name.isEmpty() || name == "cover") continue
+            when (el.tagName()) {
+                "input" -> {
+                    val type = el.attr("type").lowercase().ifEmpty { "text" }
+                    if (type in setOf("file", "submit", "button", "image", "reset")) continue
+                    if (type == "radio" && isConfirmationGroup(name)) continue
+                    if (type in setOf("checkbox", "radio")) {
+                        if (el.hasAttr("checked")) formFields += name to el.attr("value")
+                    } else {
+                        formFields += name to el.attr("value")
+                    }
+                }
+                "textarea" -> formFields += name to el.wholeText()
+                "select" -> {
+                    val chosen = el.select("option[selected]").firstOrNull() ?: el.select("option").firstOrNull()
+                    if (chosen != null) {
+                        formFields += name to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
+                    }
+                }
+            }
+        }
+
+        val rawAction = form.attr("action").trim().ifEmpty { "/create-book/confirm" }
+        val actionUrl = if (rawAction.startsWith("http")) rawAction else "$cleanBase/${rawAction.trimStart('/')}"
+
+        val options = form.select("input[type=radio]")
+            .filter { isConfirmationGroup(it.attr("name").trim()) }
+            .map { radio -> confirmationOption(radio) }
+
+        val groups = options.groupBy { it.field }
+        val needsChoice = groups.any { (field, groupOptions) ->
+            // Los autores se preguntan siempre (es donde se evitan los duplicados); la obra y la
+            // serie solo si hay alguna existente que elegir.
+            field.startsWith("author_match-") ||
+                groupOptions.any { it.kind != AuthorOption.Kind.NEW }
+        }
+
+        val bookForm = BookEditForm(actionUrl, formFields)
+        if (needsChoice) {
+            val sorted = groups.flatMap { (field, groupOptions) ->
+                if (field.startsWith("author_match-")) {
+                    // Primero los que ya existen, que son los que hay que elegir para no duplicar.
+                    groupOptions.sortedBy { it.kind.ordinal }
+                } else {
+                    // Obra o serie nueva primero: es lo que se hacía antes de preguntar.
+                    groupOptions.sortedBy { if (it.kind == AuthorOption.Kind.NEW) 0 else 1 }
+                }
+            }
+            return ConfirmationStep.Ask(bookForm, sorted)
+        }
+
+        // Sin nada que elegir, las respuestas por defecto: obra y serie nuevas.
+        val autoFields = formFields.toMutableList()
+        groups.keys.forEach { field -> if (autoFields.none { it.first == field }) autoFields += field to "0" }
+        if (autoFields.none { it.first == "parent_work" }) autoFields += "parent_work" to "0"
+        if (form.selectFirst("input[name=series_match]") != null && autoFields.none { it.first == "series_match" }) {
+            autoFields += "series_match" to "0"
+        }
+        return ConfirmationStep.Auto(BookEditForm(actionUrl, autoFields))
+    }
+
+    private fun isConfirmationGroup(name: String): Boolean =
+        name.startsWith("author_match-") || name == "parent_work" || name == "series_match"
+
+    private fun confirmationOption(radio: org.jsoup.nodes.Element): AuthorOption {
+        val field = radio.attr("name").trim()
+        val value = radio.attr("value").trim()
+        val label = radio.parent()
+        val name = (label?.text() ?: "").trim()
+        val help = generateSequence(label?.nextElementSibling()) { it.nextElementSibling() }
+            .takeWhile { it.tagName() == "p" && (it.hasClass("help") || it.hasClass("is-danger")) }
+            .map { it.text().trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString(" · ")
+        val kind = when {
+            // Para la obra y la serie, «0» es la nueva; para un autor, la nueva es su nombre.
+            field == "parent_work" || field == "series_match" ->
+                if (value == "0" || value.isBlank()) AuthorOption.Kind.NEW else AuthorOption.Kind.EXISTING
+            value.toLongOrNull() != null -> AuthorOption.Kind.EXISTING
+            value.startsWith("http") -> AuthorOption.Kind.ISNI
+            else -> AuthorOption.Kind.NEW
+        }
+        return AuthorOption(field = field, value = value, label = name.ifEmpty { value }, help = help, kind = kind)
+    }
+
+    /**
+     * Confirma la creación del libro con una respuesta por pregunta ([selections]: una opción
+     * por cada `author_match-N`, `parent_work` y `series_match` que se haya preguntado).
+     */
+    suspend fun confirmCreateBook(
         api: BookWyrmApi,
         form: BookEditForm,
-        option: AuthorOption,
+        selections: List<AuthorOption>,
         coverBytes: ByteArray? = null,
         coverMimeType: String? = null
     ): CreateBookResult = withContext(Dispatchers.IO) {
         try {
-            val fields = form.fields.toMutableList()
-            // Reemplazar o añadir el campo de autor elegido
-            fields.removeAll { it.first.startsWith("author_match-") }
-            fields.add(option.field to option.value)
-
-            // Si se eligió un autor existente o ISNI, quitar add_author para que
-            // BookWyrm no intente crear un autor nuevo simultáneamente
-            if (option.kind != AuthorOption.Kind.NEW) {
-                fields.removeAll { it.first == "add_author" }
-            }
-
-            // Asegurar que parent_work="0" (nueva obra) esté seleccionado
-            if (fields.none { it.first == "parent_work" }) {
-                fields.add("parent_work" to "0")
-            }
-
-            // Asegurar que author-match-count esté presente para que BookWyrm procese la selección
-            if (fields.none { it.first == "author-match-count" }) {
-                fields.add("author-match-count" to "1")
-            }
-
-            // Asegurar que series_match esté presente si hay campo de series
-            if (fields.any { it.first == "series" } && fields.none { it.first == "series_match" }) {
-                fields.add("series_match" to "0")
-            }
-
-            // Limpiar campos enteros, fechas e ISBN vacíos que podrían causar 502/500
-            // en Django al recibir "" en un IntegerField/DateField o fallar validación de ISBN.
-            fields.removeAll { (name, value) ->
-                (name == "pages" && (value.isBlank() || value.filter { it.isDigit() }.toLongOrNull()?.let { it <= 0 } != false)) ||
-                (name == "published_date" && value.isBlank()) ||
-                (name == "isbn_10" && value.isBlank()) ||
-                (name == "isbn_13" && value.isBlank())
-            }
+            val fields = buildConfirmFields(form, selections)
 
             // Si el servidor BookWyrm ya guardó la portada en su caché de sesión (file_resubmit),
             // no es necesario volver a subir los bytes del archivo en multipart.
@@ -1322,6 +1359,134 @@ object BookWyrmScraper {
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             CreateBookResult.Error(e.message ?: "Unknown error")
+        }
+    }
+
+    /** Campos que se mandan al confirmar, con las respuestas elegidas. */
+    internal fun buildConfirmFields(form: BookEditForm, selections: List<AuthorOption>): List<Pair<String, String>> {
+        val chosen = selections.associateBy { it.field }
+        val fields = form.fields.filter { (name, _) -> name !in chosen.keys }.toMutableList()
+
+        // El autor N corresponde al N-ésimo add_author. Si para él se eligió una ficha que ya
+        // existe (o del ISNI), se quita su add_author para que ninguna versión de BookWyrm cree
+        // además uno nuevo con ese nombre.
+        val dropAuthorIndexes = chosen.values
+            .filter { it.field.startsWith("author_match-") && it.kind != AuthorOption.Kind.NEW }
+            .mapNotNull { it.field.substringAfter("author_match-").toIntOrNull() }
+            .toSet()
+        if (dropAuthorIndexes.isNotEmpty()) {
+            var authorIndex = -1
+            fields.removeAll { (name, value) ->
+                if (name != "add_author" || value.isBlank()) return@removeAll false
+                authorIndex++
+                authorIndex in dropAuthorIndexes
+            }
+        }
+        chosen.values.forEach { fields += it.field to it.value }
+
+        // Asegurar que parent_work="0" (nueva obra) esté seleccionado si no se preguntó
+        if (fields.none { it.first == "parent_work" }) fields += "parent_work" to "0"
+
+        // Sin author-match-count BookWyrm no lee las respuestas de autor
+        if (fields.none { it.first == "author-match-count" }) {
+            val count = chosen.keys.count { it.startsWith("author_match-") }
+            if (count > 0) fields += "author-match-count" to count.toString()
+        }
+
+        // Asegurar que series_match esté presente si hay campo de series
+        if (fields.any { it.first == "series" && it.second.isNotBlank() } && fields.none { it.first == "series_match" }) {
+            fields += "series_match" to "0"
+        }
+
+        // Limpiar campos enteros, fechas e ISBN vacíos que podrían causar 502/500
+        // en Django al recibir "" en un IntegerField/DateField o fallar validación de ISBN.
+        fields.removeAll { (name, value) ->
+            (name == "pages" && (value.isBlank() || value.filter { it.isDigit() }.toLongOrNull()?.let { it <= 0 } != false)) ||
+            (name == "published_date" && value.isBlank()) ||
+            (name == "isbn_10" && value.isBlank()) ||
+            (name == "isbn_13" && value.isBlank())
+        }
+        return fields
+    }
+
+    /**
+     * Pone en una estantería un libro recién creado: «to-read» o «reading». Pasa por el estado
+     * de lectura, como la ficha del libro, para que «Leyendo» abra la lectura con la fecha de hoy;
+     * si la instancia no lo acepta, se usa la estantería a secas.
+     */
+    suspend fun shelveCreatedBook(api: BookWyrmApi, bookId: String, shelfSlug: String): Boolean = withContext(Dispatchers.IO) {
+        val status = when (shelfSlug) {
+            "to-read" -> "want"
+            "reading" -> "start"
+            else -> return@withContext false
+        }
+        try {
+            val today = java.time.LocalDate.now().toString()
+            val response = api.updateReadingStatus(
+                status = status,
+                bookId = bookId,
+                startDate = today.takeIf { status == "start" }
+            )
+            val ok = BookWyrmUtils.isWriteSuccess(response)
+            BookWyrmUtils.closeQuietly(response)
+            if (ok) return@withContext true
+            val fallback = api.shelveBook(bookId, shelfSlug)
+            BookWyrmUtils.isWriteSuccess(fallback).also { BookWyrmUtils.closeQuietly(fallback) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            false
+        }
+    }
+
+    /**
+     * La confirmación se cortó sin respuesta clara. Si el libro tiene ISBN se mira, tras una
+     * pausa, si la instancia ya lo tiene; si no, se avisa de que puede haberse creado en lugar
+     * de reenviar el formulario a ciegas.
+     */
+    private suspend fun afterInterruptedConfirm(
+        api: BookWyrmApi,
+        actionUrl: String,
+        fields: List<Pair<String, String>>,
+        code: Int?
+    ): CreateBookResult {
+        val isbn = fields.firstOrNull { it.first == "isbn_13" && it.second.isNotBlank() }?.second
+            ?: fields.firstOrNull { it.first == "isbn_10" && it.second.isNotBlank() }?.second
+        if (isbn != null) {
+            kotlinx.coroutines.delay(3_000L)
+            findBookUrlByIsbn(api, isbn)?.let { url ->
+                val bookId = url.substringAfterLast("/book/").substringBefore("/").substringBefore("-").substringBefore("?")
+                return CreateBookResult.Created(url, bookId)
+            }
+        }
+        val reason = if (code != null) "Error $code" else "Tiempo de espera agotado"
+        return CreateBookResult.Error(
+            "$reason: la instancia tardó demasiado en confirmar el libro y puede que se haya creado. " +
+                "Búscalo antes de volver a intentarlo para no duplicarlo."
+        )
+    }
+
+    /**
+     * Dirección del libro con ese ISBN en la instancia (solo su base de datos, sin conectores),
+     * o null si no lo tiene o no se pudo consultar.
+     */
+    suspend fun findBookUrlByIsbn(api: BookWyrmApi, isbn: String): String? = withContext(Dispatchers.IO) {
+        val clean = com.ferlagod.rocinante.utils.IsbnUtils.normalize(isbn)
+        if (clean.isEmpty()) return@withContext null
+        try {
+            val response = api.searchByIsbn(clean)
+            if (!response.isSuccessful) {
+                BookWyrmUtils.closeQuietly(response)
+                return@withContext null
+            }
+            val body = response.body()?.string()?.trimStart().orEmpty()
+            if (!body.startsWith("[")) return@withContext null
+            @Suppress("DEPRECATION")
+            com.google.gson.JsonParser().parse(body).asJsonArray
+                .mapNotNull { it.takeIf { e -> e.isJsonObject }?.asJsonObject?.get("key")?.takeIf { k -> k.isJsonPrimitive }?.asString }
+                .firstOrNull { it.contains("/book/") }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
         }
     }
 
@@ -1354,8 +1519,10 @@ object BookWyrmScraper {
     ): CreateBookResult = withContext(Dispatchers.IO) {
         // BookWyrm ConfirmEditBook puede tardar mucho cuando seleccionas un autor existente:
         // hace llamadas síncronas a isni.oclc.org, procesa la imagen con Pillow y escribe en DB.
-        // Por eso reintentamos una vez si el primer intento da SocketTimeoutException.
-        val maxAttempts = 2
+        // Si se corta (timeout, o 502/504 del proxy), el servidor puede haber creado el libro
+        // igualmente: volver a enviar el formulario lo duplicaría. En vez de eso se busca por
+        // ISBN si ya está, y si no se puede saber, se avisa en lugar de reintentar.
+        val maxAttempts = 1
         var lastException: Exception? = null
 
         for (attempt in 1..maxAttempts) {
@@ -1410,14 +1577,24 @@ object BookWyrmScraper {
                 }
 
                 // Un 502/504 puede ser timeout del proxy inverso (nginx) esperando a BookWyrm
-                // mientras éste consulta ISNI. Reintentar una vez.
-                if (response.code() in setOf(502, 504) && attempt < maxAttempts) {
-                    runCatching { response.body()?.close() }
-                    kotlinx.coroutines.delay(3_000L)
-                    continue
+                // mientras éste consulta ISNI: puede que el libro se haya creado.
+                if (response.code() in setOf(502, 504)) {
+                    BookWyrmUtils.closeQuietly(response)
+                    return@withContext afterInterruptedConfirm(api, actionUrl, fields, response.code())
                 }
 
                 val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
+
+                // Otra ronda de preguntas (BookWyrm vuelve a preguntar por la serie si al decir
+                // «serie nueva» encuentra alguna parecida de los mismos autores).
+                if (response.code() == 200 && html.isNotEmpty()) {
+                    val cleanBase = java.net.URL(actionUrl).let { "${it.protocol}://${it.host}" }
+                    val step = parseCreateConfirmation(html, actionUrl, cleanBase)
+                    if (step is ConfirmationStep.Ask) {
+                        return@withContext CreateBookResult.NeedsAuthorConfirmation(step.form, step.options)
+                    }
+                }
+
                 val doc = org.jsoup.Jsoup.parse(html, actionUrl)
                 val errors = extractFormErrors(doc)
 
@@ -1430,11 +1607,10 @@ object BookWyrmScraper {
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 lastException = e
-                // Reintentar en caso de SocketTimeoutException (el servidor tardó demasiado
-                // consultando isni.oclc.org para resolver alias del autor seleccionado)
-                if (e is java.net.SocketTimeoutException && attempt < maxAttempts) {
-                    kotlinx.coroutines.delay(3_000L)
-                    continue
+                // El servidor tardó demasiado (p. ej. consultando isni.oclc.org): puede que el
+                // libro se haya creado de todos modos.
+                if (e is java.net.SocketTimeoutException) {
+                    return@withContext afterInterruptedConfirm(api, actionUrl, fields, null)
                 }
                 val isTimeout = e is java.net.SocketTimeoutException
                 val msg = if (isTimeout) {

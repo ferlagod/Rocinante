@@ -34,12 +34,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.DialogProperties
@@ -50,12 +53,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
-import kotlinx.coroutines.launch
+import com.ferlagod.rocinante.data.api.OpenLibraryLookup
+import com.ferlagod.rocinante.utils.IsbnUtils
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 /**
  * Comprime la imagen de portada seleccionada a un tamaño adecuado para la web (máximo 1200px),
@@ -66,23 +72,30 @@ import java.io.ByteArrayOutputStream
  * fotos de la cámara guardan los píxeles girados y la marca aparte, y sin aplicarla la
  * portada subía tumbada.
  */
-private suspend fun compressCoverImage(
-    context: Context,
-    uri: Uri,
+private suspend fun compressCoverImage(context: Context, uri: Uri): Pair<ByteArray, String>? {
+    val cr = context.contentResolver
+    return compressCover(open = { cr.openInputStream(uri) }, fallbackMime = cr.getType(uri))
+}
+
+/** Lo mismo con una imagen ya descargada (la portada de OpenLibrary). */
+private suspend fun compressCoverBytes(bytes: ByteArray): Pair<ByteArray, String>? =
+    compressCover(open = { bytes.inputStream() }, fallbackMime = "image/jpeg")
+
+private suspend fun compressCover(
+    open: () -> InputStream?,
+    fallbackMime: String?,
     maxDimension: Int = 1200,
     quality: Int = 85
 ): Pair<ByteArray, String>? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
     runCatching {
-        val cr = context.contentResolver
         val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, boundsOptions) }
+        open()?.use { BitmapFactory.decodeStream(it, null, boundsOptions) }
 
         val origW = boundsOptions.outWidth
         val origH = boundsOptions.outHeight
         if (origW <= 0 || origH <= 0) {
-            val raw = cr.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
-            val mime = cr.getType(uri) ?: "image/jpeg"
-            return@runCatching raw to mime
+            val raw = open()?.use { it.readBytes() } ?: return@runCatching null
+            return@runCatching raw to (fallbackMime ?: "image/jpeg")
         }
 
         var sampleSize = 1
@@ -95,9 +108,9 @@ private suspend fun compressCoverImage(
         }
 
         val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val decoded = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOptions) } ?: return@runCatching null
+        val decoded = open()?.use { BitmapFactory.decodeStream(it, null, decodeOptions) } ?: return@runCatching null
 
-        val bitmap = applyExifOrientation(context, uri, decoded)
+        val bitmap = applyExifOrientation(open, decoded)
 
         val finalBitmap = if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
             val ratio = minOf(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
@@ -121,9 +134,9 @@ private suspend fun compressCoverImage(
  * Gira o voltea [bitmap] según la marca EXIF de la imagen. Si no hay marca, no se puede leer
  * o no hace falta tocar nada, devuelve el mismo bitmap.
  */
-private fun applyExifOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
+private fun applyExifOrientation(open: () -> InputStream?, bitmap: Bitmap): Bitmap {
     val orientation = runCatching {
-        context.contentResolver.openInputStream(uri)?.use {
+        open()?.use {
             android.media.ExifInterface(it).getAttributeInt(
                 android.media.ExifInterface.TAG_ORIENTATION,
                 android.media.ExifInterface.ORIENTATION_NORMAL
@@ -149,22 +162,30 @@ private fun applyExifOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bi
     }.getOrDefault(bitmap)
 }
 
+/** Guarda la lista de autores al girar (una SnapshotStateList no se guarda sola). */
+private val authorListSaver = listSaver<androidx.compose.runtime.snapshots.SnapshotStateList<String>, String>(
+    save = { it.toList() },
+    restore = { it.toMutableStateList() }
+)
+
 /**
  * Diálogo para la creación manual de un libro en la instancia de BookWyrm.
  *
  * Soporta entrada de metadatos completos con desplegables controlados para formato e idioma,
- * selección opcional de portada desde el dispositivo, desambiguación de autor (antiduplicados),
- * y opción de crear y seguir añadiendo más libros consecutivamente.
+ * varios autores, rellenar los datos por ISBN desde OpenLibrary, aviso si el ISBN ya está en
+ * la instancia, selección opcional de portada desde el dispositivo, las preguntas de
+ * confirmación de la instancia (autores, obra, serie), ponerlo en una estantería al crearlo y
+ * opción de crear y seguir añadiendo más libros consecutivamente.
  *
  * @param initialTitle Título inicial (ej. proveniente de la búsqueda si no es un ISBN).
  * @param initialIsbn ISBN inicial (ej. proveniente del escáner de código de barras o búsqueda numérica).
  * @param instanceUrl Dirección de la instancia.
  * @param api Cliente API configurado para la instancia.
  * @param onBookCreated Callback invocado cuando el libro ha sido creado satisfactoriamente en el servidor,
- *                      con la URL completa del nuevo libro.
+ *                      con la URL completa del nuevo libro. También para abrir el que ya existía.
  * @param onDismiss Callback para cerrar el diálogo.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateBookDialog(
     instanceUrl: String,
@@ -175,7 +196,15 @@ fun CreateBookDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val appContext = context.applicationContext
+
+    val viewModel: CreateBookViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "create_book_dialog")
+    // Una clave por apertura del diálogo; al girar se conserva y el ViewModel sigue con lo suyo.
+    val sessionKey = rememberSaveable { java.util.UUID.randomUUID().toString() }
+    remember(sessionKey) { viewModel.start(sessionKey) }
+    val vmState by viewModel.state.collectAsStateWithLifecycle()
+    val isWorking = vmState.isWorking
+    val confirmation = vmState.confirmation
 
     // Opciones oficiales de formato en BookWyrm (schema.org/BookFormatType)
     val formatOptions = remember {
@@ -192,7 +221,6 @@ fun CreateBookDialog(
     // Opciones oficiales de idioma en BookWyrm
     val languageOptions = remember {
         listOf(
-            "" to R.string.create_book_lang_unspecified,
             "spa" to R.string.create_book_lang_es,
             "eng" to R.string.create_book_lang_en,
             "cat" to R.string.create_book_lang_ca,
@@ -205,24 +233,40 @@ fun CreateBookDialog(
         )
     }
 
+    val shelfOptions = remember {
+        listOf(
+            "" to R.string.create_book_shelf_none,
+            "to-read" to R.string.shelf_chip_to_read,
+            "reading" to R.string.shelf_chip_reading
+        )
+    }
+
     // Campos del formulario principal persistidos frente a giros o cambios de app
     var title by rememberSaveable { mutableStateOf(initialTitle) }
-    var author by rememberSaveable { mutableStateOf("") }
+    val authors = rememberSaveable(saver = authorListSaver) { mutableStateListOf("") }
     var isbn by rememberSaveable { mutableStateOf(initialIsbn) }
     var pages by rememberSaveable { mutableStateOf("") }
     var subtitle by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var publishedDate by rememberSaveable { mutableStateOf("") }
-    var selectedLanguageCode by rememberSaveable { mutableStateOf("") }
+    var publishers by rememberSaveable { mutableStateOf("") }
+    var series by rememberSaveable { mutableStateOf("") }
+    var seriesNumber by rememberSaveable { mutableStateOf("") }
+    // Varios idiomas, separados por comas como los manda el formulario web.
+    var selectedLanguageCodes by rememberSaveable { mutableStateOf("") }
     var selectedFormatCode by rememberSaveable { mutableStateOf("") }
+    var shelfSlug by rememberSaveable { mutableStateOf("") }
 
     // Estados de desplegables
     var formatDropdownExpanded by remember { mutableStateOf(false) }
-    var languageDropdownExpanded by remember { mutableStateOf(false) }
+    var shelfDropdownExpanded by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
-    // Imagen de portada (persistida como String para sobrevivir a recreation de Activity)
+    // Imagen de portada (persistida como String para sobrevivir a recreation de Activity).
+    // La local tiene prioridad; la remota es la que trae OpenLibrary al rellenar por ISBN.
     var coverUriString by rememberSaveable { mutableStateOf<String?>(null) }
     val coverUri = remember(coverUriString) { coverUriString?.let { Uri.parse(it) } }
+    var remoteCoverUrl by rememberSaveable { mutableStateOf<String?>(null) }
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -232,44 +276,51 @@ fun CreateBookDialog(
     }
 
     var showMoreDetails by rememberSaveable { mutableStateOf(false) }
-    var isWorking by remember { mutableStateOf(false) }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Si el usuario quiere guardar y añadir otro a continuación
-    var keepAddingAnother by rememberSaveable { mutableStateOf(false) }
-
-    // Estado de desambiguación de autor (paso 2)
-    var pendingConfirmationForm by remember { mutableStateOf<BookWyrmScraper.BookEditForm?>(null) }
-    var authorCandidates by remember { mutableStateOf<List<BookWyrmScraper.AuthorOption>>(emptyList()) }
-    var selectedAuthorOption by remember { mutableStateOf<BookWyrmScraper.AuthorOption?>(null) }
+    val selectedLanguages = selectedLanguageCodes.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
     fun resetForm() {
         title = ""
-        author = ""
+        authors.clear()
+        authors.add("")
         isbn = ""
         pages = ""
         subtitle = ""
         description = ""
         publishedDate = ""
-        selectedLanguageCode = ""
+        publishers = ""
+        series = ""
+        seriesNumber = ""
+        selectedLanguageCodes = ""
         selectedFormatCode = ""
         coverUriString = null
-        pendingConfirmationForm = null
-        authorCandidates = emptyList()
-        selectedAuthorOption = null
+        remoteCoverUrl = null
         errorMessage = null
-        keepAddingAnother = false
+        // La estantería se queda: al dar de alta varios seguidos suelen ir al mismo sitio.
     }
 
-    fun submitInitialForm(andAddAnother: Boolean = false) {
+    // La portada se prepara justo antes de enviarla, ya fuera del hilo principal.
+    val coverProvider: suspend () -> Pair<ByteArray?, String> = {
+        val local = coverUri
+        val remote = remoteCoverUrl
+        when {
+            local != null -> compressCoverImage(appContext, local) ?: (null to "image/jpeg")
+            remote != null -> OpenLibraryLookup.downloadCover(remote)?.let { compressCoverBytes(it) }
+                ?: (null to "image/jpeg")
+            else -> null to "image/jpeg"
+        }
+    }
+
+    fun submitInitialForm(andAddAnother: Boolean, checkDuplicates: Boolean = true) {
         val trimmedTitle = title.trim()
-        val trimmedAuthor = author.trim()
+        val authorNames = authors.map { it.trim() }.filter { it.isNotEmpty() }
 
         if (trimmedTitle.isEmpty()) {
             errorMessage = context.getString(R.string.create_book_title_required)
             return
         }
-        if (trimmedAuthor.isEmpty()) {
+        if (authorNames.isEmpty()) {
             errorMessage = context.getString(R.string.create_book_author_required)
             return
         }
@@ -288,112 +339,97 @@ fun CreateBookDialog(
         }
 
         errorMessage = null
-        isWorking = true
-        keepAddingAnother = andAddAnother
-
-        coroutineScope.launch {
-            val (coverBytes, coverMimeType) = coverUri?.let { uri ->
-                compressCoverImage(context, uri)
-            } ?: (null to "image/jpeg")
-
-            val result = BookWyrmScraper.createBookManually(
-                api = api,
-                instanceUrl = instanceUrl,
+        viewModel.submit(
+            api = api,
+            instanceUrl = instanceUrl,
+            request = CreateBookViewModel.Request(
                 title = trimmedTitle,
-                authorName = trimmedAuthor,
+                authors = authorNames,
                 subtitle = subtitle.trim(),
-                isbn13 = isbn.trim(),
+                isbn = isbn.trim(),
                 pages = pages.trim(),
                 publishedDate = normalizedDate,
                 description = description.trim(),
-                languages = selectedLanguageCode,
+                languages = selectedLanguages.joinToString(", "),
                 physicalFormat = selectedFormatCode,
-                coverBytes = coverBytes,
-                coverMimeType = coverMimeType
-            )
-
-            isWorking = false
-
-            when (result) {
-                is BookWyrmScraper.CreateBookResult.Created -> {
-                    if (andAddAnother) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.create_book_created_toast, trimmedTitle),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        resetForm()
-                    } else {
-                        onBookCreated(result.bookUrl)
-                        onDismiss()
-                    }
-                }
-                is BookWyrmScraper.CreateBookResult.NeedsAuthorConfirmation -> {
-                    pendingConfirmationForm = result.form
-                    authorCandidates = result.options
-                    selectedAuthorOption = result.options.firstOrNull()
-                }
-                is BookWyrmScraper.CreateBookResult.Error -> {
-                    errorMessage = result.message.ifBlank {
-                        context.getString(R.string.create_book_error_generic)
-                    }
-                }
-            }
-        }
+                publishers = publishers.trim(),
+                series = series.trim(),
+                seriesNumber = seriesNumber.trim(),
+                shelfSlug = shelfSlug,
+                andAddAnother = andAddAnother
+            ),
+            checkDuplicates = checkDuplicates,
+            cover = coverProvider
+        )
     }
 
-    fun submitAuthorConfirmation() {
-        val form = pendingConfirmationForm ?: return
-        val option = selectedAuthorOption ?: return
-        val bookTitle = title.trim()
-
-        errorMessage = null
-        isWorking = true
-
-        coroutineScope.launch {
-            // Si el formulario ya contiene la portada en la caché del servidor (file_resubmit),
-            // no es necesario volver a subirla por la red.
-            val hasCachedCover = form.fields.any { it.first.contains("cover-clearable_file_input_cache-key") }
-            val (coverBytes, coverMimeType) = if (hasCachedCover) {
-                null to null
-            } else {
-                coverUri?.let { uri -> compressCoverImage(context, uri) } ?: (null to null)
-            }
-
-            val result = BookWyrmScraper.confirmCreateBookAuthor(
-                api = api,
-                form = form,
-                option = option,
-                coverBytes = coverBytes,
-                coverMimeType = coverMimeType
-            )
-            isWorking = false
-
-            when (result) {
-                is BookWyrmScraper.CreateBookResult.Created -> {
-                    if (keepAddingAnother) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.create_book_created_toast, bookTitle),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        resetForm()
-                    } else {
-                        onBookCreated(result.bookUrl)
-                        onDismiss()
-                    }
+    // Lo que termina en el ViewModel se atiende aquí, una sola vez.
+    LaunchedEffect(vmState.event) {
+        when (val event = vmState.event) {
+            is CreateBookViewModel.Event.Created -> {
+                if (event.shelved == false) {
+                    Toast.makeText(context, context.getString(R.string.create_book_shelve_failed), Toast.LENGTH_LONG).show()
                 }
-                is BookWyrmScraper.CreateBookResult.NeedsAuthorConfirmation -> {
-                    pendingConfirmationForm = result.form
-                    authorCandidates = result.options
-                    selectedAuthorOption = result.options.firstOrNull()
-                }
-                is BookWyrmScraper.CreateBookResult.Error -> {
-                    errorMessage = result.message.ifBlank {
-                        context.getString(R.string.create_book_error_generic)
-                    }
+                if (event.andAddAnother) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.create_book_created_toast, event.title),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    resetForm()
+                } else {
+                    onBookCreated(event.bookUrl)
+                    onDismiss()
                 }
             }
+            is CreateBookViewModel.Event.Failed -> {
+                errorMessage = event.message.ifBlank { context.getString(R.string.create_book_error_generic) }
+            }
+            is CreateBookViewModel.Event.LookupDone -> {
+                val data = event.data
+                if (data == null) {
+                    Toast.makeText(context, context.getString(R.string.create_book_fill_not_found), Toast.LENGTH_SHORT).show()
+                } else {
+                    // Solo lo que esté vacío: lo que ya escribió el usuario manda.
+                    if (title.isBlank()) title = data.title
+                    if (subtitle.isBlank()) subtitle = data.subtitle
+                    if (authors.all { it.isBlank() } && data.authors.isNotEmpty()) {
+                        authors.clear()
+                        authors.addAll(data.authors)
+                    }
+                    if (pages.isBlank()) data.pages?.let { pages = it.toString() }
+                    if (publishedDate.isBlank()) publishedDate = OpenLibraryLookup.isoDateOrYear(data.publishedDate)
+                    if (publishers.isBlank()) publishers = data.publishers.joinToString(", ")
+                    if (coverUriString == null && remoteCoverUrl == null) remoteCoverUrl = data.coverUrl
+                    if (data.subtitle.isNotBlank() || data.publishers.isNotEmpty() || data.publishedDate.isNotBlank()) {
+                        showMoreDetails = true
+                    }
+                    Toast.makeText(context, context.getString(R.string.create_book_fill_done), Toast.LENGTH_SHORT).show()
+                }
+            }
+            null -> Unit
+        }
+        if (vmState.event != null) viewModel.consumeEvent()
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        publishedDate = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+                    }
+                    showDatePicker = false
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.progress_btn_cancel)) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -406,7 +442,7 @@ fun CreateBookDialog(
         ),
         title = {
             Text(
-                text = if (pendingConfirmationForm != null) {
+                text = if (confirmation != null) {
                     stringResource(R.string.create_book_author_choice_title)
                 } else {
                     stringResource(R.string.create_book_title)
@@ -430,56 +466,93 @@ fun CreateBookDialog(
                     )
                 }
 
-                if (pendingConfirmationForm != null) {
-                    // Pantalla 2: Selección y confirmación de autor
-                    Text(
-                        text = stringResource(R.string.create_book_author_choice_explanation, author.trim()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                vmState.duplicateUrl?.let { existingUrl ->
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.create_book_duplicate_title),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                text = stringResource(R.string.create_book_duplicate_body),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = {
+                                    viewModel.dismissDuplicate()
+                                    onBookCreated(existingUrl)
+                                    onDismiss()
+                                }) { Text(stringResource(R.string.create_book_duplicate_open)) }
+                                TextButton(onClick = {
+                                    viewModel.dismissDuplicate()
+                                    submitInitialForm(andAddAnother = false, checkDuplicates = false)
+                                }) { Text(stringResource(R.string.create_book_duplicate_create_anyway)) }
+                            }
+                        }
+                    }
+                }
 
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.padding(top = 8.dp)
-                    ) {
-                        authorCandidates.forEach { option ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(MaterialTheme.shapes.small)
-                                    .clickable(enabled = !isWorking) {
-                                        selectedAuthorOption = option
-                                    }
-                                    .padding(vertical = 4.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = selectedAuthorOption == option,
-                                    onClick = { selectedAuthorOption = option },
-                                    enabled = !isWorking
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = when (option.kind) {
-                                            BookWyrmScraper.AuthorOption.Kind.NEW ->
-                                                stringResource(R.string.missing_authors_choice_new, author.trim())
-                                            else -> option.label
-                                        },
-                                        style = MaterialTheme.typography.bodyMedium
+                if (confirmation != null) {
+                    // Pantalla 2: las preguntas de la instancia, una por grupo
+                    val groups = confirmation.options.groupBy { it.field }
+                    groups.forEach { (field, groupOptions) ->
+                        val typedName = groupOptions.firstOrNull { it.kind == BookWyrmScraper.AuthorOption.Kind.NEW }?.value.orEmpty()
+                        Text(
+                            text = when {
+                                field.startsWith("author_match-") ->
+                                    stringResource(R.string.create_book_author_choice_explanation, typedName)
+                                field == "parent_work" -> stringResource(R.string.create_book_work_choice)
+                                else -> stringResource(R.string.create_book_series_choice)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            groupOptions.forEach { option ->
+                                val selected = confirmation.selections[field] == option
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable(enabled = !isWorking) { viewModel.select(option) }
+                                        .padding(vertical = 4.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = selected,
+                                        onClick = { viewModel.select(option) },
+                                        enabled = !isWorking
                                     )
-                                    val detail = when (option.kind) {
-                                        BookWyrmScraper.AuthorOption.Kind.ISNI ->
-                                            listOf(stringResource(R.string.missing_authors_choice_isni), option.help)
-                                                .filter { it.isNotBlank() }.joinToString(" · ")
-                                        else -> option.help
-                                    }
-                                    if (detail.isNotBlank()) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = detail,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = if (field.startsWith("author_match-") &&
+                                                option.kind == BookWyrmScraper.AuthorOption.Kind.NEW
+                                            ) {
+                                                stringResource(R.string.missing_authors_choice_new, option.value)
+                                            } else {
+                                                option.label
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium
                                         )
+                                        val detail = when (option.kind) {
+                                            BookWyrmScraper.AuthorOption.Kind.ISNI ->
+                                                listOf(stringResource(R.string.missing_authors_choice_isni), option.help)
+                                                    .filter { it.isNotBlank() }.joinToString(" · ")
+                                            else -> option.help
+                                        }
+                                        if (detail.isNotBlank()) {
+                                            Text(
+                                                text = detail,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -496,14 +569,36 @@ fun CreateBookDialog(
                         enabled = !isWorking
                     )
 
-                    OutlinedTextField(
-                        value = author,
-                        onValueChange = { author = it },
-                        label = { Text(stringResource(R.string.create_book_field_author)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isWorking
-                    )
+                    // Un campo por autor: con comas no se distinguiría «Tolkien, J. R. R.» de dos.
+                    authors.forEachIndexed { index, value ->
+                        OutlinedTextField(
+                            value = value,
+                            onValueChange = { authors[index] = it },
+                            label = { Text(stringResource(R.string.create_book_field_author)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isWorking,
+                            trailingIcon = if (authors.size > 1) {
+                                {
+                                    IconButton(onClick = { authors.removeAt(index) }, enabled = !isWorking) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.create_book_remove_author)
+                                        )
+                                    }
+                                }
+                            } else null
+                        )
+                    }
+                    TextButton(
+                        onClick = { authors.add("") },
+                        enabled = !isWorking,
+                        modifier = Modifier.align(Alignment.Start)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.create_book_add_author))
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -512,9 +607,9 @@ fun CreateBookDialog(
                         // Teclado de texto: el numérico no tiene la «X» de control de los ISBN-10.
                         // Solo se admiten los caracteres de un ISBN.
                         // Se avisa al tener ya la longitud de un ISBN, no mientras se teclea.
-                        val isbnLooksWrong = com.ferlagod.rocinante.utils.IsbnUtils.normalize(isbn).length
+                        val isbnLooksWrong = IsbnUtils.normalize(isbn).length
                             .let { it == 10 || it >= 13 } &&
-                            !com.ferlagod.rocinante.utils.IsbnUtils.hasValidChecksum(isbn)
+                            !IsbnUtils.hasValidChecksum(isbn)
                         OutlinedTextField(
                             value = isbn,
                             onValueChange = { value ->
@@ -543,6 +638,19 @@ fun CreateBookDialog(
                             modifier = Modifier.weight(1f),
                             enabled = !isWorking
                         )
+                    }
+
+                    // Rellenar por ISBN: solo al pulsarlo, que es cuando se manda el ISBN a OpenLibrary.
+                    TextButton(
+                        onClick = { viewModel.lookupIsbn(isbn) },
+                        enabled = !isWorking && !vmState.isLookingUp && IsbnUtils.isIsbn(isbn),
+                        modifier = Modifier.align(Alignment.Start)
+                    ) {
+                        if (vmState.isLookingUp) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(stringResource(R.string.create_book_fill_from_isbn))
                     }
 
                     // Selector de formato (desplegable)
@@ -583,20 +691,59 @@ fun CreateBookDialog(
                         }
                     }
 
+                    // Estantería en la que ponerlo nada más crearlo
+                    ExposedDropdownMenuBox(
+                        expanded = shelfDropdownExpanded && !isWorking,
+                        onExpandedChange = { if (!isWorking) shelfDropdownExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val shelfLabel = shelfOptions.firstOrNull { it.first == shelfSlug }?.let {
+                            stringResource(it.second)
+                        } ?: stringResource(R.string.create_book_shelf_none)
+
+                        OutlinedTextField(
+                            value = shelfLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.create_book_shelf_label)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shelfDropdownExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                            enabled = !isWorking
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = shelfDropdownExpanded && !isWorking,
+                            onDismissRequest = { shelfDropdownExpanded = false }
+                        ) {
+                            shelfOptions.forEach { (slug, stringRes) ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(stringRes)) },
+                                    onClick = {
+                                        shelfSlug = slug
+                                        shelfDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     // Selector de portada
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (coverUri != null) {
+                        val previewModel: Any? = coverUri ?: remoteCoverUrl
+                        if (previewModel != null) {
                             Box(
                                 modifier = Modifier
                                     .size(width = 54.dp, height = 76.dp)
                                     .clip(MaterialTheme.shapes.small)
                             ) {
                                 AsyncImage(
-                                    model = coverUri,
+                                    model = previewModel,
                                     contentDescription = stringResource(R.string.create_book_cover_label),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
@@ -615,7 +762,10 @@ fun CreateBookDialog(
                                     Text(stringResource(R.string.create_book_cover_change))
                                 }
                                 TextButton(
-                                    onClick = { coverUriString = null },
+                                    onClick = {
+                                        coverUriString = null
+                                        remoteCoverUrl = null
+                                    },
                                     enabled = !isWorking,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -688,45 +838,69 @@ fun CreateBookDialog(
                                 label = { Text(stringResource(R.string.create_book_field_published_date)) },
                                 placeholder = { Text("AAAA o AAAA-MM-DD") },
                                 singleLine = true,
+                                trailingIcon = {
+                                    IconButton(onClick = { showDatePicker = true }, enabled = !isWorking) {
+                                        Icon(
+                                            imageVector = Icons.Default.DateRange,
+                                            contentDescription = stringResource(R.string.create_book_pick_date)
+                                        )
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = !isWorking
                             )
 
-                            // Selector de idioma (desplegable)
-                            ExposedDropdownMenuBox(
-                                expanded = languageDropdownExpanded && !isWorking,
-                                onExpandedChange = { if (!isWorking) languageDropdownExpanded = it },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                val langLabel = languageOptions.firstOrNull { it.first == selectedLanguageCode }?.let {
-                                    stringResource(it.second)
-                                } ?: stringResource(R.string.create_book_lang_unspecified)
+                            OutlinedTextField(
+                                value = publishers,
+                                onValueChange = { publishers = it },
+                                label = { Text(stringResource(R.string.create_book_field_publishers)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !isWorking
+                            )
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 OutlinedTextField(
-                                    value = langLabel,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text(stringResource(R.string.create_book_field_languages)) },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageDropdownExpanded) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                    value = series,
+                                    onValueChange = { series = it },
+                                    label = { Text(stringResource(R.string.create_book_field_series)) },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(2f),
                                     enabled = !isWorking
                                 )
+                                OutlinedTextField(
+                                    value = seriesNumber,
+                                    onValueChange = { seriesNumber = it },
+                                    label = { Text(stringResource(R.string.create_book_field_series_number)) },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !isWorking && series.isNotBlank()
+                                )
+                            }
 
-                                ExposedDropdownMenu(
-                                    expanded = languageDropdownExpanded && !isWorking,
-                                    onDismissRequest = { languageDropdownExpanded = false }
-                                ) {
-                                    languageOptions.forEach { (code, stringRes) ->
-                                        DropdownMenuItem(
-                                            text = { Text(stringResource(stringRes)) },
-                                            onClick = {
-                                                selectedLanguageCode = code
-                                                languageDropdownExpanded = false
-                                            }
-                                        )
-                                    }
+                            // Idiomas: se pueden marcar varios (un libro bilingüe, por ejemplo).
+                            Text(
+                                text = stringResource(R.string.create_book_field_languages),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                languageOptions.forEach { (code, stringRes) ->
+                                    val isSelected = code in selectedLanguages
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = {
+                                            val updated = if (isSelected) selectedLanguages - code else selectedLanguages + code
+                                            selectedLanguageCodes = updated.joinToString(",")
+                                        },
+                                        label = { Text(stringResource(stringRes)) },
+                                        enabled = !isWorking
+                                    )
                                 }
                             }
 
@@ -757,10 +931,12 @@ fun CreateBookDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (pendingConfirmationForm != null) {
+                    if (confirmation != null) {
+                        val allAnswered = confirmation.options.map { it.field }.distinct()
+                            .all { confirmation.selections.containsKey(it) }
                         Button(
-                            onClick = { submitAuthorConfirmation() },
-                            enabled = !isWorking && selectedAuthorOption != null
+                            onClick = { viewModel.confirm(api, coverProvider) },
+                            enabled = !isWorking && allAnswered
                         ) {
                             Text(stringResource(R.string.create_book_confirm_author))
                         }
@@ -784,9 +960,9 @@ fun CreateBookDialog(
         dismissButton = {
             TextButton(
                 onClick = {
-                    if (pendingConfirmationForm != null) {
-                        // Volver al formulario de campos si cancela la confirmación de autor
-                        pendingConfirmationForm = null
+                    if (confirmation != null) {
+                        // Volver al formulario de campos si cancela la confirmación
+                        viewModel.cancelConfirmation()
                     } else {
                         onDismiss()
                     }
@@ -794,7 +970,7 @@ fun CreateBookDialog(
                 enabled = !isWorking
             ) {
                 Text(
-                    if (pendingConfirmationForm != null) {
+                    if (confirmation != null) {
                         stringResource(R.string.progress_btn_cancel)
                     } else {
                         stringResource(R.string.book_close)
