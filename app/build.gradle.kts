@@ -35,6 +35,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Sin META-INF/version-control-info.textproto: su contenido depende del entorno
+            // y rompe la build reproducible de F-Droid
+            vcsInfo.include = false
         }
         debug {
             // ID distinto para que la build de depuración conviva con la release/F-Droid instalada
