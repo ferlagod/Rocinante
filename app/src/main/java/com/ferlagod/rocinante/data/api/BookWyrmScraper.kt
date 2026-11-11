@@ -3079,39 +3079,79 @@ suspend fun com.ferlagod.rocinante.data.api.BookWyrmApi.editProfile(
     }
 
     val html = getResponse.body()?.string() ?: return getResponse
-    val document = org.jsoup.Jsoup.parse(html)
-    val form = document.selectFirst("form[method=post]")
+    val fields = BookWyrmScraper.buildProfileFormFields(html, name, summary)
         ?: return retrofit2.Response.error(400, "Form not found".toByteArray().toResponseBody(null))
 
     val formBuilder = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
     formBuilder.addFormDataPart("csrfmiddlewaretoken", csrfToken)
+    fields.forEach { (fieldName, value) -> formBuilder.addFormDataPart(fieldName, value) }
 
-    val inputs = form.select("input, textarea, select")
-    for (input in inputs) {
-        val fieldName = input.attr("name")
-        if (fieldName.isBlank() || fieldName == "csrfmiddlewaretoken") continue
+    return this.submitProfilePreferences(formBuilder.build())
+}
 
-        val type = input.attr("type").lowercase()
-        if (type == "file") continue
+/**
+ * Los campos del formulario de preferencias del perfil, listos para reenviarlos, con el nombre
+ * y la biografía cambiados y todo lo demás tal y como lo tiene la instancia.
+ *
+ * El formulario es un ModelForm de Django: lo que no viaja se guarda vacío, y dos de sus listas
+ * (la zona horaria y la privacidad por defecto) no admiten quedarse en blanco, así que con una
+ * sola que falte la instancia rechaza el formulario entero. Por eso de cada lista se manda la
+ * opción que trae marcada, y no un `value` que un `<select>` no tiene.
+ *
+ * @return Pares nombre/valor sin el token CSRF, que pone quien envía; null si la página no trae
+ *   el formulario (sesión caducada, o una versión de BookWyrm que lo llame de otro modo).
+ */
+internal fun BookWyrmScraper.buildProfileFormFields(
+    html: String,
+    name: String,
+    summary: String
+): List<Pair<String, String>>? {
+    val document = org.jsoup.Jsoup.parse(html)
+    // Se busca por su nombre: el primer formulario POST de la página puede ser otro, como el
+    // de cerrar sesión del menú de usuario. El de reserva es para plantillas antiguas sin nombre.
+    val form = document.selectFirst("form[name=edit-profile]")
+        ?: document.select("form[method=post]").firstOrNull { it.selectFirst("[name=summary]") != null }
+        ?: return null
 
+    val fields = mutableListOf<Pair<String, String>>()
+    for (input in form.select("input[name], textarea[name], select[name]")) {
+        val fieldName = input.attr("name").trim()
+        if (fieldName.isEmpty() || fieldName == "csrfmiddlewaretoken") continue
+
+        // El nombre y la biografía son lo único que se cambia desde la app.
         if (fieldName == "name") {
-            formBuilder.addFormDataPart(fieldName, name)
+            fields += fieldName to name
             continue
         }
         if (fieldName == "summary" || fieldName == "bio" || fieldName == "description") {
-            formBuilder.addFormDataPart(fieldName, summary)
+            fields += fieldName to summary
             continue
         }
 
-        if (type == "checkbox" || type == "radio") {
-            if (input.hasAttr("checked")) {
-                formBuilder.addFormDataPart(fieldName, input.attr("value").ifEmpty { "on" })
+        when (input.tagName()) {
+            "select" -> {
+                // La opción marcada, o la primera si no hay ninguna, que es la que daría por
+                // buena el navegador. Una lista sin opciones no se envía.
+                val chosen = input.selectFirst("option[selected]") ?: input.selectFirst("option")
+                if (chosen != null) {
+                    fields += fieldName to (if (chosen.hasAttr("value")) chosen.attr("value") else chosen.text())
+                }
             }
-        } else {
-            val value = if (input.tagName() == "textarea") input.text() else input.attr("value")
-            formBuilder.addFormDataPart(fieldName, value)
+            // wholeText y no text: text() junta los saltos de línea en espacios.
+            "textarea" -> fields += fieldName to input.wholeText()
+            else -> {
+                val type = input.attr("type").lowercase()
+                // La foto no se puede reenviar (sin ella la instancia deja la que había), y los
+                // botones no son datos.
+                if (type in setOf("file", "submit", "button", "image", "reset")) continue
+                if (type == "checkbox" || type == "radio") {
+                    // Una casilla sin marcar no se envía, igual que en el navegador.
+                    if (input.hasAttr("checked")) fields += fieldName to input.attr("value").ifEmpty { "on" }
+                } else {
+                    fields += fieldName to input.attr("value")
+                }
+            }
         }
     }
-
-    return this.submitProfilePreferences(formBuilder.build())
+    return fields
 }
