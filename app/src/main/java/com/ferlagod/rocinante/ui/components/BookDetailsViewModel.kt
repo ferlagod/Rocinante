@@ -30,6 +30,7 @@ import com.ferlagod.rocinante.data.model.BookWyrmAuthor
 import com.ferlagod.rocinante.utils.BookWyrmUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -94,13 +95,13 @@ class BookDetailsViewModel @Inject constructor(
         _state.value = State(enrichment = initialEnrichment)
 
         viewModelScope.launch {
-            val fresh = runCatching { BookWyrmScraper.scrapeBookEnrichment(api, bookKey) }.getOrNull()
+            val fresh = orNull { BookWyrmScraper.scrapeBookEnrichment(api, bookKey) }
             if (fresh != null && sessionKey == session) {
                 // Se cachea desde aquí, y no solo avisando a quien abrió la ficha: por la
                 // búsqueda y la actividad pasan los libros que aún no están en ninguna
                 // estantería, que son justo los que se acaban de añadir. Guardado ya, «Mis
                 // libros» los enseña completos sin volver a leer su página.
-                runCatching { cache.mergeEnrichment(fresh) }
+                orNull { cache.mergeEnrichment(fresh) }
                 _state.update { it.copy(enrichment = fresh, freshEnrichment = fresh) }
             }
         }
@@ -137,8 +138,8 @@ class BookDetailsViewModel @Inject constructor(
             urls.mapIndexed { index, url ->
                 async {
                     val author = cache.loadAuthor(url) ?: limiter.withPermit {
-                        runCatching { api.getAuthor(BookWyrmUtils.ensureJsonUrl(url)) }.getOrNull()
-                    }?.also { runCatching { cache.saveAuthor(url, it) } }
+                        orNull { api.getAuthor(BookWyrmUtils.ensureJsonUrl(url)) }
+                    }?.also { orNull { cache.saveAuthor(url, it) } }
                     if (author != null && sessionKey == session) {
                         loaded[index] = author
                         // Se van enseñando según llegan, en vez de esperar a tenerlos todos.
@@ -164,7 +165,7 @@ class BookDetailsViewModel @Inject constructor(
         }
         _state.update { it.copy(isLoadingProgress = true) }
         progressJob = viewModelScope.launch {
-            val progress = runCatching { BookWyrmScraper.getReadingProgress(api, bookKey) }.getOrNull()
+            val progress = orNull { BookWyrmScraper.getReadingProgress(api, bookKey) }
             _state.update { it.copy(readingProgress = progress, isLoadingProgress = false) }
         }
     }
@@ -178,4 +179,19 @@ class BookDetailsViewModel @Inject constructor(
         _state.update { it.copy(enrichment = enrichment) }
 
     fun consumeFreshEnrichment() = _state.update { it.copy(freshEnrichment = null) }
+
+    /**
+     * Como `runCatching { … }.getOrNull()`, pero dejando pasar la cancelación.
+     *
+     * `runCatching` también atrapa la [CancellationException]: un trabajo cancelado (al volver
+     * a pedir el progreso, por ejemplo) seguía adelante como si la red hubiera fallado y
+     * escribía un progreso vacío encima del que estaba cargando el trabajo nuevo.
+     */
+    private inline fun <T> orNull(block: () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        null
+    }
 }
