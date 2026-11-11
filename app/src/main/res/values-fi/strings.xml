@@ -39,6 +39,7 @@
     <string name="shelf_screen_subtitle">Valitse hylly nähdäksesi lukuedistymisesi.</string>
     <string name="shelf_back">Takaisin</string>
     <string name="shelf_empty">Tämä hylly on tyhjä.</string>
+    <string name="shelf_empty_hint">Etsi kirja kohdasta «Hae», avaa se ja napauta «Lisää hyllyyn».</string>
     <string name="shelf_sort">Lajittele</string>
     <string name="shelf_sort_default">Oletusjärjestys</string>
     <string name="shelf_sort_title_asc">Nimi A–Ö</string>

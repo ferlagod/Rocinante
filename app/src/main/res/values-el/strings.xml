@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Επιλέξτε ένα ράφι για να δείτε την πρόοδό σας.</string>
     <string name="shelf_back">Πίσω</string>
     <string name="shelf_empty">Αυτό το ράφι είναι άδειο.</string>
+    <string name="shelf_empty_hint">Αναζητήστε ένα βιβλίο στην «Αναζήτηση», ανοίξτε το και πατήστε «Προσθήκη στο ράφι».</string>
     <string name="shelf_sort">Ταξινόμηση</string>
     <string name="shelf_sort_default">Προεπιλεγμένη σειρά</string>
     <string name="shelf_sort_title_asc">Τίτλος Α–Ω</string>

@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Seleziona uno scaffale per visualizzare i tuoi progressi.</string>
     <string name="shelf_back">Indietro</string>
     <string name="shelf_empty">Questo scaffale è vuoto.</string>
+    <string name="shelf_empty_hint">Cerca un libro in «Cerca», aprilo e tocca «Aggiungi allo scaffale».</string>
     <string name="shelf_sort">Ordina</string>
     <string name="shelf_sort_default">Ordine predefinito</string>
     <string name="shelf_sort_title_asc">Titolo A–Z</string>

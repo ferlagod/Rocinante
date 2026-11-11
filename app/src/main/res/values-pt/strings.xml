@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Selecione uma estante para visualizar o seu progresso.</string>
     <string name="shelf_back">Voltar</string>
     <string name="shelf_empty">Esta estante está vazia.</string>
+    <string name="shelf_empty_hint">Procure um livro em «Buscar», abra-o e toque em «Adicionar à estante».</string>
     <string name="shelf_sort">Ordenar</string>
     <string name="shelf_sort_default">Ordem predefinida</string>
     <string name="shelf_sort_title_asc">Título A–Z</string>

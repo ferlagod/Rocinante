@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Wähle ein Regal, um deinen Lesefortschritt zu sehen.</string>
     <string name="shelf_back">Zurück</string>
     <string name="shelf_empty">Dieses Regal ist leer.</string>
+    <string name="shelf_empty_hint">Suche ein Buch unter «Suchen», öffne es und tippe auf «Zum Regal hinzufügen».</string>
     <string name="shelf_sort">Sortieren</string>
     <string name="shelf_sort_default">Standardreihenfolge</string>
     <string name="shelf_sort_title_asc">Titel A–Z</string>

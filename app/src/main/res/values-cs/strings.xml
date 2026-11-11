@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Vyberte poličku a prohlédněte si svůj pokrok.</string>
     <string name="shelf_back">Zpět</string>
     <string name="shelf_empty">Tato polička je prázdná.</string>
+    <string name="shelf_empty_hint">Vyhledejte knihu v sekci «Hledat», otevřete ji a klepněte na «Přidat na poličku».</string>
     <string name="shelf_sort">Seřadit</string>
     <string name="shelf_sort_default">Výchozí řazení</string>
     <string name="shelf_sort_title_asc">Název A–Z</string>

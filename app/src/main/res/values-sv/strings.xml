@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Välj en hylla för att se dina framsteg.</string>
     <string name="shelf_back">Tillbaka</string>
     <string name="shelf_empty">Den här hyllan är tom.</string>
+    <string name="shelf_empty_hint">Sök efter en bok under «Sök», öppna den och tryck på «Lägg till i hylla».</string>
     <string name="shelf_sort">Sortera</string>
     <string name="shelf_sort_default">Standardordning</string>
     <string name="shelf_sort_title_asc">Titel A–Ö</string>

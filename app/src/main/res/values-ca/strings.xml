@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Selecciona una prestatgeria per a veure el teu progrés.</string>
     <string name="shelf_back">Torna</string>
     <string name="shelf_empty">Aquesta prestatgeria està buida.</string>
+    <string name="shelf_empty_hint">Cerca un llibre a «Cerca», obre\'l i toca «Afegeix a prestatgeria».</string>
     <string name="shelf_sort">Ordena</string>
     <string name="shelf_sort_default">Ordre predeterminat</string>
     <string name="shelf_sort_title_asc">Títol A–Z</string>

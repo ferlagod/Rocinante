@@ -1717,11 +1717,26 @@ fun ShelfNativeDetailScreen(
         } else if (isLoading && currentPage == 1) {
             ShelfSkeletonLoader()
         } else if (books.isEmpty()) {
+            // Una estantería vacía es justo donde se queda quien acaba de llegar: se le dice
+            // por dónde se meten los libros, que el botón vive en la ficha y no aquí.
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(R.string.shelf_empty),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.shelf_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.shelf_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         } else {
             val isShowingBookList = !(showAuthorList && openAuthorKey == null) && !(showSeriesList && openSeriesUrl == null)

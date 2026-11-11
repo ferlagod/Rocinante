@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Sélectionnez une étagère pour voir votre progression.</string>
     <string name="shelf_back">Retour</string>
     <string name="shelf_empty">Cette étagère est vide.</string>
+    <string name="shelf_empty_hint">Cherchez un livre dans «Rechercher», ouvrez-le et touchez «Ajouter à l\'étagère».</string>
     <string name="shelf_sort">Trier</string>
     <string name="shelf_sort_default">Ordre par défaut</string>
     <string name="shelf_sort_title_asc">Titre A–Z</string>

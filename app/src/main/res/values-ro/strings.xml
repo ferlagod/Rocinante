@@ -25,6 +25,7 @@
     <string name="shelf_screen_subtitle">Selectează un raft pentru a-ți vizualiza progresul.</string>
     <string name="shelf_back">Înapoi</string>
     <string name="shelf_empty">Acest raft este gol.</string>
+    <string name="shelf_empty_hint">Caută o carte în «Căutare», deschide-o și atinge «Adaugă pe raft».</string>
     <string name="shelf_sort">Sortează</string>
     <string name="shelf_sort_default">Ordine implicită</string>
     <string name="shelf_sort_title_asc">Titlu A–Z</string>
