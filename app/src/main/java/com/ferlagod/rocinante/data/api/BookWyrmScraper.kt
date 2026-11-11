@@ -2281,7 +2281,8 @@ object BookWyrmScraper {
                 }
 
                 val ratingMeta = element.selectFirst("meta[itemprop=ratingValue]")
-                val ratingValue = ratingMeta?.attr("content")?.toFloatOrNull()?.toInt()
+                // Se conserva el decimal: con toInt() un 4,5 se quedaba en 4.
+                val ratingValue = ratingMeta?.attr("content")?.toDoubleOrNull()
 
                 val dateElement = element.selectFirst("time")
                 var publishedDate = dateElement?.attr("datetime") ?: ""

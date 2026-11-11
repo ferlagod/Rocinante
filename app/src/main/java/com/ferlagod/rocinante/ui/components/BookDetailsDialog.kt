@@ -1435,12 +1435,10 @@ fun BookDetailsDialog(
                                                             fontWeight = FontWeight.Bold,
                                                             color = MaterialTheme.colorScheme.onSurface
                                                         )
-                                                        if (rating != null && rating in 1..5) {
-                                                            Text(
-                                                                text = "★".repeat(rating) + "☆".repeat(5 - rating),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.tertiary
-                                                            )
+                                                        // RatingStars y no estrellas de texto: estas
+                                                        // no saben pintar media estrella.
+                                                        if (rating != null && rating in 0.5..5.0) {
+                                                            RatingStars(rating = rating, starSize = 14.dp)
                                                         }
                                                     }
                                                     Spacer(modifier = Modifier.height(2.dp))
@@ -3653,19 +3651,20 @@ fun ReviewDetailDialog(
                     }
                 }
 
-                if (rating != null && rating in 1..5) {
+                if (rating != null && rating in 0.5..5.0) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "★".repeat(rating) + "☆".repeat(5 - rating),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
+                        RatingStars(rating = rating, starSize = 18.dp)
                         Spacer(modifier = Modifier.width(6.dp))
+                        // «4» si es entera y «4,5» si lleva media, con la coma o el punto del
+                        // idioma del móvil.
+                        val ratingLabel = java.text.NumberFormat.getNumberInstance().apply {
+                            maximumFractionDigits = 1
+                        }.format(rating)
                         Text(
-                            text = stringResource(R.string.rating_stars, rating.toString()),
+                            text = stringResource(R.string.rating_stars, ratingLabel),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

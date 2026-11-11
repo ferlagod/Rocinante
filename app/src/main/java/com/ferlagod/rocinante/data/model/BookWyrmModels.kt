@@ -142,8 +142,9 @@ data class ActivityPubObject(
     val type: String?,
     val content: String?,
     val name: String?,
-    // Calificación por estrellas (Review)
-    val rating: Int?,
+    // Calificación por estrellas (Review), de 0,5 en 0,5: BookWyrm admite medias estrellas,
+    // así que es decimal. Con un Int, Gson no podía leer un «4.5» y fallaba la actividad entera.
+    val rating: Double?,
     // URL del libro al que hace referencia la actividad (Review, Comment, Quotation)
     @SerializedName("inReplyToBook") val inReplyToBook: String? = null,
     // Adjuntos: BookWyrm puede incluir aquí la portada del libro
