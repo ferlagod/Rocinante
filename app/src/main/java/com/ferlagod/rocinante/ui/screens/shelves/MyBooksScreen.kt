@@ -1676,11 +1676,10 @@ fun ShelfNativeDetailScreen(
                                 BookWyrmScraper.scrapeBookEnrichment(api, bookUrl)?.let { enriched ->
                                     enrichment = enrichment.toMutableMap()
                                         .apply { put(bookUrl, enriched) }
-                                    enrichLock.withLock {
-                                        val stored = dataCache.loadEnrichment()
-                                        stored[bookUrl] = enriched
-                                        dataCache.saveEnrichment(stored)
-                                    }
+                                    // Solo este libro: la caché ya se coordina sola con las
+                                    // demás escrituras, y esperar a enrichLock dejaba este
+                                    // guardado detrás de todo un resincronizado.
+                                    dataCache.mergeEnrichment(enriched, bookUrl)
                                 }
                             } catch (e: Exception) {
                                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -2227,7 +2226,9 @@ fun ShelfNativeDetailScreen(
             onEnrichmentUpdated = { fresh ->
                 val updated = enrichment.toMutableMap().apply { put(activeBookUrl, fresh) }
                 enrichment = updated
-                coroutineScope.launch { dataCache.saveEnrichment(updated) }
+                // Se guarda solo este libro y no el mapa entero de la pantalla, que puede ser
+                // de antes de lo que otra parte de la app haya escrito mientras tanto.
+                coroutineScope.launch { dataCache.mergeEnrichment(fresh, activeBookUrl) }
             }
         )
     }

@@ -24,6 +24,8 @@ import com.ferlagod.rocinante.data.model.TimelineUiItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -405,14 +407,32 @@ class TimelineCache(private val context: Context) {
     /**
      * Guarda el mapa completo de datos enriquecidos por libro.
      */
-    suspend fun saveEnrichment(data: Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>) = withContext(Dispatchers.IO) {
-        try {
-            val file = File(context.cacheDir, "enrichment_cache.json")
-            file.writeText(gson.toJson(data))
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+    suspend fun saveEnrichment(data: Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>) =
+        enrichmentLock.withLock { writeEnrichment(data) }
+
+    /**
+     * Escribe el mapa sin coger el candado; quien llama ya lo tiene.
+     *
+     * Se escribe en un archivo aparte y luego se renombra encima del bueno: el renombrado es
+     * atómico, así que quien lea a la vez ve el archivo viejo o el nuevo, nunca uno a medias.
+     * Con `writeText` directo, una lectura en mitad de la escritura no podía leer el JSON,
+     * lo daba por vacío, y el siguiente guardado se llevaba por delante toda la caché.
+     */
+    private suspend fun writeEnrichment(data: Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>) =
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(context.cacheDir, "enrichment_cache.json")
+                val tmp = File(context.cacheDir, "enrichment_cache.json.tmp")
+                tmp.writeText(gson.toJson(data))
+                if (!tmp.renameTo(file)) {
+                    // Algún sistema de archivos no deja renombrar encima: se borra y se reintenta.
+                    file.delete()
+                    tmp.renameTo(file)
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            }
         }
-    }
 
     /**
      * Guarda los datos de un solo libro sin tocar los de los demás.
@@ -423,10 +443,26 @@ class TimelineCache(private val context: Context) {
      * búsqueda ya trae autor, idioma y serie cuando se entra en «Mis libros», en vez de
      * aparecer pelado hasta el siguiente resincronizado.
      */
-    suspend fun mergeEnrichment(entry: com.ferlagod.rocinante.data.model.BookEnrichment) {
-        val current = loadEnrichment()
-        current[entry.bookId] = entry
-        saveEnrichment(current)
+    suspend fun mergeEnrichment(
+        entry: com.ferlagod.rocinante.data.model.BookEnrichment,
+        key: String = entry.bookId
+    ) {
+        // Leer, cambiar y escribir va todo bajo el mismo candado: la ficha, «Mis libros» y las
+        // estadísticas escriben a la vez, y sin él cada una guardaba su copia leída antes y
+        // borraba lo que otra acababa de apuntar.
+        enrichmentLock.withLock {
+            val current = loadEnrichment()
+            current[key] = entry
+            writeEnrichment(current)
+        }
+    }
+
+    companion object {
+        /**
+         * Candado de la caché de enriquecimiento, uno para todo el proceso: cada pantalla crea
+         * su propio [TimelineCache], y un candado por instancia no las coordinaría entre sí.
+         */
+        private val enrichmentLock = Mutex()
     }
 
     /**
