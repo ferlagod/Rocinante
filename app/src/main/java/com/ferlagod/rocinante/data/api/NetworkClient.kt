@@ -28,6 +28,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -355,6 +356,26 @@ object NetworkClient {
         return built
     }
 
+    /** Cabeceras que solo tienen sentido hacia la instancia del usuario. */
+    private val SESSION_HEADERS = listOf("X-CSRFToken", "Origin", "Referer")
+
+    /**
+     * La petición con la que seguir una redirección 307/308, o null si no hay que seguirla.
+     *
+     * Dentro de la instancia se repite la petición tal cual. Hacia otro servidor (una portada
+     * guardada en un almacenamiento externo, por ejemplo) se quitan las cabeceras de la sesión,
+     * que no son de su incumbencia: antes viajaban también el token CSRF y el origen. Y una
+     * petición con cuerpo, como un POST, no se sigue fuera de la instancia, porque el cuerpo
+     * lleva el token en el formulario; se devuelve la redirección a quien la pidió.
+     */
+    internal fun redirectRequest(request: Request, newUrl: HttpUrl, instanceHost: String?): Request? {
+        val builder = request.newBuilder().url(newUrl)
+        if (isInstanceHost(newUrl.host, instanceHost)) return builder.build()
+        if (request.body != null) return null
+        SESSION_HEADERS.forEach { builder.removeHeader(it) }
+        return builder.build()
+    }
+
     /** Fábrica de llamadas para Coil. */
     val imageCallFactory: Call.Factory = Call.Factory { request -> currentImageClient().newCall(request) }
 
@@ -433,8 +454,7 @@ object NetworkClient {
                 val location = response.header("Location") ?: break
                 if (location.contains(AnubisClearance.CHALLENGE_PATH)) break
                 val newUrl = response.request.url.resolve(location) ?: break
-                
-                val newRequest = response.request.newBuilder().url(newUrl).build()
+                val newRequest = redirectRequest(response.request, newUrl, host) ?: break
                 response.close()
                 response = chain.proceed(newRequest)
                 followCount++
