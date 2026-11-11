@@ -119,21 +119,65 @@ object FavouriteShelf {
         bookUrl: String
     ): Boolean {
         val wanted = BookWyrmScraper.canonicalBookUrl(bookUrl)
+        var found = false
+        walkShelfPages(fetchPage = { page -> shelfPageIds(api, instanceUrl, username, identifier, page) }) { ids ->
+            found = wanted in ids
+            !found
+        }
+        return found
+    }
+
+    /** Tope de páginas que se recorren de una estantería, por si alguna vez se enredan. */
+    private const val MAX_SHELF_PAGES = 20
+
+    /**
+     * Recorre las páginas de una estantería hasta que se acaban.
+     *
+     * Que se acaben no quiere decir que llegue una vacía: el paginador de Django que usa
+     * BookWyrm responde a una página que no existe con la última, así que esperar a la vacía
+     * pedía siempre las [MAX_SHELF_PAGES] páginas. Se para en cuanto una página no trae ningún
+     * libro que no se hubiera visto ya.
+     *
+     * @param fetchPage Las direcciones (ya normalizadas) de los libros de una página.
+     * @param onPage Recibe cada página con libros nuevos; si devuelve false, se deja de pedir.
+     * @return Todas las direcciones vistas.
+     */
+    internal suspend fun walkShelfPages(
+        fetchPage: suspend (Int) -> List<String>,
+        onPage: (List<String>) -> Boolean = { true }
+    ): Set<String> {
+        val seen = mutableSetOf<String>()
+        for (page in 1..MAX_SHELF_PAGES) {
+            val ids = fetchPage(page)
+            val fresh = ids.filter { it !in seen }
+            if (fresh.isEmpty()) break
+            seen += fresh
+            if (!onPage(fresh)) break
+        }
+        return seen
+    }
+
+    /**
+     * Las direcciones normalizadas de los libros de una página de la estantería: del `.json`, o
+     * de la página web si la instancia no lo da (modo seguro de ActivityPub).
+     */
+    private suspend fun shelfPageIds(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String,
+        identifier: String,
+        page: Int
+    ): List<String> {
         val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
             .trimEnd('/')
         val user = username.removePrefix("@").substringBefore("@").trim()
-        for (page in 1..20) {
-            val items = runCatching {
-                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page").orderedItems.orEmpty()
-            }.getOrElse {
-                BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier?page=$page", "$base/").orEmpty()
-            }
-            if (items.isEmpty()) return false
-            if (items.any { it.id != null && BookWyrmScraper.canonicalBookUrl(it.id) == wanted }) {
-                return true
-            }
+        val items = try {
+            api.getShelfData("$base/user/$user/books/$identifier.json?page=$page").orderedItems.orEmpty()
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier?page=$page", "$base/").orEmpty()
         }
-        return false
+        return items.mapNotNull { it.id }.map { BookWyrmScraper.canonicalBookUrl(it) }
     }
 
     /**
@@ -146,22 +190,8 @@ object FavouriteShelf {
         instanceUrl: String,
         username: String,
         identifier: String
-    ): Set<String> {
-        val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
-            .trimEnd('/')
-        val user = username.removePrefix("@").substringBefore("@").trim()
-        val ids = mutableSetOf<String>()
-        for (page in 1..20) {
-            val items = runCatching {
-                api.getShelfData("$base/user/$user/books/$identifier.json?page=$page").orderedItems.orEmpty()
-            }.getOrElse {
-                BookWyrmScraper.scrapeShelfPage(api, "$base/user/$user/books/$identifier?page=$page", "$base/").orEmpty()
-            }
-            if (items.isEmpty()) break
-            items.mapNotNull { it.id }.forEach { ids += BookWyrmScraper.canonicalBookUrl(it) }
-        }
-        return ids
-    }
+    ): Set<String> =
+        walkShelfPages(fetchPage = { page -> shelfPageIds(api, instanceUrl, username, identifier, page) })
 
     /**
      * Cuántos libros hay en la estantería, o null si no se pudo saber.
