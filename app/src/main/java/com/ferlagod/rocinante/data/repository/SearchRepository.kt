@@ -30,19 +30,26 @@ class SearchRepository(
     private val api: BookWyrmApi
 ) {
     /**
-     * Realiza una búsqueda devolviendo el HTML y raspando los resultados.
-     * Soporta tanto resultados locales como remotos (conectores).
+     * Busca libros en la instancia, como la página /search de la web.
+     *
+     * BookWyrm enseña primero lo que tiene en su base de datos. Los catálogos externos que
+     * tenga configurados el administrador (Open Library, Inventaire, otras instancias...) solo
+     * los consulta si no hay nada local o si se le pide con `remote=true`, que es lo que hace
+     * el enlace «Cargar resultados de otros catálogos» de la web.
+     *
+     * @param remote Pedir también los catálogos externos. Es lento: la instancia los consulta
+     *   en ese momento, uno detrás de otro.
      */
-    suspend fun searchBooksScraped(query: String, instanceUrl: String): List<BookSearchResult> = withContext(Dispatchers.IO) {
+    suspend fun searchBooksScraped(query: String, instanceUrl: String, remote: Boolean = false): List<BookSearchResult> = withContext(Dispatchers.IO) {
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-        
+
         try {
-            val response = api.searchBooks(query)
+            val response = api.searchBooks(query, remote = if (remote) "true" else null)
             if (!response.isSuccessful) return@withContext emptyList()
-            
+
             val responseBody = response.body()?.string() ?: return@withContext emptyList()
-            
+
             // Intento JSON primero por si es una API moderna pura
             try {
                 if (responseBody.trimStart().startsWith("[")) {
@@ -50,102 +57,103 @@ class SearchRepository(
                     return@withContext Gson().fromJson(responseBody, typeToken)
                 }
             } catch (_: Exception) {}
-            
-            // Scraping HTML
-            val document = org.jsoup.Jsoup.parse(responseBody)
-            val results = mutableListOf<BookSearchResult>()
-            
-            // 1. Extraer resultados locales
-            val localElements = document.select("li.local-book-search-result, li:has(a[href*=/book/])")
-            for (element in localElements) {
-                // Ignore resolve-book forms in the local pass
-                if (element.selectFirst("form[action*=/resolve-book/]") != null) continue
 
-                val anchor = element.selectFirst("a[href*=/book/]") ?: continue
-                val title = anchor.text()
-                val key = anchor.attr("href").substringAfter("/book/").substringBefore("/")
-                
-                val authorAnchor = element.selectFirst("a.author") ?: element.selectFirst("a[href*=/author/]")
-                val author = authorAnchor?.text()
-                
-                val img = element.selectFirst("img.book-cover")
-                val coverRaw = img?.attr("src")
-                val cover = if (coverRaw != null && !coverRaw.startsWith("http")) {
-                    baseUrl.trimEnd('/') + "/" + coverRaw.trimStart('/')
-                } else coverRaw
-                
-                // Intentar extraer el año (ej: "(pubblicato 1949)" o "(published 1949)")
-                // Tomamos la ÚLTIMA coincidencia para evitar falsos positivos si el título es un año (ej. "1984")
-                val textContent = element.text()
-                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().findAll(textContent).lastOrNull()
-                val year = yearMatch?.value?.toIntOrNull()
-                
-                if (key.isNotBlank()) {
-                    results.add(
-                        BookSearchResult(
-                            key = key,
-                            title = title,
-                            author = author,
-                            year = year,
-                            cover = cover,
-                            isRemote = false
-                        )
-                    )
-                }
-            }
-            
-            // 2. Extraer resultados remotos (conectores federados)
-            // BookWyrm usa formularios con action "/resolve-book/" y un campo remote_id oculto
-            val remoteElements = document.select("li.remote-book-search-result, li:has(form[action*=/resolve-book/])")
-            for (element in remoteElements) {
-                // Buscamos el formulario para obtener el remote_id
-                val form = element.selectFirst("form[action*=/resolve-book/]")
-                val remoteIdInput = form?.selectFirst("input[name=remote_id]")
-                val remoteId = remoteIdInput?.attr("value")
-                
-                if (remoteId.isNullOrBlank()) continue
-                
-                // Normalmente el título está en negrita o en un span (BookWyrm UI)
-                val strongElems = element.select("strong")
-                val title = if (strongElems.isNotEmpty()) strongElems.first()?.text() ?: "Libro remoto" else "Libro remoto"
-                
-                // Extraer autor si está disponible, soportando inglés, italiano y español
-                val authorText = element.text()
-                val author = authorText.substringAfter(" by ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
-                             ?: authorText.substringAfter(" di ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
-                             ?: authorText.substringAfter(" por ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
-                             ?: authorText.substringAfter(" de ", "").substringBefore("(").trim().takeIf { it.isNotBlank() }
-                
-                val img = element.selectFirst("img.book-cover")
-                val coverRaw = img?.attr("src")
-                val cover = if (coverRaw != null && !coverRaw.startsWith("http")) {
-                    baseUrl.trimEnd('/') + "/" + coverRaw.trimStart('/')
-                } else coverRaw
-                
-                // Tomamos la ÚLTIMA coincidencia para evitar falsos positivos si el título es un año (ej. "1984")
-                val yearMatch = "\\b(18|19|20)\\d{2}\\b".toRegex().findAll(authorText).lastOrNull()
-                val year = yearMatch?.value?.toIntOrNull()
-                
-                results.add(
-                    BookSearchResult(
-                        key = remoteId, // Guardamos el remoteId en 'key' para que funcione como identificador temporal
-                        title = title,
-                        author = author,
-                        year = year,
-                        cover = cover,
-                        isRemote = true,
-                        remoteId = remoteId
-                    )
-                )
-            }
-            
-            // Evitar duplicados basados en 'key'
-            results.distinctBy { it.key }
+            parseBookSearchPage(responseBody, baseUrl)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             emptyList()
         }
     }
+
+    companion object {
+        private val YEAR_REGEX = "\\b(1[5-9]|20)\\d{2}\\b".toRegex()
+
+        /**
+         * Lee la página de resultados de /search (search/book.html).
+         *
+         * - Locales: `li.local-book-search-result`, con el título y el autor enlazando a
+         *   /book/<id> y /author/<id> de la propia instancia.
+         * - Remotos: un `section` por catálogo, con su nombre en el `summary` y cada libro en
+         *   un `li` con un formulario a /resolve-book que lleva el `remote_id`. El título enlaza
+         *   fuera, a veces a otra instancia de BookWyrm (otra.instancia/book/123), así que esos
+         *   enlaces no se pueden tomar por libros de aquí.
+         */
+        internal fun parseBookSearchPage(html: String, baseUrl: String): List<BookSearchResult> {
+            val document = org.jsoup.Jsoup.parse(html, baseUrl)
+            val results = mutableListOf<BookSearchResult>()
+            val base = baseUrl.trimEnd('/')
+
+            fun absolute(src: String?): String? = when {
+                src.isNullOrBlank() -> null
+                src.startsWith("http") -> src
+                else -> base + "/" + src.trimStart('/')
+            }
+
+            fun isRemoteItem(el: org.jsoup.nodes.Element): Boolean =
+                el.selectFirst("form[action*=resolve-book]") != null || el.closest("details") != null
+
+            // 1. Locales. Si la instancia no marca la clase (versiones viejas), cualquier li
+            // con un enlace a un libro que no sea de un catálogo externo.
+            val localElements = document.select("li.local-book-search-result")
+                .ifEmpty { document.select("li:has(a[href*=/book/])") }
+                .filterNot { isRemoteItem(it) }
+            for (element in localElements) {
+                val anchor = element.select("a[href*=/book/]").firstOrNull { a ->
+                    val href = a.absUrl("href").ifEmpty { a.attr("href") }
+                    !href.startsWith("http") || href.startsWith(base)
+                } ?: continue
+                val key = anchor.attr("href").substringAfter("/book/").substringBefore("/").substringBefore("?")
+                if (key.isBlank()) continue
+                val author = (element.selectFirst("a.author") ?: element.selectFirst("a[href*=/author/]"))?.text()
+                // La ÚLTIMA coincidencia, por si el título es un año («1984»).
+                val year = YEAR_REGEX.findAll(element.text()).lastOrNull()?.value?.toIntOrNull()
+                results += BookSearchResult(
+                    key = key,
+                    title = anchor.text(),
+                    author = author,
+                    year = year,
+                    cover = absolute(element.selectFirst("img")?.attr("src")),
+                    isRemote = false
+                )
+            }
+
+            // 2. Catálogos externos, con el nombre de cada uno.
+            for (form in document.select("form[action*=resolve-book]")) {
+                val remoteId = form.selectFirst("input[name=remote_id]")?.attr("value")?.trim()
+                if (remoteId.isNullOrBlank()) continue
+                val element = form.closest("li") ?: form.parent() ?: continue
+                val source = (form.closest("section") ?: form.closest("details"))
+                    ?.selectFirst("summary")
+                    ?.let { summary -> summary.selectFirst("a")?.text() ?: summary.text() }
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: runCatching { java.net.URI(remoteId).host?.removePrefix("www.") }.getOrNull()
+
+                val title = element.selectFirst("strong")?.text()?.trim().orEmpty()
+                // Debajo del título va «Autor (año)», sin traducir.
+                val byline = element.select("p")
+                    .firstOrNull { it.selectFirst("strong") == null && it.selectFirst("form") == null && it.text().isNotBlank() }
+                    ?.text()?.trim().orEmpty()
+                val yearMatch = Regex("""\((\d{4})\)\s*$""").find(byline)
+                val author = (if (yearMatch != null) byline.substring(0, yearMatch.range.first) else byline)
+                    .trim().takeIf { it.isNotEmpty() }
+
+                results += BookSearchResult(
+                    key = remoteId,
+                    title = title.ifEmpty { null },
+                    author = author,
+                    year = yearMatch?.groupValues?.get(1)?.toIntOrNull(),
+                    cover = absolute(element.selectFirst("img")?.attr("src")),
+                    isRemote = true,
+                    remoteId = remoteId,
+                    source = source
+                )
+            }
+
+            return results.distinctBy { it.key }
+        }
+    }
+
     /**
      * Busca una edición por ISBN exacto contra /isbn/<isbn>.json, un endpoint JSON
      * estable de BookWyrm. Solo consulta la base de datos LOCAL de la instancia; si la

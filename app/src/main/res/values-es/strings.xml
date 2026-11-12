@@ -625,6 +625,8 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="search_local_section">En tus estanterías</string>
     <string name="search_instance_section">En esta instancia</string>
     <string name="search_instance_prompt">Buscar «%1$s» en la instancia</string>
+    <string name="search_remote_section">Resultados de %1$s</string>
+    <string name="search_remote_loading">Buscando en otros catálogos…</string>
     <string name="search_clear">Borrar</string>
     <string name="search_tools_desc">Herramientas</string>
     <string name="search_tools_close">Cerrar herramientas</string>

@@ -568,6 +568,8 @@
     <string name="search_local_section">Στα ράφια σου</string>
     <string name="search_instance_section">Σε αυτήν την υπηρεσία</string>
     <string name="search_instance_prompt">Αναζήτηση «%1$s» σε αυτό το instance</string>
+    <string name="search_remote_section">Αποτελέσματα από %1$s</string>
+    <string name="search_remote_loading">Αναζήτηση σε άλλους καταλόγους…</string>
     <string name="search_clear">Καθαρισμός</string>
     <string name="search_tools_desc">Εργαλεία</string>
     <string name="search_tools_close">Κλείσιμο εργαλείων</string>

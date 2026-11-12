@@ -179,7 +179,9 @@ data class BookSearchResult(
     val year: Int?,
     val cover: String?,
     val isRemote: Boolean = false,
-    val remoteId: String? = null
+    val remoteId: String? = null,
+    // De qué catálogo viene un resultado remoto («Open Library», «Inventaire»...).
+    val source: String? = null
 ) : java.io.Serializable
 
 /**

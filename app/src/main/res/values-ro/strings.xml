@@ -588,6 +588,8 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="search_local_section">În rafturile tale</string>
     <string name="search_instance_section">Pe această instanță</string>
     <string name="search_instance_prompt">Caută „%1$s” pe această instanță</string>
+    <string name="search_remote_section">Rezultate din %1$s</string>
+    <string name="search_remote_loading">Se caută în alte cataloage…</string>
     <string name="search_clear">Șterge</string>
     <string name="search_tools_desc">Instrumente</string>
     <string name="search_tools_close">Închide instrumentele</string>

@@ -568,6 +568,8 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="search_local_section">Dans vos étagères</string>
     <string name="search_instance_section">Sur cette instance</string>
     <string name="search_instance_prompt">Chercher « %1$s » sur cette instance</string>
+    <string name="search_remote_section">Résultats de %1$s</string>
+    <string name="search_remote_loading">Recherche dans d\'autres catalogues…</string>
     <string name="search_clear">Effacer</string>
     <string name="search_tools_desc">Outils</string>
     <string name="search_tools_close">Fermer les outils</string>

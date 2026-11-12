@@ -568,6 +568,8 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="search_local_section">A les teves prestatgeries</string>
     <string name="search_instance_section">En aquesta instància</string>
     <string name="search_instance_prompt">Cercar «%1$s» a la instància</string>
+    <string name="search_remote_section">Resultats de %1$s</string>
+    <string name="search_remote_loading">Cercant en altres catàlegs…</string>
     <string name="search_clear">Esborrar</string>
     <string name="search_tools_desc">Eines</string>
     <string name="search_tools_close">Tancar les eines</string>

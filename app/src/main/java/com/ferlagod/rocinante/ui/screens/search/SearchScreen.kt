@@ -140,20 +140,58 @@ fun SearchScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
+    // Catálogos externos (Open Library, Inventaire, otras instancias...). Van aparte porque la
+    // instancia los consulta en ese momento y puede tardar varios segundos: lo local se enseña
+    // ya y esto se añade debajo cuando llega.
+    var isLoadingRemote by remember { mutableStateOf(false) }
+    var remoteJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var remoteSearchSeq by remember { mutableStateOf(0) }
+
+    val cancelRemoteSearch: () -> Unit = {
+        remoteJob?.cancel()
+        remoteJob = null
+        remoteSearchSeq++
+        isLoadingRemote = false
+    }
+
+    // Si la instancia no tenía nada propio ya habrá consultado los catálogos por su cuenta y
+    // los resultados remotos vienen en la primera respuesta: entonces no hace falta repetir.
+    val searchRemoteIfNeeded: (String, List<BookSearchResult>) -> Unit = { query, firstResults ->
+        cancelRemoteSearch()
+        if (firstResults.isNotEmpty() && firstResults.none { it.isRemote }) {
+            val seq = remoteSearchSeq
+            isLoadingRemote = true
+            remoteJob = coroutineScope.launch {
+                try {
+                    val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
+                    val remote = repo.searchBooksScraped(query, instanceUrl, remote = true).filter { it.isRemote }
+                    if (seq == remoteSearchSeq && remote.isNotEmpty()) {
+                        searchResults = (searchResults + remote).distinctBy { it.key }
+                    }
+                } finally {
+                    if (seq == remoteSearchSeq) isLoadingRemote = false
+                }
+            }
+        }
+    }
+
     val performSearch: () -> Unit = {
         if (searchQuery.isNotBlank()) {
+            cancelRemoteSearch()
             isSearching = true
             keyboardController?.hide()
             coroutineScope.launch {
                 try {
                     val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
                     if (searchMode == SearchMode.BOOKS) {
-                        searchResults = repo.searchBooksScraped(searchQuery, instanceUrl)
+                        val query = searchQuery
+                        searchResults = repo.searchBooksScraped(query, instanceUrl)
                         userSearchResults = emptyList()
                         errorMessage = null
                         if (searchResults.isEmpty()) {
                             errorMessage = context.getString(R.string.search_books_empty)
                         }
+                        searchRemoteIfNeeded(query, searchResults)
                     } else {
                         userSearchResults = repo.searchUsersScraped(searchQuery, instanceUrl)
                         searchResults = emptyList()
@@ -183,6 +221,7 @@ fun SearchScreen(
         if (!com.ferlagod.rocinante.utils.IsbnUtils.isIsbn(scanned)) {
             performSearch()
         } else {
+            cancelRemoteSearch()
             isSearching = true
             keyboardController?.hide()
             coroutineScope.launch {
@@ -191,6 +230,7 @@ fun SearchScreen(
                     val exact = repo.searchByIsbn(com.ferlagod.rocinante.utils.IsbnUtils.normalize(scanned))
                     val results = if (exact.isNotEmpty()) exact else repo.searchBooksScraped(scanned, instanceUrl)
                     searchResults = results
+                    if (exact.isEmpty()) searchRemoteIfNeeded(scanned, results)
                     userSearchResults = emptyList()
                     errorMessage = if (results.isEmpty()) context.getString(R.string.search_books_empty) else null
                 } catch (e: Exception) {
@@ -322,6 +362,7 @@ fun SearchScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = {
+                            cancelRemoteSearch()
                             searchQuery = ""
                             searchResults = emptyList()
                             userSearchResults = emptyList()
@@ -493,116 +534,147 @@ fun SearchScreen(
                             }
                         }
                     }
-                    if (searchResults.isNotEmpty()) {
-                        item(key = "remote-header") {
-                            SearchSectionHeader(stringResource(R.string.search_instance_section))
-                        }
+                }
+                // Primero lo que ya está en la instancia; debajo, un bloque por cada catálogo
+                // externo, con su nombre, como en la web.
+                val instanceResults = searchResults.filter { !it.isRemote }
+                val remoteGroups = searchResults.filter { it.isRemote }.groupBy { it.source.orEmpty() }
+                if (instanceResults.isNotEmpty() && (localHits.isNotEmpty() || remoteGroups.isNotEmpty())) {
+                    item(key = "instance-header") {
+                        SearchSectionHeader(stringResource(R.string.search_instance_section))
                     }
                 }
-                items(items = searchResults, key = { it.key ?: it.title ?: it.hashCode().toString() }) { book ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (isLoadingDetails) return@clickable
-                                val bookKey = book.key
-                                if (!bookKey.isNullOrEmpty()) {
-                                    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
-                                    if (settingsState.openLinksExternally) {
-                                        val url = if (bookKey.startsWith("http")) bookKey else "$cleanBase/book/$bookKey"
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                                        context.startActivity(intent)
-                                    } else {
-                                        isLoadingDetails = true
-                                        coroutineScope.launch {
-                                            try {
-                                                var finalBookKey = bookKey
-                                                if (book.isRemote && !book.remoteId.isNullOrEmpty()) {
-                                                    val localUrl = BookWyrmScraper.resolveLocalBookUrl(resolvedApi, book.remoteId)
-                                                    if (!localUrl.isNullOrEmpty()) {
-                                                        if (localUrl.contains("/book/")) {
-                                                            val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
-                                                            if (potentialKey.isNotBlank()) finalBookKey = potentialKey
-                                                        } else if (localUrl.startsWith("http")) {
-                                                            finalBookKey = localUrl
+                val sections = listOf("" to instanceResults) + remoteGroups.entries.map { it.key to it.value }
+                sections.forEachIndexed { index, (source, books) ->
+                    if (index > 0 && source.isNotBlank()) {
+                        item(key = "remote-header-$index") {
+                            SearchSectionHeader(stringResource(R.string.search_remote_section, source))
+                        }
+                    }
+                    items(items = books, key = { "book-" + (it.key ?: it.title ?: it.hashCode().toString()) }) { book ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (isLoadingDetails) return@clickable
+                                    val bookKey = book.key
+                                    if (!bookKey.isNullOrEmpty()) {
+                                        val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
+                                        if (settingsState.openLinksExternally) {
+                                            val url = if (bookKey.startsWith("http")) bookKey else "$cleanBase/book/$bookKey"
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                            context.startActivity(intent)
+                                        } else {
+                                            isLoadingDetails = true
+                                            coroutineScope.launch {
+                                                try {
+                                                    var finalBookKey = bookKey
+                                                    if (book.isRemote && !book.remoteId.isNullOrEmpty()) {
+                                                        val localUrl = BookWyrmScraper.resolveLocalBookUrl(resolvedApi, book.remoteId)
+                                                        if (!localUrl.isNullOrEmpty()) {
+                                                            if (localUrl.contains("/book/")) {
+                                                                val potentialKey = localUrl.substringAfter("/book/").substringBefore("/")
+                                                                if (potentialKey.isNotBlank()) finalBookKey = potentialKey
+                                                            } else if (localUrl.startsWith("http")) {
+                                                                finalBookKey = localUrl
+                                                            }
                                                         }
                                                     }
-                                                }
                                                 
-                                                activeBookKey = finalBookKey
-                                                // Lo que ya se sabía del libro (autor, estrellas,
-                                                // serie...) de la última vez que se abrió su
-                                                // página: se enseña mientras se relee.
-                                                selectedBookEnrichment = dataCache.loadEnrichment()[
-                                                    BookWyrmScraper.canonicalBookUrl(finalBookKey)
-                                                ]
-                                                val detailsUrl = if (finalBookKey.startsWith("http")) {
-                                                    BookWyrmUtils.ensureJsonUrl(finalBookKey)
-                                                } else {
-                                                    BookWyrmUtils.ensureJsonUrl("$cleanBase/book/$finalBookKey")
-                                                }
-                                                selectedBookDetails = try {
-                                                    resolvedApi.getBookDetails(detailsUrl)
+                                                    activeBookKey = finalBookKey
+                                                    // Lo que ya se sabía del libro (autor, estrellas,
+                                                    // serie...) de la última vez que se abrió su
+                                                    // página: se enseña mientras se relee.
+                                                    selectedBookEnrichment = dataCache.loadEnrichment()[
+                                                        BookWyrmScraper.canonicalBookUrl(finalBookKey)
+                                                    ]
+                                                    val detailsUrl = if (finalBookKey.startsWith("http")) {
+                                                        BookWyrmUtils.ensureJsonUrl(finalBookKey)
+                                                    } else {
+                                                        BookWyrmUtils.ensureJsonUrl("$cleanBase/book/$finalBookKey")
+                                                    }
+                                                    selectedBookDetails = try {
+                                                        resolvedApi.getBookDetails(detailsUrl)
+                                                    } catch (e: Exception) {
+                                                        if (e is kotlinx.coroutines.CancellationException) throw e
+                                                        val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                        BookWyrmScraper.scrapeBookDetails(resolvedApi, baseBookUrl) ?: throw e
+                                                    }
+
+                                                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
+                                                    try {
+                                                        selectedBookReviews = BookWyrmScraper.scrapeBookReviews(resolvedApi, baseBookUrl)
+                                                    } catch (_: Exception) {
+                                                        selectedBookReviews = emptyList()
+                                                    }
                                                 } catch (e: Exception) {
                                                     if (e is kotlinx.coroutines.CancellationException) throw e
-                                                    val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                    BookWyrmScraper.scrapeBookDetails(resolvedApi, baseBookUrl) ?: throw e
+                                                    errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                                                } finally {
+                                                    isLoadingDetails = false
                                                 }
-
-                                                val baseBookUrl = detailsUrl.removeSuffix(".json").trimEnd('/')
-                                                try {
-                                                    selectedBookReviews = BookWyrmScraper.scrapeBookReviews(resolvedApi, baseBookUrl)
-                                                } catch (_: Exception) {
-                                                    selectedBookReviews = emptyList()
-                                                }
-                                            } catch (e: Exception) {
-                                                if (e is kotlinx.coroutines.CancellationException) throw e
-                                                errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
-                                            } finally {
-                                                isLoadingDetails = false
                                             }
                                         }
                                     }
+                                },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (!book.cover.isNullOrEmpty()) {
+                                    AsyncImage(
+                                        model = book.cover,
+                                        contentDescription = stringResource(R.string.book_cover_desc),
+                                        modifier = Modifier
+                                            .width(70.dp)
+                                            .height(100.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
                                 }
-                            },
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = book.title ?: stringResource(R.string.book_no_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.search_author, book.author ?: stringResource(R.string.search_author_unknown)),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    if (book.year != null) {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = stringResource(R.string.search_year, book.year),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (isLoadingRemote) {
+                    item(key = "remote-loading") {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (!book.cover.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = book.cover,
-                                    contentDescription = stringResource(R.string.book_cover_desc),
-                                    modifier = Modifier
-                                        .width(70.dp)
-                                        .height(100.dp),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                            }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = book.title ?: stringResource(R.string.book_no_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = stringResource(R.string.search_author, book.author ?: stringResource(R.string.search_author_unknown)),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                if (book.year != null) {
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = stringResource(R.string.search_year, book.year),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
-                            }
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.search_remote_loading),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }

@@ -568,6 +568,8 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="search_local_section">I dina hyllor</string>
     <string name="search_instance_section">På denna instans</string>
     <string name="search_instance_prompt">Sök efter ”%1$s” på den här instansen</string>
+    <string name="search_remote_section">Resultat från %1$s</string>
+    <string name="search_remote_loading">Söker i andra kataloger…</string>
     <string name="search_clear">Rensa</string>
     <string name="search_tools_desc">Verktyg</string>
     <string name="search_tools_close">Stäng verktyg</string>

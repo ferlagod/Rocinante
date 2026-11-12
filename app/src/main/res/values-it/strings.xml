@@ -568,6 +568,8 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="search_local_section">Nei tuoi scaffali</string>
     <string name="search_instance_section">In questa istanza</string>
     <string name="search_instance_prompt">Cerca «%1$s» in questa istanza</string>
+    <string name="search_remote_section">Risultati da %1$s</string>
+    <string name="search_remote_loading">Ricerca in altri cataloghi…</string>
     <string name="search_clear">Cancella</string>
     <string name="search_tools_desc">Strumenti</string>
     <string name="search_tools_close">Chiudi strumenti</string>

@@ -569,6 +569,8 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="search_local_section">Omissa hyllyissäsi</string>
     <string name="search_instance_section">Tässä instanssissa</string>
     <string name="search_instance_prompt">Hae tästä instanssista ”%1$s”</string>
+    <string name="search_remote_section">Tulokset: %1$s</string>
+    <string name="search_remote_loading">Haetaan muista luetteloista…</string>
     <string name="search_clear">Tyhjennä</string>
     <string name="search_tools_desc">Työkalut</string>
     <string name="search_tools_close">Sulje työkalut</string>

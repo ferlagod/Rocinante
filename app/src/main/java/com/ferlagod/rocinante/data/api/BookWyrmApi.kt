@@ -94,7 +94,10 @@ interface BookWyrmApi {
     @GET("search")
     @Headers("Accept: text/html")
     suspend fun searchBooks(
-        @Query("q") query: String
+        @Query("q") query: String,
+        @Query("type") type: String = "book",
+        // "true" para que la instancia consulte también los catálogos externos; null no se envía.
+        @Query("remote") remote: String? = null
     ): retrofit2.Response<ResponseBody>
 
     // Búsqueda exacta por ISBN contra el endpoint JSON estable de BookWyrm

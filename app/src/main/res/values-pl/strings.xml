@@ -599,6 +599,8 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="search_local_section">Na twoich półkach</string>
     <string name="search_instance_section">W tej instancji</string>
     <string name="search_instance_prompt">Szukaj „%1$s” w tej instancji</string>
+    <string name="search_remote_section">Wyniki z %1$s</string>
+    <string name="search_remote_loading">Wyszukiwanie w innych katalogach…</string>
     <string name="search_clear">Wyczyść</string>
     <string name="search_tools_desc">Narzędzia</string>
     <string name="search_tools_close">Zamknij narzędzia</string>
