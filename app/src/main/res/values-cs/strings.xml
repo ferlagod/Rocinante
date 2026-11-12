@@ -695,6 +695,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="create_book_confirm_author">Potvrdit autora</string>
     <string name="create_book_error_generic">Knihu se nepodařilo vytvořit. Zkontrolujte zadané údaje.</string>
     <string name="create_book_title_required">Zadejte prosím název</string>
+    <string name="create_book_date_invalid">Datum vydání musí být ve tvaru RRRR, RRRR-MM nebo RRRR-MM-DD</string>
     <string name="create_book_author_required">Zadejte prosím autora</string>
     <string name="create_book_format_paperback">Brožovaná (Paperback)</string>
     <string name="create_book_format_hardcover">Pevná vazba (Hardcover)</string>

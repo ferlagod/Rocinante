@@ -714,6 +714,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="create_book_confirm_author">Bekræft forfatter</string>
     <string name="create_book_error_generic">Kunne ikke oprette bogen. Tjek venligst oplysningerne.</string>
     <string name="create_book_title_required">Indtast venligst en titel</string>
+    <string name="create_book_date_invalid">Udgivelsesdatoen skal være ÅÅÅÅ, ÅÅÅÅ-MM eller ÅÅÅÅ-MM-DD</string>
     <string name="create_book_author_required">Indtast venligst en forfatter</string>
     <string name="create_book_format_paperback">Paperback / Hæftet</string>
     <string name="create_book_format_hardcover">Indbundet (Hardcover)</string>

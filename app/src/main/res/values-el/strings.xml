@@ -664,6 +664,7 @@
     <string name="create_book_confirm_author">Επιβεβαίωση συγγραφέα</string>
     <string name="create_book_error_generic">Δεν ήταν δυνατή η δημιουργία του βιβλίου. Ελέγξτε τα στοιχεία.</string>
     <string name="create_book_title_required">Παρακαλώ εισαγάγετε τίτλο</string>
+    <string name="create_book_date_invalid">Η ημερομηνία έκδοσης πρέπει να είναι ΕΕΕΕ, ΕΕΕΕ-ΜΜ ή ΕΕΕΕ-ΜΜ-ΗΗ</string>
     <string name="create_book_author_required">Παρακαλώ εισαγάγετε συγγραφέα</string>
     <string name="create_book_format_paperback">Χαρτόδετο (Paperback)</string>
     <string name="create_book_format_hardcover">Σκληρόδετο (Hardcover)</string>

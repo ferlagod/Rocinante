@@ -667,6 +667,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="create_book_confirm_author">Confirmar autor/a</string>
     <string name="create_book_error_generic">Non se puido crear o libro. Revisa os datos introducidos.</string>
     <string name="create_book_title_required">O título é obrigatorio</string>
+    <string name="create_book_date_invalid">A data de publicación debe ser AAAA, AAAA-MM ou AAAA-MM-DD</string>
     <string name="create_book_author_required">O autor/a é obrigatorio/a</string>
     <string name="create_book_format_paperback">Tapa branda</string>
     <string name="create_book_format_hardcover">Tapa dura</string>

@@ -664,6 +664,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="create_book_confirm_author">Bekräfta författare</string>
     <string name="create_book_error_generic">Det gick inte att skapa boken. Kontrollera uppgifterna.</string>
     <string name="create_book_title_required">Ange en titel</string>
+    <string name="create_book_date_invalid">Utgivningsdatumet måste vara ÅÅÅÅ, ÅÅÅÅ-MM eller ÅÅÅÅ-MM-DD</string>
     <string name="create_book_author_required">Ange en författare</string>
     <string name="create_book_format_paperback">Pocket / Häftad (Paperback)</string>
     <string name="create_book_format_hardcover">Inbunden (Hardcover)</string>

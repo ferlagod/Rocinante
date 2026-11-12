@@ -1201,8 +1201,39 @@ object BookWyrmScraper {
         if (trimmedPages.isNotEmpty() && trimmedPages.toLongOrNull()?.let { it > 0 } == true) {
             fields += "pages" to trimmedPages
         }
-        if (publishedDate.isNotBlank()) fields += "published_date" to publishedDate.trim()
+        if (publishedDate.isNotBlank()) {
+            // BookWyrm pinta la fecha con un SelectDateWidget (año, mes y día por separado) y
+            // solo entiende fechas a medias si llegan así: un «2019» suelto en published_date
+            // lo rechaza. Lo que falte va vacío, igual que deja la web el desplegable sin tocar.
+            val parts = splitPublishedDate(publishedDate)
+            if (parts != null) {
+                fields += "published_date_year" to parts.year
+                fields += "published_date_month" to parts.month
+                fields += "published_date_day" to parts.day
+            } else {
+                fields += "published_date" to publishedDate.trim()
+            }
+        }
         return fields
+    }
+
+    /** Fecha de publicación troceada como la espera el formulario; mes y día pueden ir vacíos. */
+    data class DateParts(val year: String, val month: String, val day: String)
+
+    /**
+     * Acepta AAAA, AAAA-MM y AAAA-MM-DD (con o sin ceros delante). Devuelve null si no es
+     * ninguna de esas o si el mes o el día no existen.
+     */
+    fun splitPublishedDate(raw: String): DateParts? {
+        val match = Regex("""^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$""").find(raw.trim()) ?: return null
+        val year = match.groupValues[1]
+        val month = match.groupValues[2].toIntOrNull()
+        val day = match.groupValues[3].toIntOrNull()
+        if (month == null) return if (day == null) DateParts(year, "", "") else null
+        if (month !in 1..12) return null
+        if (day == null) return DateParts(year, month.toString(), "")
+        val valid = runCatching { java.time.LocalDate.of(year.toInt(), month, day) }.isSuccess
+        return if (valid) DateParts(year, month.toString(), day.toString()) else null
     }
 
     /** Qué hacer con la página que devuelve BookWyrm al crear o confirmar un libro. */
@@ -1494,17 +1525,39 @@ object BookWyrmScraper {
      * Extrae mensajes de error visibles del formulario BookWyrm, ignorando plantillas y elementos
      * ocultos como `#status-error-message` que existen de forma fija en layout.html.
      */
-    private fun extractFormErrors(doc: org.jsoup.nodes.Document): List<String> {
-        return doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
+    internal fun extractFormErrors(doc: org.jsoup.nodes.Document): List<String> {
+        val visible = doc.select(".notification.is-danger, .message.is-danger, .help.is-danger, ul.errorlist li")
             .filter { el ->
                 !el.hasClass("is-hidden") &&
                 el.id() != "status-error-message" &&
                 el.closest("#live-messages") == null &&
                 el.parents().none { it.hasClass("is-hidden") }
             }
-            .map { it.text().trim() }
+        // Los errores de verdad van dentro del formulario, junto a su campo. Fuera solo queda el
+        // aviso de «no se pudo guardar, mira los errores de abajo», que llega traducido al idioma
+        // de la instancia y no dice nada por sí solo: si hay errores dentro, el aviso sobra.
+        val inForm = visible.filter { it.closest("form") != null }
+        val chosen = inForm.ifEmpty { visible }
+        return chosen
+            .map { el -> withFieldLabel(doc, el, el.text().trim()) }
             .filter { it.isNotEmpty() && !it.contains("see errors below", ignoreCase = true) }
             .distinct()
+    }
+
+    /**
+     * Antepone el nombre del campo al error («Fecha de publicación: Introduzca una fecha
+     * válida»). BookWyrm mete los errores de cada campo en un `div` con id `id_<campo>_error`.
+     */
+    private fun withFieldLabel(doc: org.jsoup.nodes.Document, el: org.jsoup.nodes.Element, message: String): String {
+        if (message.isEmpty()) return message
+        val holderId = el.parents().firstOrNull { it.id().matches(Regex("""^id_.+_error$""")) }?.id()
+            ?: return message
+        val field = holderId.removePrefix("id_").removeSuffix("_error")
+        val label = (doc.selectFirst("label[for=id_$field]") ?: doc.selectFirst("label[for^=id_${field}_]"))
+            ?.ownText()?.trim()?.trimEnd(':')?.trim()
+            .orEmpty()
+            .ifEmpty { field.replace('_', ' ') }
+        return "$label: $message"
     }
 
     /**

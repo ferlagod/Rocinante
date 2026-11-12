@@ -685,6 +685,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="create_book_confirm_author">Confirmă autorul</string>
     <string name="create_book_error_generic">Cartea nu a putut fi creată. Te rugăm să verifici datele introduse.</string>
     <string name="create_book_title_required">Te rugăm să introduci un titlu</string>
+    <string name="create_book_date_invalid">Data publicării trebuie să fie AAAA, AAAA-LL sau AAAA-LL-ZZ</string>
     <string name="create_book_author_required">Te rugăm să introduci un autor</string>
     <string name="create_book_format_paperback">Copertă broșată (Paperback)</string>
     <string name="create_book_format_hardcover">Copertă cartonată (Hardcover)</string>

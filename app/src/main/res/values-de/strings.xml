@@ -665,6 +665,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="create_book_confirm_author">Autor/in bestätigen</string>
     <string name="create_book_error_generic">Buch konnte nicht erstellt werden. Bitte überprüfe die Angaben.</string>
     <string name="create_book_title_required">Der Titel ist erforderlich</string>
+    <string name="create_book_date_invalid">Das Veröffentlichungsdatum muss JJJJ, JJJJ-MM oder JJJJ-MM-TT sein</string>
     <string name="create_book_author_required">Der/die Autor/in ist erforderlich</string>
     <string name="create_book_format_paperback">Taschenbuch</string>
     <string name="create_book_format_hardcover">Gebundene Ausgabe</string>

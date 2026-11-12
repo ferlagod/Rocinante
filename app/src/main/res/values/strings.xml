@@ -717,6 +717,7 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="create_book_confirm_author">Confirm author</string>
     <string name="create_book_error_generic">Could not create the book. Please check the details.</string>
     <string name="create_book_title_required">Please enter a title</string>
+    <string name="create_book_date_invalid">The publication date must be YYYY, YYYY-MM or YYYY-MM-DD</string>
     <string name="create_book_author_required">Please enter an author</string>
     <string name="create_book_format_paperback">Paperback</string>
     <string name="create_book_format_hardcover">Hardcover</string>

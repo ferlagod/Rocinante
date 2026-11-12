@@ -125,4 +125,41 @@ class CreateBookFlowTest {
         val html = """<form action="/login"><input name="username"><input name="password" type="password"></form>"""
         assertTrue(BookWyrmScraper.parseCreateConfirmation(html, "$base/create-book", base) is BookWyrmScraper.ConfirmationStep.Failed)
     }
+    @Test
+    fun `la fecha se manda troceada como el SelectDateWidget de BookWyrm`() {
+        val soloAnio = BookWyrmScraper.buildCreateBookFields(csrfToken = "t", title = "Una mente in frammenti", authorNames = listOf("Gabor Maté"), publishedDate = "2019")
+        assertTrue("published_date_year" to "2019" in soloAnio)
+        assertTrue("published_date_month" to "" in soloAnio)
+        assertTrue("published_date_day" to "" in soloAnio)
+        assertFalse(soloAnio.any { it.first == "published_date" })
+
+        val completa = BookWyrmScraper.buildCreateBookFields(csrfToken = "t", title = "x", authorNames = listOf("y"), publishedDate = "2019-03-05")
+        assertEquals(listOf("2019", "3", "5"), completa.filter { it.first.startsWith("published_date_") }.map { it.second })
+    }
+
+    @Test
+    fun `fechas validas e invalidas`() {
+        assertEquals(BookWyrmScraper.DateParts("2019", "", ""), BookWyrmScraper.splitPublishedDate(" 2019 "))
+        assertEquals(BookWyrmScraper.DateParts("2019", "3", ""), BookWyrmScraper.splitPublishedDate("2019-03"))
+        assertEquals(BookWyrmScraper.DateParts("2020", "2", "29"), BookWyrmScraper.splitPublishedDate("2020-02-29"))
+        assertEquals(null, BookWyrmScraper.splitPublishedDate("2019-13"))
+        assertEquals(null, BookWyrmScraper.splitPublishedDate("2019-02-30"))
+        assertEquals(null, BookWyrmScraper.splitPublishedDate("marzo 2019"))
+    }
+
+    @Test
+    fun `el aviso traducido no tapa el error del campo`() {
+        val html = """
+            <div class="block"><p class="notification is-danger is-light">Salvataggio del libro non riuscito, vedere gli errori qui sotto per maggiori informazioni.</p></div>
+            <form name="create-book" action="/create-book" method="post">
+              <label class="label" for="id_published_date">Data di pubblicazione:</label>
+              <input type="number" name="published_date_year" value="2019">
+              <div id="id_published_date_error"><p class="notification is-danger is-light px-4 py-1">Inserisci una data valida.</p></div>
+              <input type="text" name="pages" value="307">
+            </form>
+        """.trimIndent()
+        val step = BookWyrmScraper.parseCreateConfirmation(html, "$base/create-book", base)
+        assertTrue(step is BookWyrmScraper.ConfirmationStep.Failed)
+        assertEquals("Data di pubblicazione: Inserisci una data valida.", (step as BookWyrmScraper.ConfirmationStep.Failed).message)
+    }
 }

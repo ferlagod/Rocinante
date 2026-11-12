@@ -665,6 +665,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="create_book_confirm_author">Confirmer l\'auteur/e</string>
     <string name="create_book_error_generic">Impossible de créer le livre. Veuillez vérifier les informations saisies.</string>
     <string name="create_book_title_required">Le titre est obligatoire</string>
+    <string name="create_book_date_invalid">La date de publication doit être AAAA, AAAA-MM ou AAAA-MM-JJ</string>
     <string name="create_book_author_required">L\'auteur/e est obligatoire</string>
     <string name="create_book_format_paperback">Broché</string>
     <string name="create_book_format_hardcover">Relié</string>

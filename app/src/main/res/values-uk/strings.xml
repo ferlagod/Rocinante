@@ -697,6 +697,7 @@
     <string name="create_book_confirm_author">Підтвердити автора</string>
     <string name="create_book_error_generic">Не вдалося створити книгу. Будь ласка, перевірте введені дані.</string>
     <string name="create_book_title_required">Будь ласка, введіть назву</string>
+    <string name="create_book_date_invalid">Дата публікації має бути у форматі РРРР, РРРР-ММ або РРРР-ММ-ДД</string>
     <string name="create_book_author_required">Будь ласка, вкажіть автора</string>
     <string name="create_book_format_paperback">М\'яка обкладинка (Paperback)</string>
     <string name="create_book_format_hardcover">Тверда палітурка (Hardcover)</string>

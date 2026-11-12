@@ -697,6 +697,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="create_book_confirm_author">Potwierdź autora/kę</string>
     <string name="create_book_error_generic">Nie udało się utworzyć książki. Sprawdź wprowadzone dane.</string>
     <string name="create_book_title_required">Tytuł jest wymagany</string>
+    <string name="create_book_date_invalid">Data publikacji musi mieć postać RRRR, RRRR-MM lub RRRR-MM-DD</string>
     <string name="create_book_author_required">Autor/ka jest wymagany/a</string>
     <string name="create_book_format_paperback">Miękka oprawa</string>
     <string name="create_book_format_hardcover">Twarda oprawa</string>

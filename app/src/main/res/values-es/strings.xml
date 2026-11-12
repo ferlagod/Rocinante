@@ -722,6 +722,7 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="create_book_confirm_author">Confirmar autor</string>
     <string name="create_book_error_generic">No se pudo crear el libro. Revisa los datos introducidos.</string>
     <string name="create_book_title_required">El título es obligatorio</string>
+    <string name="create_book_date_invalid">La fecha de publicación debe ser AAAA, AAAA-MM o AAAA-MM-DD</string>
     <string name="create_book_author_required">El autor es obligatorio</string>
     <string name="create_book_format_paperback">Tapa blanda</string>
     <string name="create_book_format_hardcover">Tapa dura</string>

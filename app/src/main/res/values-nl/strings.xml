@@ -664,6 +664,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="create_book_confirm_author">Auteur bevestigen</string>
     <string name="create_book_error_generic">Kon het boek niet aanmaken. Controleer de ingevoerde gegevens.</string>
     <string name="create_book_title_required">De titel is verplicht</string>
+    <string name="create_book_date_invalid">De publicatiedatum moet JJJJ, JJJJ-MM of JJJJ-MM-DD zijn</string>
     <string name="create_book_author_required">De auteur is verplicht</string>
     <string name="create_book_format_paperback">Paperback</string>
     <string name="create_book_format_hardcover">Hardcover</string>

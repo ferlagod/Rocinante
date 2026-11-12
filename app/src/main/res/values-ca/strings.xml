@@ -665,6 +665,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="create_book_confirm_author">Confirmar autor/a</string>
     <string name="create_book_error_generic">No s\'ha pogut crear el llibre. Revisa les dades introduïdes.</string>
     <string name="create_book_title_required">El títol és obligatori</string>
+    <string name="create_book_date_invalid">La data de publicació ha de ser AAAA, AAAA-MM o AAAA-MM-DD</string>
     <string name="create_book_author_required">L\'autor/a és obligatori/a</string>
     <string name="create_book_format_paperback">Tapa tova</string>
     <string name="create_book_format_hardcover">Tapa dura</string>

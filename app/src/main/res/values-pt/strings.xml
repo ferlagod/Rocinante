@@ -665,6 +665,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="create_book_confirm_author">Confirmar autor/a</string>
     <string name="create_book_error_generic">Não foi possível criar o livro. Verifique os dados introduzidos.</string>
     <string name="create_book_title_required">O título é obrigatório</string>
+    <string name="create_book_date_invalid">A data de publicação deve ser AAAA, AAAA-MM ou AAAA-MM-DD</string>
     <string name="create_book_author_required">O autor/a é obrigatório/a</string>
     <string name="create_book_format_paperback">Capa comum</string>
     <string name="create_book_format_hardcover">Capa dura</string>

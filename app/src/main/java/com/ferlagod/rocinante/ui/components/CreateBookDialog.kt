@@ -337,6 +337,11 @@ fun CreateBookDialog(
                 raw
             }
         }
+        if (normalizedDate.isNotEmpty() && BookWyrmScraper.splitPublishedDate(normalizedDate) == null) {
+            errorMessage = context.getString(R.string.create_book_date_invalid)
+            showMoreDetails = true
+            return
+        }
 
         errorMessage = null
         viewModel.submit(

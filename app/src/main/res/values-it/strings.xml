@@ -665,6 +665,7 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="create_book_confirm_author">Conferma autore/rice</string>
     <string name="create_book_error_generic">Impossibile creare il libro. Controlla i dati inseriti.</string>
     <string name="create_book_title_required">Il titolo è obbligatorio</string>
+    <string name="create_book_date_invalid">La data di pubblicazione deve essere AAAA, AAAA-MM o AAAA-MM-GG</string>
     <string name="create_book_author_required">L\'autore/rice è obbligatorio/a</string>
     <string name="create_book_format_paperback">Copertina flessibile</string>
     <string name="create_book_format_hardcover">Copertina rigida</string>

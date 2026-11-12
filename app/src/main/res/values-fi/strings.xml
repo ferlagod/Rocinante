@@ -665,6 +665,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="create_book_confirm_author">Vahvista kirjailija</string>
     <string name="create_book_error_generic">Kirjan luominen epäonnistui. Tarkista tiedot.</string>
     <string name="create_book_title_required">Anna kirjan nimi</string>
+    <string name="create_book_date_invalid">Julkaisupäivän muodon on oltava VVVV, VVVV-KK tai VVVV-KK-PP</string>
     <string name="create_book_author_required">Anna kirjailijan nimi</string>
     <string name="create_book_format_paperback">Pehmeäkantinen (Paperback)</string>
     <string name="create_book_format_hardcover">Kovakantinen (Hardcover)</string>
