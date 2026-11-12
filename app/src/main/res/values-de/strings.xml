@@ -689,4 +689,14 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="create_book_lang_de">Deutsch</string>
     <string name="create_book_lang_it">Italienisch</string>
     <string name="create_book_lang_pt">Portugiesisch</string>
+    <string name="create_book_discard_title">Dieses Buch verwerfen?</string>
+    <string name="create_book_discard_body">Deine Eingaben gehen verloren.</string>
+    <string name="create_book_discard_confirm">Verwerfen</string>
+    <string name="create_book_discard_keep">Weiter bearbeiten</string>
+    <string name="create_book_scan_not_isbn">Dieser Code ist keine ISBN</string>
+    <string name="create_book_author_suggestions">Bereits auf der Instanz:</string>
+    <string name="create_book_step_duplicates">Prüfe, ob die Instanz es schon hat…</string>
+    <string name="create_book_step_cover">Cover wird vorbereitet…</string>
+    <string name="create_book_step_confirming">Bestätigung bei der Instanz…</string>
+    <string name="create_book_step_shelving">Wird ins Regal gestellt…</string>
 </resources>

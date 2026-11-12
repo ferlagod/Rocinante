@@ -721,4 +721,14 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="create_book_lang_de">Niemiecki</string>
     <string name="create_book_lang_it">Włoski</string>
     <string name="create_book_lang_pt">Portugalski</string>
+    <string name="create_book_discard_title">Odrzucić tę książkę?</string>
+    <string name="create_book_discard_body">Wprowadzone dane zostaną utracone.</string>
+    <string name="create_book_discard_confirm">Odrzuć</string>
+    <string name="create_book_discard_keep">Edytuj dalej</string>
+    <string name="create_book_scan_not_isbn">Ten kod nie jest numerem ISBN</string>
+    <string name="create_book_author_suggestions">Już w instancji:</string>
+    <string name="create_book_step_duplicates">Sprawdzanie, czy instancja już ją ma…</string>
+    <string name="create_book_step_cover">Przygotowywanie okładki…</string>
+    <string name="create_book_step_confirming">Potwierdzanie z instancją…</string>
+    <string name="create_book_step_shelving">Dodawanie na półkę…</string>
 </resources>

@@ -738,4 +738,14 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="create_book_lang_de">Tysk</string>
     <string name="create_book_lang_it">Italiensk</string>
     <string name="create_book_lang_pt">Portugisisk</string>
+    <string name="create_book_discard_title">Kassér denne bog?</string>
+    <string name="create_book_discard_body">De oplysninger, du har indtastet, går tabt.</string>
+    <string name="create_book_discard_confirm">Kassér</string>
+    <string name="create_book_discard_keep">Fortsæt redigering</string>
+    <string name="create_book_scan_not_isbn">Den kode er ikke et ISBN</string>
+    <string name="create_book_author_suggestions">Allerede på instansen:</string>
+    <string name="create_book_step_duplicates">Tjekker, om instansen allerede har den…</string>
+    <string name="create_book_step_cover">Forbereder omslaget…</string>
+    <string name="create_book_step_confirming">Bekræfter med instansen…</string>
+    <string name="create_book_step_shelving">Sætter den på hylden…</string>
 </resources>

@@ -689,4 +689,14 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="create_book_lang_de">Allemand</string>
     <string name="create_book_lang_it">Italien</string>
     <string name="create_book_lang_pt">Portugais</string>
+    <string name="create_book_discard_title">Abandonner ce livre ?</string>
+    <string name="create_book_discard_body">Les informations saisies seront perdues.</string>
+    <string name="create_book_discard_confirm">Abandonner</string>
+    <string name="create_book_discard_keep">Continuer la saisie</string>
+    <string name="create_book_scan_not_isbn">Ce code n\'est pas un ISBN</string>
+    <string name="create_book_author_suggestions">Déjà sur l\'instance :</string>
+    <string name="create_book_step_duplicates">Vérification si l\'instance l\'a déjà…</string>
+    <string name="create_book_step_cover">Préparation de la couverture…</string>
+    <string name="create_book_step_confirming">Confirmation auprès de l\'instance…</string>
+    <string name="create_book_step_shelving">Ajout à l\'étagère…</string>
 </resources>

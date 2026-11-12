@@ -721,4 +721,14 @@
     <string name="create_book_lang_de">Німецька</string>
     <string name="create_book_lang_it">Італійська</string>
     <string name="create_book_lang_pt">Португальська</string>
+    <string name="create_book_discard_title">Відкинути цю книгу?</string>
+    <string name="create_book_discard_body">Введені дані буде втрачено.</string>
+    <string name="create_book_discard_confirm">Відкинути</string>
+    <string name="create_book_discard_keep">Продовжити редагування</string>
+    <string name="create_book_scan_not_isbn">Цей код не є ISBN</string>
+    <string name="create_book_author_suggestions">Уже в інстанції:</string>
+    <string name="create_book_step_duplicates">Перевіряємо, чи інстанція вже має її…</string>
+    <string name="create_book_step_cover">Готуємо обкладинку…</string>
+    <string name="create_book_step_confirming">Підтверджуємо з інстанцією…</string>
+    <string name="create_book_step_shelving">Додаємо на полицю…</string>
 </resources>

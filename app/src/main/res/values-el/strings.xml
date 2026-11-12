@@ -688,4 +688,14 @@
     <string name="create_book_lang_de">Γερμανικά</string>
     <string name="create_book_lang_it">Ιταλικά</string>
     <string name="create_book_lang_pt">Πορτογαλικά</string>
+    <string name="create_book_discard_title">Απόρριψη αυτού του βιβλίου;</string>
+    <string name="create_book_discard_body">Τα στοιχεία που έγραψες θα χαθούν.</string>
+    <string name="create_book_discard_confirm">Απόρριψη</string>
+    <string name="create_book_discard_keep">Συνέχεια επεξεργασίας</string>
+    <string name="create_book_scan_not_isbn">Αυτός ο κωδικός δεν είναι ISBN</string>
+    <string name="create_book_author_suggestions">Ήδη στο instance:</string>
+    <string name="create_book_step_duplicates">Έλεγχος αν το instance το έχει ήδη…</string>
+    <string name="create_book_step_cover">Προετοιμασία εξωφύλλου…</string>
+    <string name="create_book_step_confirming">Επιβεβαίωση με το instance…</string>
+    <string name="create_book_step_shelving">Προσθήκη στο ράφι…</string>
 </resources>

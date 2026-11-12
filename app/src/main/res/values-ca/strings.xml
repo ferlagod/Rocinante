@@ -689,4 +689,14 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="create_book_lang_de">Alemany</string>
     <string name="create_book_lang_it">Italià</string>
     <string name="create_book_lang_pt">Portuguès</string>
+    <string name="create_book_discard_title">Vols descartar aquest llibre?</string>
+    <string name="create_book_discard_body">Es perdran les dades que has escrit.</string>
+    <string name="create_book_discard_confirm">Descarta</string>
+    <string name="create_book_discard_keep">Continua editant</string>
+    <string name="create_book_scan_not_isbn">Aquest codi no és un ISBN</string>
+    <string name="create_book_author_suggestions">Ja a la instància:</string>
+    <string name="create_book_step_duplicates">Comprovant si la instància ja el té…</string>
+    <string name="create_book_step_cover">Preparant la coberta…</string>
+    <string name="create_book_step_confirming">Confirmant amb la instància…</string>
+    <string name="create_book_step_shelving">Posant-lo a la prestatgeria…</string>
 </resources>

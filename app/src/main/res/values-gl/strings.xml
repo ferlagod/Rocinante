@@ -691,4 +691,14 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="create_book_lang_de">Alemán</string>
     <string name="create_book_lang_it">Italiano</string>
     <string name="create_book_lang_pt">Portugués</string>
+    <string name="create_book_discard_title">Descartar este libro?</string>
+    <string name="create_book_discard_body">Perderanse os datos que escribiches.</string>
+    <string name="create_book_discard_confirm">Descartar</string>
+    <string name="create_book_discard_keep">Seguir editando</string>
+    <string name="create_book_scan_not_isbn">Ese código non é un ISBN</string>
+    <string name="create_book_author_suggestions">Xa na instancia:</string>
+    <string name="create_book_step_duplicates">Comprobando se a instancia xa o ten…</string>
+    <string name="create_book_step_cover">Preparando a portada…</string>
+    <string name="create_book_step_confirming">Confirmando coa instancia…</string>
+    <string name="create_book_step_shelving">Poñéndoo no andel…</string>
 </resources>

@@ -688,4 +688,14 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="create_book_lang_de">Tyska</string>
     <string name="create_book_lang_it">Italienska</string>
     <string name="create_book_lang_pt">Portugisiska</string>
+    <string name="create_book_discard_title">Kassera den här boken?</string>
+    <string name="create_book_discard_body">Uppgifterna du har angett går förlorade.</string>
+    <string name="create_book_discard_confirm">Kassera</string>
+    <string name="create_book_discard_keep">Fortsätt redigera</string>
+    <string name="create_book_scan_not_isbn">Den koden är inte ett ISBN</string>
+    <string name="create_book_author_suggestions">Redan på instansen:</string>
+    <string name="create_book_step_duplicates">Kontrollerar om instansen redan har den…</string>
+    <string name="create_book_step_cover">Förbereder omslaget…</string>
+    <string name="create_book_step_confirming">Bekräftar med instansen…</string>
+    <string name="create_book_step_shelving">Lägger den på hyllan…</string>
 </resources>

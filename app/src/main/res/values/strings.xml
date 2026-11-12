@@ -741,4 +741,14 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="create_book_lang_de">German</string>
     <string name="create_book_lang_it">Italian</string>
     <string name="create_book_lang_pt">Portuguese</string>
+    <string name="create_book_discard_title">Discard this book?</string>
+    <string name="create_book_discard_body">The details you entered will be lost.</string>
+    <string name="create_book_discard_confirm">Discard</string>
+    <string name="create_book_discard_keep">Keep editing</string>
+    <string name="create_book_scan_not_isbn">That code is not an ISBN</string>
+    <string name="create_book_author_suggestions">Already on the instance:</string>
+    <string name="create_book_step_duplicates">Checking whether the instance already has it…</string>
+    <string name="create_book_step_cover">Preparing the cover…</string>
+    <string name="create_book_step_confirming">Confirming with the instance…</string>
+    <string name="create_book_step_shelving">Adding it to the shelf…</string>
 </resources>

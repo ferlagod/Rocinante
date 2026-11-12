@@ -20,6 +20,7 @@
 package com.ferlagod.rocinante.ui.components
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -34,32 +35,43 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ferlagod.rocinante.R
 import com.ferlagod.rocinante.data.api.BookWyrmApi
 import com.ferlagod.rocinante.data.api.BookWyrmScraper
 import com.ferlagod.rocinante.data.api.OpenLibraryLookup
+import com.ferlagod.rocinante.utils.CreateBookForm
 import com.ferlagod.rocinante.utils.IsbnUtils
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
@@ -162,20 +174,34 @@ private fun applyExifOrientation(open: () -> InputStream?, bitmap: Bitmap): Bitm
     }.getOrDefault(bitmap)
 }
 
+
 /** Guarda la lista de autores al girar (una SnapshotStateList no se guarda sola). */
 private val authorListSaver = listSaver<androidx.compose.runtime.snapshots.SnapshotStateList<String>, String>(
     save = { it.toList() },
     restore = { it.toMutableStateList() }
 )
 
+private const val PREFS_NAME = "create_book_prefs"
+private const val PREF_LANGUAGES = "languages"
+
+/** Los idiomas de la última alta o, la primera vez, el del móvil si el formulario lo ofrece. */
+private fun defaultLanguageCodes(prefs: SharedPreferences, context: Context): String =
+    prefs.getString(PREF_LANGUAGES, null)
+        ?: CreateBookForm.languageCodeFor(ConfigurationCompat.getLocales(context.resources.configuration)[0]?.language).orEmpty()
+
+/** Campo al que llevar al usuario cuando falta algo. */
+private enum class FieldTarget { TITLE, AUTHOR, DATE }
+
 /**
- * Diálogo para la creación manual de un libro en la instancia de BookWyrm.
+ * Pantalla completa para la creación manual de un libro en la instancia de BookWyrm.
  *
  * Soporta entrada de metadatos completos con desplegables controlados para formato e idioma,
- * varios autores, rellenar los datos por ISBN desde OpenLibrary, aviso si el ISBN ya está en
- * la instancia, selección opcional de portada desde el dispositivo, las preguntas de
- * confirmación de la instancia (autores, obra, serie), ponerlo en una estantería al crearlo y
- * opción de crear y seguir añadiendo más libros consecutivamente.
+ * varios autores (con sugerencias de los que ya están en la instancia), escanear el ISBN,
+ * rellenar los datos por ISBN desde OpenLibrary (solo, si se abre con un ISBN), aviso en cuanto
+ * el ISBN ya está en la instancia, selección opcional de portada desde el dispositivo, las
+ * preguntas de confirmación de la instancia (autores, obra, serie), ponerlo en una estantería al
+ * crearlo y opción de crear y seguir añadiendo más libros consecutivamente. Si hay algo escrito,
+ * pregunta antes de cerrar.
  *
  * @param initialTitle Título inicial (ej. proveniente de la búsqueda si no es un ISBN).
  * @param initialIsbn ISBN inicial (ej. proveniente del escáner de código de barras o búsqueda numérica).
@@ -197,12 +223,14 @@ fun CreateBookDialog(
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
+    val prefs = remember(appContext) { appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
 
     val viewModel: CreateBookViewModel = androidx.hilt.navigation.compose.hiltViewModel(key = "create_book_dialog")
     // Una clave por apertura del diálogo; al girar se conserva y el ViewModel sigue con lo suyo.
     val sessionKey = rememberSaveable { java.util.UUID.randomUUID().toString() }
     remember(sessionKey) { viewModel.start(sessionKey) }
     val vmState by viewModel.state.collectAsStateWithLifecycle()
+    val step = vmState.step
     val isWorking = vmState.isWorking
     val confirmation = vmState.confirmation
 
@@ -253,7 +281,7 @@ fun CreateBookDialog(
     var series by rememberSaveable { mutableStateOf("") }
     var seriesNumber by rememberSaveable { mutableStateOf("") }
     // Varios idiomas, separados por comas como los manda el formulario web.
-    var selectedLanguageCodes by rememberSaveable { mutableStateOf("") }
+    var selectedLanguageCodes by rememberSaveable { mutableStateOf(defaultLanguageCodes(prefs, context)) }
     var selectedFormatCode by rememberSaveable { mutableStateOf("") }
     var shelfSlug by rememberSaveable { mutableStateOf("") }
 
@@ -261,6 +289,7 @@ fun CreateBookDialog(
     var formatDropdownExpanded by remember { mutableStateOf(false) }
     var shelfDropdownExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
 
     // Imagen de portada (persistida como String para sobrevivir a recreation de Activity).
     // La local tiene prioridad; la remota es la que trae OpenLibrary al rellenar por ISBN.
@@ -275,10 +304,51 @@ fun CreateBookDialog(
         }
     }
 
+    // Escanear el ISBN sin salir del alta (útil al dar de alta varios seguidos).
+    val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract()) { result ->
+        val contents = result.contents ?: return@rememberLauncherForActivityResult
+        if (IsbnUtils.isIsbn(contents)) {
+            isbn = IsbnUtils.normalize(contents)
+            viewModel.lookupIsbn(isbn)
+        } else {
+            Toast.makeText(context, context.getString(R.string.create_book_scan_not_isbn), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     var showMoreDetails by rememberSaveable { mutableStateOf(false) }
+    // Error de la instancia o de la red; los de validación van en su campo.
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var titleError by rememberSaveable { mutableStateOf(false) }
+    var authorError by rememberSaveable { mutableStateOf(false) }
+    var dateError by rememberSaveable { mutableStateOf(false) }
+    var focusTarget by remember { mutableStateOf<FieldTarget?>(null) }
+    var lastAndAddAnother by rememberSaveable { mutableStateOf(false) }
+    var autoLookupDone by rememberSaveable { mutableStateOf(false) }
+
+    val scrollState = rememberScrollState()
+    val titleFocus = remember { FocusRequester() }
+    val authorFocus = remember { FocusRequester() }
+    val dateFocus = remember { FocusRequester() }
 
     val selectedLanguages = selectedLanguageCodes.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+    // Si hay algo que perder, se pregunta antes de cerrar. Idioma y estantería no cuentan:
+    // vienen puestos por defecto.
+    val isDirty = title.trim() != initialTitle.trim() ||
+        authors.any { it.isNotBlank() } ||
+        IsbnUtils.normalize(isbn) != IsbnUtils.normalize(initialIsbn) ||
+        listOf(pages, subtitle, description, publishedDate, publishers, series, seriesNumber, selectedFormatCode)
+            .any { it.isNotBlank() } ||
+        coverUriString != null || remoteCoverUrl != null
+
+    fun requestClose() {
+        when {
+            isWorking -> Unit
+            confirmation != null -> viewModel.cancelConfirmation()
+            isDirty -> showDiscardDialog = true
+            else -> onDismiss()
+        }
+    }
 
     fun resetForm() {
         title = ""
@@ -292,12 +362,15 @@ fun CreateBookDialog(
         publishers = ""
         series = ""
         seriesNumber = ""
-        selectedLanguageCodes = ""
         selectedFormatCode = ""
         coverUriString = null
         remoteCoverUrl = null
         errorMessage = null
-        // La estantería se queda: al dar de alta varios seguidos suelen ir al mismo sitio.
+        titleError = false
+        authorError = false
+        dateError = false
+        viewModel.clearAuthorSuggestions()
+        // La estantería y los idiomas se quedan: al dar de alta varios seguidos suelen repetirse.
     }
 
     // La portada se prepara justo antes de enviarla, ya fuera del hilo principal.
@@ -315,35 +388,23 @@ fun CreateBookDialog(
     fun submitInitialForm(andAddAnother: Boolean, checkDuplicates: Boolean = true) {
         val trimmedTitle = title.trim()
         val authorNames = authors.map { it.trim() }.filter { it.isNotEmpty() }
+        val normalizedDate = CreateBookForm.normalizePublishedDate(publishedDate)
 
-        if (trimmedTitle.isEmpty()) {
-            errorMessage = context.getString(R.string.create_book_title_required)
-            return
+        titleError = trimmedTitle.isEmpty()
+        authorError = authorNames.isEmpty()
+        dateError = normalizedDate.isNotEmpty() && BookWyrmScraper.splitPublishedDate(normalizedDate) == null
+        if (dateError) showMoreDetails = true
+        // Se lleva al usuario al primer campo que falla (aunque esté más abajo o plegado).
+        focusTarget = when {
+            titleError -> FieldTarget.TITLE
+            authorError -> FieldTarget.AUTHOR
+            dateError -> FieldTarget.DATE
+            else -> null
         }
-        if (authorNames.isEmpty()) {
-            errorMessage = context.getString(R.string.create_book_author_required)
-            return
-        }
-
-        // Si el usuario escribe DD/MM/AAAA o DD-MM-AAAA, normalizar a AAAA-MM-DD para Django
-        val normalizedDate = run {
-            val raw = publishedDate.trim()
-            val dmyRegex = Regex("""^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$""")
-            val match = dmyRegex.find(raw)
-            if (match != null) {
-                val (d, m, y) = match.destructured
-                "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
-            } else {
-                raw
-            }
-        }
-        if (normalizedDate.isNotEmpty() && BookWyrmScraper.splitPublishedDate(normalizedDate) == null) {
-            errorMessage = context.getString(R.string.create_book_date_invalid)
-            showMoreDetails = true
-            return
-        }
+        if (focusTarget != null) return
 
         errorMessage = null
+        lastAndAddAnother = andAddAnother
         viewModel.submit(
             api = api,
             instanceUrl = instanceUrl,
@@ -368,10 +429,46 @@ fun CreateBookDialog(
         )
     }
 
+    LaunchedEffect(focusTarget) {
+        val target = focusTarget ?: return@LaunchedEffect
+        // Un fotograma para que «Más detalles» llegue a desplegarse antes de enfocar la fecha.
+        withFrameNanos { }
+        runCatching {
+            when (target) {
+                FieldTarget.TITLE -> titleFocus.requestFocus()
+                FieldTarget.AUTHOR -> authorFocus.requestFocus()
+                FieldTarget.DATE -> dateFocus.requestFocus()
+            }
+        }
+        focusTarget = null
+    }
+
+    // El error de la instancia sale arriba: que se vea aunque se haya pulsado desde abajo.
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) scrollState.animateScrollTo(0)
+    }
+    LaunchedEffect(vmState.duplicate) {
+        if (vmState.duplicate != null) scrollState.animateScrollTo(0)
+    }
+
+    // Abierto con un ISBN (escáner o búsqueda): se rellenan los datos sin tener que pedirlo.
+    LaunchedEffect(Unit) {
+        if (!autoLookupDone && IsbnUtils.isIsbn(initialIsbn)) {
+            autoLookupDone = true
+            viewModel.lookupIsbn(initialIsbn)
+        }
+    }
+
+    // En cuanto el ISBN está completo se mira si la instancia ya lo tiene.
+    LaunchedEffect(isbn) {
+        viewModel.checkDuplicate(api, isbn)
+    }
+
     // Lo que termina en el ViewModel se atiende aquí, una sola vez.
     LaunchedEffect(vmState.event) {
         when (val event = vmState.event) {
             is CreateBookViewModel.Event.Created -> {
+                runCatching { prefs.edit().putString(PREF_LANGUAGES, selectedLanguageCodes).apply() }
                 if (event.shelved == false) {
                     Toast.makeText(context, context.getString(R.string.create_book_shelve_failed), Toast.LENGTH_LONG).show()
                 }
@@ -382,6 +479,7 @@ fun CreateBookDialog(
                         Toast.LENGTH_SHORT
                     ).show()
                     resetForm()
+                    scrollState.scrollTo(0)
                 } else {
                     onBookCreated(event.bookUrl)
                     onDismiss()
@@ -409,6 +507,8 @@ fun CreateBookDialog(
                     if (data.subtitle.isNotBlank() || data.publishers.isNotEmpty() || data.publishedDate.isNotBlank()) {
                         showMoreDetails = true
                     }
+                    if (title.isNotBlank()) titleError = false
+                    if (authors.any { it.isNotBlank() }) authorError = false
                     Toast.makeText(context, context.getString(R.string.create_book_fill_done), Toast.LENGTH_SHORT).show()
                 }
             }
@@ -417,61 +517,133 @@ fun CreateBookDialog(
         if (vmState.event != null) viewModel.consumeEvent()
     }
 
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        publishedDate = java.time.Instant.ofEpochMilli(millis)
-                            .atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
-                    }
-                    showDatePicker = false
-                }) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.progress_btn_cancel)) }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
+    val textFieldsEnabled = !isWorking
 
-    AlertDialog(
-        onDismissRequest = {
-            if (!isWorking) onDismiss()
-        },
+    Dialog(
+        // Atrás pasa por aquí: vuelve de la confirmación o pregunta antes de perder lo escrito.
+        onDismissRequest = { requestClose() },
         properties = DialogProperties(
-            dismissOnClickOutside = false
-        ),
-        title = {
-            Text(
-                text = if (confirmation != null) {
-                    stringResource(R.string.create_book_author_choice_title)
-                } else {
-                    stringResource(R.string.create_book_title)
-                },
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = false,
+            decorFitsSystemWindows = false
+        )
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (confirmation != null) {
+                                stringResource(R.string.create_book_author_choice_title)
+                            } else {
+                                stringResource(R.string.create_book_title)
+                            }
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { requestClose() }, enabled = !isWorking) {
+                            if (confirmation != null) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.progress_btn_cancel)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.book_close)
+                                )
+                            }
+                        }
+                    }
+                )
+            },
+            bottomBar = {
+                Surface(tonalElevation = 3.dp) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // Los botones suben con el teclado para poder guardar sin cerrarlo.
+                            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        when {
+                            step != null -> Row(
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                Text(
+                                    text = stringResource(
+                                        when (step) {
+                                            CreateBookViewModel.Step.CHECKING_DUPLICATES -> R.string.create_book_step_duplicates
+                                            CreateBookViewModel.Step.PREPARING_COVER -> R.string.create_book_step_cover
+                                            CreateBookViewModel.Step.SENDING -> R.string.create_book_saving
+                                            CreateBookViewModel.Step.CONFIRMING -> R.string.create_book_step_confirming
+                                            CreateBookViewModel.Step.SHELVING -> R.string.create_book_step_shelving
+                                        }
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            confirmation != null -> {
+                                val allAnswered = confirmation.options.map { it.field }.distinct()
+                                    .all { confirmation.selections.containsKey(it) }
+                                Button(
+                                    onClick = { viewModel.confirm(api, coverProvider) },
+                                    enabled = allAnswered,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(stringResource(R.string.create_book_confirm_author))
+                                }
+                            }
+                            else -> Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { submitInitialForm(andAddAnother = true) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(stringResource(R.string.create_book_save_and_add_another))
+                                }
+                                Button(
+                                    onClick = { submitInitialForm(andAddAnother = false) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(stringResource(R.string.create_book_save))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ) { innerPadding ->
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 480.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (errorMessage != null) {
-                    Text(
-                        text = errorMessage.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = errorMessage.orEmpty(),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
 
-                vmState.duplicateUrl?.let { existingUrl ->
+                vmState.duplicate?.takeIf { confirmation == null }?.let { duplicate ->
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier.padding(12.dp),
@@ -487,15 +659,24 @@ fun CreateBookDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = {
-                                    viewModel.dismissDuplicate()
-                                    onBookCreated(existingUrl)
-                                    onDismiss()
-                                }) { Text(stringResource(R.string.create_book_duplicate_open)) }
-                                TextButton(onClick = {
-                                    viewModel.dismissDuplicate()
-                                    submitInitialForm(andAddAnother = false, checkDuplicates = false)
-                                }) { Text(stringResource(R.string.create_book_duplicate_create_anyway)) }
+                                Button(
+                                    onClick = {
+                                        viewModel.dismissDuplicate()
+                                        onBookCreated(duplicate.url)
+                                        onDismiss()
+                                    },
+                                    enabled = !isWorking
+                                ) { Text(stringResource(R.string.create_book_duplicate_open)) }
+                                TextButton(
+                                    onClick = {
+                                        viewModel.acceptDuplicate()
+                                        // Si salió al guardar, se sigue con lo que se había pedido.
+                                        if (duplicate.fromSubmit) {
+                                            submitInitialForm(andAddAnother = lastAndAddAnother, checkDuplicates = false)
+                                        }
+                                    },
+                                    enabled = !isWorking
+                                ) { Text(stringResource(R.string.create_book_duplicate_create_anyway)) }
                             }
                         }
                     }
@@ -567,25 +748,57 @@ fun CreateBookDialog(
                     // Pantalla 1: Formulario principal de creación
                     OutlinedTextField(
                         value = title,
-                        onValueChange = { title = it },
+                        onValueChange = {
+                            title = it
+                            titleError = false
+                        },
                         label = { Text(stringResource(R.string.create_book_field_title)) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isWorking
+                        isError = titleError,
+                        supportingText = if (titleError) {
+                            { Text(stringResource(R.string.create_book_title_required)) }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Next
+                        ),
+                        modifier = Modifier.fillMaxWidth().focusRequester(titleFocus),
+                        enabled = textFieldsEnabled
                     )
 
                     // Un campo por autor: con comas no se distinguiría «Tolkien, J. R. R.» de dos.
                     authors.forEachIndexed { index, value ->
+                        val showError = authorError && index == 0
                         OutlinedTextField(
                             value = value,
-                            onValueChange = { authors[index] = it },
+                            onValueChange = {
+                                authors[index] = it
+                                authorError = false
+                                viewModel.suggestAuthors(api, instanceUrl, index, it)
+                            },
                             label = { Text(stringResource(R.string.create_book_field_author)) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isWorking,
+                            isError = showError,
+                            supportingText = if (showError) {
+                                { Text(stringResource(R.string.create_book_author_required)) }
+                            } else null,
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Words,
+                                imeAction = ImeAction.Next
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (index == 0) Modifier.focusRequester(authorFocus) else Modifier),
+                            enabled = textFieldsEnabled,
                             trailingIcon = if (authors.size > 1) {
                                 {
-                                    IconButton(onClick = { authors.removeAt(index) }, enabled = !isWorking) {
+                                    IconButton(
+                                        onClick = {
+                                            authors.removeAt(index)
+                                            viewModel.clearAuthorSuggestions()
+                                        },
+                                        enabled = !isWorking
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = stringResource(R.string.create_book_remove_author)
@@ -594,6 +807,27 @@ fun CreateBookDialog(
                                 }
                             } else null
                         )
+                        // Autores que ya están en la instancia: elegir uno evita erratas y duplicados.
+                        vmState.authorSuggestions?.takeIf { it.index == index && !isWorking }?.let { suggestions ->
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = stringResource(R.string.create_book_author_suggestions),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    suggestions.names.forEach { name ->
+                                        SuggestionChip(
+                                            onClick = {
+                                                if (index < authors.size) authors[index] = name
+                                                viewModel.clearAuthorSuggestions()
+                                            },
+                                            label = { Text(name) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                     TextButton(
                         onClick = { authors.add("") },
@@ -624,28 +858,51 @@ fun CreateBookDialog(
                             label = { Text(stringResource(R.string.create_book_field_isbn)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Ascii,
-                                capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters
+                                capitalization = KeyboardCapitalization.Characters,
+                                imeAction = ImeAction.Next
                             ),
                             singleLine = true,
                             isError = isbnLooksWrong,
                             supportingText = if (isbnLooksWrong) {
                                 { Text(stringResource(R.string.create_book_isbn_check_warning)) }
                             } else null,
-                            modifier = Modifier.weight(1f),
-                            enabled = !isWorking
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = {
+                                        scanLauncher.launch(
+                                            ScanOptions()
+                                                .setPrompt(context.getString(R.string.search_barcode_prompt))
+                                                .setBeepEnabled(false)
+                                                .setOrientationLocked(false)
+                                        )
+                                    },
+                                    enabled = !isWorking
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.QrCodeScanner,
+                                        contentDescription = stringResource(R.string.search_tools_scan)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.weight(1.4f),
+                            enabled = textFieldsEnabled
                         )
                         OutlinedTextField(
                             value = pages,
-                            onValueChange = { pages = it },
+                            // Solo cifras: lo demás la instancia lo rechazaría al guardar.
+                            onValueChange = { value -> pages = value.filter { it.isDigit() }.take(5) },
                             label = { Text(stringResource(R.string.create_book_field_pages)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
                             singleLine = true,
                             modifier = Modifier.weight(1f),
-                            enabled = !isWorking
+                            enabled = textFieldsEnabled
                         )
                     }
 
-                    // Rellenar por ISBN: solo al pulsarlo, que es cuando se manda el ISBN a OpenLibrary.
+                    // Rellenar por ISBN a mano (al abrir con un ISBN o al escanear se hace solo).
                     TextButton(
                         onClick = { viewModel.lookupIsbn(isbn) },
                         enabled = !isWorking && !vmState.isLookingUp && IsbnUtils.isIsbn(isbn),
@@ -677,7 +934,7 @@ fun CreateBookDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            enabled = !isWorking
+                            enabled = textFieldsEnabled
                         )
 
                         ExposedDropdownMenu(
@@ -693,6 +950,30 @@ fun CreateBookDialog(
                                     }
                                 )
                             }
+                        }
+                    }
+
+                    // Idiomas: se pueden marcar varios (un libro bilingüe, por ejemplo). Están a la
+                    // vista porque vienen marcados por defecto y conviene ver cuál se va a mandar.
+                    Text(
+                        text = stringResource(R.string.create_book_field_languages),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        languageOptions.forEach { (code, stringRes) ->
+                            val isSelected = code in selectedLanguages
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    val updated = if (isSelected) selectedLanguages - code else selectedLanguages + code
+                                    selectedLanguageCodes = updated.joinToString(",")
+                                },
+                                label = { Text(stringResource(stringRes)) },
+                                enabled = !isWorking
+                            )
                         }
                     }
 
@@ -715,7 +996,7 @@ fun CreateBookDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            enabled = !isWorking
+                            enabled = textFieldsEnabled
                         )
 
                         ExposedDropdownMenu(
@@ -833,16 +1114,28 @@ fun CreateBookDialog(
                                 onValueChange = { subtitle = it },
                                 label = { Text(stringResource(R.string.create_book_field_subtitle)) },
                                 singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.Sentences,
+                                    imeAction = ImeAction.Next
+                                ),
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
+                                enabled = textFieldsEnabled
                             )
 
+                            // El formato admitido ya va en la etiqueta.
                             OutlinedTextField(
                                 value = publishedDate,
-                                onValueChange = { publishedDate = it },
+                                onValueChange = {
+                                    publishedDate = it
+                                    dateError = false
+                                },
                                 label = { Text(stringResource(R.string.create_book_field_published_date)) },
-                                placeholder = { Text("AAAA o AAAA-MM-DD") },
                                 singleLine = true,
+                                isError = dateError,
+                                supportingText = if (dateError) {
+                                    { Text(stringResource(R.string.create_book_date_invalid)) }
+                                } else null,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                                 trailingIcon = {
                                     IconButton(onClick = { showDatePicker = true }, enabled = !isWorking) {
                                         Icon(
@@ -851,8 +1144,8 @@ fun CreateBookDialog(
                                         )
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
+                                modifier = Modifier.fillMaxWidth().focusRequester(dateFocus),
+                                enabled = textFieldsEnabled
                             )
 
                             OutlinedTextField(
@@ -860,8 +1153,12 @@ fun CreateBookDialog(
                                 onValueChange = { publishers = it },
                                 label = { Text(stringResource(R.string.create_book_field_publishers)) },
                                 singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.Words,
+                                    imeAction = ImeAction.Next
+                                ),
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
+                                enabled = textFieldsEnabled
                             )
 
                             Row(
@@ -873,40 +1170,22 @@ fun CreateBookDialog(
                                     onValueChange = { series = it },
                                     label = { Text(stringResource(R.string.create_book_field_series)) },
                                     singleLine = true,
+                                    keyboardOptions = KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.Words,
+                                        imeAction = ImeAction.Next
+                                    ),
                                     modifier = Modifier.weight(2f),
-                                    enabled = !isWorking
+                                    enabled = textFieldsEnabled
                                 )
                                 OutlinedTextField(
                                     value = seriesNumber,
                                     onValueChange = { seriesNumber = it },
                                     label = { Text(stringResource(R.string.create_book_field_series_number)) },
                                     singleLine = true,
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                                     modifier = Modifier.weight(1f),
-                                    enabled = !isWorking && series.isNotBlank()
+                                    enabled = textFieldsEnabled && series.isNotBlank()
                                 )
-                            }
-
-                            // Idiomas: se pueden marcar varios (un libro bilingüe, por ejemplo).
-                            Text(
-                                text = stringResource(R.string.create_book_field_languages),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                languageOptions.forEach { (code, stringRes) ->
-                                    val isSelected = code in selectedLanguages
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = {
-                                            val updated = if (isSelected) selectedLanguages - code else selectedLanguages + code
-                                            selectedLanguageCodes = updated.joinToString(",")
-                                        },
-                                        label = { Text(stringResource(stringRes)) },
-                                        enabled = !isWorking
-                                    )
-                                }
                             }
 
                             OutlinedTextField(
@@ -915,73 +1194,59 @@ fun CreateBookDialog(
                                 label = { Text(stringResource(R.string.create_book_field_description)) },
                                 minLines = 3,
                                 maxLines = 6,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !isWorking
+                                enabled = textFieldsEnabled
                             )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            if (isWorking) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .padding(end = 8.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (confirmation != null) {
-                        val allAnswered = confirmation.options.map { it.field }.distinct()
-                            .all { confirmation.selections.containsKey(it) }
-                        Button(
-                            onClick = { viewModel.confirm(api, coverProvider) },
-                            enabled = !isWorking && allAnswered
-                        ) {
-                            Text(stringResource(R.string.create_book_confirm_author))
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = { submitInitialForm(andAddAnother = true) },
-                            enabled = !isWorking
-                        ) {
-                            Text(stringResource(R.string.create_book_save_and_add_another))
-                        }
-                        Button(
-                            onClick = { submitInitialForm(andAddAnother = false) },
-                            enabled = !isWorking
-                        ) {
-                            Text(stringResource(R.string.create_book_save))
-                        }
+        }
+    }
+
+    // Después de la pantalla completa para que, al recrearse tras girar, queden por encima.
+    if (showDatePicker) {
+        // Se abre en la fecha que ya esté escrita, no en hoy.
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = CreateBookForm.publishedDateToUtcMillis(publishedDate)
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        publishedDate = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+                        dateError = false
                     }
+                    showDatePicker = false
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.progress_btn_cancel)) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text(stringResource(R.string.create_book_discard_title)) },
+            text = { Text(stringResource(R.string.create_book_discard_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onDismiss()
+                }) { Text(stringResource(R.string.create_book_discard_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(stringResource(R.string.create_book_discard_keep))
                 }
             }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    if (confirmation != null) {
-                        // Volver al formulario de campos si cancela la confirmación
-                        viewModel.cancelConfirmation()
-                    } else {
-                        onDismiss()
-                    }
-                },
-                enabled = !isWorking
-            ) {
-                Text(
-                    if (confirmation != null) {
-                        stringResource(R.string.progress_btn_cancel)
-                    } else {
-                        stringResource(R.string.book_close)
-                    }
-                )
-            }
-        }
-    )
+        )
+    }
 }

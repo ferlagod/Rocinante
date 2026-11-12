@@ -428,9 +428,11 @@ fun SearchScreen(
                 OutlinedButton(
                     onClick = {
                         val cleanQuery = searchQuery.trim()
-                        val digitsOnly = cleanQuery.replace("-", "")
-                        if (digitsOnly.isNotEmpty() && digitsOnly.all { it.isDigit() } && digitsOnly.length in 10..13) {
-                            createBookInitialIsbn = digitsOnly
+                        // Mismo criterio que el resto de la app: también los ISBN-10 acabados en X.
+                        if (com.ferlagod.rocinante.utils.IsbnUtils.isIsbn(cleanQuery) &&
+                            cleanQuery.all { it.isDigit() || it in "-xX " }
+                        ) {
+                            createBookInitialIsbn = com.ferlagod.rocinante.utils.IsbnUtils.normalize(cleanQuery)
                             createBookInitialTitle = ""
                         } else {
                             createBookInitialTitle = cleanQuery

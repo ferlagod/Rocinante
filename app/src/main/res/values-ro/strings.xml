@@ -709,4 +709,14 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="create_book_lang_de">Germană</string>
     <string name="create_book_lang_it">Italiană</string>
     <string name="create_book_lang_pt">Portugheză</string>
+    <string name="create_book_discard_title">Renunți la această carte?</string>
+    <string name="create_book_discard_body">Datele introduse se vor pierde.</string>
+    <string name="create_book_discard_confirm">Renunță</string>
+    <string name="create_book_discard_keep">Continuă editarea</string>
+    <string name="create_book_scan_not_isbn">Acest cod nu este un ISBN</string>
+    <string name="create_book_author_suggestions">Deja pe instanță:</string>
+    <string name="create_book_step_duplicates">Se verifică dacă instanța o are deja…</string>
+    <string name="create_book_step_cover">Se pregătește coperta…</string>
+    <string name="create_book_step_confirming">Se confirmă cu instanța…</string>
+    <string name="create_book_step_shelving">Se adaugă pe raft…</string>
 </resources>

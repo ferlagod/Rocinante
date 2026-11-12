@@ -689,4 +689,14 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="create_book_lang_de">Saksa</string>
     <string name="create_book_lang_it">Italia</string>
     <string name="create_book_lang_pt">Portugali</string>
+    <string name="create_book_discard_title">Hylätäänkö tämä kirja?</string>
+    <string name="create_book_discard_body">Syöttämäsi tiedot menetetään.</string>
+    <string name="create_book_discard_confirm">Hylkää</string>
+    <string name="create_book_discard_keep">Jatka muokkausta</string>
+    <string name="create_book_scan_not_isbn">Koodi ei ole ISBN</string>
+    <string name="create_book_author_suggestions">Jo instanssissa:</string>
+    <string name="create_book_step_duplicates">Tarkistetaan, onko instanssissa jo tämä…</string>
+    <string name="create_book_step_cover">Valmistellaan kantta…</string>
+    <string name="create_book_step_confirming">Vahvistetaan instanssin kanssa…</string>
+    <string name="create_book_step_shelving">Lisätään hyllyyn…</string>
 </resources>

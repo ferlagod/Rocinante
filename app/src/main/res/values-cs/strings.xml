@@ -719,4 +719,14 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="create_book_lang_de">Němčina</string>
     <string name="create_book_lang_it">Italština</string>
     <string name="create_book_lang_pt">Portugalština</string>
+    <string name="create_book_discard_title">Zahodit tuto knihu?</string>
+    <string name="create_book_discard_body">Zadané údaje budou ztraceny.</string>
+    <string name="create_book_discard_confirm">Zahodit</string>
+    <string name="create_book_discard_keep">Pokračovat v úpravách</string>
+    <string name="create_book_scan_not_isbn">Tento kód není ISBN</string>
+    <string name="create_book_author_suggestions">Už na instanci:</string>
+    <string name="create_book_step_duplicates">Kontroluje se, zda ji instance už má…</string>
+    <string name="create_book_step_cover">Připravuje se obálka…</string>
+    <string name="create_book_step_confirming">Potvrzuje se s instancí…</string>
+    <string name="create_book_step_shelving">Přidává se do police…</string>
 </resources>

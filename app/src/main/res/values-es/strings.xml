@@ -746,4 +746,14 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="create_book_lang_de">Alemán</string>
     <string name="create_book_lang_it">Italiano</string>
     <string name="create_book_lang_pt">Portugués</string>
+    <string name="create_book_discard_title">¿Descartar este libro?</string>
+    <string name="create_book_discard_body">Se perderán los datos que has escrito.</string>
+    <string name="create_book_discard_confirm">Descartar</string>
+    <string name="create_book_discard_keep">Seguir editando</string>
+    <string name="create_book_scan_not_isbn">Ese código no es un ISBN</string>
+    <string name="create_book_author_suggestions">Ya en la instancia:</string>
+    <string name="create_book_step_duplicates">Comprobando si la instancia ya lo tiene…</string>
+    <string name="create_book_step_cover">Preparando la portada…</string>
+    <string name="create_book_step_confirming">Confirmando con la instancia…</string>
+    <string name="create_book_step_shelving">Poniéndolo en la estantería…</string>
 </resources>

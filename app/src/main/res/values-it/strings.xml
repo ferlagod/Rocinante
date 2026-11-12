@@ -689,4 +689,14 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="create_book_lang_de">Tedesco</string>
     <string name="create_book_lang_it">Italiano</string>
     <string name="create_book_lang_pt">Portoghese</string>
+    <string name="create_book_discard_title">Scartare questo libro?</string>
+    <string name="create_book_discard_body">I dati inseriti andranno persi.</string>
+    <string name="create_book_discard_confirm">Scarta</string>
+    <string name="create_book_discard_keep">Continua a modificare</string>
+    <string name="create_book_scan_not_isbn">Questo codice non è un ISBN</string>
+    <string name="create_book_author_suggestions">Già nell\'istanza:</string>
+    <string name="create_book_step_duplicates">Controllo se l\'istanza lo ha già…</string>
+    <string name="create_book_step_cover">Preparazione della copertina…</string>
+    <string name="create_book_step_confirming">Conferma con l\'istanza…</string>
+    <string name="create_book_step_shelving">Aggiunta allo scaffale…</string>
 </resources>

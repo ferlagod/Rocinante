@@ -688,4 +688,14 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="create_book_lang_de">Duits</string>
     <string name="create_book_lang_it">Italiaans</string>
     <string name="create_book_lang_pt">Portugees</string>
+    <string name="create_book_discard_title">Dit boek weggooien?</string>
+    <string name="create_book_discard_body">De ingevoerde gegevens gaan verloren.</string>
+    <string name="create_book_discard_confirm">Weggooien</string>
+    <string name="create_book_discard_keep">Verder bewerken</string>
+    <string name="create_book_scan_not_isbn">Die code is geen ISBN</string>
+    <string name="create_book_author_suggestions">Al op de instantie:</string>
+    <string name="create_book_step_duplicates">Controleren of de instantie het al heeft…</string>
+    <string name="create_book_step_cover">Omslag voorbereiden…</string>
+    <string name="create_book_step_confirming">Bevestigen bij de instantie…</string>
+    <string name="create_book_step_shelving">Op de plank zetten…</string>
 </resources>
