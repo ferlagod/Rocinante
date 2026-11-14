@@ -97,7 +97,8 @@ class ReadingStatsTest {
         val stats = ReadingStatsCalculator.compute(books, enrichment, currentYear = 2026)
 
         assertEquals(3, stats.totalBooks)
-        assertEquals(2, stats.booksWithoutFinishDate)
+        // «c» no tiene nada leído de su página todavía: no se sabe si le falta la fecha.
+        assertEquals(1, stats.booksWithoutFinishDate)
         assertEquals(listOf(ReadingStats.YearCount(2025, 1)), stats.booksPerYear)
     }
 

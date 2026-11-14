@@ -307,11 +307,31 @@ fun ReadingStatsCard(
         }
 
         // Advertencias sobre datos que faltan
-        if (stats.booksWithoutFinishDate > 0 || stats.booksWithoutPages > 0) {
+        if (stats.booksWithoutFinishDate > 0 || stats.booksWithoutPages > 0 || stats.booksWithShelvedDate > 0) {
             Column(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
+                if (stats.booksWithShelvedDate > 0) {
+                    // Están en la gráfica, pero con la fecha en que se archivaron: se dice, y
+                    // lleva al mismo diálogo para poner la de verdad o confirmar esa.
+                    val canFixDates = onFixMissingDates != null
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.profile_stats_shelved_dates,
+                            stats.booksWithShelvedDate,
+                            stats.booksWithShelvedDate
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (canFixDates) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = if (canFixDates) {
+                            Modifier.clickable { onFixMissingDates!!() }
+                        } else {
+                            Modifier
+                        }
+                    )
+                }
                 if (stats.booksWithoutFinishDate > 0) {
                     // Igual que las páginas: se puede hacer algo, así que el aviso lleva a
                     // los libros de los que habla.

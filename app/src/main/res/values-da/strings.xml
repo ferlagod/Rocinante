@@ -520,6 +520,15 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="missing_ratings_privacy">Synlighed:</string>
     <string name="missing_ratings_failed">Kunne ikke vurdere «%1$s»</string>
     <string name="missing_dates_explanation">Datoerne er dine, ikke bogens: det her rører kun din egen læsning. Uden slutdato er bogen ikke med i grafen over år, og uden begge tæller den ikke med i læsedage.</string>
+    <string name="missing_dates_shelved_note">Bøger uden registreret læsning får datoen, hvor de blev sat på hylden, foreslået som slutdato. Intet gemmes, før du bekræfter.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Gem %d dato</item>
+        <item quantity="other">Gem %d datoer</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d dato kunne ikke gemmes</item>
+        <item quantity="other">%d datoer kunne ikke gemmes</item>
+    </plurals>
     <string name="missing_dates_save">Gem datoer</string>
     <string name="missing_dates_failed">Kunne ikke gemme datoerne for «%1$s»</string>
     <string name="missing_pages_explanation">Sideantallet hører til bogen, ikke til dig: det, du skriver her, gemmes på instansen, og alle ser det. Der gemmes én bog ad gangen.</string>
@@ -539,6 +548,10 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d bog mangler slutdato og er ikke med i grafen</item>
         <item quantity="other">%d bøger mangler slutdato og er ikke med i grafen</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d bog bruger datoen, hvor den blev sat på hylden, som slutdato</item>
+        <item quantity="other">%d bøger bruger datoen, hvor de blev sat på hylden, som slutdato</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d bog mangler sidetal og er ikke med i totalen</item>

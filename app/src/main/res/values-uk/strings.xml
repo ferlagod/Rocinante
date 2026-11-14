@@ -490,6 +490,19 @@
     <string name="missing_ratings_privacy">Видимість:</string>
     <string name="missing_ratings_failed">Не вдалося оцінити «%1$s»</string>
     <string name="missing_dates_explanation">Дати ваші, а не книжки: це стосується лише вашого читання. Без дати завершення книжки немає на графіку за роками, а без обох вона не рахується у днях читання.</string>
+    <string name="missing_dates_shelved_note">Книжкам без жодного записаного читання пропонується датою завершення дата додавання на полицю. Нічого не зберігається, доки ви не підтвердите.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Зберегти %d дату</item>
+        <item quantity="few">Зберегти %d дати</item>
+        <item quantity="many">Зберегти %d дат</item>
+        <item quantity="other">Зберегти %d дати</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Не вдалося зберегти %d дату</item>
+        <item quantity="few">Не вдалося зберегти %d дати</item>
+        <item quantity="many">Не вдалося зберегти %d дат</item>
+        <item quantity="other">Не вдалося зберегти %d дати</item>
+    </plurals>
     <string name="missing_dates_save">Зберегти дати</string>
     <string name="missing_dates_failed">Не вдалося зберегти дати книжки «%1$s»</string>
     <string name="missing_pages_explanation">Кількість сторінок належить книзі, а не вам: те, що ви впишете тут, зберігається на інстанції і це бачать усі. Зберігається по одній книзі.</string>
@@ -555,6 +568,12 @@
         <item quantity="one">%d книга не має дати завершення й не показана на графіку</item>
         <item quantity="few">%d книги не мають дати завершення й не показані на графіку</item>
         <item quantity="many">%d книг не мають дати завершення й не показані на графіку</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d книжка має датою завершення дату додавання на полицю</item>
+        <item quantity="few">%d книжки мають датою завершення дату додавання на полицю</item>
+        <item quantity="many">%d книжок мають датою завершення дату додавання на полицю</item>
+        <item quantity="other">%d книжки мають датою завершення дату додавання на полицю</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d книга не вказує кількість сторінок і не входить у суму</item>

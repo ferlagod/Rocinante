@@ -470,6 +470,15 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="missing_ratings_privacy">Visibilité :</string>
     <string name="missing_ratings_failed">Impossible de noter « %1$s »</string>
     <string name="missing_dates_explanation">Les dates sont les vôtres, pas celles du livre : cela ne touche que votre propre lecture. Sans date de fin, le livre n\'apparaît pas dans le graphique par années, et sans les deux il ne compte pas dans les jours de lecture.</string>
+    <string name="missing_dates_shelved_note">Pour les livres sans aucune lecture enregistrée, la date à laquelle ils ont été rangés est proposée comme date de fin. Rien n’est enregistré tant que vous ne l’avez pas confirmé.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Enregistrer %d date</item>
+        <item quantity="other">Enregistrer %d dates</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d date n’a pas pu être enregistrée</item>
+        <item quantity="other">%d dates n’ont pas pu être enregistrées</item>
+    </plurals>
     <string name="missing_dates_save">Enregistrer les dates</string>
     <string name="missing_dates_failed">Impossible d\'enregistrer les dates de « %1$s »</string>
     <string name="missing_pages_explanation">Le nombre de pages appartient au livre, pas à vous : ce que vous écrivez ici est enregistré sur l\'instance et tout le monde le voit. L\'enregistrement se fait livre par livre.</string>
@@ -532,6 +541,10 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d livre n\'a pas de date de fin et n\'apparaît pas dans le graphique</item>
         <item quantity="other">%d livres n\'ont pas de date de fin et n\'apparaissent pas dans le graphique</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d livre a pour date de fin celle où il a été rangé</item>
+        <item quantity="other">%d livres ont pour date de fin celle où ils ont été rangés</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d livre n\'indique pas de pages et n\'est pas compté</item>

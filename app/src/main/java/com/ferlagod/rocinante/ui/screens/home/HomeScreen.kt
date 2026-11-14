@@ -1829,26 +1829,40 @@ fun ProfileTab(
     var selectedStatsYear by remember { mutableStateOf<Int?>(null) }
     var showYearInReviewDialog by remember { mutableStateOf(false) }
 
+    // Fecha en que se archivó cada libro leído sin ninguna lectura registrada: hace de fecha de
+    // fin aproximada en las estadísticas y se propone en el diálogo de las fechas que faltan.
+    var shelvedDates by remember { mutableStateOf(com.ferlagod.rocinante.utils.ShelvedDates()) }
+
+    // Las cifras del perfil salen de aquí, se llegue desde la caché o desde la sincronización.
+    fun recomputeStats(
+        books: List<com.ferlagod.rocinante.data.model.ShelfBookItem>,
+        data: Map<String, com.ferlagod.rocinante.data.model.BookEnrichment>
+    ) {
+        readingStats = if (books.isEmpty()) {
+            null
+        } else {
+            com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
+                books = books,
+                enrichment = data,
+                currentYear = currentYear,
+                filterYear = selectedStatsYear,
+                shelvedDates = shelvedDates
+            )
+        }
+        topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
+            books = books,
+            enrichment = com.ferlagod.rocinante.utils.applyShelvedFallback(books, data, shelvedDates).enrichment,
+            filterYear = selectedStatsYear
+        )
+    }
+
     LaunchedEffect(refreshTrigger, selectedStatsYear) {
         val readShelf = dataCache.loadShelfBooks("read").orEmpty()
         readBooks = readShelf
         val enrichmentData = dataCache.loadEnrichment()
         enrichment = enrichmentData
-        readingStats = if (readShelf.isEmpty()) {
-            null
-        } else {
-            com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
-                books = readShelf,
-                enrichment = enrichmentData,
-                currentYear = currentYear,
-                filterYear = selectedStatsYear
-            )
-        }
-        topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
-            books = readShelf,
-            enrichment = enrichmentData,
-            filterYear = selectedStatsYear
-        )
+        dataCache.loadShelvedDates()?.let { shelvedDates = it }
+        recomputeStats(readShelf, enrichmentData)
     }
 
     if (showMissingPages) {
@@ -1904,11 +1918,14 @@ fun ProfileTab(
             // A los que les falta alguna de las dos: sin la de fin no salen en la gráfica por
             // años, y sin las dos no cuentan en los días de lectura. Los dos avisos del perfil
             // llevan aquí, así que la lista es la unión y no una por cada uno.
+            // Solo los libros cuya página ya se ha leído: de los demás no se sabe aún si les
+            // falta algo, y tras actualizar la app salían todos vacíos mientras se releían.
             books = readBooks.filter { book ->
-                val data = book.id?.let { enrichment[it] }
-                data?.finished.isNullOrBlank() || data?.started.isNullOrBlank()
+                val data = book.id?.let { enrichment[it] } ?: return@filter false
+                data.finished.isNullOrBlank() || data.started.isNullOrBlank()
             },
             enrichment = enrichment,
+            shelvedDates = shelvedDates,
             api = api,
             context = context,
             coroutineScope = coroutineScope,
@@ -2287,24 +2304,36 @@ fun ProfileTab(
                 onProgress = { updatedBooks, updatedEnrichment ->
                     readBooks = updatedBooks
                     enrichment = updatedEnrichment
-                    readingStats = if (updatedBooks.isEmpty()) {
-                        null
-                    } else {
-                        com.ferlagod.rocinante.utils.ReadingStatsCalculator.compute(
-                            books = updatedBooks,
-                            enrichment = updatedEnrichment,
-                            currentYear = currentYear,
-                            filterYear = selectedStatsYear
-                        )
-                    }
-                    topRated = com.ferlagod.rocinante.utils.ReadingStatsCalculator.topRated(
-                        books = updatedBooks,
-                        enrichment = updatedEnrichment,
-                        filterYear = selectedStatsYear
-                    )
+                    recomputeStats(updatedBooks, updatedEnrichment)
                 }
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+        // Con la estantería y sus fechas ya al día, se buscan las de archivado de los libros
+        // que siguen sin fecha de fin. Solo si falta alguna que no se conozca, y como mucho una
+        // vez por hora: cuesta las últimas páginas de la estantería.
+        try {
+            val uncovered = readBooks.filter { book ->
+                val data = book.id?.let { enrichment[it] } ?: return@filter false
+                val hasFinish = !data.finished.isNullOrBlank() ||
+                    data.readthroughs.orEmpty().any { !it.finished.isNullOrBlank() }
+                !hasFinish && shelvedDates.dateFor(book) == null
+            }
+            val age = dataCache.shelvedDatesAge()
+            if ((uncovered.isNotEmpty() && age > 60 * 60 * 1000L) || age > 7 * 24 * 60 * 60 * 1000L) {
+                com.ferlagod.rocinante.data.api.BookWyrmScraper.scrapeShelvedDates(
+                    api = api,
+                    instanceUrl = instanceUrl,
+                    username = username
+                )?.let { fresh ->
+                    dataCache.saveShelvedDates(fresh)
+                    shelvedDates = fresh
+                    recomputeStats(readBooks, enrichment)
+                }
+            }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
         }
         try {
             val fetchedUsers = com.ferlagod.rocinante.data.api.BookWyrmScraper.getSuggestedUsers(api, instanceUrl)

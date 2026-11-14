@@ -60,6 +60,9 @@ import com.ferlagod.rocinante.data.model.ShelfBookItem
  * @property formatDistribution formatos leídos, con el valor tal cual lo da BookWyrm
  *   ("Hardcover", "EBook"…); traducirlo es cosa de la interfaz.
  * @property booksWithoutFormat libros sin formato declarado.
+ * @property booksWithShelvedDate libros sin ninguna lectura registrada a los que se les ha
+ *   puesto como fecha de fin la de archivado: cuentan en la gráfica, pero la fecha es
+ *   aproximada y la interfaz lo dice.
  */
 data class ReadingStats(
     val totalBooks: Int,
@@ -91,7 +94,8 @@ data class ReadingStats(
     val booksWithoutLanguage: Int,
     val formatDistribution: List<FormatCount>,
     val booksWithoutFormat: Int,
-    val filterYear: Int? = null
+    val filterYear: Int? = null,
+    val booksWithShelvedDate: Int = 0
 ) {
     data class YearCount(val year: Int, val count: Int)
 
@@ -278,7 +282,24 @@ object ReadingStatsCalculator {
         books: List<ShelfBookItem>,
         enrichment: Map<String, BookEnrichment>,
         currentYear: Int,
-        filterYear: Int? = null
+        filterYear: Int? = null,
+        shelvedDates: ShelvedDates = ShelvedDates()
+    ): ReadingStats {
+        val fallback = applyShelvedFallback(books, enrichment, shelvedDates)
+        val stats = computeWith(books, fallback.enrichment, currentYear, filterYear)
+        val approximated = fallback.approximated.count { id ->
+            val year = parseIsoDate(fallback.enrichment[id]?.finished)?.year
+                ?: return@count false
+            if (filterYear != null) year == filterYear else year in MIN_PLAUSIBLE_YEAR..currentYear
+        }
+        return stats.copy(booksWithShelvedDate = approximated)
+    }
+
+    private fun computeWith(
+        books: List<ShelfBookItem>,
+        enrichment: Map<String, BookEnrichment>,
+        currentYear: Int,
+        filterYear: Int?
     ): ReadingStats {
         val targetYear = filterYear ?: currentYear
 
@@ -397,9 +418,12 @@ object ReadingStatsCalculator {
             ReadingStats.MonthCount(month, finishedMonths[month] ?: 0)
         }
 
-        // Libros sin fecha de fin (o con fecha no plausible / futura)
+        // Libros sin fecha de fin (o con fecha no plausible / futura). Los que aún no se han
+        // leído de su página no cuentan: no se sabe si tienen fecha, y tras actualizar la app
+        // o sincronizar por primera vez salían cientos «sin fecha» mientras se iban leyendo.
+        val pendingBooks = books.count { book -> book.id != null && enrichment[book.id] == null }
         val booksWithoutFinishDate = if (filterYear == null) {
-            (totalReads - allYears.size).coerceAtLeast(0)
+            (totalReads - allYears.size - pendingBooks).coerceAtLeast(0)
         } else {
             0
         }

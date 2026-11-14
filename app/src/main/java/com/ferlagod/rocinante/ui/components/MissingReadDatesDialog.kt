@@ -79,6 +79,7 @@ import kotlinx.coroutines.launch
  *
  * @param books Libros de la estantería a los que les falta alguna fecha.
  * @param enrichment Lo que ya se sabe de cada uno, para partir de la fecha que sí esté puesta.
+ * @param shelvedDates Fechas de archivado, que se proponen como fecha de fin a quien no tiene.
  * @param onSaved Se llama con lo guardado, para que quien abrió el diálogo lo apunte y las
  *   cifras del perfil dejen de decir que faltan.
  */
@@ -86,6 +87,7 @@ import kotlinx.coroutines.launch
 fun MissingReadDatesDialog(
     books: List<ShelfBookItem>,
     enrichment: Map<String, BookEnrichment>,
+    shelvedDates: com.ferlagod.rocinante.utils.ShelvedDates = com.ferlagod.rocinante.utils.ShelvedDates(),
     api: BookWyrmApi,
     context: Context,
     coroutineScope: CoroutineScope,
@@ -99,9 +101,17 @@ fun MissingReadDatesDialog(
             books.forEach { b -> b.id?.let { id -> enrichment[id]?.started?.let { put(id, it) } } }
         }
     }
+    // A un libro sin ninguna fecha de fin se le propone la de archivado: es la única que guarda
+    // BookWyrm de las importaciones, y suele andar cerca. No se guarda hasta que se confirma.
     val finished = remember {
         mutableStateMapOf<String, String>().apply {
-            books.forEach { b -> b.id?.let { id -> enrichment[id]?.finished?.let { put(id, it) } } }
+            books.forEach { b ->
+                val id = b.id ?: return@forEach
+                val date = enrichment[id]?.finished?.takeIf { it.isNotBlank() }
+                    ?: enrichment[id]?.readthroughs.orEmpty().mapNotNull { it.finished }.maxOrNull()
+                    ?: shelvedDates.dateFor(b)
+                date?.let { put(id, it) }
+            }
         }
     }
     val saving = remember { mutableStateMapOf<String, Boolean>() }
@@ -112,58 +122,104 @@ fun MissingReadDatesDialog(
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
-    fun save(book: ShelfBookItem) {
-        val id = book.id ?: return
+    // Los libros a los que se les ha propuesto la fecha de archivado, con esa fecha: el botón
+    // de guardarlas todas solo manda las que siguen tal cual se propusieron.
+    val suggested = remember {
+        books.mapNotNull { b ->
+            val id = b.id ?: return@mapNotNull null
+            val date = finished[id] ?: return@mapNotNull null
+            if (date == shelvedDates.dateFor(b) && enrichment[id]?.finished.isNullOrBlank()) id to date else null
+        }.toMap()
+    }
+    var savingAll by remember { mutableStateOf(false) }
+
+    /**
+     * Guarda las fechas de un libro en la instancia.
+     *
+     * @param quiet sin avisos por libro, para el guardado de todos de golpe, que avisa al final.
+     * @return true si quedó guardado.
+     */
+    suspend fun saveNow(book: ShelfBookItem, quiet: Boolean): Boolean {
+        val id = book.id ?: return false
         val start = started[id]
         val finish = finished[id]
-        if (start == null && finish == null) return
+        if (start == null && finish == null) return false
         if (start != null && finish != null && start > finish) {
-            toast(context.getString(R.string.book_read_dates_order))
-            return
+            if (!quiet) toast(context.getString(R.string.book_read_dates_order))
+            return false
         }
-        if (saving[id] == true) return
+        if (saving[id] == true || done[id] == true) return false
+        saving[id] = true
+        try {
+            val ctx = BookWyrmScraper.getReadDatesContext(api, id)
+            if (ctx == null) {
+                if (!quiet) toast(context.getString(R.string.missing_dates_failed, book.title.orEmpty()))
+                return false
+            }
+            // Si ya hay una lectura dada de alta se corrige esa —la más reciente, que es la
+            // que le falta el dato—; si no hay ninguna, se crea.
+            val latest = ctx.readthroughs.maxByOrNull { it.finishDate ?: it.startDate ?: "" }
+            val response = if (latest != null) {
+                api.editReadthrough(
+                    readthroughId = latest.id,
+                    startDate = start ?: "",
+                    finishDate = finish ?: "",
+                    csrfToken = ctx.csrfToken
+                )
+            } else {
+                api.createReadthrough(
+                    book = ctx.bookId,
+                    user = ctx.userId,
+                    startDate = start ?: "",
+                    finishDate = finish ?: "",
+                    csrfToken = ctx.csrfToken
+                )
+            }
+            // Al corregir, BookWyrm contesta 200 vacío o redirige. Al crear, un 200 es el
+            // formulario devuelto con errores: ahí solo vale la redirección.
+            val ok = com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) || (latest != null && response.isSuccessful)
+            if (ok) {
+                BookWyrmScraper.invalidateBookPage()
+                done[id] = true
+                onSaved(id, start, finish)
+            } else if (!quiet) {
+                toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()))
+            }
+            return ok
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (!quiet) toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, e))
+            return false
+        } finally {
+            saving[id] = false
+        }
+    }
+
+    fun save(book: ShelfBookItem) {
+        coroutineScope.launch { saveNow(book, quiet = false) }
+    }
+
+    /**
+     * Guarda de una vez las fechas de archivado propuestas que no se han tocado. Van de una en
+     * una, y no todas a la vez: son cientos de peticiones contra la instancia de otra persona.
+     */
+    fun saveAllSuggested() {
+        if (savingAll) return
+        savingAll = true
         coroutineScope.launch {
-            saving[id] = true
+            var failed = 0
             try {
-                val ctx = BookWyrmScraper.getReadDatesContext(api, id)
-                if (ctx == null) {
-                    toast(context.getString(R.string.missing_dates_failed, book.title.orEmpty()))
-                    return@launch
+                books.filter { b ->
+                    val id = b.id ?: return@filter false
+                    done[id] != true && suggested[id] != null && finished[id] == suggested[id]
+                }.forEach { book ->
+                    if (!saveNow(book, quiet = true)) failed++
                 }
-                // Si ya hay una lectura dada de alta se corrige esa —la más reciente, que es la
-                // que le falta el dato—; si no hay ninguna, se crea.
-                val latest = ctx.readthroughs.maxByOrNull { it.finishDate ?: it.startDate ?: "" }
-                val response = if (latest != null) {
-                    api.editReadthrough(
-                        readthroughId = latest.id,
-                        startDate = start ?: "",
-                        finishDate = finish ?: "",
-                        csrfToken = ctx.csrfToken
-                    )
-                } else {
-                    api.createReadthrough(
-                        book = ctx.bookId,
-                        user = ctx.userId,
-                        startDate = start ?: "",
-                        finishDate = finish ?: "",
-                        csrfToken = ctx.csrfToken
-                    )
-                }
-                // Al corregir, BookWyrm contesta 200 vacío o redirige. Al crear, un 200 es el
-                // formulario devuelto con errores: ahí solo vale la redirección.
-                val ok = com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) || (latest != null && response.isSuccessful)
-                if (ok) {
-                    BookWyrmScraper.invalidateBookPage()
-                    done[id] = true
-                    onSaved(id, start, finish)
-                } else {
-                    toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, response.code()))
-                }
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
-                toast(com.ferlagod.rocinante.utils.NetworkErrors.message(context, e))
             } finally {
-                saving[id] = false
+                savingAll = false
+            }
+            if (failed > 0) {
+                toast(context.resources.getQuantityString(R.plurals.missing_dates_bulk_failed, failed, failed))
             }
         }
     }
@@ -183,6 +239,14 @@ fun MissingReadDatesDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
+                if (suggested.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.missing_dates_shelved_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
                 LazyColumn(
                     modifier = Modifier.heightIn(max = 420.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -261,6 +325,18 @@ fun MissingReadDatesDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.book_close))
+            }
+        },
+        dismissButton = {
+            val remaining = suggested.count { (id, date) -> done[id] != true && finished[id] == date }
+            if (remaining > 0 || savingAll) {
+                TextButton(onClick = { saveAllSuggested() }, enabled = !savingAll) {
+                    if (savingAll) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(pluralStringResource(R.plurals.missing_dates_save_suggested, remaining, remaining))
+                    }
+                }
             }
         }
     )

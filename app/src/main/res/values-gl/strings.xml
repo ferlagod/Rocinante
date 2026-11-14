@@ -472,6 +472,15 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="missing_ratings_privacy">Visibilidade:</string>
     <string name="missing_ratings_failed">Non se puido valorar «%1$s»</string>
     <string name="missing_dates_explanation">As datas son túas, non do libro: isto só toca a túa propia lectura. Sen data de fin o libro non sae na gráfica por anos, e sen as dúas non conta nos días de lectura.</string>
+    <string name="missing_dates_shelved_note">Aos libros sen ningunha lectura rexistrada propóñselles como data de fin a de cando se arquivaron. Non se garda nada ata que o confirmes.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Gardar %d data</item>
+        <item quantity="other">Gardar %d datas</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Non se puido gardar %d data</item>
+        <item quantity="other">Non se puideron gardar %d datas</item>
+    </plurals>
     <string name="missing_dates_save">Gardar as datas</string>
     <string name="missing_dates_failed">Non se puideron gardar as datas de «%1$s»</string>
     <string name="missing_pages_explanation">As páxinas son do libro, non de quen o le: o que escribas aquí gárdase na instancia e véno todos. Gárdase dun en un.</string>
@@ -534,6 +543,10 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d libro non ten data de fin e non aparece na gráfica</item>
         <item quantity="other">%d libros non teñen data de fin e non aparecen na gráfica</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d libro usa como data de fin a de cando se arquivou</item>
+        <item quantity="other">%d libros usan como data de fin a de cando se arquivaron</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d libro non indica páxinas e non suma no total</item>

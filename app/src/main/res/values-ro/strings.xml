@@ -480,6 +480,17 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="missing_ratings_privacy">Vizibilitate:</string>
     <string name="missing_ratings_failed">Cartea „%1$s” nu a putut fi notată</string>
     <string name="missing_dates_explanation">Datele sunt ale tale, nu ale cărții: asta schimbă doar propria ta lectură. Fără data de final cartea lipsește din graficul pe ani, iar fără amândouă nu contează la zilele de lectură.</string>
+    <string name="missing_dates_shelved_note">Cărților fără nicio lectură înregistrată li se propune ca dată de final data la care au fost puse pe raft. Nu se salvează nimic până nu confirmi.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Salvează %d dată</item>
+        <item quantity="few">Salvează %d date</item>
+        <item quantity="other">Salvează %d de date</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d dată nu a putut fi salvată</item>
+        <item quantity="few">%d date nu au putut fi salvate</item>
+        <item quantity="other">%d de date nu au putut fi salvate</item>
+    </plurals>
     <string name="missing_dates_save">Salvează datele</string>
     <string name="missing_dates_failed">Datele cărții „%1$s” nu au putut fi salvate</string>
     <string name="missing_pages_explanation">Numărul de pagini ține de carte, nu de tine: ce scrii aici se salvează pe instanță și văd toți. Se salvează câte una pe rând.</string>
@@ -544,6 +555,11 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
         <item quantity="one">%d carte nu are dată de final și nu apare în grafic</item>
         <item quantity="few">%d cărți nu au dată de final și nu apar în grafic</item>
         <item quantity="other">%d de cărți nu au dată de final și nu apar în grafic</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d carte folosește ca dată de final data la care a fost pusă pe raft</item>
+        <item quantity="few">%d cărți folosesc ca dată de final data la care au fost puse pe raft</item>
+        <item quantity="other">%d de cărți folosesc ca dată de final data la care au fost puse pe raft</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d carte nu indică paginile și nu intră în total</item>

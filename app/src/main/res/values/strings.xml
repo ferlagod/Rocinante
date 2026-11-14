@@ -521,6 +521,15 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <string name="missing_ratings_privacy">Visibility:</string>
     <string name="missing_ratings_failed">Could not rate “%1$s”</string>
     <string name="missing_dates_explanation">The dates are yours, not the book\'s: this only changes your own reading. Without a finish date the book is missing from the year chart, and without both it does not count towards reading days.</string>
+    <string name="missing_dates_shelved_note">Books with no reading recorded get the date they were shelved as a suggested finish date. Nothing is saved until you confirm it.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Save %d date</item>
+        <item quantity="other">Save %d dates</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d date could not be saved</item>
+        <item quantity="other">%d dates could not be saved</item>
+    </plurals>
     <string name="missing_dates_save">Save dates</string>
     <string name="missing_dates_failed">Could not save the dates for “%1$s”</string>
     <string name="missing_pages_explanation">The page count belongs to the book, not to you: what you write here is saved on the instance and everyone sees it. Saved one by one.</string>
@@ -543,6 +552,10 @@ Search fix: Fixed the bug that prevented opening book details after searching.</
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d book has no finish date and is not in the chart</item>
         <item quantity="other">%d books have no finish date and are not in the chart</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d book uses the date it was shelved as its finish date</item>
+        <item quantity="other">%d books use the date they were shelved as their finish date</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d book has no page count and is not in the page total</item>

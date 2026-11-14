@@ -69,6 +69,7 @@ class RocinanteApplication : Application(), ImageLoaderFactory {
                 // Actualización detectada: purgar archivos y carpetas de caché temporal
                 cacheDir.listFiles()?.forEach { file ->
                     val name = file.name
+                    if (name in KEPT_ON_UPDATE) return@forEach
                     if (name.endsWith(".json") || name == "http_cache" || name == "authors" || name == "book_details") {
                         file.deleteRecursively()
                     }
@@ -124,5 +125,16 @@ class RocinanteApplication : Application(), ImageLoaderFactory {
         } catch (_: Exception) {
             // WebView ausente o no inicializable: se mantiene el UA de respaldo.
         }
+    }
+
+    private companion object {
+        /**
+         * Lo que sobrevive a una actualización. Los datos de cada libro (autor, nota, fechas
+         * de lectura) cuestan una petición por libro, y al borrarlos el perfil enseñaba cientos
+         * de libros «sin fechas» mientras se volvían a leer uno a uno. No hace falta tirarlos:
+         * cada entrada lleva su versión de formato y la que no es la actual se vuelve a leer.
+         * Las fechas de archivado son solo fechas por libro, sin formato que pueda caducar.
+         */
+        val KEPT_ON_UPDATE = setOf("enrichment_cache.json", "shelved_dates_cache.json")
     }
 }

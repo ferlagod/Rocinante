@@ -470,6 +470,15 @@
     <string name="missing_ratings_privacy">Ορατότητα:</string>
     <string name="missing_ratings_failed">Δεν ήταν δυνατή η βαθμολόγηση του «%1$s»</string>
     <string name="missing_dates_explanation">Οι ημερομηνίες είναι δικές σας, όχι του βιβλίου: αλλάζει μόνο το δικό σας διάβασμα. Χωρίς ημερομηνία λήξης το βιβλίο λείπει από το γράφημα ανά έτος, και χωρίς τις δύο δεν μετράει στις ημέρες ανάγνωσης.</string>
+    <string name="missing_dates_shelved_note">Στα βιβλία χωρίς καταγεγραμμένη ανάγνωση προτείνεται ως ημερομηνία λήξης η ημερομηνία που μπήκαν στο ράφι. Τίποτα δεν αποθηκεύεται μέχρι να το επιβεβαιώσετε.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Αποθήκευση %d ημερομηνίας</item>
+        <item quantity="other">Αποθήκευση %d ημερομηνιών</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Δεν ήταν δυνατή η αποθήκευση %d ημερομηνίας</item>
+        <item quantity="other">Δεν ήταν δυνατή η αποθήκευση %d ημερομηνιών</item>
+    </plurals>
     <string name="missing_dates_save">Αποθήκευση ημερομηνιών</string>
     <string name="missing_dates_failed">Δεν ήταν δυνατή η αποθήκευση των ημερομηνιών του «%1$s»</string>
     <string name="missing_pages_explanation">Ο αριθμός σελίδων ανήκει στο βιβλίο, όχι σε εσάς: ό,τι γράψετε εδώ αποθηκεύεται στο instance και το βλέπουν όλοι. Αποθηκεύεται ένα κάθε φορά.</string>
@@ -532,6 +541,10 @@
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d βιβλίο δεν έχει ημερομηνία ολοκλήρωσης και δεν εμφανίζεται στο γράφημα</item>
         <item quantity="other">%d βιβλία δεν έχουν ημερομηνία ολοκλήρωσης και δεν εμφανίζονται στο γράφημα</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d βιβλίο έχει ως ημερομηνία λήξης την ημερομηνία που μπήκε στο ράφι</item>
+        <item quantity="other">%d βιβλία έχουν ως ημερομηνία λήξης την ημερομηνία που μπήκαν στο ράφι</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d βιβλίο δεν δηλώνει σελίδες και δεν προσμετράται</item>

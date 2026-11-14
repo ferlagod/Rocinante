@@ -470,6 +470,15 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="missing_ratings_privacy">Visibilitat:</string>
     <string name="missing_ratings_failed">No s\'ha pogut valorar «%1$s»</string>
     <string name="missing_dates_explanation">Les dates són teves, no del llibre: això només toca la teva pròpia lectura. Sense data de fi el llibre no surt al gràfic per anys, i sense totes dues no compta als dies de lectura.</string>
+    <string name="missing_dates_shelved_note">Als llibres sense cap lectura registrada se’ls proposa com a data de final la de quan es van arxivar. No es desa res fins que ho confirmis.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Desa %d data</item>
+        <item quantity="other">Desa %d dates</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">No s’ha pogut desar %d data</item>
+        <item quantity="other">No s’han pogut desar %d dates</item>
+    </plurals>
     <string name="missing_dates_save">Desar les dates</string>
     <string name="missing_dates_failed">No s\'han pogut desar les dates de «%1$s»</string>
     <string name="missing_pages_explanation">Les pàgines són del llibre, no de qui el llegeix: el que escriguis aquí es desa a la instància i ho veu tothom. Es desa d\'un en un.</string>
@@ -532,6 +541,10 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d llibre no té data de finalització i no surt al gràfic</item>
         <item quantity="other">%d llibres no tenen data de finalització i no surten al gràfic</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d llibre fa servir com a data de final la de quan es va arxivar</item>
+        <item quantity="other">%d llibres fan servir com a data de final la de quan es van arxivar</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d llibre no indica pàgines i no suma al total</item>

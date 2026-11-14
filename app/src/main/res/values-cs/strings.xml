@@ -489,6 +489,19 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="missing_ratings_privacy">Viditelnost:</string>
     <string name="missing_ratings_failed">Knihu „%1$s“ se nepodařilo ohodnotit</string>
     <string name="missing_dates_explanation">Data jsou vaše, ne knihy: mění se tím jen vaše vlastní čtení. Bez data dočtení kniha chybí v grafu podle let a bez obou se nepočítá do dnů čtení.</string>
+    <string name="missing_dates_shelved_note">Knihám bez zaznamenaného čtení se jako datum dočtení navrhuje datum zařazení do police. Nic se neuloží, dokud to nepotvrdíte.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Uložit %d datum</item>
+        <item quantity="few">Uložit %d data</item>
+        <item quantity="many">Uložit %d data</item>
+        <item quantity="other">Uložit %d dat</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d datum se nepodařilo uložit</item>
+        <item quantity="few">%d data se nepodařilo uložit</item>
+        <item quantity="many">%d data se nepodařilo uložit</item>
+        <item quantity="other">%d dat se nepodařilo uložit</item>
+    </plurals>
     <string name="missing_dates_save">Uložit data</string>
     <string name="missing_dates_failed">Data knihy „%1$s“ se nepodařilo uložit</string>
     <string name="missing_pages_explanation">Počet stran patří knize, ne tobě: co sem napíšeš, se uloží na instanci a uvidí to všichni. Ukládá se po jedné.</string>
@@ -553,6 +566,12 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
         <item quantity="one">%d kniha nemá datum dočtení a není v grafu</item>
         <item quantity="few">%d knihy nemají datum dočtení a nejsou v grafu</item>
         <item quantity="other">%d knih nemá datum dočtení a není v grafu</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d kniha má jako datum dočtení datum zařazení do police</item>
+        <item quantity="few">%d knihy mají jako datum dočtení datum zařazení do police</item>
+        <item quantity="many">%d knihy má jako datum dočtení datum zařazení do police</item>
+        <item quantity="other">%d knih má jako datum dočtení datum zařazení do police</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d kniha neuvádí počet stran a nezapočítává se</item>

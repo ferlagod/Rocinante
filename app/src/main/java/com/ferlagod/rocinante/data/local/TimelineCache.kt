@@ -259,6 +259,37 @@ class TimelineCache(private val context: Context) {
     }
 
     /**
+     * Las fechas de archivado de los libros leídos que no tienen fecha de fin. Sacarlas cuesta
+     * varias páginas de la estantería, y solo cambian al archivar libros nuevos.
+     */
+    suspend fun loadShelvedDates(): com.ferlagod.rocinante.utils.ShelvedDates? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(context.cacheDir, "shelved_dates_cache.json")
+            if (!file.exists()) return@withContext null
+            gson.fromJson(file.readText(), com.ferlagod.rocinante.utils.ShelvedDates::class.java)
+                // Gson no pasa por el constructor: un mapa que falte en el JSON llega a null.
+                ?.let { com.ferlagod.rocinante.utils.ShelvedDates(it.byUrl ?: emptyMap(), it.byTitle ?: emptyMap()) }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    suspend fun saveShelvedDates(dates: com.ferlagod.rocinante.utils.ShelvedDates) = withContext(Dispatchers.IO) {
+        try {
+            File(context.cacheDir, "shelved_dates_cache.json").writeText(gson.toJson(dates))
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+        }
+    }
+
+    /** Cuánto hace que se guardaron, en milisegundos. Enorme si no hay nada. */
+    suspend fun shelvedDatesAge(): Long = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, "shelved_dates_cache.json")
+        if (!file.exists()) Long.MAX_VALUE else System.currentTimeMillis() - file.lastModified()
+    }
+
+    /**
      * Por dónde va cada libro que se está leyendo, en tanto por uno.
      *
      * Se guarda porque sacarlo cuesta una petición **por libro**: sin esto, pasar por

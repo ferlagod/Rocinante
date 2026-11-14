@@ -470,6 +470,15 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="missing_ratings_privacy">Visibilidade:</string>
     <string name="missing_ratings_failed">Não foi possível avaliar “%1$s”</string>
     <string name="missing_dates_explanation">As datas são suas, não do livro: isto mexe só na sua leitura. Sem data de fim o livro não aparece no gráfico por anos, e sem as duas não conta nos dias de leitura.</string>
+    <string name="missing_dates_shelved_note">Para os livros sem nenhuma leitura registrada, a data em que foram arquivados é sugerida como data de fim. Nada é salvo até você confirmar.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Salvar %d data</item>
+        <item quantity="other">Salvar %d datas</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Não foi possível salvar %d data</item>
+        <item quantity="other">Não foi possível salvar %d datas</item>
+    </plurals>
     <string name="missing_dates_save">Salvar as datas</string>
     <string name="missing_dates_failed">Não foi possível salvar as datas de “%1$s”</string>
     <string name="missing_pages_explanation">O número de páginas é do livro, não de quem o lê: o que você escrever aqui fica salvo na instância e todo mundo vê. É salvo um de cada vez.</string>
@@ -532,6 +541,10 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d livro não tem data de fim e não aparece no gráfico</item>
         <item quantity="other">%d livros não têm data de fim e não aparecem no gráfico</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d livro usa como data de fim a data em que foi arquivado</item>
+        <item quantity="other">%d livros usam como data de fim a data em que foram arquivados</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d livro não indica páginas e não entra no total</item>

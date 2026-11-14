@@ -527,6 +527,15 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <string name="missing_ratings_privacy">Visibilidad:</string>
     <string name="missing_ratings_failed">No se pudo puntuar «%1$s»</string>
     <string name="missing_dates_explanation">Las fechas son tuyas, no del libro: esto solo toca tu propia lectura. Sin fecha de fin el libro no sale en la gráfica por años, y sin las dos no cuenta en los días de lectura.</string>
+    <string name="missing_dates_shelved_note">A los libros sin ninguna lectura registrada se les propone como fecha de fin la de cuando se archivaron. No se guarda nada hasta que lo confirmes.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Guardar %d fecha</item>
+        <item quantity="other">Guardar %d fechas</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">No se pudo guardar %d fecha</item>
+        <item quantity="other">No se pudieron guardar %d fechas</item>
+    </plurals>
     <string name="missing_dates_save">Guardar fechas</string>
     <string name="missing_dates_failed">No se pudieron guardar las fechas de «%1$s»</string>
     <string name="missing_pages_explanation">Las páginas son del libro, no de quien lo lee: lo que escribas aquí se guarda en la instancia y lo ve todo el mundo. Se guarda de uno en uno.</string>
@@ -546,6 +555,10 @@ Corrección en búsquedas: Arreglado el fallo que impedía abrir los detalles de
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d libro no tiene fecha de fin y no aparece en el gráfico</item>
         <item quantity="other">%d libros no tienen fecha de fin y no aparecen en el gráfico</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d libro usa como fecha de fin la de cuando se archivó</item>
+        <item quantity="other">%d libros usan como fecha de fin la de cuando se archivaron</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d libro no indica páginas y no suma en el total</item>

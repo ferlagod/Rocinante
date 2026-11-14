@@ -471,6 +471,15 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="missing_ratings_privacy">Näkyvyys:</string>
     <string name="missing_ratings_failed">Kirjaa ”%1$s” ei voitu arvioida</string>
     <string name="missing_dates_explanation">Päivämäärät ovat sinun, eivät kirjan: tämä koskee vain omaa lukemistasi. Ilman lopetuspäivää kirja ei näy vuosikaaviossa, ja ilman molempia se ei kerrytä lukupäiviä.</string>
+    <string name="missing_dates_shelved_note">Kirjoille, joilla ei ole kirjattua lukukertaa, ehdotetaan lopetuspäiväksi hyllyyn lisäämisen päivää. Mitään ei tallenneta ennen kuin vahvistat.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Tallenna %d päivämäärä</item>
+        <item quantity="other">Tallenna %d päivämäärää</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d päivämäärä jäi tallentamatta</item>
+        <item quantity="other">%d päivämäärää jäi tallentamatta</item>
+    </plurals>
     <string name="missing_dates_save">Tallenna päivämäärät</string>
     <string name="missing_dates_failed">Kirjan ”%1$s” päivämääriä ei voitu tallentaa</string>
     <string name="missing_pages_explanation">Sivumäärä kuuluu kirjalle, ei sinulle: se, minkä kirjoitat tähän, tallentuu instanssiin ja näkyy kaikille. Tallennus tapahtuu kirja kerrallaan.</string>
@@ -533,6 +542,10 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d kirjalta puuttuu lopetuspäivä, eikä se näy kaaviossa</item>
         <item quantity="other">%d kirjalta puuttuu lopetuspäivä, eivätkä ne näy kaaviossa</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d kirjan lopetuspäivänä on hyllyyn lisäämisen päivä</item>
+        <item quantity="other">%d kirjan lopetuspäivänä on hyllyyn lisäämisen päivä</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d kirjalta puuttuu sivumäärä, eikä se ole mukana summassa</item>

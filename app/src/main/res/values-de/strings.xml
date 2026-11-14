@@ -470,6 +470,15 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="missing_ratings_privacy">Sichtbarkeit:</string>
     <string name="missing_ratings_failed">„%1$s“ konnte nicht bewertet werden</string>
     <string name="missing_dates_explanation">Die Daten gehören dir, nicht dem Buch: das ändert nur deine eigene Lektüre. Ohne Enddatum fehlt das Buch in der Jahresgrafik, und ohne beide zählt es nicht bei den Lesetagen.</string>
+    <string name="missing_dates_shelved_note">Bücher ohne erfasste Lektüre bekommen das Datum, an dem sie ins Regal kamen, als Enddatum vorgeschlagen. Gespeichert wird erst, wenn du es bestätigst.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">%d Datum speichern</item>
+        <item quantity="other">%d Daten speichern</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d Datum konnte nicht gespeichert werden</item>
+        <item quantity="other">%d Daten konnten nicht gespeichert werden</item>
+    </plurals>
     <string name="missing_dates_save">Daten speichern</string>
     <string name="missing_dates_failed">Die Daten für „%1$s“ konnten nicht gespeichert werden</string>
     <string name="missing_pages_explanation">Die Seitenzahl gehört zum Buch, nicht zu dir: Was du hier einträgst, wird auf der Instanz gespeichert und alle sehen es. Es wird eines nach dem anderen gespeichert.</string>
@@ -532,6 +541,10 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d Buch hat kein Enddatum und fehlt im Diagramm</item>
         <item quantity="other">%d Bücher haben kein Enddatum und fehlen im Diagramm</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d Buch nutzt das Datum, an dem es ins Regal kam, als Enddatum</item>
+        <item quantity="other">%d Bücher nutzen das Datum, an dem sie ins Regal kamen, als Enddatum</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d Buch hat keine Seitenzahl und zählt nicht mit</item>

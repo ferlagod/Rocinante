@@ -470,6 +470,15 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <string name="missing_ratings_privacy">Visibilità:</string>
     <string name="missing_ratings_failed">Non è stato possibile votare «%1$s»</string>
     <string name="missing_dates_explanation">Le date sono tue, non del libro: questo tocca solo la tua lettura. Senza data di fine il libro non compare nel grafico per anni, e senza entrambe non conta nei giorni di lettura.</string>
+    <string name="missing_dates_shelved_note">Ai libri senza nessuna lettura registrata viene proposta come data di fine quella in cui sono stati archiviati. Non viene salvato nulla finché non confermi.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Salva %d data</item>
+        <item quantity="other">Salva %d date</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Impossibile salvare %d data</item>
+        <item quantity="other">Impossibile salvare %d date</item>
+    </plurals>
     <string name="missing_dates_save">Salva le date</string>
     <string name="missing_dates_failed">Non è stato possibile salvare le date di «%1$s»</string>
     <string name="missing_pages_explanation">Le pagine sono del libro, non di chi lo legge: quello che scrivi qui viene salvato sull\'istanza e lo vedono tutti. Si salva un libro alla volta.</string>
@@ -532,6 +541,10 @@ Correzione della ricerca: Risolto il bug che impediva l\'apertura dei dettagli d
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d libro non ha data di fine e non compare nel grafico</item>
         <item quantity="other">%d libri non hanno data di fine e non compaiono nel grafico</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d libro usa come data di fine quella in cui è stato archiviato</item>
+        <item quantity="other">%d libri usano come data di fine quella in cui sono stati archiviati</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d libro non indica le pagine e non entra nel totale</item>

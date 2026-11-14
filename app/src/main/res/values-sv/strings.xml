@@ -470,6 +470,15 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="missing_ratings_privacy">Synlighet:</string>
     <string name="missing_ratings_failed">Kunde inte betygsätta ”%1$s”</string>
     <string name="missing_dates_explanation">Datumen är dina, inte bokens: det här rör bara din egen läsning. Utan slutdatum saknas boken i diagrammet per år, och utan båda räknas den inte i lästa dagar.</string>
+    <string name="missing_dates_shelved_note">Böcker utan registrerad läsning får datumet då de hyllades föreslaget som slutdatum. Inget sparas förrän du bekräftar.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Spara %d datum</item>
+        <item quantity="other">Spara %d datum</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d datum kunde inte sparas</item>
+        <item quantity="other">%d datum kunde inte sparas</item>
+    </plurals>
     <string name="missing_dates_save">Spara datum</string>
     <string name="missing_dates_failed">Datumen för ”%1$s” kunde inte sparas</string>
     <string name="missing_pages_explanation">Sidantalet hör till boken, inte till dig: det du skriver här sparas på instansen och alla ser det. Det sparas en bok i taget.</string>
@@ -532,6 +541,10 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d bok saknar slutdatum och syns inte i diagrammet</item>
         <item quantity="other">%d böcker saknar slutdatum och syns inte i diagrammet</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d bok använder datumet då den hyllades som slutdatum</item>
+        <item quantity="other">%d böcker använder datumet då de hyllades som slutdatum</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d bok saknar sidantal och räknas inte med</item>

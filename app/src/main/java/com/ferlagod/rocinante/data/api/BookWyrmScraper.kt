@@ -3058,6 +3058,132 @@ object BookWyrmScraper {
     }
 
     /**
+     * Una fila de la estantería propia con sus fechas tal y como las pinta la página.
+     *
+     * @property shelved la fecha de archivado ya en ISO, o null si no se entendió.
+     * @property hasFinish si la columna de fin trae algo: el texto no hace falta, solo saber
+     *   que BookWyrm tiene una fecha de fin para ese libro.
+     */
+    data class ShelvedRow(
+        val bookUrl: String,
+        val title: String,
+        val shelved: String?,
+        val hasFinish: Boolean
+    )
+
+    /**
+     * Lo que interesa de una página de la estantería para sacar las fechas de archivado.
+     *
+     * @property hasDateColumns false si la página no trae las columnas de fechas, que BookWyrm
+     *   solo enseña a quien mira su propia estantería con la sesión iniciada.
+     * @property previousPage número de la página anterior, o null si es la primera.
+     */
+    data class ShelvedDatesPage(
+        val rows: List<ShelvedRow>,
+        val hasDateColumns: Boolean,
+        val previousPage: Int?
+    )
+
+    /**
+     * Trocea una página HTML de la estantería propia. Las tres columnas de fechas (archivado,
+     * inicio y fin, por ese orden) son las únicas celdas con la clase `nowrap-date-whitespace`;
+     * su `data-title` está traducido, así que se distinguen por la posición.
+     */
+    fun parseShelvedDatesPage(
+        html: String,
+        baseUrl: String,
+        today: java.time.LocalDate
+    ): ShelvedDatesPage {
+        val doc = org.jsoup.Jsoup.parse(html)
+        val cleanBase = baseUrl.trimEnd('/')
+        val language = doc.selectFirst("html")?.attr("lang")?.trim()?.ifEmpty { null }
+        var hasDateColumns = false
+        val rows = doc.select("tr.book-preview").mapNotNull { row ->
+            val link = row.select("a[href*=/book/]").firstOrNull { it.text().isNotBlank() }
+                ?: row.selectFirst("a[href*=/book/]")
+                ?: return@mapNotNull null
+            val rawId = link.attr("href").substringAfter("/book/").substringBefore("/").substringBefore("?")
+            if (rawId.isBlank()) return@mapNotNull null
+            val cells = row.select("td.nowrap-date-whitespace")
+            if (cells.size < 3) return@mapNotNull null
+            hasDateColumns = true
+            val shelved = com.ferlagod.rocinante.utils.ShelvedDateParser
+                .parse(cells[0].text(), language, today)
+                ?.toString()
+            ShelvedRow(
+                bookUrl = "$cleanBase/book/$rawId",
+                title = link.text().trim(),
+                shelved = shelved,
+                hasFinish = cells[2].text().isNotBlank()
+            )
+        }
+        val previousPage = doc.selectFirst("a.pagination-previous[href]")
+            ?.attr("href")
+            ?.let { Regex("""[?&]page=(\d+)""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+        return ShelvedDatesPage(rows, hasDateColumns, previousPage)
+    }
+
+    /**
+     * Las fechas de archivado de los libros de una estantería propia que no tienen fecha de fin.
+     *
+     * Se pide la estantería ordenada por fecha de fin, de la más reciente a la más antigua: los
+     * libros sin ella quedan todos al final. Se empieza por una página fuera de rango, que el
+     * paginador de Django contesta con la última, y se va hacia atrás hasta llegar a una página
+     * en la que ya hay libros con fecha de fin. Así se piden solo las páginas que hacen falta,
+     * y no la estantería entera, que puede tener cientos de libros.
+     *
+     * @return las fechas encontradas, o null si la página no se pudo leer o no trae las fechas
+     *   (sesión caducada, o una versión de BookWyrm que no las pinte).
+     */
+    suspend fun scrapeShelvedDates(
+        api: BookWyrmApi,
+        instanceUrl: String,
+        username: String,
+        identifier: String = "read",
+        today: java.time.LocalDate = java.time.LocalDate.now(),
+        maxPages: Int = 100
+    ): com.ferlagod.rocinante.utils.ShelvedDates? = withContext(Dispatchers.IO) {
+        try {
+            val base = (if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl")
+                .trimEnd('/')
+            val user = username.removePrefix("@").substringBefore("@").trim()
+            val byUrl = mutableMapOf<String, String>()
+            val byTitle = mutableMapOf<String, String>()
+            var page: Int? = LAST_PAGE
+            var fetched = 0
+            while (page != null && fetched < maxPages) {
+                val html = fetchHtmlWithRedirects(
+                    api,
+                    "$base/user/$user/books/$identifier?sort=-finish_date&page=$page",
+                    "$base/"
+                )
+                if (html.isEmpty()) return@withContext if (fetched == 0) null else
+                    com.ferlagod.rocinante.utils.ShelvedDates(byUrl, byTitle)
+                fetched++
+                val parsed = parseShelvedDatesPage(html, base, today)
+                if (fetched == 1 && !parsed.hasDateColumns) return@withContext null
+                parsed.rows.filter { !it.hasFinish }.forEach { row ->
+                    val date = row.shelved ?: return@forEach
+                    byUrl[com.ferlagod.rocinante.utils.ShelvedDates.normalizeUrl(row.bookUrl)] = date
+                    if (row.title.isNotEmpty()) {
+                        byTitle[com.ferlagod.rocinante.utils.ShelvedDates.titleKey(row.title)] = date
+                    }
+                }
+                // Con una fecha de fin en la página, lo de antes ya la tiene toda.
+                if (parsed.rows.isEmpty() || parsed.rows.any { it.hasFinish }) break
+                page = parsed.previousPage?.takeIf { it < (page ?: 0) }
+            }
+            com.ferlagod.rocinante.utils.ShelvedDates(byUrl, byTitle)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /** Una página que no existe: el paginador de BookWyrm devuelve entonces la última. */
+    private const val LAST_PAGE = 99999
+
+    /**
      * Raspa la ficha básica de un libro desde su página HTML como fallback cuando el endpoint
      * ActivityPub .json devuelve 403 Forbidden ("Invalid signature") o falla.
      */

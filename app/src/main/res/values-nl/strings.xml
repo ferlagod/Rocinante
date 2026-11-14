@@ -470,6 +470,15 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="missing_ratings_privacy">Zichtbaarheid:</string>
     <string name="missing_ratings_failed">Kon ‘%1$s’ niet beoordelen</string>
     <string name="missing_dates_explanation">De datums zijn van jou, niet van het boek: dit raakt alleen je eigen lezen. Zonder einddatum staat het boek niet in de grafiek per jaar, en zonder allebei telt het niet mee in de leesdagen.</string>
+    <string name="missing_dates_shelved_note">Voor boeken zonder geregistreerde leesbeurt wordt de datum waarop ze op de plank kwamen als einddatum voorgesteld. Er wordt niets opgeslagen tot je het bevestigt.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">%d datum opslaan</item>
+        <item quantity="other">%d datums opslaan</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">%d datum kon niet worden opgeslagen</item>
+        <item quantity="other">%d datums konden niet worden opgeslagen</item>
+    </plurals>
     <string name="missing_dates_save">Datums opslaan</string>
     <string name="missing_dates_failed">De datums van ‘%1$s’ konden niet worden opgeslagen</string>
     <string name="missing_pages_explanation">Het aantal pagina\'s hoort bij het boek, niet bij jou: wat je hier invult, wordt op de instantie opgeslagen en iedereen ziet het. Er wordt één boek tegelijk opgeslagen.</string>
@@ -532,6 +541,10 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <plurals name="profile_stats_missing_dates">
         <item quantity="one">%d boek heeft geen einddatum en staat niet in de grafiek</item>
         <item quantity="other">%d boeken hebben geen einddatum en staan niet in de grafiek</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d boek gebruikt de datum waarop het op de plank kwam als einddatum</item>
+        <item quantity="other">%d boeken gebruiken de datum waarop ze op de plank kwamen als einddatum</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d boek heeft geen paginaäantal en telt niet mee</item>

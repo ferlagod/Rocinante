@@ -490,6 +490,19 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="missing_ratings_privacy">Widoczność:</string>
     <string name="missing_ratings_failed">Nie udało się ocenić „%1$s”</string>
     <string name="missing_dates_explanation">Daty są Twoje, nie książki: to dotyczy tylko Twojego czytania. Bez daty zakończenia książki nie ma na wykresie lat, a bez obu nie liczy się do dni czytania.</string>
+    <string name="missing_dates_shelved_note">Książkom bez zapisanego czytania proponujemy jako datę ukończenia datę dodania na półkę. Nic nie zostanie zapisane, dopóki tego nie potwierdzisz.</string>
+    <plurals name="missing_dates_save_suggested">
+        <item quantity="one">Zapisz %d datę</item>
+        <item quantity="few">Zapisz %d daty</item>
+        <item quantity="many">Zapisz %d dat</item>
+        <item quantity="other">Zapisz %d daty</item>
+    </plurals>
+    <plurals name="missing_dates_bulk_failed">
+        <item quantity="one">Nie udało się zapisać %d daty</item>
+        <item quantity="few">Nie udało się zapisać %d dat</item>
+        <item quantity="many">Nie udało się zapisać %d dat</item>
+        <item quantity="other">Nie udało się zapisać %d daty</item>
+    </plurals>
     <string name="missing_dates_save">Zapisz daty</string>
     <string name="missing_dates_failed">Nie udało się zapisać dat książki „%1$s”</string>
     <string name="missing_pages_explanation">Liczba stron należy do książki, a nie do Ciebie: to, co tu wpiszesz, zapisuje się na instancji i widzą to wszyscy. Zapisuje się po jednej.</string>
@@ -555,6 +568,12 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
         <item quantity="one">%d książka nie ma daty ukończenia i nie ma jej na wykresie</item>
         <item quantity="few">%d książki nie mają daty ukończenia i nie ma ich na wykresie</item>
         <item quantity="many">%d książek nie ma daty ukończenia i nie ma ich na wykresie</item>
+    </plurals>
+    <plurals name="profile_stats_shelved_dates">
+        <item quantity="one">%d książka ma jako datę ukończenia datę dodania na półkę</item>
+        <item quantity="few">%d książki mają jako datę ukończenia datę dodania na półkę</item>
+        <item quantity="many">%d książek ma jako datę ukończenia datę dodania na półkę</item>
+        <item quantity="other">%d książki mają jako datę ukończenia datę dodania na półkę</item>
     </plurals>
     <plurals name="profile_stats_missing_pages">
         <item quantity="one">%d książka nie podaje liczby stron i nie wlicza się do sumy</item>
