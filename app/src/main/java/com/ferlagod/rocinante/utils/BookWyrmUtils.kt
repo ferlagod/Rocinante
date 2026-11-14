@@ -83,45 +83,35 @@ object BookWyrmUtils {
         return if (cleanUrl.endsWith(".json")) cleanUrl else "$cleanUrl.json"
     }
 
-    // Abreviaturas de mes al estilo Django (formato `N`, AP-style) usadas por BookWyrm
-    // al renderizar fechas de publicación. Solo necesitamos los 3 primeros caracteres.
-    private val MONTH_ABBREVIATIONS = mapOf(
-        "jan" to 1, "feb" to 2, "mar" to 3, "apr" to 4, "may" to 5, "jun" to 6,
-        "jul" to 7, "aug" to 8, "sep" to 9, "oct" to 10, "nov" to 11, "dec" to 12
-    )
-
-    private val REVIEW_DATE_REGEX = Regex("""([A-Za-z]+)\.?\s+(\d{1,2})(?:,\s*(\d{4}))?""")
-
     /**
-     * Convierte la fecha legible que BookWyrm renderiza en las reseñas (p. ej.
-     * "Aug. 22, 2024", "June 23, 2023" o "May 2" cuando el año es el actual) en una
-     * [java.time.LocalDate] comparable, para poder ordenar las reseñas cronológicamente.
+     * Convierte la fecha que BookWyrm pinta en los estados («Aug. 22, 2024», «22 de agosto», «hace
+     * 3 horas») en una [java.time.LocalDate] comparable, para ordenar las reseñas.
      *
-     * Las cadenas ya en formato ISO ("2024-08-22T...") también se aceptan.
+     * Viene en el idioma de quien mira: antes solo se entendía el inglés, y en cualquier otro las
+     * reseñas quedaban sin ordenar. BookWyrm escribe la fecha completa si es de otro año, sin año
+     * si es de este, y una frase relativa («hace 3 horas», «now») si es de hoy.
      *
-     * @param raw Texto de fecha extraído del HTML.
-     * @return La fecha parseada, o null si no se reconoce el formato.
+     * @param raw Texto de fecha extraído del HTML, o una fecha ISO.
+     * @param language El `lang` de la página, si se sabe; sin él se busca el mes en todos.
+     * @return La fecha, o null si no se reconoce.
      */
-    fun parseReviewDate(raw: String?): java.time.LocalDate? {
+    fun parseReviewDate(
+        raw: String?,
+        language: String? = null,
+        today: java.time.LocalDate = java.time.LocalDate.now()
+    ): java.time.LocalDate? {
         if (raw.isNullOrBlank()) return null
         val s = raw.trim()
 
-        // Caso ISO 8601 (por si una futura versión de BookWyrm expone datetime)
+        // Caso ISO 8601 (el atributo datetime, si lo hay).
         if (s.length >= 10 && s[4] == '-' && s[7] == '-') {
             try {
                 return java.time.LocalDate.parse(s.substring(0, 10))
             } catch (_: Exception) { /* continuar con el parseo legible */ }
         }
 
-        val match = REVIEW_DATE_REGEX.find(s) ?: return null
-        val month = MONTH_ABBREVIATIONS[match.groupValues[1].lowercase().take(3)] ?: return null
-        val day = match.groupValues[2].toIntOrNull() ?: return null
-        // BookWyrm omite el año cuando la fecha pertenece al año en curso.
-        val year = match.groupValues[3].toIntOrNull() ?: java.time.Year.now().value
-        return try {
-            java.time.LocalDate.of(year, month, day)
-        } catch (_: Exception) {
-            null
-        }
+        ShelvedDateParser.parse(s, language, today, defaultYear = today.year)?.let { return it }
+        // Sin año ni mes reconocibles solo queda la frase relativa de las últimas horas.
+        return if (Regex("""\d{4}""").containsMatchIn(s)) null else today
     }
 }

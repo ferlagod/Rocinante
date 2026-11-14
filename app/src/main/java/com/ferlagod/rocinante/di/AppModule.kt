@@ -158,8 +158,7 @@ object AppModule {
                 val hostUrl = finalUrl.toHttpUrlOrNull()
                 val host = hostUrl?.host?.lowercase() ?: cleanUrl.lowercase()
                 NetworkClient.lastInstanceHost = host
-                val scheme = hostUrl?.scheme ?: "https"
-                val origin = "$scheme://$host"
+                val origin = hostUrl?.let { NetworkClient.originOf(it) } ?: "https://$host"
                 val referer = "$origin/"
 
                 // Solo reescribir si la URL apunta al host placeholder de Retrofit ("bookwyrm.social").
@@ -287,6 +286,9 @@ object AppModule {
         // estado de lectura, las lecturas y los tokens del usuario, y servir durante 10 minutos
         // la copia de antes de cambiar de estantería o terminar un libro deshacía en pantalla
         // lo que se acababa de hacer.
+        // «private»: son respuestas pedidas con la sesión del usuario y solo valen para esta
+        // caché. Al editar la ficha de un libro se borran las suyas (BookWyrmScraper.forgetBookEdits)
+        // para no enseñar durante diez minutos la versión de antes.
         val cacheInterceptor = okhttp3.Interceptor { chain ->
             val request = chain.request()
             var response = chain.proceed(request)
@@ -298,7 +300,7 @@ object AppModule {
                         response = response.newBuilder()
                             .removeHeader("Pragma")
                             .removeHeader("Cache-Control")
-                            .header("Cache-Control", "public, max-age=600")
+                            .header("Cache-Control", "private, max-age=600")
                             .build()
                     }
                 }

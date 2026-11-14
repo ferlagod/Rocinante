@@ -416,6 +416,7 @@
     <string name="quotation_quote_prefix">Цитата: </string>
     <string name="time_just_now">Щойно</string>
     <string name="book_my_quotes_reviews">Мої цитати та рецензії</string>
+    <string name="book_my_posts_empty">Ви ще нічого не публікували про цю книжку.</string>
     <string name="post_validation_error">Помилка перевірки під час публікації</string>
     <string name="session_expired">Термін дії сесії завершився</string>
     <string name="session_invalid">Недійсна сесія</string>

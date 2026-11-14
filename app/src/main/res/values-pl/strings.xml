@@ -416,6 +416,7 @@ Poprawka wyszukiwania: Naprawiono błąd uniemożliwiający otwarcie szczegół�
     <string name="quotation_quote_prefix">Cytat: </string>
     <string name="time_just_now">Przed chwilą</string>
     <string name="book_my_quotes_reviews">Moje cytaty i recenzje</string>
+    <string name="book_my_posts_empty">Nie opublikowano jeszcze nic o tej książce.</string>
     <string name="post_validation_error">Błąd walidacji podczas publikowania</string>
     <string name="session_expired">Twoja sesja wygasła</string>
     <string name="session_invalid">Nieprawidłowa sesja</string>

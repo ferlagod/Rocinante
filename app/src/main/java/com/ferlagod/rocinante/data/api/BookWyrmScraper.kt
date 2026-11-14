@@ -136,6 +136,20 @@ object BookWyrmScraper {
      * @return La URL normalizada; lo recibido tal cual si aún no se sabe de qué instancia se
      *   trata (sin sesión no hay forma de completar un identificador suelto).
      */
+    /**
+     * El identificador de la estantería a la que redirige BookWyrm tras crearla
+     * (`/user/<nombre>/books/<identificador>`), o null si la redirección no es esa.
+     *
+     * Si el formulario no le vale, BookWyrm no devuelve un 200 sino otra redirección, a la lista
+     * de estanterías (`/user/<nombre>/books`). Antes se tomaba lo que hubiera tras la última
+     * barra, «books», como el nombre de una estantería nueva que no existía.
+     */
+    fun shelfIdentifierFromLocation(location: String?): String? {
+        if (location.isNullOrBlank()) return null
+        val path = location.substringBefore('#').substringBefore('?').trimEnd('/')
+        return Regex("""/(?:books|shelf)/([\w-]+)$""").find(path)?.groupValues?.get(1)
+    }
+
     fun canonicalBookUrl(bookUrl: String): String {
         val full = if (bookUrl.startsWith("http")) {
             bookUrl
@@ -215,6 +229,19 @@ object BookWyrmScraper {
             bookPageKey = null
             bookPageHtml = ""
         }
+    }
+
+    /**
+     * Olvida todo lo guardado de un libro tras cambiar su ficha: la página leída hace un momento
+     * y lo que tenga la caché HTTP (su `.json`, sus ediciones), que si no se seguiría enseñando
+     * hasta diez minutos.
+     *
+     * @param bookUrl la dirección del libro, o cualquiera que lleve `/book/<número>` (la del
+     *   formulario de confirmación, por ejemplo).
+     */
+    suspend fun forgetBookEdits(bookUrl: String) {
+        invalidateBookPage()
+        withContext(Dispatchers.IO) { NetworkClient.evictCachedBook(bookUrl) }
     }
 
     suspend fun fetchBookPage(api: BookWyrmApi, url: String, baseUrl: String): String =
@@ -798,7 +825,7 @@ object BookWyrmScraper {
             // Guardado, la instancia redirige a la ficha del libro; el cliente de la app no
             // sigue las redirecciones, así que un 302 es que se guardó. Un formulario con algo
             // mal se devuelve a sí mismo con un 200 y no ha guardado nada.
-            BookWyrmUtils.isOkRedirect(response)
+            BookWyrmUtils.isOkRedirect(response).also { saved -> if (saved) forgetBookEdits(form.actionUrl) }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -966,7 +993,10 @@ object BookWyrmScraper {
                 if (!written) add("add_author", authorName)
             }.build()
             val response = api.postForm(form.actionUrl, body)
-            if (BookWyrmUtils.isOkRedirect(response)) return@withContext AddAuthorResult.Saved
+            if (BookWyrmUtils.isOkRedirect(response)) {
+                forgetBookEdits(form.actionUrl)
+                return@withContext AddAuthorResult.Saved
+            }
 
             val html = runCatching { response.body()?.string() }.getOrNull().orEmpty()
             if (html.isEmpty()) return@withContext AddAuthorResult.Failed
@@ -1024,6 +1054,7 @@ object BookWyrmScraper {
                 add(option.field, option.value)
             }.build()
             BookWyrmUtils.isOkRedirect(api.postForm(form.actionUrl, body))
+                .also { saved -> if (saved) forgetBookEdits(form.actionUrl) }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -2010,6 +2041,62 @@ object BookWyrmScraper {
         }
     }
 
+    /**
+     * Lo que el usuario ha publicado sobre un libro: sus reseñas, comentarios y citas.
+     *
+     * Sale de las mismas pestañas que enseña la ficha del libro en la web («Tus reseñas», «Tus
+     * comentarios», «Tus citas»), que BookWyrm sirve en `/book/<id>/review`, `/comment` y
+     * `/quote` con los estados del usuario que mira, sea cual sea su privacidad. Antes se sacaba
+     * del outbox, que a quien no es otra instancia de BookWyrm le da las reseñas como `Article`
+     * y los comentarios y citas como `Note`, y solo con lo público: nunca aparecía lo publicado
+     * solo para seguidores. Solo la primera página de cada una (15 estados).
+     *
+     * @return los estados, del más reciente al más antiguo; null si no se pudo leer ninguna de
+     *   las tres páginas, para que quien llama recurra a otra fuente.
+     */
+    suspend fun scrapeOwnBookStatuses(
+        api: BookWyrmApi,
+        bookUrl: String
+    ): List<com.ferlagod.rocinante.data.model.TimelineUiItem>? = withContext(Dispatchers.IO) {
+        try {
+            val localUrl = canonicalBookUrl(resolveLocalBookUrl(api, bookUrl) ?: bookUrl)
+            val baseUrl = java.net.URL(localUrl).let { "${it.protocol}://${it.host}/" }
+            var anyRead = false
+            val dated = mutableListOf<Pair<java.time.LocalDate?, com.ferlagod.rocinante.data.model.TimelineUiItem>>()
+            for (kind in listOf("review", "comment", "quote")) {
+                val html = fetchHtmlWithRedirects(api, "$localUrl/$kind", baseUrl)
+                if (html.isEmpty()) continue
+                anyRead = true
+                val doc = org.jsoup.Jsoup.parse(html)
+                val language = doc.selectFirst("html")?.attr("lang")?.trim()?.ifEmpty { null }
+                parseOwnStatusesPage(doc, baseUrl).forEach { item ->
+                    dated += BookWyrmUtils.parseReviewDate(item.published, language) to item
+                }
+            }
+            if (!anyRead) return@withContext null
+            // Cada pestaña viene ya ordenada; juntas hay que ordenarlas por fecha. Las que no
+            // se entienden van al final, en el orden en que llegaron.
+            dated.sortedByDescending { it.first ?: java.time.LocalDate.MIN }
+                .map { it.second }
+                .distinctBy { it.id }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
+    /**
+     * Los estados de una de esas pestañas: cada uno es un `div.block` dentro de `#reviews` que
+     * envuelve la tarjeta (`article.card`) del estado.
+     */
+    internal fun parseOwnStatusesPage(
+        doc: org.jsoup.nodes.Document,
+        baseUrl: String
+    ): List<com.ferlagod.rocinante.data.model.TimelineUiItem> {
+        val cards = doc.select("#reviews .block:has(> article.card)")
+        return parseStatusCards(doc, baseUrl, cards)
+    }
+
     suspend fun fetchHtmlWithRedirects(
         api: BookWyrmApi,
         url: String,
@@ -2046,16 +2133,23 @@ object BookWyrmScraper {
         return ""
     }
 
+    /**
+     * Lee los estados de una página de BookWyrm.
+     *
+     * @param cards las envolturas de cada estado, si quien llama ya sabe dónde están; si no, se
+     *   buscan como en el feed de inicio.
+     */
     private fun parseStatusCards(
         document: org.jsoup.nodes.Document,
-        baseUrl: String
+        baseUrl: String,
+        cards: List<org.jsoup.nodes.Element>? = null
     ): List<com.ferlagod.rocinante.data.model.TimelineUiItem> {
         val items = mutableListOf<com.ferlagod.rocinante.data.model.TimelineUiItem>()
         val cleanBase = baseUrl.trimEnd('/')
 
-        var elements = document.select("#feed > .block:has(.status-info, [itemprop=author], .media, time), .column.is-two-thirds > .block:has(.status-info, [itemprop=author], .media, time)")
+        var elements: List<org.jsoup.nodes.Element> = cards ?: document.select("#feed > .block:has(.status-info, [itemprop=author], .media, time), .column.is-two-thirds > .block:has(.status-info, [itemprop=author], .media, time)")
         
-        if (elements.isEmpty()) {
+        if (elements.isEmpty() && cards == null) {
             val statusElements = document.select(
                 "[data-date], .block[data-id], .is-flex.is-align-items-stretch:has([itemprop=author], time)"
             )
@@ -3065,10 +3159,13 @@ object BookWyrmScraper {
                 if (it.startsWith("http")) it else "$cleanBase/${it.trimStart('/')}"
             }
 
-            // Páginas
-            val rowText = row.text()
-            val pagesMatch = "\\b(\\d+)\\s*(?:pages|páginas|paginas|pagine|seiten)\\b".toRegex(RegexOption.IGNORE_CASE).find(rowText)
-            val pages = pagesMatch?.groupValues?.get(1)?.toIntOrNull()
+            // Páginas, de los microdatos schema.org y no del texto: la palabra «páginas» va en
+            // el idioma de la instancia, y solo se buscaba en cinco. La tabla de la estantería
+            // de BookWyrm no las trae; las pone luego el enriquecimiento con la ficha del libro.
+            val pages = row.selectFirst("[itemprop=numberOfPages]")
+                ?.let { it.attr("content").ifBlank { it.text() } }
+                ?.filter { it.isDigit() }
+                ?.toIntOrNull()
 
             items.add(
                 com.ferlagod.rocinante.data.model.ShelfBookItem(

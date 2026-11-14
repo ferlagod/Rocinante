@@ -380,10 +380,13 @@ class TimelineRepository(
                 // Extraer el tipo real del objeto cuando la actividad es un wrapper "Create".
                 // Según la spec ActivityPub + BookWyrm, Create envuelve el objeto real
                 // (Review, Comment, Quotation, Note). El tipo del objeto es más informativo.
-                val resolvedType = when (activity.type) {
+                val rawType = when (activity.type) {
                     "Create" -> currentObjectData?.type ?: activity.type ?: context.getString(R.string.activity_fallback_type)
                     else -> activity.type ?: context.getString(R.string.activity_fallback_type)
                 }
+                // A quien no es otra instancia de BookWyrm, el outbox le da los tipos estándar de
+                // ActivityPub: una reseña llega como «Article» (y comentarios y citas como «Note»).
+                val resolvedType = if (rawType == "Article") "Review" else rawType
 
                 // Para actividades Add (añadir libro a estantería), construir contenido descriptivo
                 val isAddActivity = activity.type == "Add"

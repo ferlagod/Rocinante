@@ -411,6 +411,7 @@ Corectare căutare: S-a remediat eroarea care împiedica deschiderea detaliilor 
     <string name="quotation_quote_prefix">Citat: </string>
     <string name="time_just_now">Chiar acum</string>
     <string name="book_my_quotes_reviews">Citatele și recenziile mele</string>
+    <string name="book_my_posts_empty">Încă nu ai publicat nimic despre această carte.</string>
     <string name="post_validation_error">Eroare de validare la publicare</string>
     <string name="session_expired">Sesiunea ta a expirat</string>
     <string name="session_invalid">Sesiune nevalidă</string>

@@ -320,6 +320,27 @@ object NetworkClient {
         } catch (_: Exception) {}
     }
 
+    /**
+     * Borra de la caché HTTP en disco todo lo guardado de un libro: su `.json`, el de sus
+     * ediciones, su portada... Lo que guarda la caché lleva diez minutos de vida, y sin esto
+     * la ficha seguía enseñando lo de antes de editarla.
+     *
+     * @param bookUrl dirección o número del libro.
+     */
+    fun evictCachedBook(bookUrl: String) {
+        val id = com.ferlagod.rocinante.utils.BookWyrmUtils.extractBookId(bookUrl)
+            .takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: return
+        val pattern = Regex("""/book/$id(?:[/.?#]|$)""")
+        try {
+            val urls = lastOkHttpClient?.cache?.urls() ?: return
+            while (urls.hasNext()) {
+                if (pattern.containsMatchIn(urls.next())) urls.remove()
+            }
+        } catch (_: Exception) {
+            // La caché es un atajo: si no se puede limpiar, caduca sola en diez minutos.
+        }
+    }
+
     @Volatile
     private var imageClientBase: OkHttpClient? = null
 
@@ -354,6 +375,18 @@ object NetworkClient {
         imageClientBase = base
         imageClient = built
         return built
+    }
+
+    /**
+     * El origen de la instancia tal y como lo compara Django con la cabecera `Origin`: esquema,
+     * host y, si no es el de siempre, el puerto. BookWyrm solo se fía de su propia dirección
+     * (`CSRF_TRUSTED_ORIGINS = [BASE_URL]`), así que en una instancia con un puerto no estándar
+     * un origen sin él hacía fallar por CSRF todos los envíos.
+     */
+    fun originOf(url: HttpUrl): String {
+        val host = url.host.lowercase()
+        val defaultPort = HttpUrl.defaultPort(url.scheme)
+        return if (url.port == defaultPort) "${url.scheme}://$host" else "${url.scheme}://$host:${url.port}"
     }
 
     /** Cabeceras que solo tienen sentido hacia la instancia del usuario. */
@@ -424,8 +457,7 @@ object NetworkClient {
             return shared
         }
 
-        val scheme = finalUrl.toHttpUrlOrNull()?.scheme ?: "https"
-        val originHeader = "$scheme://$host"
+        val originHeader = finalUrl.toHttpUrlOrNull()?.let { originOf(it) } ?: "https://$host"
         val refererHeader = "$originHeader/"
 
         // CookieJar con las cookies de sesión iniciales

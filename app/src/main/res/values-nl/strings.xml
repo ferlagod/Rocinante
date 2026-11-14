@@ -406,6 +406,7 @@ Zoekfix: De bug opgelost die het openen van boekdetails na het zoeken verhinderd
     <string name="quotation_quote_prefix">Citaat: </string>
     <string name="time_just_now">Zojuist</string>
     <string name="book_my_quotes_reviews">Mijn citaten en recensies</string>
+    <string name="book_my_posts_empty">Je hebt nog niets over dit boek gepubliceerd.</string>
     <string name="post_validation_error">Validatiefout bij het plaatsen</string>
     <string name="session_expired">Je sessie is verlopen</string>
     <string name="session_invalid">Ongeldige sessie</string>

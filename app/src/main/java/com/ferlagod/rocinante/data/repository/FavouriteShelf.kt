@@ -97,13 +97,10 @@ object FavouriteShelf {
             user = context.userId,
             csrfToken = context.csrfToken
         )
-        // Un 200 es el formulario de vuelta porque algo no le valía; solo la redirección crea.
-        if (response.code() != 302) return null
-        return response.headers()["Location"]
-            ?.trimEnd('/')
-            ?.substringAfterLast("/books/")
-            ?.substringAfterLast('/')
-            ?.takeIf { it.isNotEmpty() }
+        // Solo la redirección a la estantería nueva quiere decir que se creó: si algo no le
+        // vale, BookWyrm redirige a la lista de estanterías.
+        if (!com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response)) return null
+        return BookWyrmScraper.shelfIdentifierFromLocation(response.headers()["Location"])
     }
 
     /**

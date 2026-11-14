@@ -474,6 +474,7 @@ Søgefejl rettet: Rettet fejlen, der forhindrede visning af bogdetaljer efter en
     <string name="quotation_quote_prefix">Citat: </string>
     <string name="time_just_now">Lige nu</string>
     <string name="book_my_quotes_reviews">Mine citater og anmeldelser</string>
+    <string name="book_my_posts_empty">Du har ikke udgivet noget om denne bog endnu.</string>
     <string name="post_validation_error">Valideringsfejl ved udgivelse</string>
     <string name="session_expired">Din session er udløbet</string>
     <string name="session_invalid">Ugyldig session</string>

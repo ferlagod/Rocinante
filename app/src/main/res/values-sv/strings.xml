@@ -406,6 +406,7 @@ Sökfix: Fixade felet som hindrade öppningen av bokdetaljer efter sökning.</st
     <string name="quotation_quote_prefix">Citat: </string>
     <string name="time_just_now">Just nu</string>
     <string name="book_my_quotes_reviews">Mina citat och recensioner</string>
+    <string name="book_my_posts_empty">Du har inte publicerat något om den här boken än.</string>
     <string name="post_validation_error">Valideringsfel vid publicering</string>
     <string name="session_expired">Din session har gått ut</string>
     <string name="session_invalid">Ogiltig session</string>

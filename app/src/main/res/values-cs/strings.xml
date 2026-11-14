@@ -416,6 +416,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="quotation_quote_prefix">Citát: </string>
     <string name="time_just_now">Právě teď</string>
     <string name="book_my_quotes_reviews">Moje citáty a recenze</string>
+    <string name="book_my_posts_empty">O této knize jste zatím nic nezveřejnili.</string>
     <string name="post_validation_error">Chyba ověření při publikování</string>
     <string name="session_expired">Vaše relace vypršela</string>
     <string name="session_invalid">Neplatná relace</string>

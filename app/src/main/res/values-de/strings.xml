@@ -406,6 +406,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="quotation_quote_prefix">Zitat: </string>
     <string name="time_just_now">Gerade eben</string>
     <string name="book_my_quotes_reviews">Meine Zitate und Rezensionen</string>
+    <string name="book_my_posts_empty">Du hast noch nichts zu diesem Buch veröffentlicht.</string>
     <string name="post_validation_error">Validierungsfehler beim Veröffentlichen</string>
     <string name="session_expired">Deine Sitzung ist abgelaufen</string>
     <string name="session_invalid">Ungültige Sitzung</string>

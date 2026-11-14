@@ -138,9 +138,12 @@ object ShelvedDateParser {
      * @param text lo que dice la celda.
      * @param language el `lang` de la página («fi», «pt-br»…), o null si no se sabe.
      * @param today el día de hoy, para «hoy» y «ayer».
+     * @param defaultYear el año que se da por supuesto si el texto no lo trae, o null para
+     *   exigirlo. BookWyrm lo omite en las fechas de publicación del año en curso («Aug. 22»);
+     *   la fecha de archivado, en cambio, lo lleva siempre.
      * @return la fecha, o null si no se entiende.
      */
-    fun parse(text: String, language: String?, today: LocalDate): LocalDate? {
+    fun parse(text: String, language: String?, today: LocalDate, defaultYear: Int? = null): LocalDate? {
         val clean = normalize(text).trim()
         if (clean.isEmpty()) return null
         when (compactWord(text)) {
@@ -151,12 +154,15 @@ object ShelvedDateParser {
 
         val tokens = Regex("\\p{L}+|\\d+").findAll(clean).map { it.value }.toList()
         val numbers = tokens.mapIndexedNotNull { i, t -> t.toIntOrNull()?.let { i to it } }
-        val yearEntry = numbers.firstOrNull { (_, n) -> n in 1000..2999 } ?: return null
-        val year = yearEntry.second
-        val rest = numbers.filter { it.first != yearEntry.first }
-
         val words = tokens.filter { it.toIntOrNull() == null && it.length >= 3 }
         val month = words.firstNotNullOfOrNull { monthOf(it, language) }
+
+        // Sin año escrito solo se acepta con el mes en letra: «22 de agosto» se entiende, pero
+        // dos números sueltos no dicen cuál es el día y cuál el mes.
+        val yearEntry = numbers.firstOrNull { (_, n) -> n in 1000..2999 }
+            ?: if (defaultYear != null && month != null) -1 to defaultYear else return null
+        val year = yearEntry.second
+        val rest = numbers.filter { it.first != yearEntry.first }
 
         val (m, d) = if (month != null) {
             month to (rest.firstOrNull { (_, n) -> n in 1..31 }?.second ?: return null)

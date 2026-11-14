@@ -406,6 +406,7 @@ Correction de la recherche : Correction du bug qui empêchait d\'ouvrir les dét
     <string name="quotation_quote_prefix">Citation : </string>
     <string name="time_just_now">À l\'instant</string>
     <string name="book_my_quotes_reviews">Mes citations et critiques</string>
+    <string name="book_my_posts_empty">Vous n’avez encore rien publié sur ce livre.</string>
     <string name="post_validation_error">Erreur de validation lors de la publication</string>
     <string name="session_expired">Votre session a expiré</string>
     <string name="session_invalid">Session non valide</string>

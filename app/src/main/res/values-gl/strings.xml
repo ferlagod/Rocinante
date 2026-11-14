@@ -408,6 +408,7 @@ Corrección en buscas: Arranxado o fallo que impedía abrir os detalles dun libr
     <string name="quotation_quote_prefix">Cita: </string>
     <string name="time_just_now">Agora mesmo</string>
     <string name="book_my_quotes_reviews">As miñas citas e recensións</string>
+    <string name="book_my_posts_empty">Aínda non publicaches nada sobre este libro.</string>
     <string name="post_validation_error">Erro de validación ao publicar</string>
     <string name="session_expired">A túa sesión caducou</string>
     <string name="session_invalid">Sesión non válida</string>

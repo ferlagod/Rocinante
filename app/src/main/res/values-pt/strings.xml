@@ -406,6 +406,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="quotation_quote_prefix">Citação: </string>
     <string name="time_just_now">Agora mesmo</string>
     <string name="book_my_quotes_reviews">As minhas citações e críticas</string>
+    <string name="book_my_posts_empty">Você ainda não publicou nada sobre este livro.</string>
     <string name="post_validation_error">Erro de validação ao publicar</string>
     <string name="session_expired">A tua sessão expirou</string>
     <string name="session_invalid">Sessão inválida</string>

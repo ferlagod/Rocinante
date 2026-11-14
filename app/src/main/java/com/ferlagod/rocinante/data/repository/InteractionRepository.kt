@@ -209,7 +209,7 @@ class InteractionRepository(
     suspend fun favoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.favoriteStatus(statusId)
-            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+            doneOrAlreadyDone(response, alreadyCode = 400)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -224,7 +224,7 @@ class InteractionRepository(
     suspend fun unfavoriteStatus(statusId: String): Boolean {
         return try {
             val response = api.unfavoriteStatus(statusId)
-            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+            doneOrAlreadyDone(response, alreadyCode = 404)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -249,7 +249,7 @@ class InteractionRepository(
     suspend fun unboostStatus(statusId: String): Boolean {
         return try {
             val response = api.unboostStatus(statusId)
-            com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
+            doneOrAlreadyDone(response, alreadyCode = 500)
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
@@ -279,6 +279,20 @@ class InteractionRepository(
             false
         }
     }
+
+    /**
+     * ¿Ha quedado el estado como se pedía? Lo ha hecho la petición, o ya estaba así.
+     *
+     * BookWyrm no contesta a «ya estaba hecho» con un éxito: dar me gusta a lo que ya lo tiene es
+     * un 400, quitar uno que no hay es un 404, y deshacer una difusión que no existe acaba en un
+     * 500 (la vista intenta borrar algo que no encuentra). Pasa cuando lo que enseña la app va por
+     * detrás de lo que se hizo desde la web, y tratarlo como fallo deshacía el cambio en pantalla
+     * sin que el estado llegara nunca a cuadrar. Ninguno de esos códigos guarda nada, así que no
+     * hay nada que repetir: el estado ya es el que se quería.
+     */
+    private fun doneOrAlreadyDone(response: retrofit2.Response<*>, alreadyCode: Int): Boolean =
+        (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response) || response.code() == alreadyCode)
+            .also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
 
     companion object {
         /**

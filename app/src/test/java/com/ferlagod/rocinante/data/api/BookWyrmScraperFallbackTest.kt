@@ -108,7 +108,7 @@ class BookWyrmScraperFallbackTest {
                         <span class="title">Don Quijote de la Mancha</span>
                     </a>
                     <a href="/author/1">Miguel de Cervantes</a>
-                    <span>450 páginas</span>
+                    <span itemprop="numberOfPages">450 páginas</span>
                 </div>
             </body>
             </html>

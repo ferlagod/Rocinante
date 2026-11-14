@@ -215,8 +215,13 @@ class SearchRepository(
                     baseUrl.trimEnd('/') + "/" + avatarRaw.trimStart('/')
                 } else avatarRaw ?: ""
                 
-                val nameElement = element.selectFirst(".title")
-                val name = nameElement?.text()?.replace("Blocca account", "")?.trim() ?: ""
+                // Solo el nombre: sin el texto de botones, formularios ni el que lee el lector de
+                // pantalla junto al candado, que va en el idioma de la instancia. Antes se quitaba
+                // a mano «Blocca account», que solo sale en italiano.
+                val nameElement = element.selectFirst(".title")?.clone()?.apply {
+                    select("button, form, .is-sr-only, .icon").remove()
+                }
+                val name = nameElement?.text()?.trim() ?: ""
                 
                 val handleElement = element.selectFirst(".subtitle")
                 val handle = handleElement?.text()?.trim() ?: profileUrl.substringAfter("/user/")

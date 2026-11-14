@@ -406,6 +406,7 @@
     <string name="quotation_quote_prefix">Απόσπασμα: </string>
     <string name="time_just_now">Μόλις τώρα</string>
     <string name="book_my_quotes_reviews">Τα αποσπάσματα και οι κριτικές μου</string>
+    <string name="book_my_posts_empty">Δεν έχετε δημοσιεύσει ακόμα τίποτα για αυτό το βιβλίο.</string>
     <string name="post_validation_error">Σφάλμα επικύρωσης κατά τη δημοσίευση</string>
     <string name="session_expired">Η συνεδρία σας έληξε</string>
     <string name="session_invalid">Μη έγκυρη συνεδρία</string>

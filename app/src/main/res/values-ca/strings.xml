@@ -406,6 +406,7 @@ Correcció en cerques: S\'ha arreglat l\'error que impedia obrir els detalls d\'
     <string name="quotation_quote_prefix">Cita: </string>
     <string name="time_just_now">Ara mateix</string>
     <string name="book_my_quotes_reviews">Les meves cites i ressenyes</string>
+    <string name="book_my_posts_empty">Encara no has publicat res sobre aquest llibre.</string>
     <string name="post_validation_error">Error de validació en publicar</string>
     <string name="session_expired">La teva sessió ha caducat</string>
     <string name="session_invalid">Sessió no vàlida</string>

@@ -407,6 +407,7 @@ Hakun korjaus: Korjattu virhe, joka esti kirjan tietojen avaamisen haun jälkeen
     <string name="quotation_quote_prefix">Lainaus: </string>
     <string name="time_just_now">Juuri nyt</string>
     <string name="book_my_quotes_reviews">Omat lainaukset ja arviot</string>
+    <string name="book_my_posts_empty">Et ole vielä julkaissut mitään tästä kirjasta.</string>
     <string name="post_validation_error">Vahvistusvirhe julkaistaessa</string>
     <string name="session_expired">Istuntosi on vanhentunut</string>
     <string name="session_invalid">Virheellinen istunto</string>

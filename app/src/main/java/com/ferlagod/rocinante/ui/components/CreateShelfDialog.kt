@@ -107,12 +107,8 @@ fun CreateShelfDialog(
                     csrfToken = ctx.csrfToken
                 )
                 // Creada, BookWyrm redirige a la estantería nueva y su dirección dice cómo se
-                // llama. Un 200 es el formulario de vuelta porque algo no le valía.
-                val identifier = response.headers()["Location"]
-                    ?.trimEnd('/')
-                    ?.substringAfterLast("/books/")
-                    ?.substringAfterLast('/')
-                    ?.takeIf { it.isNotEmpty() }
+                // llama. Si algo no le vale, redirige a la lista de estanterías.
+                val identifier = BookWyrmScraper.shelfIdentifierFromLocation(response.headers()["Location"])
                 if (com.ferlagod.rocinante.utils.BookWyrmUtils.isOkRedirect(response) && identifier != null) {
                     onCreated(identifier)
                     onDismiss()

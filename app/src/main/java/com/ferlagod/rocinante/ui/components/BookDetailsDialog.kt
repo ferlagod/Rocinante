@@ -3767,6 +3767,14 @@ fun MyBookActivityDialog(
                 return@LaunchedEffect
             }
             
+            // Primero las pestañas «tus reseñas / comentarios / citas» del libro, que traen todo lo
+            // del usuario sea cual sea su privacidad. Solo si no se pueden leer, el outbox.
+            val own = BookWyrmScraper.scrapeOwnBookStatuses(api, activeBookKey)
+            if (own != null) {
+                activities = own
+                return@LaunchedEffect
+            }
+
             val cleanInstance = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
             val outboxUrl = "${cleanInstance.trimEnd('/')}/user/${username.removePrefix("@").substringBefore("@")}/outbox"
             
@@ -3799,7 +3807,7 @@ fun MyBookActivityDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Mis publicaciones", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.book_my_quotes_reviews), fontWeight = FontWeight.Bold)
         },
         text = {
             if (isLoading) {
@@ -3807,9 +3815,12 @@ fun MyBookActivityDialog(
                     CircularProgressIndicator()
                 }
             } else if (errorMessage != null) {
-                Text(text = errorMessage ?: "Error", color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = errorMessage ?: stringResource(R.string.error_unknown),
+                    color = MaterialTheme.colorScheme.error
+                )
             } else if (activities.isEmpty()) {
-                Text("No has publicado nada sobre este libro recientemente.")
+                Text(stringResource(R.string.book_my_posts_empty))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
@@ -3821,7 +3832,7 @@ fun MyBookActivityDialog(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = activity.type,
+                                    text = ownPostTypeLabel(activity.type),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -3833,7 +3844,7 @@ fun MyBookActivityDialog(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val dateStr = activity.published
                                 val shortDate = when {
-                                    dateStr.isBlank() -> "Unknown date"
+                                    dateStr.isBlank() -> stringResource(R.string.book_review_date_unknown)
                                     dateStr.contains("T") -> dateStr.substringBefore("T")
                                     else -> dateStr
                                 }
@@ -3856,6 +3867,19 @@ fun MyBookActivityDialog(
     )
 }
 
+
+/**
+ * El nombre de lo publicado en «Mis publicaciones», en el idioma del móvil. El tipo llega en
+ * inglés («Review», «Quotation»...) y antes se enseñaba tal cual.
+ */
+@Composable
+private fun ownPostTypeLabel(type: String): String = when (type) {
+    "Review" -> stringResource(R.string.activity_type_review)
+    "Quotation" -> stringResource(R.string.activity_type_cita)
+    "Add" -> stringResource(R.string.activity_type_add)
+    "Announce" -> stringResource(R.string.activity_type_announce)
+    else -> stringResource(R.string.activity_type_comment)
+}
 
 /** Convierte una fecha ISO (yyyy-MM-dd) a los milisegundos UTC que usa el calendario. */
 private fun isoToUtcMillis(iso: String?): Long? {
