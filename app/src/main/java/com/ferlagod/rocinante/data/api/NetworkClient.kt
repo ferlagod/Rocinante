@@ -376,6 +376,34 @@ object NetworkClient {
         return builder.build()
     }
 
+    /**
+     * La petición con la que repetir un envío que la instancia ha rechazado con 403 por ir
+     * como «de API», o null si no hay que repetirlo.
+     *
+     * BookWyrm trata como petición de API toda la que pide JSON en `Accept`, y en esas llama a
+     * `SiteSettings.raise_federation_disabled()`: si el administrador ha desactivado la
+     * federación, contesta 403 aunque la sesión sea buena. Las escrituras de la app (estanterías,
+     * progreso, reseñas, me gusta, seguir...) piden JSON para recibir un 200 o un 400 claros en
+     * vez de una redirección, así que en esas instancias fallaban todas. Pidiendo HTML se salta
+     * esa comprobación y la vista contesta como a la web, con una redirección al guardar, que
+     * quien llama ya reconoce como éxito.
+     *
+     * Solo se repite una vez, solo envíos (no lecturas, que tienen su propio plan B por HTML) y
+     * solo a la instancia. Un 403 por otra causa (CSRF, falta de permiso) no ha guardado nada,
+     * así que repetirlo no duplica nada: devuelve otro 403.
+     */
+    internal fun htmlRetryRequest(sent: Request, response: okhttp3.Response, isToInstance: Boolean): Request? {
+        if (!isToInstance || response.code != 403) return null
+        if (sent.method == "GET" || sent.method == "HEAD") return null
+        if (sent.header("Accept")?.contains("json") != true) return null
+        // Un cuerpo JSON (ActivityPub) no es un formulario de la web: no tiene versión HTML.
+        if (sent.body?.contentType()?.subtype?.contains("json") == true) return null
+        return sent.newBuilder()
+            .header("Accept", "text/html")
+            .removeHeader("X-Requested-With")
+            .build()
+    }
+
     /** Fábrica de llamadas para Coil. */
     val imageCallFactory: Call.Factory = Call.Factory { request -> currentImageClient().newCall(request) }
 
@@ -446,6 +474,13 @@ object NetworkClient {
                     }
                     response = chain.proceed(requestBuilder.build())
                 }
+            }
+
+            // Instancia con la federación desactivada: el envío pedido como JSON se repite como
+            // lo haría la web (ver htmlRetryRequest).
+            htmlRetryRequest(requestBuilder.build(), response, isToInstance)?.let { retry ->
+                response.close()
+                response = chain.proceed(retry)
             }
 
             // Handle 307 and 308 redirects manually, avoiding challenge paths

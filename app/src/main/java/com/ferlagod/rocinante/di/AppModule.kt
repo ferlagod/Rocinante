@@ -224,14 +224,24 @@ object AppModule {
                 }
             }
 
+            // Instancia con la federación desactivada: el envío pedido como JSON se repite como
+            // lo haría la web (ver NetworkClient.htmlRetryRequest).
+            NetworkClient.htmlRetryRequest(requestBuilder.build(), response, isToInstance)?.let { retry ->
+                response.close()
+                response = chain.proceed(retry)
+            }
+
             // Handle 307 and 308 redirects manually, avoiding challenge paths
             var followCount = 0
             while ((response.code == 307 || response.code == 308) && followCount < 3) {
                 val location = response.header("Location") ?: break
                 if (location.contains(AnubisClearance.CHALLENGE_PATH)) break
                 val newUrl = response.request.url.resolve(location) ?: break
-                
-                val newRequest = response.request.newBuilder().url(newUrl).build()
+                // Fuera de la instancia sin las cabeceras de la sesión (token CSRF, origen), y un
+                // envío con cuerpo no se sigue: el cuerpo lleva el token en el formulario.
+                val newRequest = NetworkClient.redirectRequest(
+                    response.request, newUrl, NetworkClient.lastInstanceHost
+                ) ?: break
                 response.close()
                 response = chain.proceed(newRequest)
                 followCount++
