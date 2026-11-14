@@ -266,7 +266,13 @@ class InteractionRepository(
      */
     suspend fun replyStatus(userId: String, content: String, replyParent: String, csrfToken: String): Boolean {
         return try {
-            val response = api.replyStatus(userId = userId, content = content, replyParent = replyParent, csrfToken = csrfToken)
+            val response = api.replyStatus(
+                userId = userId,
+                content = content,
+                replyParent = replyParent,
+                privacy = PostPrivacy.forPost(api),
+                csrfToken = csrfToken
+            )
             com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response).also { com.ferlagod.rocinante.utils.BookWyrmUtils.closeQuietly(response) }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e

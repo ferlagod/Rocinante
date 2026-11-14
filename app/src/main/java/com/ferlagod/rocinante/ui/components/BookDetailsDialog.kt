@@ -835,10 +835,18 @@ fun BookDetailsDialog(
                 // dónde sacar ni cuándo se empezó ni cuándo se terminó: hay que escribirlas a
                 // mano una por una.
                 val today = java.time.LocalDate.now().toString()
+                // La nota «quiere leer / empezó / terminó» se publica como en la web, con la
+                // privacidad que el usuario tiene por defecto. Si no se sabe cuál es, no se
+                // publica: mejor nada que en abierto sin querer.
+                val privacy = if (mappedStatus != null) {
+                    com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
+                } else null
                 var response = if (mappedStatus != null) {
                     api.updateReadingStatus(
                         status = mappedStatus,
                         bookId = editionId,
+                        postStatus = privacy?.let { "on" },
+                        privacy = privacy,
                         startDate = if (mappedStatus == "start") today else existingStartDate,
                         finishDate = today.takeIf { mappedStatus == "finish" },
                         stoppedDate = today.takeIf { mappedStatus == "stop" },
@@ -976,11 +984,16 @@ fun BookDetailsDialog(
                     val effectiveStartDate = contextData.startDate
                         ?: enrichment?.readthroughs
                             ?.firstOrNull { it.id == contextData.readthroughId }?.started
+                    // Terminar desde aquí publica igual que mover a «Leídos»: antes uno publicaba
+                    // y el otro no. Con la privacidad del usuario, y sin publicar si no se sabe.
+                    val privacy = com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
                     val response = api.finishReadingDetailed(
                         bookIdPath = contextData.localBookId,
                         readthroughId = contextData.readthroughId,
                         startDate = effectiveStartDate,
                         finishDate = today,
+                        postStatus = privacy?.let { "on" },
+                        privacy = privacy,
                         csrfToken = contextData.csrfToken
                     )
                     if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
@@ -2649,13 +2662,23 @@ private fun ProgressPostDialog(
     var includeSpoiler by remember { mutableStateOf(false) }
     var spoilerText by remember { mutableStateOf("") }
     var selectedPrivacy by remember { mutableStateOf("public") }
+    // Se parte de la privacidad que el usuario tiene por defecto en BookWyrm, como la web. Si
+    // ya ha tocado el selector cuando llega, se respeta lo que eligió.
+    var privacyTouched by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val preferred = com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
+        if (preferred != null && !privacyTouched) selectedPrivacy = preferred
+    }
     var isSending by remember { mutableStateOf(false) }
     var privacyExpanded by remember { mutableStateOf(false) }
 
     // Textos de privacidad
+    // Las cuatro de BookWyrm: si faltara «unlisted», a quien la tiene por defecto no se le
+    // podría enseñar la suya.
     val privacyOptions = listOf(
         "public" to stringResource(R.string.progress_privacy_public),
         "followers" to stringResource(R.string.progress_privacy_followers),
+        "unlisted" to stringResource(R.string.privacy_unlisted),
         "direct" to stringResource(R.string.progress_privacy_private)
     )
     val currentPrivacyLabel = privacyOptions.firstOrNull { it.first == selectedPrivacy }?.second
@@ -2807,6 +2830,7 @@ private fun ProgressPostDialog(
                                 text = { Text(label) },
                                 onClick = {
                                     selectedPrivacy = value
+                                    privacyTouched = true
                                     privacyExpanded = false
                                 }
                             )
@@ -2878,6 +2902,13 @@ private fun ReviewDialog(
     var spoilerText by remember { mutableStateOf("") }
     var isSensitive by remember { mutableStateOf(false) }
     var selectedPrivacy by remember { mutableStateOf("public") }
+    // Se parte de la privacidad que el usuario tiene por defecto en BookWyrm, como la web. Si
+    // ya ha tocado el selector cuando llega, se respeta lo que eligió.
+    var privacyTouched by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val preferred = com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
+        if (preferred != null && !privacyTouched) selectedPrivacy = preferred
+    }
     var isSending by remember { mutableStateOf(false) }
     var privacyExpanded by remember { mutableStateOf(false) }
     var ratingExpanded by remember { mutableStateOf(false) }
@@ -3090,6 +3121,7 @@ private fun ReviewDialog(
                                 text = { Text(label) },
                                 onClick = {
                                     selectedPrivacy = value
+                                    privacyTouched = true
                                     privacyExpanded = false
                                 }
                             )
@@ -3188,6 +3220,13 @@ private fun QuotationDialog(
     var spoilerText by remember { mutableStateOf("") }
     var isSensitive by remember { mutableStateOf(false) }
     var selectedPrivacy by remember { mutableStateOf("public") }
+    // Se parte de la privacidad que el usuario tiene por defecto en BookWyrm, como la web. Si
+    // ya ha tocado el selector cuando llega, se respeta lo que eligió.
+    var privacyTouched by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val preferred = com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
+        if (preferred != null && !privacyTouched) selectedPrivacy = preferred
+    }
     var isSending by remember { mutableStateOf(false) }
     var privacyExpanded by remember { mutableStateOf(false) }
 
@@ -3385,6 +3424,7 @@ private fun QuotationDialog(
                                 text = { Text(label) },
                                 onClick = {
                                     selectedPrivacy = value
+                                    privacyTouched = true
                                     privacyExpanded = false
                                 }
                             )

@@ -1453,9 +1453,13 @@ object BookWyrmScraper {
         }
         try {
             val today = java.time.LocalDate.now().toString()
+            // Como en la ficha del libro: se publica con la privacidad del usuario, o nada.
+            val privacy = com.ferlagod.rocinante.data.repository.PostPrivacy.defaultFor(api)
             val response = api.updateReadingStatus(
                 status = status,
                 bookId = bookId,
+                postStatus = privacy?.let { "on" },
+                privacy = privacy,
                 startDate = today.takeIf { status == "start" }
             )
             val ok = BookWyrmUtils.isWriteSuccess(response)

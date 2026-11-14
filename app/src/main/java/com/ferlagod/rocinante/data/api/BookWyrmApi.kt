@@ -195,8 +195,10 @@ interface BookWyrmApi {
     suspend fun updateReadingStatus(
         @Path("status") status: String,   // "want", "start", "finish", "stop"
         @Path("bookId") bookId: String,
-        @Field("post-status") postStatus: String = "on",
-        @Field("privacy") privacy: String = "public",
+        // Publicar la nota en el feed («on») y con qué privacidad. Sin valor por defecto a
+        // propósito: la privacidad es la del usuario (ver PostPrivacy), y null no publica.
+        @Field("post-status") postStatus: String?,
+        @Field("privacy") privacy: String?,
         // Las fechas que manda el formulario de la web, ya rellenas con el día de hoy. Sin
         // ellas BookWyrm da de alta la lectura **sin fecha**, y luego no hay de dónde sacar
         // ni cuándo se empezó ni cuándo se terminó. Se manda la que toque según el estado.
@@ -244,7 +246,9 @@ interface BookWyrmApi {
         @Field("id") readthroughId: String,
         @Field("start_date") startDate: String?,
         @Field("finish_date") finishDate: String,
-        @Field("privacy") privacy: String = "public",
+        // Igual que en [updateReadingStatus]: publicar o no, y con la privacidad del usuario.
+        @Field("post-status") postStatus: String?,
+        @Field("privacy") privacy: String?,
         @Field("csrfmiddlewaretoken") csrfToken: String = ""
     ): retrofit2.Response<ResponseBody>
 
@@ -444,7 +448,7 @@ interface BookWyrmApi {
         @Field("user") userId: String,
         @Field("content") content: String,
         @Field("reply_parent") replyParent: String,
-        @Field("privacy") privacy: String = "public",
+        @Field("privacy") privacy: String,
         @Field("csrfmiddlewaretoken") csrfToken: String
     ): retrofit2.Response<okhttp3.ResponseBody>
 
@@ -458,7 +462,7 @@ interface BookWyrmApi {
     suspend fun createStatus(
         @Field("user") userId: String,
         @Field("content") content: String,
-        @Field("privacy") privacy: String = "public",
+        @Field("privacy") privacy: String,
         @Field("csrfmiddlewaretoken") csrfToken: String
     ): retrofit2.Response<okhttp3.ResponseBody>
 
@@ -482,8 +486,8 @@ interface BookWyrmApi {
      */
     @GET
     @Headers("Accept: text/html")
-    suspend fun getRawHtmlResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
-
+    suspend fun getRawHtmlResponse(@Url fullUrl: String): retrofit2.Response<ResponseBody>
+
     /**
      * Envía un formulario entero tal y como lo haría el navegador.
      *

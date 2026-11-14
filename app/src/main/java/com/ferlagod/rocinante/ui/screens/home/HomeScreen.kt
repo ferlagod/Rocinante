@@ -489,7 +489,12 @@ fun HomeScreen(
                                             if (userId != null) {
                                                 val cookieJar = NetworkClient.lastOkHttpClient?.cookieJar as? com.ferlagod.rocinante.data.api.SessionCookieJar
                                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
-                                                val response = api.createStatus(userId = userId, content = statusText, csrfToken = csrfToken)
+                                                val response = api.createStatus(
+                                                    userId = userId,
+                                                    content = statusText,
+                                                    privacy = com.ferlagod.rocinante.data.repository.PostPrivacy.forPost(api),
+                                                    csrfToken = csrfToken
+                                                )
                                                 if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                                     showPostDialog = false
                                                     Toast.makeText(context, postSuccessMsg, Toast.LENGTH_SHORT).show()
@@ -2085,7 +2090,12 @@ fun ProfileTab(
                             val userId = userMatch?.let { it.groups[1]?.value ?: it.groups[2]?.value } ?: fallbackMatch?.groups?.get(1)?.value
                             if (userId != null) {
                                 val csrfToken = cookieJar?.currentCsrfToken() ?: ""
-                                val response = api.createStatus(userId = userId, content = shareText, csrfToken = csrfToken)
+                                val response = api.createStatus(
+                                    userId = userId,
+                                    content = shareText,
+                                    privacy = com.ferlagod.rocinante.data.repository.PostPrivacy.forPost(api),
+                                    csrfToken = csrfToken
+                                )
                                 if (com.ferlagod.rocinante.utils.BookWyrmUtils.isWriteSuccess(response)) {
                                     Toast.makeText(context, context.getString(R.string.post_success), Toast.LENGTH_SHORT).show()
                                 } else {

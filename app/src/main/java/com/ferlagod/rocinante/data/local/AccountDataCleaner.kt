@@ -81,5 +81,6 @@ object AccountDataCleaner {
         } catch (_: Exception) {}
         NetworkClient.evictHttpCache()
         BookWyrmScraper.invalidateBookPage()
+        com.ferlagod.rocinante.data.repository.PostPrivacy.clear()
     }
 }
