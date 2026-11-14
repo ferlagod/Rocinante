@@ -2076,7 +2076,8 @@ object BookWyrmScraper {
                     val href = a.attr("href")
                     href.contains("/status/") || href.contains("/review/") ||
                     href.contains("/comment/") || href.contains("/quotation/") ||
-                    href.contains("/reviewrating/")
+                    href.contains("/reviewrating/") || href.contains("/generatednote/") ||
+                    href.contains("/boost/")
                 }
                 val statusId = permalinkElement?.attr("href")?.let { href ->
                     resolveUrl(href, cleanBase)
@@ -2274,12 +2275,21 @@ object BookWyrmScraper {
         return items
     }
 
+    /**
+     * El tipo de un estado del feed. Se decide por lo que no depende del idioma —la dirección
+     * del estado y la forma de la página— porque BookWyrm pinta el feed en el idioma de quien
+     * lo mira: buscar «started reading» o «compartió» solo funcionaba en inglés y en español.
+     * El texto queda como último recurso, para plantillas antiguas.
+     */
     private fun detectStatusType(element: org.jsoup.nodes.Element, statusId: String): String {
         return when {
             statusId.contains("/review/") -> "Review"
             statusId.contains("/reviewrating/") -> "Review"
             statusId.contains("/comment/") -> "Comment"
             statusId.contains("/quotation/") -> "Quotation"
+            // Las notas que genera BookWyrm al cambiar de estantería («empezó a leer»…).
+            statusId.contains("/generatednote/") -> "Add"
+            statusId.contains("/boost/") || isBoostCard(element) -> "Announce"
             element.selectFirst("[itemprop=reviewBody]") != null -> "Review"
             element.selectFirst("[itemprop=ratingValue]") != null -> "Review"
             element.selectFirst("blockquote") != null -> "Quotation"
@@ -2296,6 +2306,19 @@ object BookWyrmScraper {
                 text.contains("compartió", ignoreCase = true)
             } -> "Announce"
             else -> "Note"
+        }
+    }
+
+    /**
+     * ¿Es una difusión? BookWyrm la pinta como el enlace al perfil de quien difunde, la palabra
+     * «boosted» traducida y, debajo, la tarjeta del estado difundido. Lo único que no depende del
+     * idioma es eso: un enlace a un perfil **fuera** de la tarjeta. En un estado normal todo,
+     * también el autor, va dentro de ella.
+     */
+    internal fun isBoostCard(element: org.jsoup.nodes.Element): Boolean {
+        if (element.selectFirst(".card") == null) return false
+        return element.select("a[href*=/user/]").any { link ->
+            link.parents().none { it.hasClass("card") }
         }
     }
 

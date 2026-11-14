@@ -50,7 +50,7 @@ class InteractionRepository(
                 }
                 
                 val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
-                val typeRegex = """/(status|review|comment|quotation|reviewrating|post)/(\d+)""".toRegex()
+                val typeRegex = STATUS_PATH
                 
                 // If it is already a local status URL (contains our instance url) and has a valid ID
                 if (isLocalUrl(statusUrl, instanceUrl)) {
@@ -190,7 +190,7 @@ class InteractionRepository(
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 e.printStackTrace()
                 if (isLocalUrl(statusUrl, instanceUrl)) {
-                    val typeRegex = """/(status|review|comment|quotation|reviewrating|post)/(\d+)""".toRegex()
+                    val typeRegex = STATUS_PATH
                     val match = typeRegex.find(statusUrl)
                     if (match != null) {
                         return@withContext match.groupValues[2]
@@ -278,5 +278,15 @@ class InteractionRepository(
             if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
+    }
+
+    companion object {
+        /**
+         * La dirección de un estado de BookWyrm: `/user/<nombre>/<tipo>/<número>`, con los tipos
+         * que admite su `urls.py`. Faltaban las notas de lectura y las difusiones, así que a esas
+         * no se les sacaba el número; «post» no es ningún tipo y sobraba.
+         */
+        internal val STATUS_PATH =
+            """/(status|review|reviewrating|comment|quotation|boost|generatednote)/(\d+)""".toRegex()
     }
 }
