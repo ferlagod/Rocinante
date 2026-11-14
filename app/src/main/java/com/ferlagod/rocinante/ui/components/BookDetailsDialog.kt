@@ -813,13 +813,16 @@ fun BookDetailsDialog(
                     // estantería cualquiera: yendo por aquí lo saca él solo de «Leyendo».
                     "stopped-reading" to "stop"
                 )[slug]
-                // Si se termina de leer (finish), conservamos la fecha de inicio que ya tuviera
-                // la lectura activa para que BookWyrm no la sobreescriba con null borrándola.
+                // Al terminar (finish) o dejar a medias (stop) se reenvía la fecha de inicio que ya
+                // tuviera la lectura activa: BookWyrm asigna las tres fechas de golpe y la que no
+                // llega la guarda vacía, así que sin esto se borraba. Es lo mismo que hace el
+                // formulario de la web en los dos casos.
                 // Solo vale la lectura EN CURSO: sin ella BookWyrm abre una lectura nueva, y darle
                 // el inicio de una anterior (o el resumen enrichment.started, que es el inicio
                 // más antiguo de todas) falsearía las fechas de una relectura.
-                val activeRtId = if (mappedStatus == "finish") BookWyrmScraper.extractReadthroughId(html) else null
-                val existingStartDate = if (mappedStatus == "finish" && !activeRtId.isNullOrBlank()) {
+                val closesReading = mappedStatus == "finish" || mappedStatus == "stop"
+                val activeRtId = if (closesReading) BookWyrmScraper.extractReadthroughId(html) else null
+                val existingStartDate = if (closesReading && !activeRtId.isNullOrBlank()) {
                     BookWyrmScraper.parseReadDates(html).readthroughs
                         .firstOrNull { it.id == activeRtId }?.startDate
                         ?: BookWyrmScraper.extractActiveReadthrough(html)
