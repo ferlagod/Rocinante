@@ -86,3 +86,4 @@ scripts/bookwyrm_scraper_monitor.py
 check_form.py
 *.py
 get_html.py
+AUDITORIA_BOOKWYRM.md
