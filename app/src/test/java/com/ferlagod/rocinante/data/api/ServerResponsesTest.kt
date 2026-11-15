@@ -44,6 +44,26 @@ class ServerResponsesTest {
     }
 
     @Test
+    fun `la página de una cita va en los campos de posición`() {
+        assertEquals(23 to null, BookWyrmUtils.parseQuotePages("23"))
+        assertEquals(23 to 25, BookWyrmUtils.parseQuotePages(" 23 – 25 "))
+        assertEquals(23 to null, BookWyrmUtils.parseQuotePages("23-23"))
+        assertNull(BookWyrmUtils.parseQuotePages("xii"))
+        assertNull(BookWyrmUtils.parseQuotePages(""))
+    }
+
+    @Test
+    fun `la búsqueda sabe si hay página siguiente`() {
+        val next = """<nav class="pagination"><a class="pagination-previous is-disabled">Anterior</a>
+            <a class="pagination-next" href="?q=x&amp;page=2">Siguiente</a></nav>"""
+        val last = """<nav class="pagination"><a class="pagination-previous" href="?q=x&amp;page=1">Anterior</a>
+            <a class="pagination-next is-disabled" aria-hidden="true">Siguiente</a></nav>"""
+        assertEquals(true, com.ferlagod.rocinante.data.repository.SearchRepository.hasNextPage(next))
+        assertEquals(false, com.ferlagod.rocinante.data.repository.SearchRepository.hasNextPage(last))
+        assertEquals(false, com.ferlagod.rocinante.data.repository.SearchRepository.hasNextPage("<p>Sin resultados</p>"))
+    }
+
+    @Test
     fun `lee lo publicado por el usuario en las pestañas del libro`() {
         val html = """
             <html lang="es"><body><div class="block" id="reviews"><div class="columns">

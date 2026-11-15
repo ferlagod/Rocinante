@@ -583,6 +583,7 @@ Suchfehler behoben: Der Fehler, der das Öffnen von Buchdetails nach einer Suche
     <string name="search_instance_section">Auf dieser Instanz</string>
     <string name="search_instance_prompt">Diese Instanz nach „%1$s“ durchsuchen</string>
     <string name="search_remote_section">Ergebnisse von %1$s</string>
+    <string name="search_load_more">Weitere Ergebnisse</string>
     <string name="search_remote_loading">Andere Kataloge werden durchsucht…</string>
     <string name="search_clear">Löschen</string>
     <string name="search_tools_desc">Werkzeuge</string>

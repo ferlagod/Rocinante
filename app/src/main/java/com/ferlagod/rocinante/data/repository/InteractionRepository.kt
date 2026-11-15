@@ -49,7 +49,6 @@ class InteractionRepository(
                     return@withContext statusUrl
                 }
                 
-                val cleanInstance = instanceUrl.removePrefix("http://").removePrefix("https://").trimEnd('/')
                 val typeRegex = STATUS_PATH
                 
                 // If it is already a local status URL (contains our instance url) and has a valid ID
@@ -150,41 +149,9 @@ class InteractionRepository(
                     }
                 }
                 
-                // Final Fallback: search for the status URL on the local instance
-                try {
-                    val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
-                    val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-                    val searchUrl = "${baseUrl}search?q=${java.net.URLEncoder.encode(statusUrl, "UTF-8")}"
-                    val searchResponse = api.getRawHtmlResponse(searchUrl)
-                    if (searchResponse.isSuccessful || searchResponse.code() in 300..399) {
-                        val searchHtml = searchResponse.body()?.string() ?: ""
-                        // 1. If it redirected straight to the status. El cliente no sigue las
-                        // redirecciones, así que el destino está en Location, no en la URL pedida.
-                        val requestUrl = searchResponse.raw().request.url
-                        val finalUrl = searchResponse.headers()["Location"]
-                            ?.let { requestUrl.resolve(it)?.toString() }
-                            ?: requestUrl.toString()
-                        val redirectMatch = typeRegex.find(finalUrl)
-                        if (redirectMatch != null && finalUrl.contains(cleanInstance)) {
-                            return@withContext redirectMatch.groupValues[2]
-                        }
-                        // 2. If it showed search results, parse the first status link
-                        val searchDoc = org.jsoup.Jsoup.parse(searchHtml)
-                        val statusLink = searchDoc.select("a").firstOrNull { 
-                            it.attr("href").contains(cleanInstance) && typeRegex.containsMatchIn(it.attr("href"))
-                        }
-                        if (statusLink != null) {
-                            val hrefMatch = typeRegex.find(statusLink.attr("href"))
-                            if (hrefMatch != null) {
-                                return@withContext hrefMatch.groupValues[2]
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    if (e is kotlinx.coroutines.CancellationException) throw e
-                    e.printStackTrace()
-                }
-                
+                // Antes se buscaba aquí la dirección del estado en /search, pero BookWyrm solo
+                // busca libros, autores, usuarios y listas: nunca encontraba nada y costaba una
+                // petición más.
                 null
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e

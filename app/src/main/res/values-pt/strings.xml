@@ -583,6 +583,7 @@ Correção na pesquisa: Corrigido o erro que impedia a abertura dos detalhes de 
     <string name="search_instance_section">Nesta instância</string>
     <string name="search_instance_prompt">Buscar “%1$s” nesta instância</string>
     <string name="search_remote_section">Resultados de %1$s</string>
+    <string name="search_load_more">Mais resultados</string>
     <string name="search_remote_loading">A pesquisar noutros catálogos…</string>
     <string name="search_clear">Limpar</string>
     <string name="search_tools_desc">Ferramentas</string>

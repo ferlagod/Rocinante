@@ -40,32 +40,64 @@ class SearchRepository(
      * @param remote Pedir también los catálogos externos. Es lento: la instancia los consulta
      *   en ese momento, uno detrás de otro.
      */
-    suspend fun searchBooksScraped(query: String, instanceUrl: String, remote: Boolean = false): List<BookSearchResult> = withContext(Dispatchers.IO) {
+    suspend fun searchBooksScraped(query: String, instanceUrl: String, remote: Boolean = false): List<BookSearchResult> =
+        searchBooksPage(query, instanceUrl, remote).results
+
+    /**
+     * Una página de resultados y si hay otra detrás.
+     *
+     * @property hasNextPage si la instancia ofrece la página siguiente. Se mira su enlace
+     *   «siguiente» y no si esta venía llena: el paginador de Django contesta a una página que
+     *   no existe con la última.
+     */
+    data class BookSearchPage(val results: List<BookSearchResult>, val hasNextPage: Boolean)
+
+    /**
+     * Como [searchBooksScraped], pero de una página concreta. BookWyrm da los resultados de su
+     * base de datos de 15 en 15; antes solo se leía la primera tanda.
+     *
+     * @param page número de página, desde 1.
+     */
+    suspend fun searchBooksPage(
+        query: String,
+        instanceUrl: String,
+        remote: Boolean = false,
+        page: Int = 1
+    ): BookSearchPage = withContext(Dispatchers.IO) {
         val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl else "https://$instanceUrl"
         val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+        val empty = BookSearchPage(emptyList(), hasNextPage = false)
 
         try {
-            val response = api.searchBooks(query, remote = if (remote) "true" else null)
-            if (!response.isSuccessful) return@withContext emptyList()
+            val response = api.searchBooks(
+                query,
+                remote = if (remote) "true" else null,
+                page = page.takeIf { it > 1 }
+            )
+            if (!response.isSuccessful) return@withContext empty
 
-            val responseBody = response.body()?.string() ?: return@withContext emptyList()
+            val responseBody = response.body()?.string() ?: return@withContext empty
 
             // Intento JSON primero por si es una API moderna pura
             try {
                 if (responseBody.trimStart().startsWith("[")) {
                     val typeToken = object : com.google.gson.reflect.TypeToken<List<BookSearchResult>>() {}.type
-                    return@withContext Gson().fromJson(responseBody, typeToken)
+                    return@withContext BookSearchPage(Gson().fromJson(responseBody, typeToken), hasNextPage = false)
                 }
             } catch (_: Exception) {}
 
-            parseBookSearchPage(responseBody, baseUrl)
+            BookSearchPage(parseBookSearchPage(responseBody, baseUrl), hasNextPage(responseBody))
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            emptyList()
+            empty
         }
     }
 
     companion object {
+        /** ¿Ofrece la página de resultados el enlace a la siguiente? Desactivado, no cuenta. */
+        internal fun hasNextPage(html: String): Boolean =
+            org.jsoup.Jsoup.parse(html).selectFirst("a.pagination-next:not(.is-disabled)[href]") != null
+
         private val YEAR_REGEX = "\\b(1[5-9]|20)\\d{2}\\b".toRegex()
 
         /**

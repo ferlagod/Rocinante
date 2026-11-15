@@ -3444,13 +3444,18 @@ private fun QuotationDialog(
                                     return@launch
                                 }
 
+                                // La página va en los campos de posición de BookWyrm, que la
+                                // escribe al federar la cita. Solo si no son números se deja en
+                                // el texto, como antes.
+                                val pages = BookWyrmUtils.parseQuotePages(pageText)
+                                val pageInText = pageText.isNotBlank() && pages == null
                                 val finalContent = buildString {
-                                    if (pageText.isNotBlank()) {
+                                    if (pageInText) {
                                         append(context.getString(R.string.quotation_page_format, pageText))
                                         if (contentText.isNotBlank()) append("\n\n")
                                     }
                                     if (contentText.isNotBlank()) {
-                                        if (pageText.isNotBlank()) append(context.getString(R.string.quotation_quote_prefix))
+                                        if (pageInText) append(context.getString(R.string.quotation_quote_prefix))
                                         append(contentText)
                                     }
                                 }
@@ -3462,7 +3467,10 @@ private fun QuotationDialog(
                                     content = finalContent,
                                     privacy = selectedPrivacy,
                                     contentWarning = spoilerText.takeIf { includeSpoiler && it.isNotBlank() },
-                                    sensitive = if (isSensitive) "on" else null
+                                    sensitive = if (isSensitive) "on" else null,
+                                    position = pages?.first?.toString(),
+                                    endPosition = pages?.second?.toString(),
+                                    positionMode = pages?.let { "PG" }
                                 )
 
                                 if (response.isSuccessful) {

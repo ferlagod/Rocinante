@@ -161,38 +161,6 @@ class TimelineRepository(
         loadFollowingActivities(baseUrl, cleanUser)
     }
     /**
-     * Carga las actividades de un inbox específico usando su URL de ActivityPub.
-     *
-     * @param inboxUrl Dirección URL del inbox.
-     * @param actorNameHint Nombre del actor para asociarlo a los ítems.
-     * @param actorAvatarHint Enlace al avatar del actor.
-     * @return Lista de elementos del timeline.
-     */
-    private suspend fun loadInboxActivities(
-        inboxUrl: String?,
-        actorNameHint: String?,
-        actorAvatarHint: String?
-    ): List<TimelineUiItem> {
-        if (inboxUrl.isNullOrBlank()) return emptyList()
-
-        val paginatedUrl = if (inboxUrl.contains("?")) {
-            "$inboxUrl&page=1"
-        } else {
-            "$inboxUrl?page=1"
-        }
-
-        return try {
-            val inbox = api.getInboxData(paginatedUrl)
-            mapActivitiesToItems(
-                inbox.orderedItems.orEmpty(),
-                actorNameHint = actorNameHint,
-                actorAvatarHint = actorAvatarHint
-            )
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-    /**
      * Carga las actividades de un outbox específico usando su URL de ActivityPub.
      *
      * @param outboxUrl Dirección URL del outbox.

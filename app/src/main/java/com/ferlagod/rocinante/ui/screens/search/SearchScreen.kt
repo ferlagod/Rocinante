@@ -144,6 +144,39 @@ fun SearchScreen(
     // instancia los consulta en ese momento y puede tardar varios segundos: lo local se enseña
     // ya y esto se añade debajo cuando llega.
     var isLoadingRemote by remember { mutableStateOf(false) }
+
+    // Paginación de los resultados de la instancia: BookWyrm los da de 15 en 15. Se guarda la
+    // búsqueda que los dio, por si se cambia el texto antes de pedir más.
+    var lastBookQuery by rememberSaveable { mutableStateOf("") }
+    var bookPage by rememberSaveable { mutableStateOf(1) }
+    var hasMoreBooks by rememberSaveable { mutableStateOf(false) }
+    var isLoadingMoreBooks by remember { mutableStateOf(false) }
+
+    val loadMoreBooks: () -> Unit = {
+        if (hasMoreBooks && !isLoadingMoreBooks && lastBookQuery.isNotBlank()) {
+            isLoadingMoreBooks = true
+            val query = lastBookQuery
+            coroutineScope.launch {
+                try {
+                    val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
+                    val next = repo.searchBooksPage(query, instanceUrl, page = bookPage + 1)
+                    val local = next.results.filter { !it.isRemote }
+                    if (query == lastBookQuery) {
+                        val before = searchResults.size
+                        searchResults = (searchResults + local).distinctBy { it.key }
+                        bookPage += 1
+                        // Una página que no trae nada nuevo es la última, venga o no el enlace.
+                        hasMoreBooks = next.hasNextPage && searchResults.size > before
+                    }
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    errorMessage = com.ferlagod.rocinante.utils.NetworkErrors.message(context, e)
+                } finally {
+                    isLoadingMoreBooks = false
+                }
+            }
+        }
+    }
     var remoteJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var remoteSearchSeq by remember { mutableStateOf(0) }
 
@@ -185,7 +218,11 @@ fun SearchScreen(
                     val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
                     if (searchMode == SearchMode.BOOKS) {
                         val query = searchQuery
-                        searchResults = repo.searchBooksScraped(query, instanceUrl)
+                        val firstPage = repo.searchBooksPage(query, instanceUrl)
+                        searchResults = firstPage.results
+                        lastBookQuery = query
+                        bookPage = 1
+                        hasMoreBooks = firstPage.hasNextPage
                         userSearchResults = emptyList()
                         errorMessage = null
                         if (searchResults.isEmpty()) {
@@ -228,8 +265,12 @@ fun SearchScreen(
                 try {
                     val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
                     val exact = repo.searchByIsbn(com.ferlagod.rocinante.utils.IsbnUtils.normalize(scanned))
-                    val results = if (exact.isNotEmpty()) exact else repo.searchBooksScraped(scanned, instanceUrl)
+                    val textPage = if (exact.isNotEmpty()) null else repo.searchBooksPage(scanned, instanceUrl)
+                    val results = if (exact.isNotEmpty()) exact else textPage!!.results
                     searchResults = results
+                    lastBookQuery = scanned
+                    bookPage = 1
+                    hasMoreBooks = textPage?.hasNextPage == true
                     if (exact.isEmpty()) searchRemoteIfNeeded(scanned, results)
                     userSearchResults = emptyList()
                     errorMessage = if (results.isEmpty()) context.getString(R.string.search_books_empty) else null
@@ -660,6 +701,10 @@ fun SearchScreen(
                             }
                         }
                     }
+                    // Al final de los de la instancia (la primera sección), la página siguiente.
+                    if (index == 0 && hasMoreBooks) {
+                        item(key = "load-more-books") { LoadMoreBooksButton(isLoadingMoreBooks, loadMoreBooks) }
+                    }
                 }
                 if (isLoadingRemote) {
                     item(key = "remote-loading") {
@@ -1035,6 +1080,24 @@ fun UserProfileDialog(
  *
  * @param title Texto del encabezado.
  */
+@Composable
+private fun LoadMoreBooksButton(isLoading: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            OutlinedButton(onClick = onClick) {
+                Text(stringResource(R.string.search_load_more))
+            }
+        }
+    }
+}
+
 @Composable
 private fun SearchSectionHeader(title: String) {
     Text(

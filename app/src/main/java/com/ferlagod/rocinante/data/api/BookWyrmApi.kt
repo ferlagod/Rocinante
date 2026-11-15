@@ -59,8 +59,8 @@ interface BookWyrmApi {
     @GET
     suspend fun getOutboxData(@Url fullUrl: String): OutboxPage
 
-    @GET
-    suspend fun getInboxData(@Url fullUrl: String): OutboxPage
+    // No hay getInboxData: el inbox de BookWyrm solo admite envíos firmados entre servidores,
+    // y un GET contesta 405.
 
     /**
      * Descarga un JSON genérico desde una URL completa.
@@ -97,7 +97,9 @@ interface BookWyrmApi {
         @Query("q") query: String,
         @Query("type") type: String = "book",
         // "true" para que la instancia consulte también los catálogos externos; null no se envía.
-        @Query("remote") remote: String? = null
+        @Query("remote") remote: String? = null,
+        // Página de resultados locales, de 15 en 15 como la web; null es la primera.
+        @Query("page") page: Int? = null
     ): retrofit2.Response<ResponseBody>
 
     // Búsqueda exacta por ISBN contra el endpoint JSON estable de BookWyrm
@@ -312,7 +314,12 @@ interface BookWyrmApi {
         @Field("content") content: String,
         @Field("privacy") privacy: String,
         @Field("content_warning") contentWarning: String?,
-        @Field("sensitive") sensitive: String?
+        @Field("sensitive") sensitive: String?,
+        // Dónde está la cita: página (o primera página) y, si abarca varias, la última. Con
+        // ellos BookWyrm escribe «p. 23» o «pp. 23-25» al federarla, en el idioma de cada cual.
+        @Field("position") position: String? = null,
+        @Field("endposition") endPosition: String? = null,
+        @Field("position_mode") positionMode: String? = null
     ): retrofit2.Response<okhttp3.ResponseBody>
 
     /**
@@ -509,13 +516,6 @@ interface BookWyrmApi {
     @POST("notifications")
     suspend fun postClearNotifications(@Field("csrfmiddlewaretoken") csrfToken: String): retrofit2.Response<ResponseBody>
 
-    /**
-     * Envía una actividad (ej. Announce para Boost) directamente a la bandeja de salida (Outbox).
-     */
-    @Headers("Accept: application/activity+json", "Content-Type: application/activity+json")
-    @POST
-    suspend fun postToOutbox(
-        @Url outboxUrl: String,
-        @Body body: com.google.gson.JsonObject
-    ): retrofit2.Response<ResponseBody>
+    // No hay postToOutbox: el outbox de BookWyrm solo admite GET. Las difusiones van por
+    // boostStatus, como en la web.
 }

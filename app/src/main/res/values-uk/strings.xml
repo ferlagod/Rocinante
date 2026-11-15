@@ -620,6 +620,7 @@
     <string name="search_instance_section">На цьому сервері</string>
     <string name="search_instance_prompt">Шукати «%1$s» на цій інстанції</string>
     <string name="search_remote_section">Результати з %1$s</string>
+    <string name="search_load_more">Більше результатів</string>
     <string name="search_remote_loading">Пошук в інших каталогах…</string>
     <string name="search_clear">Очистити</string>
     <string name="search_tools_desc">Інструменти</string>

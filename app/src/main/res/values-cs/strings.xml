@@ -618,6 +618,7 @@ Oprava vyhledávání: Byla opravena chyba, která bránila otevření podrobnos
     <string name="search_instance_section">Na této instanci</string>
     <string name="search_instance_prompt">Hledat „%1$s“ v této instanci</string>
     <string name="search_remote_section">Výsledky z %1$s</string>
+    <string name="search_load_more">Další výsledky</string>
     <string name="search_remote_loading">Hledání v dalších katalozích…</string>
     <string name="search_clear">Vymazat</string>
     <string name="search_tools_desc">Nástroje</string>

@@ -84,6 +84,20 @@ object BookWyrmUtils {
     }
 
     /**
+     * La página de una cita tal y como la escribe quien la copia: «23», «23-25», «23 – 25».
+     *
+     * @return la primera página y, si es un tramo, la última; null si no son números, y entonces
+     *   quien llama la deja en el texto como antes.
+     */
+    fun parseQuotePages(raw: String?): Pair<Int, Int?>? {
+        val match = Regex("""^\s*(\d{1,6})\s*(?:[-–—]\s*(\d{1,6})\s*)?$""").find(raw.orEmpty())
+            ?: return null
+        val first = match.groupValues[1].toInt()
+        val last = match.groupValues[2].toIntOrNull()?.takeIf { it > first }
+        return first to last
+    }
+
+    /**
      * Convierte la fecha que BookWyrm pinta en los estados («Aug. 22, 2024», «22 de agosto», «hace
      * 3 horas») en una [java.time.LocalDate] comparable, para ordenar las reseñas.
      *
