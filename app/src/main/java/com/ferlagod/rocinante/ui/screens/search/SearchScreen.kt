@@ -187,23 +187,47 @@ fun SearchScreen(
         isLoadingRemote = false
     }
 
+    // Idioma de la aplicación, para que Inventaire compare con las etiquetas en ese idioma.
+    val appLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language
+
     // Si la instancia no tenía nada propio ya habrá consultado los catálogos por su cuenta y
     // los resultados remotos vienen en la primera respuesta: entonces no hace falta repetir.
+    //
+    // Inventaire se consulta además directamente, siempre: la instancia puede no tenerlo activo,
+    // cortar la consulta por tiempo o buscar con las etiquetas en inglés, y entonces un libro que
+    // sí está en Inventaire (en italiano, por ejemplo) no aparecía por ningún lado.
     val searchRemoteIfNeeded: (String, List<BookSearchResult>) -> Unit = { query, firstResults ->
         cancelRemoteSearch()
-        if (firstResults.isNotEmpty() && firstResults.none { it.isRemote }) {
-            val seq = remoteSearchSeq
-            isLoadingRemote = true
-            remoteJob = coroutineScope.launch {
-                try {
-                    val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
-                    val remote = repo.searchBooksScraped(query, instanceUrl, remote = true).filter { it.isRemote }
-                    if (seq == remoteSearchSeq && remote.isNotEmpty()) {
-                        searchResults = (searchResults + remote).distinctBy { it.key }
-                    }
-                } finally {
-                    if (seq == remoteSearchSeq) isLoadingRemote = false
+        val seq = remoteSearchSeq
+        isLoadingRemote = true
+        remoteJob = coroutineScope.launch {
+            val addResults: (List<BookSearchResult>) -> Unit = { found ->
+                if (seq == remoteSearchSeq && found.isNotEmpty()) {
+                    searchResults = (searchResults + found).distinctBy { it.key }
+                    if (errorMessage == context.getString(R.string.search_books_empty)) errorMessage = null
                 }
+            }
+            try {
+                kotlinx.coroutines.coroutineScope {
+                    if (firstResults.isNotEmpty() && firstResults.none { it.isRemote }) {
+                        launch {
+                            val repo = com.ferlagod.rocinante.data.repository.SearchRepository(resolvedApi)
+                            addResults(repo.searchBooksScraped(query, instanceUrl, remote = true).filter { it.isRemote })
+                        }
+                    }
+                    launch {
+                        val inventaire = com.ferlagod.rocinante.data.api.InventaireClient
+                        addResults(
+                            if (com.ferlagod.rocinante.utils.IsbnUtils.isIsbn(query)) {
+                                inventaire.searchByIsbn(com.ferlagod.rocinante.utils.IsbnUtils.normalize(query))
+                            } else {
+                                inventaire.searchWorks(query, appLanguage)
+                            }
+                        )
+                    }
+                }
+            } finally {
+                if (seq == remoteSearchSeq) isLoadingRemote = false
             }
         }
     }
@@ -271,9 +295,9 @@ fun SearchScreen(
                     lastBookQuery = scanned
                     bookPage = 1
                     hasMoreBooks = textPage?.hasNextPage == true
-                    if (exact.isEmpty()) searchRemoteIfNeeded(scanned, results)
                     userSearchResults = emptyList()
                     errorMessage = if (results.isEmpty()) context.getString(R.string.search_books_empty) else null
+                    if (exact.isEmpty()) searchRemoteIfNeeded(scanned, results)
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
                     errorMessage = context.getString(R.string.search_error, e.message)

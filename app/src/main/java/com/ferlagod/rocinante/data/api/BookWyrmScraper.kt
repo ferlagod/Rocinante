@@ -1115,18 +1115,23 @@ object BookWyrmScraper {
             val cleanBase = if (instanceUrl.startsWith("http")) instanceUrl.trimEnd('/') else "https://${instanceUrl.trimEnd('/')}"
             val createUrl = "$cleanBase/create-book"
 
+            // El formulario se pide siempre, no solo por el token: trae oculto `last_edited_by`
+            // con el id del usuario, y BookWyrm lo exige. Sin él la instancia rechaza el libro con
+            // «no se pudo guardar, mira los errores de abajo» y no enseña ningún error debajo,
+            // porque la plantilla no pinta los de ese campo.
             var csrfToken = NetworkClient.currentCsrfToken().orEmpty()
-            if (csrfToken.isEmpty()) {
-                try {
-                    val getResp = api.getRawHtmlResponse(createUrl)
-                    val html = runCatching { getResp.body()?.string() }.getOrNull().orEmpty()
-                    csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                }
+            var lastEditedBy: String? = null
+            try {
+                val getResp = api.getRawHtmlResponse(createUrl)
+                val html = runCatching { getResp.body()?.string() }.getOrNull().orEmpty()
+                lastEditedBy = extractLastEditedBy(html)
+                if (csrfToken.isEmpty()) csrfToken = NetworkClient.currentCsrfToken() ?: extractCsrfToken(html)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
             }
 
             val fields = buildCreateBookFields(
+                lastEditedBy = lastEditedBy,
                 csrfToken = csrfToken,
                 title = title,
                 authorNames = authorNames,
@@ -1189,6 +1194,16 @@ object BookWyrmScraper {
      * se omiten cuando están vacíos para evitar que Django reciba "" en un IntegerField o
      * DateField y devuelva un 500/502.
      */
+    /**
+     * El id del usuario que el formulario de alta lleva oculto en `last_edited_by`, o null si la
+     * página no lo trae (sesión caducada, instancia muy antigua).
+     */
+    internal fun extractLastEditedBy(html: String): String? =
+        org.jsoup.Jsoup.parse(html)
+            .select("input[name=last_edited_by]")
+            .map { it.attr("value").trim() }
+            .firstOrNull { it.isNotEmpty() }
+
     internal fun buildCreateBookFields(
         csrfToken: String,
         title: String,
@@ -1202,13 +1217,16 @@ object BookWyrmScraper {
         physicalFormat: String = "",
         publishers: String = "",
         series: String = "",
-        seriesNumber: String = ""
+        seriesNumber: String = "",
+        lastEditedBy: String? = null
     ): List<Pair<String, String>> {
         val fields = mutableListOf(
             "csrfmiddlewaretoken" to csrfToken,
             "title" to title.trim(),
             "subtitle" to subtitle.trim()
         )
+        // Obligatorio para BookWyrm (ver createBookManually); la web lo manda siempre.
+        lastEditedBy?.takeIf { it.isNotBlank() }?.let { fields += "last_edited_by" to it }
         val authors = authorNames.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         if (authors.isEmpty()) fields += "add_author" to ""
         authors.forEach { fields += "add_author" to it }

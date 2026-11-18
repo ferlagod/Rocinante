@@ -33,6 +33,33 @@ class CreateBookFlowTest {
         assertFalse(fields.any { it.first == "pages" || it.first == "series" || it.first == "published_date" })
     }
 
+    @Test
+    fun `el alta manda last_edited_by, que BookWyrm exige y no pinta como error`() {
+        // Así lo lleva oculto book/edit/edit_book_form.html.
+        val createHtml = """
+            <form name="create-book" action="/create-book" method="post">
+              <input type="hidden" name="csrfmiddlewaretoken" value="abc">
+              <input type="hidden" name="last_edited_by" value="42">
+              <input type="hidden" name="parent_work" value="">
+            </form>
+        """.trimIndent()
+        val userId = BookWyrmScraper.extractLastEditedBy(createHtml)
+        assertEquals("42", userId)
+
+        val fields = BookWyrmScraper.buildCreateBookFields(
+            csrfToken = "abc", title = "Una mente in frammenti", authorNames = listOf("Gabor Maté"),
+            isbn = "9788834018842", pages = "307", physicalFormat = "Paperback", lastEditedBy = userId
+        )
+        assertTrue("last_edited_by" to "42" in fields)
+
+        // Sin sesión la página no lo trae: entonces no se inventa.
+        assertEquals(null, BookWyrmScraper.extractLastEditedBy("<form><input name=\"username\"></form>"))
+        assertFalse(
+            BookWyrmScraper.buildCreateBookFields(csrfToken = "t", title = "x", authorNames = listOf("y"))
+                .any { it.first == "last_edited_by" }
+        )
+    }
+
     // Tal cual la pantalla de confirmación de BookWyrm (book/edit/edit_book.html) con dos autores.
     private val confirmHtml = """
         <form name="create-book" action="/create-book/confirm" method="post" enctype="multipart/form-data">
