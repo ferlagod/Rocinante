@@ -1453,16 +1453,10 @@ fun ShelfNativeDetailScreen(
     androidx.activity.compose.BackHandler(enabled = backEnabled) { goBack() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(onClick = goBack) {
-                Text(stringResource(R.string.shelf_back))
-            }
+        // El título va en su propia línea, encima de los botones: en la misma fila competía por
+        // el ancho con «Volver» y los iconos y, en pantallas estrechas o con letra grande,
+        // acababa partido letra a letra en vertical.
+        run {
             // El recorte dice cuál es, para que se sepa qué se está viendo: el año, la nota,
             // el idioma o el formato que se tocó en el perfil.
             val filterTitle = activeFilter?.let { f ->
@@ -1493,9 +1487,25 @@ fun ShelfNativeDetailScreen(
                     showAuthorList -> stringResource(R.string.authors_title)
                     else -> shelf.title
                 },
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
             )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(onClick = goBack) {
+                Text(stringResource(R.string.shelf_back))
+            }
+            Spacer(modifier = Modifier.weight(1f))
             // Agrupar por series: solo en «Leídos», y solo mientras se esté viendo la
             // estantería entera. Dentro de una serie el orden lo da su numeración.
             if (shelf.slug == "read" && !showSeriesList && !showAuthorList) {
